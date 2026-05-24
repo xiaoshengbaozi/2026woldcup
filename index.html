@@ -175,9 +175,16 @@
       }
 
       .details {
+        display: grid;
+        gap: 6px;
         margin: 0;
         color: #344258;
-        white-space: pre-line;
+      }
+
+      .detail-row {
+        display: grid;
+        grid-template-columns: 24px 1fr;
+        gap: 8px;
       }
 
       .links {
@@ -316,10 +323,13 @@
 
       function cleanText(value) {
         return value
+          .replace(/\\\\n/g, "\n")
           .replace(/\\n/g, "\n")
           .replace(/\\,/g, ",")
           .replace(/\\;/g, ";")
           .replace(/\\\\/g, "\\")
+          .replace(/[ \t]+\\/g, "")
+          .replace(/\\[ \t]*$/gm, "")
           .trim();
       }
 
@@ -369,11 +379,20 @@
         })[char]);
       }
 
-      function visibleDetails(match) {
+      function detailRows(match) {
         return match.description
           .split("\n")
+          .map((line) => line.replace(/[ \t]+\\/g, "").replace(/^\\+|\\+$/g, "").trim())
+          .filter(Boolean)
+          .filter((line) => !line.startsWith("2026世界杯"))
+          .filter((line) => !/\s+vs\s+/i.test(line))
           .filter((line) => !line.startsWith("动态天气:") && !line.startsWith("系统地图:") && !line.startsWith("通用地图:"))
-          .join("\n");
+          .map((line) => {
+            if (line.startsWith("📍")) return { icon: "📍", text: line.slice(2).trim() };
+            if (line.startsWith("🕐")) return { icon: "🕐", text: line.slice(2).trim() };
+            if (line.startsWith("坐标:")) return { icon: "⌖", text: line };
+            return { icon: "⚽", text: line };
+          });
       }
 
       function render() {
@@ -396,6 +415,9 @@
           const dateLabel = formatDate(match.start);
           const heading = dateLabel === lastDate ? "" : `<h2 class="date-group">${escapeHtml(dateLabel)}</h2>`;
           lastDate = dateLabel;
+          const rows = detailRows(match)
+            .map((row) => `<span class="detail-row"><span>${escapeHtml(row.icon)}</span><span>${escapeHtml(row.text)}</span></span>`)
+            .join("");
           const weather = match.weather ? `<a href="${escapeHtml(match.weather)}" target="_blank" rel="noopener">天气</a>` : "";
           const map = match.url ? `<a href="${escapeHtml(match.url)}" target="_blank" rel="noopener">地图</a>` : "";
           return `
@@ -406,9 +428,8 @@
                 <h3>${escapeHtml(match.summary)}</h3>
                 <div class="meta">
                   <span>${escapeHtml(match.stage)}</span>
-                  <span>${escapeHtml(match.location || "地点待定")}</span>
                 </div>
-                <p class="details">${escapeHtml(visibleDetails(match))}</p>
+                <div class="details">${rows}</div>
                 <div class="links">${weather}${map}</div>
               </div>
             </article>
