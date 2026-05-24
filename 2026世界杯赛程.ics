@@ -1,0 +1,1245 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//FIFA World Cup 2026//CN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:2026世界杯赛程（北京时间）
+X-WR-TIMEZONE:Asia/Shanghai
+X-WR-CALDESC:FIFA World Cup 2026 完整赛程，已转换为北京时间 (UTC+8)
+BEGIN:VEVENT
+UID:fifa2026-match001@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260612T030000
+DTEND;TZID=Asia/Shanghai:20260612T050000
+SUMMARY:⚽ 🇲🇽 墨西哥 vs 🇿🇦 南非 (小组赛 Group A)
+DESCRIPTION:2026世界杯 | 小组赛 | Group A\\n🇲🇽 墨西哥 vs 🇿🇦 南非\\n📍 阿兹特克体育场（墨西哥城）\\n🕐 北京时间: 06月12日 03:00\\n动态天气: https://weather.com/weather/today/l/19.302861%2C-99.150528 \\n系统地图: bingmaps:?cp=19.302861~-99.150528&lvl=16&where=Estadio%20Azteca%2C%20Mexico%20City \\n通用地图: https://www.google.com/maps/search/?api=1&query=19.302861%2C-99.150528 \\n坐标: 19.302861\, -99.150528
+LOCATION:阿兹特克体育场（墨西哥城）
+GEO:19.302861;-99.150528
+URL:https://www.google.com/maps/search/?api=1&query=19.302861%2C-99.150528
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=19.302861~-99.150528&lvl=16&where=Estadio%20Azteca%2C%20Mexico%20City
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=阿兹特克体育场（墨西哥城）;X-TITLE=阿兹特克体育场 / 墨西哥城体育场:geo:19.302861,-99.150528?q=19.302861,-99.150528
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match002@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260612T100000
+DTEND;TZID=Asia/Shanghai:20260612T120000
+SUMMARY:⚽ 🇰🇷 韩国 vs 🇨🇿 捷克 (小组赛 Group A)
+DESCRIPTION:2026世界杯 | 小组赛 | Group A \\n🇰🇷 韩国 vs 🇨🇿 捷克\\n📍 阿克伦体育场（瓜达拉哈拉）\\n🕐 北京时间: 06月12日 10:00\\n动态天气: https://weather.com/weather/today/l/20.681667%2C-103.462778 \\n系统地图: bingmaps:?cp=20.681667~-103.462778&lvl=16&where=Estadio%20Akron%2C%20Guadalajara \\n通用地图: https://www.google.com/maps/search/?api=1&query=20.681667%2C-103.462778 \\n坐标: 20.681667\, -103.462778
+LOCATION:阿克伦体育场（瓜达拉哈拉）
+GEO:20.681667;-103.462778
+URL:https://www.google.com/maps/search/?api=1&query=20.681667%2C-103.462778
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=20.681667~-103.462778&lvl=16&where=Estadio%20Akron%2C%20Guadalajara
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=阿克伦体育场（瓜达拉哈拉）;X-TITLE=阿克伦体育场 / 瓜达拉哈拉体育场:geo:20.681667,-103.462778?q=20.681667,-103.462778
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match003@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260613T030000
+DTEND;TZID=Asia/Shanghai:20260613T050000
+SUMMARY:⚽ 🇨🇦 加拿大 vs 🇧🇦 波黑 (小组赛 Group B)
+DESCRIPTION:2026世界杯 | 小组赛 | Group B \\n🇨🇦 加拿大 vs 🇧🇦 波黑\\n📍 BMO球场（多伦多）\\n🕐 北京时间: 06月13日 03:00\\n动态天气: https://weather.com/weather/today/l/43.633222%2C-79.418611 \\n系统地图: bingmaps:?cp=43.633222~-79.418611&lvl=16&where=BMO%20Field%2C%20Toronto \\n通用地图: https://www.google.com/maps/search/?api=1&query=43.633222%2C-79.418611 \\n坐标: 43.633222\, -79.418611
+LOCATION:BMO球场（多伦多）
+GEO:43.633222;-79.418611
+URL:https://www.google.com/maps/search/?api=1&query=43.633222%2C-79.418611
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=43.633222~-79.418611&lvl=16&where=BMO%20Field%2C%20Toronto
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=BMO球场（多伦多）;X-TITLE=BMO球场 / 多伦多体育场:geo:43.633222,-79.418611?q=43.633222,-79.418611
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match004@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260613T090000
+DTEND;TZID=Asia/Shanghai:20260613T110000
+SUMMARY:⚽ 🇺🇸 美国 vs 🇵🇾 巴拉圭 (小组赛 Group D)
+DESCRIPTION:2026世界杯 | 小组赛 | Group D \\n🇺🇸 美国 vs 🇵🇾 巴拉圭\\n📍 SoFi体育场（洛杉矶）\\n🕐 北京时间: 06月13日 09:00\\n动态天气: https://weather.com/weather/today/l/33.953450%2C-118.339200 \\n系统地图: bingmaps:?cp=33.953450~-118.339200&lvl=16&where=SoFi%20Stadium%2C%20Inglewood \\n通用地图: https://www.google.com/maps/search/?api=1&query=33.953450%2C-118.339200 \\n坐标: 33.953450\, -118.339200
+LOCATION:SoFi体育场（洛杉矶）
+GEO:33.953450;-118.339200
+URL:https://www.google.com/maps/search/?api=1&query=33.953450%2C-118.339200
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=33.953450~-118.339200&lvl=16&where=SoFi%20Stadium%2C%20Inglewood
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=SoFi体育场（洛杉矶）;X-TITLE=SoFi体育场 / 洛杉矶体育场:geo:33.953450,-118.339200?q=33.953450,-118.339200
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match005@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260614T030000
+DTEND;TZID=Asia/Shanghai:20260614T050000
+SUMMARY:⚽ 🇶🇦 卡塔尔 vs 🇨🇭 瑞士 (小组赛 Group B)
+DESCRIPTION:2026世界杯 | 小组赛 | Group B \\n🇶🇦 卡塔尔 vs 🇨🇭 瑞士\\n📍 李维斯体育场（旧金山湾区）\\n🕐 北京时间: 06月14日 03:00\\n动态天气: https://weather.com/weather/today/l/37.403000%2C-121.970000 \\n系统地图: bingmaps:?cp=37.403000~-121.970000&lvl=16&where=Levi%27s%20Stadium%2C%20Santa%20Clara \\n通用地图: https://www.google.com/maps/search/?api=1&query=37.403000%2C-121.970000 \\n坐标: 37.403000\, -121.970000
+LOCATION:李维斯体育场（旧金山湾区）
+GEO:37.403000;-121.970000
+URL:https://www.google.com/maps/search/?api=1&query=37.403000%2C-121.970000
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=37.403000~-121.970000&lvl=16&where=Levi%27s%20Stadium%2C%20Santa%20Clara
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=李维斯体育场（旧金山湾区）;X-TITLE=李维斯体育场 / 旧金山湾区体育场:geo:37.403000,-121.970000?q=37.403000,-121.970000
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match006@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260614T060000
+DTEND;TZID=Asia/Shanghai:20260614T080000
+SUMMARY:⚽ 🇧🇷 巴西 vs 🇲🇦 摩洛哥 (小组赛 Group C)
+DESCRIPTION:2026世界杯 | 小组赛 | Group C \\n🇧🇷 巴西 vs 🇲🇦 摩洛哥\\n📍 大都会人寿体育场（纽约/新泽西）\\n🕐 北京时间: 06月14日 06:00\\n动态天气: https://weather.com/weather/today/l/40.813500%2C-74.074500 \\n系统地图: bingmaps:?cp=40.813500~-74.074500&lvl=16&where=MetLife%20Stadium%2C%20East%20Rutherford \\n通用地图: https://www.google.com/maps/search/?api=1&query=40.813500%2C-74.074500 \\n坐标: 40.813500\, -74.074500
+LOCATION:大都会人寿体育场（纽约/新泽西）
+GEO:40.813500;-74.074500
+URL:https://www.google.com/maps/search/?api=1&query=40.813500%2C-74.074500
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=40.813500~-74.074500&lvl=16&where=MetLife%20Stadium%2C%20East%20Rutherford
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=大都会人寿体育场（纽约/新泽西）;X-TITLE=大都会人寿体育场 / 纽约-新泽西体育场:geo:40.813500,-74.074500?q=40.813500,-74.074500
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match007@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260614T090000
+DTEND;TZID=Asia/Shanghai:20260614T110000
+SUMMARY:⚽ 🇭🇹 海地 vs 🏴󠁧󠁢󠁳󠁣󠁴󠁿 苏格兰 (小组赛 Group C)
+DESCRIPTION:2026世界杯 | 小组赛 | Group C \\n🇭🇹 海地 vs 🏴󠁧󠁢󠁳󠁣󠁴󠁿 苏格兰\\n📍 吉列体育场（波士顿）\\n🕐 北京时间: 06月14日 09:00\\n动态天气: https://weather.com/weather/today/l/42.090944%2C-71.264344 \\n系统地图: bingmaps:?cp=42.090944~-71.264344&lvl=16&where=Gillette%20Stadium%2C%20Foxborough \\n通用地图: https://www.google.com/maps/search/?api=1&query=42.090944%2C-71.264344 \\n坐标: 42.090944\, -71.264344
+LOCATION:吉列体育场（波士顿）
+GEO:42.090944;-71.264344
+URL:https://www.google.com/maps/search/?api=1&query=42.090944%2C-71.264344
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=42.090944~-71.264344&lvl=16&where=Gillette%20Stadium%2C%20Foxborough
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=吉列体育场（波士顿）;X-TITLE=吉列体育场 / 波士顿体育场:geo:42.090944,-71.264344?q=42.090944,-71.264344
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match008@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260614T120000
+DTEND;TZID=Asia/Shanghai:20260614T140000
+SUMMARY:⚽ 🇦🇺 澳大利亚 vs 🇹🇷 土耳其 (小组赛 Group D)
+DESCRIPTION:2026世界杯 | 小组赛 | Group D \\n🇦🇺 澳大利亚 vs 🇹🇷 土耳其\\n📍 卑诗体育馆（温哥华）\\n🕐 北京时间: 06月14日 12:00\\n动态天气: https://weather.com/weather/today/l/49.276750%2C-123.111999 \\n系统地图: bingmaps:?cp=49.276750~-123.111999&lvl=16&where=BC%20Place%2C%20Vancouver \\n通用地图: https://www.google.com/maps/search/?api=1&query=49.276750%2C-123.111999 \\n坐标: 49.276750\, -123.111999
+LOCATION:卑诗体育馆（温哥华）
+GEO:49.276750;-123.111999
+URL:https://www.google.com/maps/search/?api=1&query=49.276750%2C-123.111999
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=49.276750~-123.111999&lvl=16&where=BC%20Place%2C%20Vancouver
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=卑诗体育馆（温哥华）;X-TITLE=卑诗体育馆 / 温哥华体育场:geo:49.276750,-123.111999?q=49.276750,-123.111999
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match009@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260615T010000
+DTEND;TZID=Asia/Shanghai:20260615T030000
+SUMMARY:⚽ 🇩🇪 德国 vs 🇨🇼 库拉索 (小组赛 Group E)
+DESCRIPTION:2026世界杯 | 小组赛 | Group E \\n🇩🇪 德国 vs 🇨🇼 库拉索\\n📍 NRG体育场（休斯敦）\\n🕐 北京时间: 06月15日 01:00\\n动态天气: https://weather.com/weather/today/l/29.684722%2C-95.410833 \\n系统地图: bingmaps:?cp=29.684722~-95.410833&lvl=16&where=NRG%20Stadium%2C%20Houston \\n通用地图: https://www.google.com/maps/search/?api=1&query=29.684722%2C-95.410833 \\n坐标: 29.684722\, -95.410833
+LOCATION:NRG体育场（休斯敦）
+GEO:29.684722;-95.410833
+URL:https://www.google.com/maps/search/?api=1&query=29.684722%2C-95.410833
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=29.684722~-95.410833&lvl=16&where=NRG%20Stadium%2C%20Houston
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=NRG体育场（休斯敦）;X-TITLE=NRG体育场 / 休斯敦体育场:geo:29.684722,-95.410833?q=29.684722,-95.410833
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match010@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260615T040000
+DTEND;TZID=Asia/Shanghai:20260615T060000
+SUMMARY:⚽ 🇳🇱 荷兰 vs 🇯🇵 日本 (小组赛 Group F)
+DESCRIPTION:2026世界杯 | 小组赛 | Group F \\n🇳🇱 荷兰 vs 🇯🇵 日本\\n📍 AT&T体育场（达拉斯）\\n🕐 北京时间: 06月15日 04:00\\n动态天气: https://weather.com/weather/today/l/32.747778%2C-97.092778 \\n系统地图: bingmaps:?cp=32.747778~-97.092778&lvl=16&where=AT%26T%20Stadium%2C%20Arlington \\n通用地图: https://www.google.com/maps/search/?api=1&query=32.747778%2C-97.092778 \\n坐标: 32.747778\, -97.092778
+LOCATION:AT&T体育场（达拉斯）
+GEO:32.747778;-97.092778
+URL:https://www.google.com/maps/search/?api=1&query=32.747778%2C-97.092778
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=32.747778~-97.092778&lvl=16&where=AT%26T%20Stadium%2C%20Arlington
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=AT&T体育场（达拉斯）;X-TITLE=AT&T体育场 / 达拉斯体育场:geo:32.747778,-97.092778?q=32.747778,-97.092778
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match011@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260615T070000
+DTEND;TZID=Asia/Shanghai:20260615T090000
+SUMMARY:⚽ 🇨🇮 科特迪瓦 vs 🇪🇨 厄瓜多尔 (小组赛 Group E)
+DESCRIPTION:2026世界杯 | 小组赛 | Group E \\n🇨🇮 科特迪瓦 vs 🇪🇨 厄瓜多尔\\n📍 林肯金融球场（费城）\\n🕐 北京时间: 06月15日 07:00\\n动态天气: https://weather.com/weather/today/l/39.900833%2C-75.167500 \\n系统地图: bingmaps:?cp=39.900833~-75.167500&lvl=16&where=Lincoln%20Financial%20Field%2C%20Philadelphia \\n通用地图: https://www.google.com/maps/search/?api=1&query=39.900833%2C-75.167500 \\n坐标: 39.900833\, -75.167500
+LOCATION:林肯金融球场（费城）
+GEO:39.900833;-75.167500
+URL:https://www.google.com/maps/search/?api=1&query=39.900833%2C-75.167500
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=39.900833~-75.167500&lvl=16&where=Lincoln%20Financial%20Field%2C%20Philadelphia
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=林肯金融球场（费城）;X-TITLE=林肯金融球场 / 费城体育场:geo:39.900833,-75.167500?q=39.900833,-75.167500
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match012@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260615T100000
+DTEND;TZID=Asia/Shanghai:20260615T120000
+SUMMARY:⚽ 🇸🇪 瑞典 vs 🇹🇳 突尼斯 (小组赛 Group F)
+DESCRIPTION:2026世界杯 | 小组赛 | Group F \\n🇸🇪 瑞典 vs 🇹🇳 突尼斯\\n📍 BBVA体育场（蒙特雷）\\n🕐 北京时间: 06月15日 10:00\\n动态天气: https://weather.com/weather/today/l/25.668333%2C-100.244167 \\n系统地图: bingmaps:?cp=25.668333~-100.244167&lvl=16&where=Estadio%20BBVA%2C%20Monterrey \\n通用地图: https://www.google.com/maps/search/?api=1&query=25.668333%2C-100.244167 \\n坐标: 25.668333\, -100.244167
+LOCATION:BBVA体育场（蒙特雷）
+GEO:25.668333;-100.244167
+URL:https://www.google.com/maps/search/?api=1&query=25.668333%2C-100.244167
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=25.668333~-100.244167&lvl=16&where=Estadio%20BBVA%2C%20Monterrey
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=BBVA体育场（蒙特雷）;X-TITLE=BBVA体育场 / 蒙特雷体育场:geo:25.668333,-100.244167?q=25.668333,-100.244167
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match013@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260616T000000
+DTEND;TZID=Asia/Shanghai:20260616T020000
+SUMMARY:⚽ 🇪🇸 西班牙 vs 🇨🇻 佛得角 (小组赛 Group H)
+DESCRIPTION:2026世界杯 | 小组赛 | Group H \\n🇪🇸 西班牙 vs 🇨🇻 佛得角\\n📍 梅赛德斯-奔驰体育场（亚特兰大）\\n🕐 北京时间: 06月16日 00:00\\n动态天气: https://weather.com/weather/today/l/33.755556%2C-84.400833 \\n系统地图: bingmaps:?cp=33.755556~-84.400833&lvl=16&where=Mercedes-Benz%20Stadium%2C%20Atlanta \\n通用地图: https://www.google.com/maps/search/?api=1&query=33.755556%2C-84.400833 \\n坐标: 33.755556\, -84.400833
+LOCATION:梅赛德斯-奔驰体育场（亚特兰大）
+GEO:33.755556;-84.400833
+URL:https://www.google.com/maps/search/?api=1&query=33.755556%2C-84.400833
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=33.755556~-84.400833&lvl=16&where=Mercedes-Benz%20Stadium%2C%20Atlanta
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=梅赛德斯-奔驰体育场（亚特兰大）;X-TITLE=梅赛德斯-奔驰体育场 / 亚特兰大体育场:geo:33.755556,-84.400833?q=33.755556,-84.400833
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match014@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260616T030000
+DTEND;TZID=Asia/Shanghai:20260616T050000
+SUMMARY:⚽ 🇧🇪 比利时 vs 🇪🇬 埃及 (小组赛 Group G)
+DESCRIPTION:2026世界杯 | 小组赛 | Group G \\n🇧🇪 比利时 vs 🇪🇬 埃及\\n📍 流明球场（西雅图）\\n🕐 北京时间: 06月16日 03:00\\n动态天气: https://weather.com/weather/today/l/47.595200%2C-122.331600 \\n系统地图: bingmaps:?cp=47.595200~-122.331600&lvl=16&where=Lumen%20Field%2C%20Seattle \\n通用地图: https://www.google.com/maps/search/?api=1&query=47.595200%2C-122.331600 \\n坐标: 47.595200\, -122.331600
+LOCATION:流明球场（西雅图）
+GEO:47.595200;-122.331600
+URL:https://www.google.com/maps/search/?api=1&query=47.595200%2C-122.331600
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=47.595200~-122.331600&lvl=16&where=Lumen%20Field%2C%20Seattle
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=流明球场（西雅图）;X-TITLE=流明球场 / 西雅图体育场:geo:47.595200,-122.331600?q=47.595200,-122.331600
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match015@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260616T060000
+DTEND;TZID=Asia/Shanghai:20260616T080000
+SUMMARY:⚽ 🇸🇦 沙特阿拉伯 vs 🇺🇾 乌拉圭 (小组赛 Group H)
+DESCRIPTION:2026世界杯 | 小组赛 | Group H \\n🇸🇦 沙特阿拉伯 vs 🇺🇾 乌拉圭\\n📍 硬石体育场（迈阿密）\\n🕐 北京时间: 06月16日 06:00\\n动态天气: https://weather.com/weather/today/l/25.958056%2C-80.238889 \\n系统地图: bingmaps:?cp=25.958056~-80.238889&lvl=16&where=Hard%20Rock%20Stadium%2C%20Miami%20Gardens \\n通用地图: https://www.google.com/maps/search/?api=1&query=25.958056%2C-80.238889 \\n坐标: 25.958056\, -80.238889
+LOCATION:硬石体育场（迈阿密）
+GEO:25.958056;-80.238889
+URL:https://www.google.com/maps/search/?api=1&query=25.958056%2C-80.238889
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=25.958056~-80.238889&lvl=16&where=Hard%20Rock%20Stadium%2C%20Miami%20Gardens
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=硬石体育场（迈阿密）;X-TITLE=硬石体育场 / 迈阿密体育场:geo:25.958056,-80.238889?q=25.958056,-80.238889
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match016@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260616T090000
+DTEND;TZID=Asia/Shanghai:20260616T110000
+SUMMARY:⚽ 🇮🇷 伊朗 vs 🇳🇿 新西兰 (小组赛 Group G)
+DESCRIPTION:2026世界杯 | 小组赛 | Group G \\n🇮🇷 伊朗 vs 🇳🇿 新西兰\\n📍 SoFi体育场（洛杉矶）\\n🕐 北京时间: 06月16日 09:00\\n动态天气: https://weather.com/weather/today/l/33.953450%2C-118.339200 \\n系统地图: bingmaps:?cp=33.953450~-118.339200&lvl=16&where=SoFi%20Stadium%2C%20Inglewood \\n通用地图: https://www.google.com/maps/search/?api=1&query=33.953450%2C-118.339200 \\n坐标: 33.953450\, -118.339200
+LOCATION:SoFi体育场（洛杉矶）
+GEO:33.953450;-118.339200
+URL:https://www.google.com/maps/search/?api=1&query=33.953450%2C-118.339200
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=33.953450~-118.339200&lvl=16&where=SoFi%20Stadium%2C%20Inglewood
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=SoFi体育场（洛杉矶）;X-TITLE=SoFi体育场 / 洛杉矶体育场:geo:33.953450,-118.339200?q=33.953450,-118.339200
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match017@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260617T030000
+DTEND;TZID=Asia/Shanghai:20260617T050000
+SUMMARY:⚽ 🇫🇷 法国 vs 🇸🇳 塞内加尔 (小组赛 Group I)
+DESCRIPTION:2026世界杯 | 小组赛 | Group I \\n🇫🇷 法国 vs 🇸🇳 塞内加尔\\n📍 大都会人寿体育场（纽约/新泽西）\\n🕐 北京时间: 06月17日 03:00\\n动态天气: https://weather.com/weather/today/l/40.813500%2C-74.074500 \\n系统地图: bingmaps:?cp=40.813500~-74.074500&lvl=16&where=MetLife%20Stadium%2C%20East%20Rutherford \\n通用地图: https://www.google.com/maps/search/?api=1&query=40.813500%2C-74.074500 \\n坐标: 40.813500\, -74.074500
+LOCATION:大都会人寿体育场（纽约/新泽西）
+GEO:40.813500;-74.074500
+URL:https://www.google.com/maps/search/?api=1&query=40.813500%2C-74.074500
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=40.813500~-74.074500&lvl=16&where=MetLife%20Stadium%2C%20East%20Rutherford
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=大都会人寿体育场（纽约/新泽西）;X-TITLE=大都会人寿体育场 / 纽约-新泽西体育场:geo:40.813500,-74.074500?q=40.813500,-74.074500
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match018@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260617T060000
+DTEND;TZID=Asia/Shanghai:20260617T080000
+SUMMARY:⚽ 🇮🇶 伊拉克 vs 🇳🇴 挪威 (小组赛 Group I)
+DESCRIPTION:2026世界杯 | 小组赛 | Group I \\n🇮🇶 伊拉克 vs 🇳🇴 挪威\\n📍 吉列体育场（波士顿）\\n🕐 北京时间: 06月17日 06:00\\n动态天气: https://weather.com/weather/today/l/42.090944%2C-71.264344 \\n系统地图: bingmaps:?cp=42.090944~-71.264344&lvl=16&where=Gillette%20Stadium%2C%20Foxborough \\n通用地图: https://www.google.com/maps/search/?api=1&query=42.090944%2C-71.264344 \\n坐标: 42.090944\, -71.264344
+LOCATION:吉列体育场（波士顿）
+GEO:42.090944;-71.264344
+URL:https://www.google.com/maps/search/?api=1&query=42.090944%2C-71.264344
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=42.090944~-71.264344&lvl=16&where=Gillette%20Stadium%2C%20Foxborough
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=吉列体育场（波士顿）;X-TITLE=吉列体育场 / 波士顿体育场:geo:42.090944,-71.264344?q=42.090944,-71.264344
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match019@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260617T090000
+DTEND;TZID=Asia/Shanghai:20260617T110000
+SUMMARY:⚽ 🇦🇷 阿根廷 vs 🇩🇿 阿尔及利亚 (小组赛 Group J)
+DESCRIPTION:2026世界杯 | 小组赛 | Group J \\n🇦🇷 阿根廷 vs 🇩🇿 阿尔及利亚\\n📍 箭头体育场（堪萨斯城）\\n🕐 北京时间: 06月17日 09:00\\n动态天气: https://weather.com/weather/today/l/39.048939%2C-94.483917 \\n系统地图: bingmaps:?cp=39.048939~-94.483917&lvl=16&where=Arrowhead%20Stadium%2C%20Kansas%20City \\n通用地图: https://www.google.com/maps/search/?api=1&query=39.048939%2C-94.483917 \\n坐标: 39.048939\, -94.483917
+LOCATION:箭头体育场（堪萨斯城）
+GEO:39.048939;-94.483917
+URL:https://www.google.com/maps/search/?api=1&query=39.048939%2C-94.483917
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=39.048939~-94.483917&lvl=16&where=Arrowhead%20Stadium%2C%20Kansas%20City
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=箭头体育场（堪萨斯城）;X-TITLE=箭头体育场 / 堪萨斯城体育场:geo:39.048939,-94.483917?q=39.048939,-94.483917
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match020@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260617T120000
+DTEND;TZID=Asia/Shanghai:20260617T140000
+SUMMARY:⚽ 🇦🇹 奥地利 vs 🇯🇴 约旦 (小组赛 Group J)
+DESCRIPTION:2026世界杯 | 小组赛 | Group J \\n🇦🇹 奥地利 vs 🇯🇴 约旦\\n📍 李维斯体育场（旧金山湾区）\\n🕐 北京时间: 06月17日 12:00\\n动态天气: https://weather.com/weather/today/l/37.403000%2C-121.970000 \\n系统地图: bingmaps:?cp=37.403000~-121.970000&lvl=16&where=Levi%27s%20Stadium%2C%20Santa%20Clara \\n通用地图: https://www.google.com/maps/search/?api=1&query=37.403000%2C-121.970000 \\n坐标: 37.403000\, -121.970000
+LOCATION:李维斯体育场（旧金山湾区）
+GEO:37.403000;-121.970000
+URL:https://www.google.com/maps/search/?api=1&query=37.403000%2C-121.970000
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=37.403000~-121.970000&lvl=16&where=Levi%27s%20Stadium%2C%20Santa%20Clara
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=李维斯体育场（旧金山湾区）;X-TITLE=李维斯体育场 / 旧金山湾区体育场:geo:37.403000,-121.970000?q=37.403000,-121.970000
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match021@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260618T010000
+DTEND;TZID=Asia/Shanghai:20260618T030000
+SUMMARY:⚽ 🇵🇹 葡萄牙 vs 🇨🇩 刚果(金) (小组赛 Group K)
+DESCRIPTION:2026世界杯 | 小组赛 | Group K \\n🇵🇹 葡萄牙 vs 🇨🇩 刚果(金)\\n📍 NRG体育场（休斯敦）\\n🕐 北京时间: 06月18日 01:00\\n动态天气: https://weather.com/weather/today/l/29.684722%2C-95.410833 \\n系统地图: bingmaps:?cp=29.684722~-95.410833&lvl=16&where=NRG%20Stadium%2C%20Houston \\n通用地图: https://www.google.com/maps/search/?api=1&query=29.684722%2C-95.410833 \\n坐标: 29.684722\, -95.410833
+LOCATION:NRG体育场（休斯敦）
+GEO:29.684722;-95.410833
+URL:https://www.google.com/maps/search/?api=1&query=29.684722%2C-95.410833
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=29.684722~-95.410833&lvl=16&where=NRG%20Stadium%2C%20Houston
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=NRG体育场（休斯敦）;X-TITLE=NRG体育场 / 休斯敦体育场:geo:29.684722,-95.410833?q=29.684722,-95.410833
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match022@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260618T040000
+DTEND;TZID=Asia/Shanghai:20260618T060000
+SUMMARY:⚽ 🏴󠁧󠁢󠁥󠁮󠁧󠁿 英格兰 vs 🇭🇷 克罗地亚 (小组赛 Group L)
+DESCRIPTION:2026世界杯 | 小组赛 | Group L \\n🏴󠁧󠁢󠁥󠁮󠁧󠁿 英格兰 vs 🇭🇷 克罗地亚\\n📍 AT&T体育场（达拉斯）\\n🕐 北京时间: 06月18日 04:00\\n动态天气: https://weather.com/weather/today/l/32.747778%2C-97.092778 \\n系统地图: bingmaps:?cp=32.747778~-97.092778&lvl=16&where=AT%26T%20Stadium%2C%20Arlington \\n通用地图: https://www.google.com/maps/search/?api=1&query=32.747778%2C-97.092778 \\n坐标: 32.747778\, -97.092778
+LOCATION:AT&T体育场（达拉斯）
+GEO:32.747778;-97.092778
+URL:https://www.google.com/maps/search/?api=1&query=32.747778%2C-97.092778
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=32.747778~-97.092778&lvl=16&where=AT%26T%20Stadium%2C%20Arlington
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=AT&T体育场（达拉斯）;X-TITLE=AT&T体育场 / 达拉斯体育场:geo:32.747778,-97.092778?q=32.747778,-97.092778
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match023@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260618T070000
+DTEND;TZID=Asia/Shanghai:20260618T090000
+SUMMARY:⚽ 🇬🇭 加纳 vs 🇵🇦 巴拿马 (小组赛 Group L)
+DESCRIPTION:2026世界杯 | 小组赛 | Group L \\n🇬🇭 加纳 vs 🇵🇦 巴拿马\\n📍 BMO球场（多伦多）\\n🕐 北京时间: 06月18日 07:00\\n动态天气: https://weather.com/weather/today/l/43.633222%2C-79.418611 \\n系统地图: bingmaps:?cp=43.633222~-79.418611&lvl=16&where=BMO%20Field%2C%20Toronto \\n通用地图: https://www.google.com/maps/search/?api=1&query=43.633222%2C-79.418611 \\n坐标: 43.633222\, -79.418611
+LOCATION:BMO球场（多伦多）
+GEO:43.633222;-79.418611
+URL:https://www.google.com/maps/search/?api=1&query=43.633222%2C-79.418611
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=43.633222~-79.418611&lvl=16&where=BMO%20Field%2C%20Toronto
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=BMO球场（多伦多）;X-TITLE=BMO球场 / 多伦多体育场:geo:43.633222,-79.418611?q=43.633222,-79.418611
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match024@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260618T100000
+DTEND;TZID=Asia/Shanghai:20260618T120000
+SUMMARY:⚽ 🇺🇿 乌兹别克斯坦 vs 🇨🇴 哥伦比亚 (小组赛 Group K)
+DESCRIPTION:2026世界杯 | 小组赛 | Group K \\n🇺🇿 乌兹别克斯坦 vs 🇨🇴 哥伦比亚\\n📍 阿兹特克体育场（墨西哥城）\\n🕐 北京时间: 06月18日 10:00\\n动态天气: https://weather.com/weather/today/l/19.302861%2C-99.150528 \\n系统地图: bingmaps:?cp=19.302861~-99.150528&lvl=16&where=Estadio%20Azteca%2C%20Mexico%20City \\n通用地图: https://www.google.com/maps/search/?api=1&query=19.302861%2C-99.150528 \\n坐标: 19.302861\, -99.150528
+LOCATION:阿兹特克体育场（墨西哥城）
+GEO:19.302861;-99.150528
+URL:https://www.google.com/maps/search/?api=1&query=19.302861%2C-99.150528
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=19.302861~-99.150528&lvl=16&where=Estadio%20Azteca%2C%20Mexico%20City
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=阿兹特克体育场（墨西哥城）;X-TITLE=阿兹特克体育场 / 墨西哥城体育场:geo:19.302861,-99.150528?q=19.302861,-99.150528
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match025@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260619T000000
+DTEND;TZID=Asia/Shanghai:20260619T020000
+SUMMARY:⚽ 🇨🇿 捷克 vs 🇿🇦 南非 (小组赛 Group A)
+DESCRIPTION:2026世界杯 | 小组赛 | Group A \\n🇨🇿 捷克 vs 🇿🇦 南非\\n📍 梅赛德斯-奔驰体育场（亚特兰大）\\n🕐 北京时间: 06月19日 00:00\\n动态天气: https://weather.com/weather/today/l/33.755556%2C-84.400833 \\n系统地图: bingmaps:?cp=33.755556~-84.400833&lvl=16&where=Mercedes-Benz%20Stadium%2C%20Atlanta \\n通用地图: https://www.google.com/maps/search/?api=1&query=33.755556%2C-84.400833 \\n坐标: 33.755556\, -84.400833
+LOCATION:梅赛德斯-奔驰体育场（亚特兰大）
+GEO:33.755556;-84.400833
+URL:https://www.google.com/maps/search/?api=1&query=33.755556%2C-84.400833
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=33.755556~-84.400833&lvl=16&where=Mercedes-Benz%20Stadium%2C%20Atlanta
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=梅赛德斯-奔驰体育场（亚特兰大）;X-TITLE=梅赛德斯-奔驰体育场 / 亚特兰大体育场:geo:33.755556,-84.400833?q=33.755556,-84.400833
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match026@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260619T030000
+DTEND;TZID=Asia/Shanghai:20260619T050000
+SUMMARY:⚽ 🇨🇭 瑞士 vs 🇧🇦 波黑 (小组赛 Group B)
+DESCRIPTION:2026世界杯 | 小组赛 | Group B \\n🇨🇭 瑞士 vs 🇧🇦 波黑\\n📍 SoFi体育场（洛杉矶）\\n🕐 北京时间: 06月19日 03:00\\n动态天气: https://weather.com/weather/today/l/33.953450%2C-118.339200 \\n系统地图: bingmaps:?cp=33.953450~-118.339200&lvl=16&where=SoFi%20Stadium%2C%20Inglewood \\n通用地图: https://www.google.com/maps/search/?api=1&query=33.953450%2C-118.339200 \\n坐标: 33.953450\, -118.339200
+LOCATION:SoFi体育场（洛杉矶）
+GEO:33.953450;-118.339200
+URL:https://www.google.com/maps/search/?api=1&query=33.953450%2C-118.339200
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=33.953450~-118.339200&lvl=16&where=SoFi%20Stadium%2C%20Inglewood
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=SoFi体育场（洛杉矶）;X-TITLE=SoFi体育场 / 洛杉矶体育场:geo:33.953450,-118.339200?q=33.953450,-118.339200
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match027@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260619T060000
+DTEND;TZID=Asia/Shanghai:20260619T080000
+SUMMARY:⚽ 🇨🇦 加拿大 vs 🇶🇦 卡塔尔 (小组赛 Group B)
+DESCRIPTION:2026世界杯 | 小组赛 | Group B \\n🇨🇦 加拿大 vs 🇶🇦 卡塔尔\\n📍 卑诗体育馆（温哥华）\\n🕐 北京时间: 06月19日 06:00\\n动态天气: https://weather.com/weather/today/l/49.276750%2C-123.111999 \\n系统地图: bingmaps:?cp=49.276750~-123.111999&lvl=16&where=BC%20Place%2C%20Vancouver \\n通用地图: https://www.google.com/maps/search/?api=1&query=49.276750%2C-123.111999 \\n坐标: 49.276750\, -123.111999
+LOCATION:卑诗体育馆（温哥华）
+GEO:49.276750;-123.111999
+URL:https://www.google.com/maps/search/?api=1&query=49.276750%2C-123.111999
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=49.276750~-123.111999&lvl=16&where=BC%20Place%2C%20Vancouver
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=卑诗体育馆（温哥华）;X-TITLE=卑诗体育馆 / 温哥华体育场:geo:49.276750,-123.111999?q=49.276750,-123.111999
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match028@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260619T090000
+DTEND;TZID=Asia/Shanghai:20260619T110000
+SUMMARY:⚽ 🇲🇽 墨西哥 vs 🇰🇷 韩国 (小组赛 Group A)
+DESCRIPTION:2026世界杯 | 小组赛 | Group A \\n🇲🇽 墨西哥 vs 🇰🇷 韩国\\n📍 阿克伦体育场（瓜达拉哈拉）\\n🕐 北京时间: 06月19日 09:00\\n动态天气: https://weather.com/weather/today/l/20.681667%2C-103.462778 \\n系统地图: bingmaps:?cp=20.681667~-103.462778&lvl=16&where=Estadio%20Akron%2C%20Guadalajara \\n通用地图: https://www.google.com/maps/search/?api=1&query=20.681667%2C-103.462778 \\n坐标: 20.681667\, -103.462778
+LOCATION:阿克伦体育场（瓜达拉哈拉）
+GEO:20.681667;-103.462778
+URL:https://www.google.com/maps/search/?api=1&query=20.681667%2C-103.462778
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=20.681667~-103.462778&lvl=16&where=Estadio%20Akron%2C%20Guadalajara
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=阿克伦体育场（瓜达拉哈拉）;X-TITLE=阿克伦体育场 / 瓜达拉哈拉体育场:geo:20.681667,-103.462778?q=20.681667,-103.462778
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match029@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260620T030000
+DTEND;TZID=Asia/Shanghai:20260620T050000
+SUMMARY:⚽ 🇺🇸 美国 vs 🇦🇺 澳大利亚 (小组赛 Group D)
+DESCRIPTION:2026世界杯 | 小组赛 | Group D \\n🇺🇸 美国 vs 🇦🇺 澳大利亚\\n📍 流明球场（西雅图）\\n🕐 北京时间: 06月20日 03:00\\n动态天气: https://weather.com/weather/today/l/47.595200%2C-122.331600 \\n系统地图: bingmaps:?cp=47.595200~-122.331600&lvl=16&where=Lumen%20Field%2C%20Seattle \\n通用地图: https://www.google.com/maps/search/?api=1&query=47.595200%2C-122.331600 \\n坐标: 47.595200\, -122.331600
+LOCATION:流明球场（西雅图）
+GEO:47.595200;-122.331600
+URL:https://www.google.com/maps/search/?api=1&query=47.595200%2C-122.331600
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=47.595200~-122.331600&lvl=16&where=Lumen%20Field%2C%20Seattle
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=流明球场（西雅图）;X-TITLE=流明球场 / 西雅图体育场:geo:47.595200,-122.331600?q=47.595200,-122.331600
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match030@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260620T060000
+DTEND;TZID=Asia/Shanghai:20260620T080000
+SUMMARY:⚽ 🏴󠁧󠁢󠁳󠁣󠁴󠁿 苏格兰 vs 🇲🇦 摩洛哥 (小组赛 Group C)
+DESCRIPTION:2026世界杯 | 小组赛 | Group C \\n🏴󠁧󠁢󠁳󠁣󠁴󠁿 苏格兰 vs 🇲🇦 摩洛哥\\n📍 吉列体育场（波士顿）\\n🕐 北京时间: 06月20日 06:00\\n动态天气: https://weather.com/weather/today/l/42.090944%2C-71.264344 \\n系统地图: bingmaps:?cp=42.090944~-71.264344&lvl=16&where=Gillette%20Stadium%2C%20Foxborough \\n通用地图: https://www.google.com/maps/search/?api=1&query=42.090944%2C-71.264344 \\n坐标: 42.090944\, -71.264344
+LOCATION:吉列体育场（波士顿）
+GEO:42.090944;-71.264344
+URL:https://www.google.com/maps/search/?api=1&query=42.090944%2C-71.264344
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=42.090944~-71.264344&lvl=16&where=Gillette%20Stadium%2C%20Foxborough
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=吉列体育场（波士顿）;X-TITLE=吉列体育场 / 波士顿体育场:geo:42.090944,-71.264344?q=42.090944,-71.264344
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match031@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260620T083000
+DTEND;TZID=Asia/Shanghai:20260620T103000
+SUMMARY:⚽ 🇧🇷 巴西 vs 🇭🇹 海地 (小组赛 Group C)
+DESCRIPTION:2026世界杯 | 小组赛 | Group C \\n🇧🇷 巴西 vs 🇭🇹 海地\\n📍 林肯金融球场（费城）\\n🕐 北京时间: 06月20日 08:30\\n动态天气: https://weather.com/weather/today/l/39.900833%2C-75.167500 \\n系统地图: bingmaps:?cp=39.900833~-75.167500&lvl=16&where=Lincoln%20Financial%20Field%2C%20Philadelphia \\n通用地图: https://www.google.com/maps/search/?api=1&query=39.900833%2C-75.167500 \\n坐标: 39.900833\, -75.167500
+LOCATION:林肯金融球场（费城）
+GEO:39.900833;-75.167500
+URL:https://www.google.com/maps/search/?api=1&query=39.900833%2C-75.167500
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=39.900833~-75.167500&lvl=16&where=Lincoln%20Financial%20Field%2C%20Philadelphia
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=林肯金融球场（费城）;X-TITLE=林肯金融球场 / 费城体育场:geo:39.900833,-75.167500?q=39.900833,-75.167500
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match032@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260620T110000
+DTEND;TZID=Asia/Shanghai:20260620T130000
+SUMMARY:⚽ 🇹🇷 土耳其 vs 🇵🇾 巴拉圭 (小组赛 Group D)
+DESCRIPTION:2026世界杯 | 小组赛 | Group D \\n🇹🇷 土耳其 vs 🇵🇾 巴拉圭\\n📍 李维斯体育场（旧金山湾区）\\n🕐 北京时间: 06月20日 11:00\\n动态天气: https://weather.com/weather/today/l/37.403000%2C-121.970000 \\n系统地图: bingmaps:?cp=37.403000~-121.970000&lvl=16&where=Levi%27s%20Stadium%2C%20Santa%20Clara \\n通用地图: https://www.google.com/maps/search/?api=1&query=37.403000%2C-121.970000 \\n坐标: 37.403000\, -121.970000
+LOCATION:李维斯体育场（旧金山湾区）
+GEO:37.403000;-121.970000
+URL:https://www.google.com/maps/search/?api=1&query=37.403000%2C-121.970000
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=37.403000~-121.970000&lvl=16&where=Levi%27s%20Stadium%2C%20Santa%20Clara
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=李维斯体育场（旧金山湾区）;X-TITLE=李维斯体育场 / 旧金山湾区体育场:geo:37.403000,-121.970000?q=37.403000,-121.970000
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match033@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260621T010000
+DTEND;TZID=Asia/Shanghai:20260621T030000
+SUMMARY:⚽ 🇳🇱 荷兰 vs 🇸🇪 瑞典 (小组赛 Group F)
+DESCRIPTION:2026世界杯 | 小组赛 | Group F \\n🇳🇱 荷兰 vs 🇸🇪 瑞典\\n📍 NRG体育场（休斯敦）\\n🕐 北京时间: 06月21日 01:00\\n动态天气: https://weather.com/weather/today/l/29.684722%2C-95.410833 \\n系统地图: bingmaps:?cp=29.684722~-95.410833&lvl=16&where=NRG%20Stadium%2C%20Houston \\n通用地图: https://www.google.com/maps/search/?api=1&query=29.684722%2C-95.410833 \\n坐标: 29.684722\, -95.410833
+LOCATION:NRG体育场（休斯敦）
+GEO:29.684722;-95.410833
+URL:https://www.google.com/maps/search/?api=1&query=29.684722%2C-95.410833
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=29.684722~-95.410833&lvl=16&where=NRG%20Stadium%2C%20Houston
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=NRG体育场（休斯敦）;X-TITLE=NRG体育场 / 休斯敦体育场:geo:29.684722,-95.410833?q=29.684722,-95.410833
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match034@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260621T040000
+DTEND;TZID=Asia/Shanghai:20260621T060000
+SUMMARY:⚽ 🇩🇪 德国 vs 🇨🇮 科特迪瓦 (小组赛 Group E)
+DESCRIPTION:2026世界杯 | 小组赛 | Group E \\n🇩🇪 德国 vs 🇨🇮 科特迪瓦\\n📍 BMO球场（多伦多）\\n🕐 北京时间: 06月21日 04:00\\n动态天气: https://weather.com/weather/today/l/43.633222%2C-79.418611 \\n系统地图: bingmaps:?cp=43.633222~-79.418611&lvl=16&where=BMO%20Field%2C%20Toronto \\n通用地图: https://www.google.com/maps/search/?api=1&query=43.633222%2C-79.418611 \\n坐标: 43.633222\, -79.418611
+LOCATION:BMO球场（多伦多）
+GEO:43.633222;-79.418611
+URL:https://www.google.com/maps/search/?api=1&query=43.633222%2C-79.418611
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=43.633222~-79.418611&lvl=16&where=BMO%20Field%2C%20Toronto
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=BMO球场（多伦多）;X-TITLE=BMO球场 / 多伦多体育场:geo:43.633222,-79.418611?q=43.633222,-79.418611
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match035@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260621T080000
+DTEND;TZID=Asia/Shanghai:20260621T100000
+SUMMARY:⚽ 🇪🇨 厄瓜多尔 vs 🇨🇼 库拉索 (小组赛 Group E)
+DESCRIPTION:2026世界杯 | 小组赛 | Group E \\n🇪🇨 厄瓜多尔 vs 🇨🇼 库拉索\\n📍 箭头体育场（堪萨斯城）\\n🕐 北京时间: 06月21日 08:00\\n动态天气: https://weather.com/weather/today/l/39.048939%2C-94.483917 \\n系统地图: bingmaps:?cp=39.048939~-94.483917&lvl=16&where=Arrowhead%20Stadium%2C%20Kansas%20City \\n通用地图: https://www.google.com/maps/search/?api=1&query=39.048939%2C-94.483917 \\n坐标: 39.048939\, -94.483917
+LOCATION:箭头体育场（堪萨斯城）
+GEO:39.048939;-94.483917
+URL:https://www.google.com/maps/search/?api=1&query=39.048939%2C-94.483917
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=39.048939~-94.483917&lvl=16&where=Arrowhead%20Stadium%2C%20Kansas%20City
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=箭头体育场（堪萨斯城）;X-TITLE=箭头体育场 / 堪萨斯城体育场:geo:39.048939,-94.483917?q=39.048939,-94.483917
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match036@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260621T120000
+DTEND;TZID=Asia/Shanghai:20260621T140000
+SUMMARY:⚽ 🇹🇳 突尼斯 vs 🇯🇵 日本 (小组赛 Group F)
+DESCRIPTION:2026世界杯 | 小组赛 | Group F \\n🇹🇳 突尼斯 vs 🇯🇵 日本\\n📍 BBVA体育场（蒙特雷）\\n🕐 北京时间: 06月21日 12:00\\n动态天气: https://weather.com/weather/today/l/25.668333%2C-100.244167 \\n系统地图: bingmaps:?cp=25.668333~-100.244167&lvl=16&where=Estadio%20BBVA%2C%20Monterrey \\n通用地图: https://www.google.com/maps/search/?api=1&query=25.668333%2C-100.244167 \\n坐标: 25.668333\, -100.244167
+LOCATION:BBVA体育场（蒙特雷）
+GEO:25.668333;-100.244167
+URL:https://www.google.com/maps/search/?api=1&query=25.668333%2C-100.244167
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=25.668333~-100.244167&lvl=16&where=Estadio%20BBVA%2C%20Monterrey
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=BBVA体育场（蒙特雷）;X-TITLE=BBVA体育场 / 蒙特雷体育场:geo:25.668333,-100.244167?q=25.668333,-100.244167
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match037@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260622T000000
+DTEND;TZID=Asia/Shanghai:20260622T020000
+SUMMARY:⚽ 🇪🇸 西班牙 vs 🇸🇦 沙特阿拉伯 (小组赛 Group H)
+DESCRIPTION:2026世界杯 | 小组赛 | Group H \\n🇪🇸 西班牙 vs 🇸🇦 沙特阿拉伯\\n📍 梅赛德斯-奔驰体育场（亚特兰大）\\n🕐 北京时间: 06月22日 00:00\\n动态天气: https://weather.com/weather/today/l/33.755556%2C-84.400833 \\n系统地图: bingmaps:?cp=33.755556~-84.400833&lvl=16&where=Mercedes-Benz%20Stadium%2C%20Atlanta \\n通用地图: https://www.google.com/maps/search/?api=1&query=33.755556%2C-84.400833 \\n坐标: 33.755556\, -84.400833
+LOCATION:梅赛德斯-奔驰体育场（亚特兰大）
+GEO:33.755556;-84.400833
+URL:https://www.google.com/maps/search/?api=1&query=33.755556%2C-84.400833
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=33.755556~-84.400833&lvl=16&where=Mercedes-Benz%20Stadium%2C%20Atlanta
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=梅赛德斯-奔驰体育场（亚特兰大）;X-TITLE=梅赛德斯-奔驰体育场 / 亚特兰大体育场:geo:33.755556,-84.400833?q=33.755556,-84.400833
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match038@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260622T030000
+DTEND;TZID=Asia/Shanghai:20260622T050000
+SUMMARY:⚽ 🇧🇪 比利时 vs 🇮🇷 伊朗 (小组赛 Group G)
+DESCRIPTION:2026世界杯 | 小组赛 | Group G \\n🇧🇪 比利时 vs 🇮🇷 伊朗\\n📍 SoFi体育场（洛杉矶）\\n🕐 北京时间: 06月22日 03:00\\n动态天气: https://weather.com/weather/today/l/33.953450%2C-118.339200 \\n系统地图: bingmaps:?cp=33.953450~-118.339200&lvl=16&where=SoFi%20Stadium%2C%20Inglewood \\n通用地图: https://www.google.com/maps/search/?api=1&query=33.953450%2C-118.339200 \\n坐标: 33.953450\, -118.339200
+LOCATION:SoFi体育场（洛杉矶）
+GEO:33.953450;-118.339200
+URL:https://www.google.com/maps/search/?api=1&query=33.953450%2C-118.339200
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=33.953450~-118.339200&lvl=16&where=SoFi%20Stadium%2C%20Inglewood
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=SoFi体育场（洛杉矶）;X-TITLE=SoFi体育场 / 洛杉矶体育场:geo:33.953450,-118.339200?q=33.953450,-118.339200
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match039@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260622T060000
+DTEND;TZID=Asia/Shanghai:20260622T080000
+SUMMARY:⚽ 🇺🇾 乌拉圭 vs 🇨🇻 佛得角 (小组赛 Group H)
+DESCRIPTION:2026世界杯 | 小组赛 | Group H \\n🇺🇾 乌拉圭 vs 🇨🇻 佛得角\\n📍 硬石体育场（迈阿密）\\n🕐 北京时间: 06月22日 06:00\\n动态天气: https://weather.com/weather/today/l/25.958056%2C-80.238889 \\n系统地图: bingmaps:?cp=25.958056~-80.238889&lvl=16&where=Hard%20Rock%20Stadium%2C%20Miami%20Gardens \\n通用地图: https://www.google.com/maps/search/?api=1&query=25.958056%2C-80.238889 \\n坐标: 25.958056\, -80.238889
+LOCATION:硬石体育场（迈阿密）
+GEO:25.958056;-80.238889
+URL:https://www.google.com/maps/search/?api=1&query=25.958056%2C-80.238889
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=25.958056~-80.238889&lvl=16&where=Hard%20Rock%20Stadium%2C%20Miami%20Gardens
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=硬石体育场（迈阿密）;X-TITLE=硬石体育场 / 迈阿密体育场:geo:25.958056,-80.238889?q=25.958056,-80.238889
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match040@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260622T090000
+DTEND;TZID=Asia/Shanghai:20260622T110000
+SUMMARY:⚽ 🇳🇿 新西兰 vs 🇪🇬 埃及 (小组赛 Group G)
+DESCRIPTION:2026世界杯 | 小组赛 | Group G \\n🇳🇿 新西兰 vs 🇪🇬 埃及\\n📍 卑诗体育馆（温哥华）\\n🕐 北京时间: 06月22日 09:00\\n动态天气: https://weather.com/weather/today/l/49.276750%2C-123.111999 \\n系统地图: bingmaps:?cp=49.276750~-123.111999&lvl=16&where=BC%20Place%2C%20Vancouver \\n通用地图: https://www.google.com/maps/search/?api=1&query=49.276750%2C-123.111999 \\n坐标: 49.276750\, -123.111999
+LOCATION:卑诗体育馆（温哥华）
+GEO:49.276750;-123.111999
+URL:https://www.google.com/maps/search/?api=1&query=49.276750%2C-123.111999
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=49.276750~-123.111999&lvl=16&where=BC%20Place%2C%20Vancouver
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=卑诗体育馆（温哥华）;X-TITLE=卑诗体育馆 / 温哥华体育场:geo:49.276750,-123.111999?q=49.276750,-123.111999
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match041@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260623T010000
+DTEND;TZID=Asia/Shanghai:20260623T030000
+SUMMARY:⚽ 🇦🇷 阿根廷 vs 🇦🇹 奥地利 (小组赛 Group J)
+DESCRIPTION:2026世界杯 | 小组赛 | Group J \\n🇦🇷 阿根廷 vs 🇦🇹 奥地利\\n📍 AT&T体育场（达拉斯）\\n🕐 北京时间: 06月23日 01:00\\n动态天气: https://weather.com/weather/today/l/32.747778%2C-97.092778 \\n系统地图: bingmaps:?cp=32.747778~-97.092778&lvl=16&where=AT%26T%20Stadium%2C%20Arlington \\n通用地图: https://www.google.com/maps/search/?api=1&query=32.747778%2C-97.092778 \\n坐标: 32.747778\, -97.092778
+LOCATION:AT&T体育场（达拉斯）
+GEO:32.747778;-97.092778
+URL:https://www.google.com/maps/search/?api=1&query=32.747778%2C-97.092778
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=32.747778~-97.092778&lvl=16&where=AT%26T%20Stadium%2C%20Arlington
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=AT&T体育场（达拉斯）;X-TITLE=AT&T体育场 / 达拉斯体育场:geo:32.747778,-97.092778?q=32.747778,-97.092778
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match042@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260623T050000
+DTEND;TZID=Asia/Shanghai:20260623T070000
+SUMMARY:⚽ 🇫🇷 法国 vs 🇮🇶 伊拉克 (小组赛 Group I)
+DESCRIPTION:2026世界杯 | 小组赛 | Group I \\n🇫🇷 法国 vs 🇮🇶 伊拉克\\n📍 林肯金融球场（费城）\\n🕐 北京时间: 06月23日 05:00\\n动态天气: https://weather.com/weather/today/l/39.900833%2C-75.167500 \\n系统地图: bingmaps:?cp=39.900833~-75.167500&lvl=16&where=Lincoln%20Financial%20Field%2C%20Philadelphia \\n通用地图: https://www.google.com/maps/search/?api=1&query=39.900833%2C-75.167500 \\n坐标: 39.900833\, -75.167500
+LOCATION:林肯金融球场（费城）
+GEO:39.900833;-75.167500
+URL:https://www.google.com/maps/search/?api=1&query=39.900833%2C-75.167500
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=39.900833~-75.167500&lvl=16&where=Lincoln%20Financial%20Field%2C%20Philadelphia
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=林肯金融球场（费城）;X-TITLE=林肯金融球场 / 费城体育场:geo:39.900833,-75.167500?q=39.900833,-75.167500
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match043@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260623T080000
+DTEND;TZID=Asia/Shanghai:20260623T100000
+SUMMARY:⚽ 🇳🇴 挪威 vs 🇸🇳 塞内加尔 (小组赛 Group I)
+DESCRIPTION:2026世界杯 | 小组赛 | Group I \\n🇳🇴 挪威 vs 🇸🇳 塞内加尔\\n📍 大都会人寿体育场（纽约/新泽西）\\n🕐 北京时间: 06月23日 08:00\\n动态天气: https://weather.com/weather/today/l/40.813500%2C-74.074500 \\n系统地图: bingmaps:?cp=40.813500~-74.074500&lvl=16&where=MetLife%20Stadium%2C%20East%20Rutherford \\n通用地图: https://www.google.com/maps/search/?api=1&query=40.813500%2C-74.074500 \\n坐标: 40.813500\, -74.074500
+LOCATION:大都会人寿体育场（纽约/新泽西）
+GEO:40.813500;-74.074500
+URL:https://www.google.com/maps/search/?api=1&query=40.813500%2C-74.074500
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=40.813500~-74.074500&lvl=16&where=MetLife%20Stadium%2C%20East%20Rutherford
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=大都会人寿体育场（纽约/新泽西）;X-TITLE=大都会人寿体育场 / 纽约-新泽西体育场:geo:40.813500,-74.074500?q=40.813500,-74.074500
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match044@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260623T110000
+DTEND;TZID=Asia/Shanghai:20260623T130000
+SUMMARY:⚽ 🇯🇴 约旦 vs 🇩🇿 阿尔及利亚 (小组赛 Group J)
+DESCRIPTION:2026世界杯 | 小组赛 | Group J \\n🇯🇴 约旦 vs 🇩🇿 阿尔及利亚\\n📍 李维斯体育场（旧金山湾区）\\n🕐 北京时间: 06月23日 11:00\\n动态天气: https://weather.com/weather/today/l/37.403000%2C-121.970000 \\n系统地图: bingmaps:?cp=37.403000~-121.970000&lvl=16&where=Levi%27s%20Stadium%2C%20Santa%20Clara \\n通用地图: https://www.google.com/maps/search/?api=1&query=37.403000%2C-121.970000 \\n坐标: 37.403000\, -121.970000
+LOCATION:李维斯体育场（旧金山湾区）
+GEO:37.403000;-121.970000
+URL:https://www.google.com/maps/search/?api=1&query=37.403000%2C-121.970000
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=37.403000~-121.970000&lvl=16&where=Levi%27s%20Stadium%2C%20Santa%20Clara
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=李维斯体育场（旧金山湾区）;X-TITLE=李维斯体育场 / 旧金山湾区体育场:geo:37.403000,-121.970000?q=37.403000,-121.970000
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match045@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260624T010000
+DTEND;TZID=Asia/Shanghai:20260624T030000
+SUMMARY:⚽ 🇵🇹 葡萄牙 vs 🇺🇿 乌兹别克斯坦 (小组赛 Group K)
+DESCRIPTION:2026世界杯 | 小组赛 | Group K \\n🇵🇹 葡萄牙 vs 🇺🇿 乌兹别克斯坦\\n📍 NRG体育场（休斯敦）\\n🕐 北京时间: 06月24日 01:00\\n动态天气: https://weather.com/weather/today/l/29.684722%2C-95.410833 \\n系统地图: bingmaps:?cp=29.684722~-95.410833&lvl=16&where=NRG%20Stadium%2C%20Houston \\n通用地图: https://www.google.com/maps/search/?api=1&query=29.684722%2C-95.410833 \\n坐标: 29.684722\, -95.410833
+LOCATION:NRG体育场（休斯敦）
+GEO:29.684722;-95.410833
+URL:https://www.google.com/maps/search/?api=1&query=29.684722%2C-95.410833
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=29.684722~-95.410833&lvl=16&where=NRG%20Stadium%2C%20Houston
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=NRG体育场（休斯敦）;X-TITLE=NRG体育场 / 休斯敦体育场:geo:29.684722,-95.410833?q=29.684722,-95.410833
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match046@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260624T040000
+DTEND;TZID=Asia/Shanghai:20260624T060000
+SUMMARY:⚽ 🏴󠁧󠁢󠁥󠁮󠁧󠁿 英格兰 vs 🇬🇭 加纳 (小组赛 Group L)
+DESCRIPTION:2026世界杯 | 小组赛 | Group L \\n🏴󠁧󠁢󠁥󠁮󠁧󠁿 英格兰 vs 🇬🇭 加纳\\n📍 吉列体育场（波士顿）\\n🕐 北京时间: 06月24日 04:00\\n动态天气: https://weather.com/weather/today/l/42.090944%2C-71.264344 \\n系统地图: bingmaps:?cp=42.090944~-71.264344&lvl=16&where=Gillette%20Stadium%2C%20Foxborough \\n通用地图: https://www.google.com/maps/search/?api=1&query=42.090944%2C-71.264344 \\n坐标: 42.090944\, -71.264344
+LOCATION:吉列体育场（波士顿）
+GEO:42.090944;-71.264344
+URL:https://www.google.com/maps/search/?api=1&query=42.090944%2C-71.264344
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=42.090944~-71.264344&lvl=16&where=Gillette%20Stadium%2C%20Foxborough
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=吉列体育场（波士顿）;X-TITLE=吉列体育场 / 波士顿体育场:geo:42.090944,-71.264344?q=42.090944,-71.264344
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match047@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260624T070000
+DTEND;TZID=Asia/Shanghai:20260624T090000
+SUMMARY:⚽ 🇵🇦 巴拿马 vs 🇭🇷 克罗地亚 (小组赛 Group L)
+DESCRIPTION:2026世界杯 | 小组赛 | Group L \\n🇵🇦 巴拿马 vs 🇭🇷 克罗地亚\\n📍 BMO球场（多伦多）\\n🕐 北京时间: 06月24日 07:00\\n动态天气: https://weather.com/weather/today/l/43.633222%2C-79.418611 \\n系统地图: bingmaps:?cp=43.633222~-79.418611&lvl=16&where=BMO%20Field%2C%20Toronto \\n通用地图: https://www.google.com/maps/search/?api=1&query=43.633222%2C-79.418611 \\n坐标: 43.633222\, -79.418611
+LOCATION:BMO球场（多伦多）
+GEO:43.633222;-79.418611
+URL:https://www.google.com/maps/search/?api=1&query=43.633222%2C-79.418611
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=43.633222~-79.418611&lvl=16&where=BMO%20Field%2C%20Toronto
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=BMO球场（多伦多）;X-TITLE=BMO球场 / 多伦多体育场:geo:43.633222,-79.418611?q=43.633222,-79.418611
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match048@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260624T100000
+DTEND;TZID=Asia/Shanghai:20260624T120000
+SUMMARY:⚽ 🇨🇴 哥伦比亚 vs 🇨🇩 刚果(金) (小组赛 Group K)
+DESCRIPTION:2026世界杯 | 小组赛 | Group K \\n🇨🇴 哥伦比亚 vs 🇨🇩 刚果(金)\\n📍 阿克伦体育场（瓜达拉哈拉）\\n🕐 北京时间: 06月24日 10:00\\n动态天气: https://weather.com/weather/today/l/20.681667%2C-103.462778 \\n系统地图: bingmaps:?cp=20.681667~-103.462778&lvl=16&where=Estadio%20Akron%2C%20Guadalajara \\n通用地图: https://www.google.com/maps/search/?api=1&query=20.681667%2C-103.462778 \\n坐标: 20.681667\, -103.462778
+LOCATION:阿克伦体育场（瓜达拉哈拉）
+GEO:20.681667;-103.462778
+URL:https://www.google.com/maps/search/?api=1&query=20.681667%2C-103.462778
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=20.681667~-103.462778&lvl=16&where=Estadio%20Akron%2C%20Guadalajara
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=阿克伦体育场（瓜达拉哈拉）;X-TITLE=阿克伦体育场 / 瓜达拉哈拉体育场:geo:20.681667,-103.462778?q=20.681667,-103.462778
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match049@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260625T030000
+DTEND;TZID=Asia/Shanghai:20260625T050000
+SUMMARY:⚽ 🇨🇭 瑞士 vs 🇨🇦 加拿大 (小组赛 Group B)
+DESCRIPTION:2026世界杯 | 小组赛 | Group B \\n🇨🇭 瑞士 vs 🇨🇦 加拿大\\n📍 卑诗体育馆（温哥华）\\n🕐 北京时间: 06月25日 03:00\\n动态天气: https://weather.com/weather/today/l/49.276750%2C-123.111999 \\n系统地图: bingmaps:?cp=49.276750~-123.111999&lvl=16&where=BC%20Place%2C%20Vancouver \\n通用地图: https://www.google.com/maps/search/?api=1&query=49.276750%2C-123.111999 \\n坐标: 49.276750\, -123.111999
+LOCATION:卑诗体育馆（温哥华）
+GEO:49.276750;-123.111999
+URL:https://www.google.com/maps/search/?api=1&query=49.276750%2C-123.111999
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=49.276750~-123.111999&lvl=16&where=BC%20Place%2C%20Vancouver
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=卑诗体育馆（温哥华）;X-TITLE=卑诗体育馆 / 温哥华体育场:geo:49.276750,-123.111999?q=49.276750,-123.111999
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match050@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260625T030000
+DTEND;TZID=Asia/Shanghai:20260625T050000
+SUMMARY:⚽ 🇧🇦 波黑 vs 🇶🇦 卡塔尔 (小组赛 Group B)
+DESCRIPTION:2026世界杯 | 小组赛 | Group B \\n🇧🇦 波黑 vs 🇶🇦 卡塔尔\\n📍 流明球场（西雅图）\\n🕐 北京时间: 06月25日 03:00\\n动态天气: https://weather.com/weather/today/l/47.595200%2C-122.331600 \\n系统地图: bingmaps:?cp=47.595200~-122.331600&lvl=16&where=Lumen%20Field%2C%20Seattle \\n通用地图: https://www.google.com/maps/search/?api=1&query=47.595200%2C-122.331600 \\n坐标: 47.595200\, -122.331600
+LOCATION:流明球场（西雅图）
+GEO:47.595200;-122.331600
+URL:https://www.google.com/maps/search/?api=1&query=47.595200%2C-122.331600
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=47.595200~-122.331600&lvl=16&where=Lumen%20Field%2C%20Seattle
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=流明球场（西雅图）;X-TITLE=流明球场 / 西雅图体育场:geo:47.595200,-122.331600?q=47.595200,-122.331600
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match051@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260625T060000
+DTEND;TZID=Asia/Shanghai:20260625T080000
+SUMMARY:⚽ 🏴󠁧󠁢󠁳󠁣󠁴󠁿 苏格兰 vs 🇧🇷 巴西 (小组赛 Group C)
+DESCRIPTION:2026世界杯 | 小组赛 | Group C \\n🏴󠁧󠁢󠁳󠁣󠁴󠁿 苏格兰 vs 🇧🇷 巴西\\n📍 硬石体育场（迈阿密）\\n🕐 北京时间: 06月25日 06:00\\n动态天气: https://weather.com/weather/today/l/25.958056%2C-80.238889 \\n系统地图: bingmaps:?cp=25.958056~-80.238889&lvl=16&where=Hard%20Rock%20Stadium%2C%20Miami%20Gardens \\n通用地图: https://www.google.com/maps/search/?api=1&query=25.958056%2C-80.238889 \\n坐标: 25.958056\, -80.238889
+LOCATION:硬石体育场（迈阿密）
+GEO:25.958056;-80.238889
+URL:https://www.google.com/maps/search/?api=1&query=25.958056%2C-80.238889
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=25.958056~-80.238889&lvl=16&where=Hard%20Rock%20Stadium%2C%20Miami%20Gardens
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=硬石体育场（迈阿密）;X-TITLE=硬石体育场 / 迈阿密体育场:geo:25.958056,-80.238889?q=25.958056,-80.238889
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match052@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260625T060000
+DTEND;TZID=Asia/Shanghai:20260625T080000
+SUMMARY:⚽ 🇲🇦 摩洛哥 vs 🇭🇹 海地 (小组赛 Group C)
+DESCRIPTION:2026世界杯 | 小组赛 | Group C \\n🇲🇦 摩洛哥 vs 🇭🇹 海地\\n📍 梅赛德斯-奔驰体育场（亚特兰大）\\n🕐 北京时间: 06月25日 06:00\\n动态天气: https://weather.com/weather/today/l/33.755556%2C-84.400833 \\n系统地图: bingmaps:?cp=33.755556~-84.400833&lvl=16&where=Mercedes-Benz%20Stadium%2C%20Atlanta \\n通用地图: https://www.google.com/maps/search/?api=1&query=33.755556%2C-84.400833 \\n坐标: 33.755556\, -84.400833
+LOCATION:梅赛德斯-奔驰体育场（亚特兰大）
+GEO:33.755556;-84.400833
+URL:https://www.google.com/maps/search/?api=1&query=33.755556%2C-84.400833
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=33.755556~-84.400833&lvl=16&where=Mercedes-Benz%20Stadium%2C%20Atlanta
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=梅赛德斯-奔驰体育场（亚特兰大）;X-TITLE=梅赛德斯-奔驰体育场 / 亚特兰大体育场:geo:33.755556,-84.400833?q=33.755556,-84.400833
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match053@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260625T090000
+DTEND;TZID=Asia/Shanghai:20260625T110000
+SUMMARY:⚽ 🇨🇿 捷克 vs 🇲🇽 墨西哥 (小组赛 Group A)
+DESCRIPTION:2026世界杯 | 小组赛 | Group A \\n🇨🇿 捷克 vs 🇲🇽 墨西哥\\n📍 阿兹特克体育场（墨西哥城）\\n🕐 北京时间: 06月25日 09:00\\n动态天气: https://weather.com/weather/today/l/19.302861%2C-99.150528 \\n系统地图: bingmaps:?cp=19.302861~-99.150528&lvl=16&where=Estadio%20Azteca%2C%20Mexico%20City \\n通用地图: https://www.google.com/maps/search/?api=1&query=19.302861%2C-99.150528 \\n坐标: 19.302861\, -99.150528
+LOCATION:阿兹特克体育场（墨西哥城）
+GEO:19.302861;-99.150528
+URL:https://www.google.com/maps/search/?api=1&query=19.302861%2C-99.150528
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=19.302861~-99.150528&lvl=16&where=Estadio%20Azteca%2C%20Mexico%20City
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=阿兹特克体育场（墨西哥城）;X-TITLE=阿兹特克体育场 / 墨西哥城体育场:geo:19.302861,-99.150528?q=19.302861,-99.150528
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match054@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260625T090000
+DTEND;TZID=Asia/Shanghai:20260625T110000
+SUMMARY:⚽ 🇿🇦 南非 vs 🇰🇷 韩国 (小组赛 Group A)
+DESCRIPTION:2026世界杯 | 小组赛 | Group A \\n🇿🇦 南非 vs 🇰🇷 韩国\\n📍 BBVA体育场（蒙特雷）\\n🕐 北京时间: 06月25日 09:00\\n动态天气: https://weather.com/weather/today/l/25.668333%2C-100.244167 \\n系统地图: bingmaps:?cp=25.668333~-100.244167&lvl=16&where=Estadio%20BBVA%2C%20Monterrey \\n通用地图: https://www.google.com/maps/search/?api=1&query=25.668333%2C-100.244167 \\n坐标: 25.668333\, -100.244167
+LOCATION:BBVA体育场（蒙特雷）
+GEO:25.668333;-100.244167
+URL:https://www.google.com/maps/search/?api=1&query=25.668333%2C-100.244167
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=25.668333~-100.244167&lvl=16&where=Estadio%20BBVA%2C%20Monterrey
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=BBVA体育场（蒙特雷）;X-TITLE=BBVA体育场 / 蒙特雷体育场:geo:25.668333,-100.244167?q=25.668333,-100.244167
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match055@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260626T040000
+DTEND;TZID=Asia/Shanghai:20260626T060000
+SUMMARY:⚽ 🇨🇼 库拉索 vs 🇨🇮 科特迪瓦 (小组赛 Group E)
+DESCRIPTION:2026世界杯 | 小组赛 | Group E \\n🇨🇼 库拉索 vs 🇨🇮 科特迪瓦\\n📍 林肯金融球场（费城）\\n🕐 北京时间: 06月26日 04:00\\n动态天气: https://weather.com/weather/today/l/39.900833%2C-75.167500 \\n系统地图: bingmaps:?cp=39.900833~-75.167500&lvl=16&where=Lincoln%20Financial%20Field%2C%20Philadelphia \\n通用地图: https://www.google.com/maps/search/?api=1&query=39.900833%2C-75.167500 \\n坐标: 39.900833\, -75.167500
+LOCATION:林肯金融球场（费城）
+GEO:39.900833;-75.167500
+URL:https://www.google.com/maps/search/?api=1&query=39.900833%2C-75.167500
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=39.900833~-75.167500&lvl=16&where=Lincoln%20Financial%20Field%2C%20Philadelphia
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=林肯金融球场（费城）;X-TITLE=林肯金融球场 / 费城体育场:geo:39.900833,-75.167500?q=39.900833,-75.167500
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match056@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260626T040000
+DTEND;TZID=Asia/Shanghai:20260626T060000
+SUMMARY:⚽ 🇪🇨 厄瓜多尔 vs 🇩🇪 德国 (小组赛 Group E)
+DESCRIPTION:2026世界杯 | 小组赛 | Group E \\n🇪🇨 厄瓜多尔 vs 🇩🇪 德国\\n📍 大都会人寿体育场（纽约/新泽西）\\n🕐 北京时间: 06月26日 04:00\\n动态天气: https://weather.com/weather/today/l/40.813500%2C-74.074500 \\n系统地图: bingmaps:?cp=40.813500~-74.074500&lvl=16&where=MetLife%20Stadium%2C%20East%20Rutherford \\n通用地图: https://www.google.com/maps/search/?api=1&query=40.813500%2C-74.074500 \\n坐标: 40.813500\, -74.074500
+LOCATION:大都会人寿体育场（纽约/新泽西）
+GEO:40.813500;-74.074500
+URL:https://www.google.com/maps/search/?api=1&query=40.813500%2C-74.074500
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=40.813500~-74.074500&lvl=16&where=MetLife%20Stadium%2C%20East%20Rutherford
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=大都会人寿体育场（纽约/新泽西）;X-TITLE=大都会人寿体育场 / 纽约-新泽西体育场:geo:40.813500,-74.074500?q=40.813500,-74.074500
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match057@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260626T070000
+DTEND;TZID=Asia/Shanghai:20260626T090000
+SUMMARY:⚽ 🇯🇵 日本 vs 🇸🇪 瑞典 (小组赛 Group F)
+DESCRIPTION:2026世界杯 | 小组赛 | Group F \\n🇯🇵 日本 vs 🇸🇪 瑞典\\n📍 AT&T体育场（达拉斯）\\n🕐 北京时间: 06月26日 07:00\\n动态天气: https://weather.com/weather/today/l/32.747778%2C-97.092778 \\n系统地图: bingmaps:?cp=32.747778~-97.092778&lvl=16&where=AT%26T%20Stadium%2C%20Arlington \\n通用地图: https://www.google.com/maps/search/?api=1&query=32.747778%2C-97.092778 \\n坐标: 32.747778\, -97.092778
+LOCATION:AT&T体育场（达拉斯）
+GEO:32.747778;-97.092778
+URL:https://www.google.com/maps/search/?api=1&query=32.747778%2C-97.092778
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=32.747778~-97.092778&lvl=16&where=AT%26T%20Stadium%2C%20Arlington
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=AT&T体育场（达拉斯）;X-TITLE=AT&T体育场 / 达拉斯体育场:geo:32.747778,-97.092778?q=32.747778,-97.092778
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match058@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260626T070000
+DTEND;TZID=Asia/Shanghai:20260626T090000
+SUMMARY:⚽ 🇹🇳 突尼斯 vs 🇳🇱 荷兰 (小组赛 Group F)
+DESCRIPTION:2026世界杯 | 小组赛 | Group F \\n🇹🇳 突尼斯 vs 🇳🇱 荷兰\\n📍 箭头体育场（堪萨斯城）\\n🕐 北京时间: 06月26日 07:00\\n动态天气: https://weather.com/weather/today/l/39.048939%2C-94.483917 \\n系统地图: bingmaps:?cp=39.048939~-94.483917&lvl=16&where=Arrowhead%20Stadium%2C%20Kansas%20City \\n通用地图: https://www.google.com/maps/search/?api=1&query=39.048939%2C-94.483917 \\n坐标: 39.048939\, -94.483917
+LOCATION:箭头体育场（堪萨斯城）
+GEO:39.048939;-94.483917
+URL:https://www.google.com/maps/search/?api=1&query=39.048939%2C-94.483917
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=39.048939~-94.483917&lvl=16&where=Arrowhead%20Stadium%2C%20Kansas%20City
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=箭头体育场（堪萨斯城）;X-TITLE=箭头体育场 / 堪萨斯城体育场:geo:39.048939,-94.483917?q=39.048939,-94.483917
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match059@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260626T100000
+DTEND;TZID=Asia/Shanghai:20260626T120000
+SUMMARY:⚽ 🇹🇷 土耳其 vs 🇺🇸 美国 (小组赛 Group D)
+DESCRIPTION:2026世界杯 | 小组赛 | Group D \\n🇹🇷 土耳其 vs 🇺🇸 美国\\n📍 SoFi体育场（洛杉矶）\\n🕐 北京时间: 06月26日 10:00\\n动态天气: https://weather.com/weather/today/l/33.953450%2C-118.339200 \\n系统地图: bingmaps:?cp=33.953450~-118.339200&lvl=16&where=SoFi%20Stadium%2C%20Inglewood \\n通用地图: https://www.google.com/maps/search/?api=1&query=33.953450%2C-118.339200 \\n坐标: 33.953450\, -118.339200
+LOCATION:SoFi体育场（洛杉矶）
+GEO:33.953450;-118.339200
+URL:https://www.google.com/maps/search/?api=1&query=33.953450%2C-118.339200
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=33.953450~-118.339200&lvl=16&where=SoFi%20Stadium%2C%20Inglewood
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=SoFi体育场（洛杉矶）;X-TITLE=SoFi体育场 / 洛杉矶体育场:geo:33.953450,-118.339200?q=33.953450,-118.339200
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match060@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260626T100000
+DTEND;TZID=Asia/Shanghai:20260626T120000
+SUMMARY:⚽ 🇵🇾 巴拉圭 vs 🇦🇺 澳大利亚 (小组赛 Group D)
+DESCRIPTION:2026世界杯 | 小组赛 | Group D \\n🇵🇾 巴拉圭 vs 🇦🇺 澳大利亚\\n📍 李维斯体育场（旧金山湾区）\\n🕐 北京时间: 06月26日 10:00\\n动态天气: https://weather.com/weather/today/l/37.403000%2C-121.970000 \\n系统地图: bingmaps:?cp=37.403000~-121.970000&lvl=16&where=Levi%27s%20Stadium%2C%20Santa%20Clara \\n通用地图: https://www.google.com/maps/search/?api=1&query=37.403000%2C-121.970000 \\n坐标: 37.403000\, -121.970000
+LOCATION:李维斯体育场（旧金山湾区）
+GEO:37.403000;-121.970000
+URL:https://www.google.com/maps/search/?api=1&query=37.403000%2C-121.970000
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=37.403000~-121.970000&lvl=16&where=Levi%27s%20Stadium%2C%20Santa%20Clara
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=李维斯体育场（旧金山湾区）;X-TITLE=李维斯体育场 / 旧金山湾区体育场:geo:37.403000,-121.970000?q=37.403000,-121.970000
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match061@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260627T030000
+DTEND;TZID=Asia/Shanghai:20260627T050000
+SUMMARY:⚽ 🇳🇴 挪威 vs 🇫🇷 法国 (小组赛 Group I)
+DESCRIPTION:2026世界杯 | 小组赛 | Group I \\n🇳🇴 挪威 vs 🇫🇷 法国\\n📍 吉列体育场（波士顿）\\n🕐 北京时间: 06月27日 03:00\\n动态天气: https://weather.com/weather/today/l/42.090944%2C-71.264344 \\n系统地图: bingmaps:?cp=42.090944~-71.264344&lvl=16&where=Gillette%20Stadium%2C%20Foxborough \\n通用地图: https://www.google.com/maps/search/?api=1&query=42.090944%2C-71.264344 \\n坐标: 42.090944\, -71.264344
+LOCATION:吉列体育场（波士顿）
+GEO:42.090944;-71.264344
+URL:https://www.google.com/maps/search/?api=1&query=42.090944%2C-71.264344
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=42.090944~-71.264344&lvl=16&where=Gillette%20Stadium%2C%20Foxborough
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=吉列体育场（波士顿）;X-TITLE=吉列体育场 / 波士顿体育场:geo:42.090944,-71.264344?q=42.090944,-71.264344
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match062@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260627T030000
+DTEND;TZID=Asia/Shanghai:20260627T050000
+SUMMARY:⚽ 🇸🇳 塞内加尔 vs 🇮🇶 伊拉克 (小组赛 Group I)
+DESCRIPTION:2026世界杯 | 小组赛 | Group I \\n🇸🇳 塞内加尔 vs 🇮🇶 伊拉克\\n📍 BMO球场（多伦多）\\n🕐 北京时间: 06月27日 03:00\\n动态天气: https://weather.com/weather/today/l/43.633222%2C-79.418611 \\n系统地图: bingmaps:?cp=43.633222~-79.418611&lvl=16&where=BMO%20Field%2C%20Toronto \\n通用地图: https://www.google.com/maps/search/?api=1&query=43.633222%2C-79.418611 \\n坐标: 43.633222\, -79.418611
+LOCATION:BMO球场（多伦多）
+GEO:43.633222;-79.418611
+URL:https://www.google.com/maps/search/?api=1&query=43.633222%2C-79.418611
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=43.633222~-79.418611&lvl=16&where=BMO%20Field%2C%20Toronto
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=BMO球场（多伦多）;X-TITLE=BMO球场 / 多伦多体育场:geo:43.633222,-79.418611?q=43.633222,-79.418611
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match063@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260627T080000
+DTEND;TZID=Asia/Shanghai:20260627T100000
+SUMMARY:⚽ 🇨🇻 佛得角 vs 🇸🇦 沙特阿拉伯 (小组赛 Group H)
+DESCRIPTION:2026世界杯 | 小组赛 | Group H \\n🇨🇻 佛得角 vs 🇸🇦 沙特阿拉伯\\n📍 NRG体育场（休斯敦）\\n🕐 北京时间: 06月27日 08:00\\n动态天气: https://weather.com/weather/today/l/29.684722%2C-95.410833 \\n系统地图: bingmaps:?cp=29.684722~-95.410833&lvl=16&where=NRG%20Stadium%2C%20Houston \\n通用地图: https://www.google.com/maps/search/?api=1&query=29.684722%2C-95.410833 \\n坐标: 29.684722\, -95.410833
+LOCATION:NRG体育场（休斯敦）
+GEO:29.684722;-95.410833
+URL:https://www.google.com/maps/search/?api=1&query=29.684722%2C-95.410833
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=29.684722~-95.410833&lvl=16&where=NRG%20Stadium%2C%20Houston
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=NRG体育场（休斯敦）;X-TITLE=NRG体育场 / 休斯敦体育场:geo:29.684722,-95.410833?q=29.684722,-95.410833
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match064@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260627T080000
+DTEND;TZID=Asia/Shanghai:20260627T100000
+SUMMARY:⚽ 🇺🇾 乌拉圭 vs 🇪🇸 西班牙 (小组赛 Group H)
+DESCRIPTION:2026世界杯 | 小组赛 | Group H \\n🇺🇾 乌拉圭 vs 🇪🇸 西班牙\\n📍 阿克伦体育场（瓜达拉哈拉）\\n🕐 北京时间: 06月27日 08:00\\n动态天气: https://weather.com/weather/today/l/20.681667%2C-103.462778 \\n系统地图: bingmaps:?cp=20.681667~-103.462778&lvl=16&where=Estadio%20Akron%2C%20Guadalajara \\n通用地图: https://www.google.com/maps/search/?api=1&query=20.681667%2C-103.462778 \\n坐标: 20.681667\, -103.462778
+LOCATION:阿克伦体育场（瓜达拉哈拉）
+GEO:20.681667;-103.462778
+URL:https://www.google.com/maps/search/?api=1&query=20.681667%2C-103.462778
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=20.681667~-103.462778&lvl=16&where=Estadio%20Akron%2C%20Guadalajara
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=阿克伦体育场（瓜达拉哈拉）;X-TITLE=阿克伦体育场 / 瓜达拉哈拉体育场:geo:20.681667,-103.462778?q=20.681667,-103.462778
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match065@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260627T110000
+DTEND;TZID=Asia/Shanghai:20260627T130000
+SUMMARY:⚽ 🇪🇬 埃及 vs 🇮🇷 伊朗 (小组赛 Group G)
+DESCRIPTION:2026世界杯 | 小组赛 | Group G \\n🇪🇬 埃及 vs 🇮🇷 伊朗\\n📍 流明球场（西雅图）\\n🕐 北京时间: 06月27日 11:00\\n动态天气: https://weather.com/weather/today/l/47.595200%2C-122.331600 \\n系统地图: bingmaps:?cp=47.595200~-122.331600&lvl=16&where=Lumen%20Field%2C%20Seattle \\n通用地图: https://www.google.com/maps/search/?api=1&query=47.595200%2C-122.331600 \\n坐标: 47.595200\, -122.331600
+LOCATION:流明球场（西雅图）
+GEO:47.595200;-122.331600
+URL:https://www.google.com/maps/search/?api=1&query=47.595200%2C-122.331600
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=47.595200~-122.331600&lvl=16&where=Lumen%20Field%2C%20Seattle
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=流明球场（西雅图）;X-TITLE=流明球场 / 西雅图体育场:geo:47.595200,-122.331600?q=47.595200,-122.331600
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match066@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260627T110000
+DTEND;TZID=Asia/Shanghai:20260627T130000
+SUMMARY:⚽ 🇳🇿 新西兰 vs 🇧🇪 比利时 (小组赛 Group G)
+DESCRIPTION:2026世界杯 | 小组赛 | Group G \\n🇳🇿 新西兰 vs 🇧🇪 比利时\\n📍 卑诗体育馆（温哥华）\\n🕐 北京时间: 06月27日 11:00\\n动态天气: https://weather.com/weather/today/l/49.276750%2C-123.111999 \\n系统地图: bingmaps:?cp=49.276750~-123.111999&lvl=16&where=BC%20Place%2C%20Vancouver \\n通用地图: https://www.google.com/maps/search/?api=1&query=49.276750%2C-123.111999 \\n坐标: 49.276750\, -123.111999
+LOCATION:卑诗体育馆（温哥华）
+GEO:49.276750;-123.111999
+URL:https://www.google.com/maps/search/?api=1&query=49.276750%2C-123.111999
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=49.276750~-123.111999&lvl=16&where=BC%20Place%2C%20Vancouver
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=卑诗体育馆（温哥华）;X-TITLE=卑诗体育馆 / 温哥华体育场:geo:49.276750,-123.111999?q=49.276750,-123.111999
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match067@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260628T050000
+DTEND;TZID=Asia/Shanghai:20260628T070000
+SUMMARY:⚽ 🇵🇦 巴拿马 vs 🏴󠁧󠁢󠁥󠁮󠁧󠁿 英格兰 (小组赛 Group L)
+DESCRIPTION:2026世界杯 | 小组赛 | Group L \\n🇵🇦 巴拿马 vs 🏴󠁧󠁢󠁥󠁮󠁧󠁿 英格兰\\n📍 大都会人寿体育场（纽约/新泽西）\\n🕐 北京时间: 06月28日 05:00\\n动态天气: https://weather.com/weather/today/l/40.813500%2C-74.074500 \\n系统地图: bingmaps:?cp=40.813500~-74.074500&lvl=16&where=MetLife%20Stadium%2C%20East%20Rutherford \\n通用地图: https://www.google.com/maps/search/?api=1&query=40.813500%2C-74.074500 \\n坐标: 40.813500\, -74.074500
+LOCATION:大都会人寿体育场（纽约/新泽西）
+GEO:40.813500;-74.074500
+URL:https://www.google.com/maps/search/?api=1&query=40.813500%2C-74.074500
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=40.813500~-74.074500&lvl=16&where=MetLife%20Stadium%2C%20East%20Rutherford
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=大都会人寿体育场（纽约/新泽西）;X-TITLE=大都会人寿体育场 / 纽约-新泽西体育场:geo:40.813500,-74.074500?q=40.813500,-74.074500
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match068@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260628T050000
+DTEND;TZID=Asia/Shanghai:20260628T070000
+SUMMARY:⚽ 🇭🇷 克罗地亚 vs 🇬🇭 加纳 (小组赛 Group L)
+DESCRIPTION:2026世界杯 | 小组赛 | Group L \\n🇭🇷 克罗地亚 vs 🇬🇭 加纳\\n📍 林肯金融球场（费城）\\n🕐 北京时间: 06月28日 05:00\\n动态天气: https://weather.com/weather/today/l/39.900833%2C-75.167500 \\n系统地图: bingmaps:?cp=39.900833~-75.167500&lvl=16&where=Lincoln%20Financial%20Field%2C%20Philadelphia \\n通用地图: https://www.google.com/maps/search/?api=1&query=39.900833%2C-75.167500 \\n坐标: 39.900833\, -75.167500
+LOCATION:林肯金融球场（费城）
+GEO:39.900833;-75.167500
+URL:https://www.google.com/maps/search/?api=1&query=39.900833%2C-75.167500
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=39.900833~-75.167500&lvl=16&where=Lincoln%20Financial%20Field%2C%20Philadelphia
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=林肯金融球场（费城）;X-TITLE=林肯金融球场 / 费城体育场:geo:39.900833,-75.167500?q=39.900833,-75.167500
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match069@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260628T073000
+DTEND;TZID=Asia/Shanghai:20260628T093000
+SUMMARY:⚽ 🇨🇴 哥伦比亚 vs 🇵🇹 葡萄牙 (小组赛 Group K)
+DESCRIPTION:2026世界杯 | 小组赛 | Group K \\n🇨🇴 哥伦比亚 vs 🇵🇹 葡萄牙\\n📍 硬石体育场（迈阿密）\\n🕐 北京时间: 06月28日 07:30\\n动态天气: https://weather.com/weather/today/l/25.958056%2C-80.238889 \\n系统地图: bingmaps:?cp=25.958056~-80.238889&lvl=16&where=Hard%20Rock%20Stadium%2C%20Miami%20Gardens \\n通用地图: https://www.google.com/maps/search/?api=1&query=25.958056%2C-80.238889 \\n坐标: 25.958056\, -80.238889
+LOCATION:硬石体育场（迈阿密）
+GEO:25.958056;-80.238889
+URL:https://www.google.com/maps/search/?api=1&query=25.958056%2C-80.238889
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=25.958056~-80.238889&lvl=16&where=Hard%20Rock%20Stadium%2C%20Miami%20Gardens
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=硬石体育场（迈阿密）;X-TITLE=硬石体育场 / 迈阿密体育场:geo:25.958056,-80.238889?q=25.958056,-80.238889
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match070@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260628T073000
+DTEND;TZID=Asia/Shanghai:20260628T093000
+SUMMARY:⚽ 🇨🇩 刚果(金) vs 🇺🇿 乌兹别克斯坦 (小组赛 Group K)
+DESCRIPTION:2026世界杯 | 小组赛 | Group K \\n🇨🇩 刚果(金) vs 🇺🇿 乌兹别克斯坦\\n📍 梅赛德斯-奔驰体育场（亚特兰大）\\n🕐 北京时间: 06月28日 07:30\\n动态天气: https://weather.com/weather/today/l/33.755556%2C-84.400833 \\n系统地图: bingmaps:?cp=33.755556~-84.400833&lvl=16&where=Mercedes-Benz%20Stadium%2C%20Atlanta \\n通用地图: https://www.google.com/maps/search/?api=1&query=33.755556%2C-84.400833 \\n坐标: 33.755556\, -84.400833
+LOCATION:梅赛德斯-奔驰体育场（亚特兰大）
+GEO:33.755556;-84.400833
+URL:https://www.google.com/maps/search/?api=1&query=33.755556%2C-84.400833
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=33.755556~-84.400833&lvl=16&where=Mercedes-Benz%20Stadium%2C%20Atlanta
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=梅赛德斯-奔驰体育场（亚特兰大）;X-TITLE=梅赛德斯-奔驰体育场 / 亚特兰大体育场:geo:33.755556,-84.400833?q=33.755556,-84.400833
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match071@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260628T100000
+DTEND;TZID=Asia/Shanghai:20260628T120000
+SUMMARY:⚽ 🇩🇿 阿尔及利亚 vs 🇦🇹 奥地利 (小组赛 Group J)
+DESCRIPTION:2026世界杯 | 小组赛 | Group J \\n🇩🇿 阿尔及利亚 vs 🇦🇹 奥地利\\n📍 箭头体育场（堪萨斯城）\\n🕐 北京时间: 06月28日 10:00\\n动态天气: https://weather.com/weather/today/l/39.048939%2C-94.483917 \\n系统地图: bingmaps:?cp=39.048939~-94.483917&lvl=16&where=Arrowhead%20Stadium%2C%20Kansas%20City \\n通用地图: https://www.google.com/maps/search/?api=1&query=39.048939%2C-94.483917 \\n坐标: 39.048939\, -94.483917
+LOCATION:箭头体育场（堪萨斯城）
+GEO:39.048939;-94.483917
+URL:https://www.google.com/maps/search/?api=1&query=39.048939%2C-94.483917
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=39.048939~-94.483917&lvl=16&where=Arrowhead%20Stadium%2C%20Kansas%20City
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=箭头体育场（堪萨斯城）;X-TITLE=箭头体育场 / 堪萨斯城体育场:geo:39.048939,-94.483917?q=39.048939,-94.483917
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match072@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260628T100000
+DTEND;TZID=Asia/Shanghai:20260628T120000
+SUMMARY:⚽ 🇯🇴 约旦 vs 🇦🇷 阿根廷 (小组赛 Group J)
+DESCRIPTION:2026世界杯 | 小组赛 | Group J \\n🇯🇴 约旦 vs 🇦🇷 阿根廷\\n📍 AT&T体育场（达拉斯）\\n🕐 北京时间: 06月28日 10:00\\n动态天气: https://weather.com/weather/today/l/32.747778%2C-97.092778 \\n系统地图: bingmaps:?cp=32.747778~-97.092778&lvl=16&where=AT%26T%20Stadium%2C%20Arlington \\n通用地图: https://www.google.com/maps/search/?api=1&query=32.747778%2C-97.092778 \\n坐标: 32.747778\, -97.092778
+LOCATION:AT&T体育场（达拉斯）
+GEO:32.747778;-97.092778
+URL:https://www.google.com/maps/search/?api=1&query=32.747778%2C-97.092778
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=32.747778~-97.092778&lvl=16&where=AT%26T%20Stadium%2C%20Arlington
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=AT&T体育场（达拉斯）;X-TITLE=AT&T体育场 / 达拉斯体育场:geo:32.747778,-97.092778?q=32.747778,-97.092778
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match073@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260629T030000
+DTEND;TZID=Asia/Shanghai:20260629T050000
+SUMMARY:⚽ A组第2 vs B组第2 (1/16决赛)
+DESCRIPTION:2026世界杯 | 1/16决赛 \\nA组第2 vs B组第2\\n📍 SoFi体育场（洛杉矶）\\n🕐 北京时间: 06月29日 03:00\\n动态天气: https://weather.com/weather/today/l/33.953450%2C-118.339200 \\n系统地图: bingmaps:?cp=33.953450~-118.339200&lvl=16&where=SoFi%20Stadium%2C%20Inglewood \\n通用地图: https://www.google.com/maps/search/?api=1&query=33.953450%2C-118.339200 \\n坐标: 33.953450\, -118.339200
+LOCATION:SoFi体育场（洛杉矶）
+GEO:33.953450;-118.339200
+URL:https://www.google.com/maps/search/?api=1&query=33.953450%2C-118.339200
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=33.953450~-118.339200&lvl=16&where=SoFi%20Stadium%2C%20Inglewood
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=SoFi体育场（洛杉矶）;X-TITLE=SoFi体育场 / 洛杉矶体育场:geo:33.953450,-118.339200?q=33.953450,-118.339200
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match074@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260630T010000
+DTEND;TZID=Asia/Shanghai:20260630T030000
+SUMMARY:⚽ C组第1 vs F组第2 (1/16决赛)
+DESCRIPTION:2026世界杯 | 1/16决赛 \\nC组第1 vs F组第2\\n📍 NRG体育场（休斯敦）\\n🕐 北京时间: 06月30日 01:00\\n动态天气: https://weather.com/weather/today/l/29.684722%2C-95.410833 \\n系统地图: bingmaps:?cp=29.684722~-95.410833&lvl=16&where=NRG%20Stadium%2C%20Houston \\n通用地图: https://www.google.com/maps/search/?api=1&query=29.684722%2C-95.410833 \\n坐标: 29.684722\, -95.410833
+LOCATION:NRG体育场（休斯敦）
+GEO:29.684722;-95.410833
+URL:https://www.google.com/maps/search/?api=1&query=29.684722%2C-95.410833
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=29.684722~-95.410833&lvl=16&where=NRG%20Stadium%2C%20Houston
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=NRG体育场（休斯敦）;X-TITLE=NRG体育场 / 休斯敦体育场:geo:29.684722,-95.410833?q=29.684722,-95.410833
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match075@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260630T043000
+DTEND;TZID=Asia/Shanghai:20260630T063000
+SUMMARY:⚽ E组第1 vs 小组第三(A\, B\, C\, D\, F) (1/16决赛)
+DESCRIPTION:2026世界杯 | 1/16决赛\\nE组第1 vs 小组第三(A\, B\, C\, D\, F)\\n📍 吉列体育场（波士顿）\\n🕐 北京时间: 06月30日 04:30\\n动态天气: https://weather.com/weather/today/l/42.090944%2C-71.264344 \\n系统地图: bingmaps:?cp=42.090944~-71.264344&lvl=16&where=Gillette%20Stadium%2C%20Foxborough \\n通用地图: https://www.google.com/maps/search/?api=1&query=42.090944%2C-71.264344 \\n坐标: 42.090944\, -71.264344
+LOCATION:吉列体育场（波士顿）
+GEO:42.090944;-71.264344
+URL:https://www.google.com/maps/search/?api=1&query=42.090944%2C-71.264344
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=42.090944~-71.264344&lvl=16&where=Gillette%20Stadium%2C%20Foxborough
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=吉列体育场（波士顿）;X-TITLE=吉列体育场 / 波士顿体育场:geo:42.090944,-71.264344?q=42.090944,-71.264344
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match076@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260630T090000
+DTEND;TZID=Asia/Shanghai:20260630T110000
+SUMMARY:⚽ F组第1 vs C组第2 (1/16决赛)
+DESCRIPTION:2026世界杯 | 1/16决赛 \\nF组第1 vs C组第2\\n📍 BBVA体育场（蒙特雷）\\n🕐 北京时间: 06月30日 09:00\\n动态天气: https://weather.com/weather/today/l/25.668333%2C-100.244167 \\n系统地图: bingmaps:?cp=25.668333~-100.244167&lvl=16&where=Estadio%20BBVA%2C%20Monterrey \\n通用地图: https://www.google.com/maps/search/?api=1&query=25.668333%2C-100.244167 \\n坐标: 25.668333\, -100.244167
+LOCATION:BBVA体育场（蒙特雷）
+GEO:25.668333;-100.244167
+URL:https://www.google.com/maps/search/?api=1&query=25.668333%2C-100.244167
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=25.668333~-100.244167&lvl=16&where=Estadio%20BBVA%2C%20Monterrey
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=BBVA体育场（蒙特雷）;X-TITLE=BBVA体育场 / 蒙特雷体育场:geo:25.668333,-100.244167?q=25.668333,-100.244167
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match077@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260701T010000
+DTEND;TZID=Asia/Shanghai:20260701T030000
+SUMMARY:⚽ E组第2 vs I组第2 (1/16决赛)
+DESCRIPTION:2026世界杯 | 1/16决赛 \\nE组第2 vs I组第2\\n📍 AT&T体育场（达拉斯）\\n🕐 北京时间: 07月01日 01:00\\n动态天气: https://weather.com/weather/today/l/32.747778%2C-97.092778 \\n系统地图: bingmaps:?cp=32.747778~-97.092778&lvl=16&where=AT%26T%20Stadium%2C%20Arlington \\n通用地图: https://www.google.com/maps/search/?api=1&query=32.747778%2C-97.092778 \\n坐标: 32.747778\, -97.092778
+LOCATION:AT&T体育场（达拉斯）
+GEO:32.747778;-97.092778
+URL:https://www.google.com/maps/search/?api=1&query=32.747778%2C-97.092778
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=32.747778~-97.092778&lvl=16&where=AT%26T%20Stadium%2C%20Arlington
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=AT&T体育场（达拉斯）;X-TITLE=AT&T体育场 / 达拉斯体育场:geo:32.747778,-97.092778?q=32.747778,-97.092778
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match078@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260701T050000
+DTEND;TZID=Asia/Shanghai:20260701T070000
+SUMMARY:⚽ I组第1 vs 小组第三(C\, D\, F\, G\, H) (1/16决赛)
+DESCRIPTION:2026世界杯 | 1/16决赛\\nI组第1 vs 小组第三(C\, D\, F\, G\, H)\\n📍 大都会人寿体育场（纽约/新泽西）\\n🕐 北京时间: 07月01日 05:00\\n动态天气: https://weather.com/weather/today/l/40.813500%2C-74.074500 \\n系统地图: bingmaps:?cp=40.813500~-74.074500&lvl=16&where=MetLife%20Stadium%2C%20East%20Rutherford \\n通用地图: https://www.google.com/maps/search/?api=1&query=40.813500%2C-74.074500 \\n坐标: 40.813500\, -74.074500
+LOCATION:大都会人寿体育场（纽约/新泽西）
+GEO:40.813500;-74.074500
+URL:https://www.google.com/maps/search/?api=1&query=40.813500%2C-74.074500
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=40.813500~-74.074500&lvl=16&where=MetLife%20Stadium%2C%20East%20Rutherford
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=大都会人寿体育场（纽约/新泽西）;X-TITLE=大都会人寿体育场 / 纽约-新泽西体育场:geo:40.813500,-74.074500?q=40.813500,-74.074500
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match079@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260701T090000
+DTEND;TZID=Asia/Shanghai:20260701T110000
+SUMMARY:⚽ A组第1 vs 小组第三(C\, E\, F\, H\, I) (1/16决赛)
+DESCRIPTION:2026世界杯 | 1/16决赛\\nA组第1 vs 小组第三(C\, E\, F\, H\, I)\\n📍 阿兹特克体育场（墨西哥城）\\n🕐 北京时间: 07月01日 09:00\\n动态天气: https://weather.com/weather/today/l/19.302861%2C-99.150528 \\n系统地图: bingmaps:?cp=19.302861~-99.150528&lvl=16&where=Estadio%20Azteca%2C%20Mexico%20City \\n通用地图: https://www.google.com/maps/search/?api=1&query=19.302861%2C-99.150528 \\n坐标: 19.302861\, -99.150528
+LOCATION:阿兹特克体育场（墨西哥城）
+GEO:19.302861;-99.150528
+URL:https://www.google.com/maps/search/?api=1&query=19.302861%2C-99.150528
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=19.302861~-99.150528&lvl=16&where=Estadio%20Azteca%2C%20Mexico%20City
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=阿兹特克体育场（墨西哥城）;X-TITLE=阿兹特克体育场 / 墨西哥城体育场:geo:19.302861,-99.150528?q=19.302861,-99.150528
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match080@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260702T000000
+DTEND;TZID=Asia/Shanghai:20260702T020000
+SUMMARY:⚽ L组第1 vs 小组第三(E\, H\, I\, J\, K) (1/16决赛)
+DESCRIPTION:2026世界杯 | 1/16决赛\\nL组第1 vs 小组第三(E\, H\, I\, J\, K)\\n📍 梅赛德斯-奔驰体育场（亚特兰大）\\n🕐 北京时间: 07月02日 00:00\\n动态天气: https://weather.com/weather/today/l/33.755556%2C-84.400833 \\n系统地图: bingmaps:?cp=33.755556~-84.400833&lvl=16&where=Mercedes-Benz%20Stadium%2C%20Atlanta \\n通用地图: https://www.google.com/maps/search/?api=1&query=33.755556%2C-84.400833 \\n坐标: 33.755556\, -84.400833
+LOCATION:梅赛德斯-奔驰体育场（亚特兰大）
+GEO:33.755556;-84.400833
+URL:https://www.google.com/maps/search/?api=1&query=33.755556%2C-84.400833
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=33.755556~-84.400833&lvl=16&where=Mercedes-Benz%20Stadium%2C%20Atlanta
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=梅赛德斯-奔驰体育场（亚特兰大）;X-TITLE=梅赛德斯-奔驰体育场 / 亚特兰大体育场:geo:33.755556,-84.400833?q=33.755556,-84.400833
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match081@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260702T040000
+DTEND;TZID=Asia/Shanghai:20260702T060000
+SUMMARY:⚽ G组第1 vs 小组第三(A\, E\, H\, I\, J) (1/16决赛)
+DESCRIPTION:2026世界杯 | 1/16决赛\\nG组第1 vs 小组第三(A\, E\, H\, I\, J)\\n📍 流明球场（西雅图）\\n🕐 北京时间: 07月02日 04:00\\n动态天气: https://weather.com/weather/today/l/47.595200%2C-122.331600 \\n系统地图: bingmaps:?cp=47.595200~-122.331600&lvl=16&where=Lumen%20Field%2C%20Seattle \\n通用地图: https://www.google.com/maps/search/?api=1&query=47.595200%2C-122.331600 \\n坐标: 47.595200\, -122.331600
+LOCATION:流明球场（西雅图）
+GEO:47.595200;-122.331600
+URL:https://www.google.com/maps/search/?api=1&query=47.595200%2C-122.331600
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=47.595200~-122.331600&lvl=16&where=Lumen%20Field%2C%20Seattle
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=流明球场（西雅图）;X-TITLE=流明球场 / 西雅图体育场:geo:47.595200,-122.331600?q=47.595200,-122.331600
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match082@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260702T080000
+DTEND;TZID=Asia/Shanghai:20260702T100000
+SUMMARY:⚽ D组第1 vs 小组第三(B\, E\, F\, I\, J) (1/16决赛)
+DESCRIPTION:2026世界杯 | 1/16决赛\\nD组第1 vs 小组第三(B\, E\, F\, I\, J)\\n📍 李维斯体育场（旧金山湾区）\\n🕐 北京时间: 07月02日 08:00\\n动态天气: https://weather.com/weather/today/l/37.403000%2C-121.970000 \\n系统地图: bingmaps:?cp=37.403000~-121.970000&lvl=16&where=Levi%27s%20Stadium%2C%20Santa%20Clara \\n通用地图: https://www.google.com/maps/search/?api=1&query=37.403000%2C-121.970000 \\n坐标: 37.403000\, -121.970000
+LOCATION:李维斯体育场（旧金山湾区）
+GEO:37.403000;-121.970000
+URL:https://www.google.com/maps/search/?api=1&query=37.403000%2C-121.970000
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=37.403000~-121.970000&lvl=16&where=Levi%27s%20Stadium%2C%20Santa%20Clara
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=李维斯体育场（旧金山湾区）;X-TITLE=李维斯体育场 / 旧金山湾区体育场:geo:37.403000,-121.970000?q=37.403000,-121.970000
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match083@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260703T030000
+DTEND;TZID=Asia/Shanghai:20260703T050000
+SUMMARY:⚽ H组第1 vs J组第2 (1/16决赛)
+DESCRIPTION:2026世界杯 | 1/16决赛 \\nH组第1 vs J组第2\\n📍 SoFi体育场（洛杉矶）\\n🕐 北京时间: 07月03日 03:00\\n动态天气: https://weather.com/weather/today/l/33.953450%2C-118.339200 \\n系统地图: bingmaps:?cp=33.953450~-118.339200&lvl=16&where=SoFi%20Stadium%2C%20Inglewood \\n通用地图: https://www.google.com/maps/search/?api=1&query=33.953450%2C-118.339200 \\n坐标: 33.953450\, -118.339200
+LOCATION:SoFi体育场（洛杉矶）
+GEO:33.953450;-118.339200
+URL:https://www.google.com/maps/search/?api=1&query=33.953450%2C-118.339200
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=33.953450~-118.339200&lvl=16&where=SoFi%20Stadium%2C%20Inglewood
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=SoFi体育场（洛杉矶）;X-TITLE=SoFi体育场 / 洛杉矶体育场:geo:33.953450,-118.339200?q=33.953450,-118.339200
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match084@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260703T070000
+DTEND;TZID=Asia/Shanghai:20260703T090000
+SUMMARY:⚽ K组第2 vs L组第2 (1/16决赛)
+DESCRIPTION:2026世界杯 | 1/16决赛 \\nK组第2 vs L组第2\\n📍 BMO球场（多伦多）\\n🕐 北京时间: 07月03日 07:00\\n动态天气: https://weather.com/weather/today/l/43.633222%2C-79.418611 \\n系统地图: bingmaps:?cp=43.633222~-79.418611&lvl=16&where=BMO%20Field%2C%20Toronto \\n通用地图: https://www.google.com/maps/search/?api=1&query=43.633222%2C-79.418611 \\n坐标: 43.633222\, -79.418611
+LOCATION:BMO球场（多伦多）
+GEO:43.633222;-79.418611
+URL:https://www.google.com/maps/search/?api=1&query=43.633222%2C-79.418611
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=43.633222~-79.418611&lvl=16&where=BMO%20Field%2C%20Toronto
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=BMO球场（多伦多）;X-TITLE=BMO球场 / 多伦多体育场:geo:43.633222,-79.418611?q=43.633222,-79.418611
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match085@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260703T110000
+DTEND;TZID=Asia/Shanghai:20260703T130000
+SUMMARY:⚽ B组第1 vs 小组第三(E\, F\, G\, I\, J) (1/16决赛)
+DESCRIPTION:2026世界杯 | 1/16决赛\\nB组第1 vs 小组第三(E\, F\, G\, I\, J)\\n📍 卑诗体育馆（温哥华）\\n🕐 北京时间: 07月03日 11:00\\n动态天气: https://weather.com/weather/today/l/49.276750%2C-123.111999 \\n系统地图: bingmaps:?cp=49.276750~-123.111999&lvl=16&where=BC%20Place%2C%20Vancouver \\n通用地图: https://www.google.com/maps/search/?api=1&query=49.276750%2C-123.111999 \\n坐标: 49.276750\, -123.111999
+LOCATION:卑诗体育馆（温哥华）
+GEO:49.276750;-123.111999
+URL:https://www.google.com/maps/search/?api=1&query=49.276750%2C-123.111999
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=49.276750~-123.111999&lvl=16&where=BC%20Place%2C%20Vancouver
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=卑诗体育馆（温哥华）;X-TITLE=卑诗体育馆 / 温哥华体育场:geo:49.276750,-123.111999?q=49.276750,-123.111999
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match086@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260704T020000
+DTEND;TZID=Asia/Shanghai:20260704T040000
+SUMMARY:⚽ D组第2 vs G组第2 (1/16决赛)
+DESCRIPTION:2026世界杯 | 1/16决赛 \\nD组第2 vs G组第2\\n📍 AT&T体育场（达拉斯）\\n🕐 北京时间: 07月04日 02:00\\n动态天气: https://weather.com/weather/today/l/32.747778%2C-97.092778 \\n系统地图: bingmaps:?cp=32.747778~-97.092778&lvl=16&where=AT%26T%20Stadium%2C%20Arlington \\n通用地图: https://www.google.com/maps/search/?api=1&query=32.747778%2C-97.092778 \\n坐标: 32.747778\, -97.092778
+LOCATION:AT&T体育场（达拉斯）
+GEO:32.747778;-97.092778
+URL:https://www.google.com/maps/search/?api=1&query=32.747778%2C-97.092778
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=32.747778~-97.092778&lvl=16&where=AT%26T%20Stadium%2C%20Arlington
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=AT&T体育场（达拉斯）;X-TITLE=AT&T体育场 / 达拉斯体育场:geo:32.747778,-97.092778?q=32.747778,-97.092778
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match087@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260704T060000
+DTEND;TZID=Asia/Shanghai:20260704T080000
+SUMMARY:⚽ J组第1 vs H组第2 (1/16决赛)
+DESCRIPTION:2026世界杯 | 1/16决赛 \\nJ组第1 vs H组第2\\n📍 硬石体育场（迈阿密）\\n🕐 北京时间: 07月04日 06:00\\n动态天气: https://weather.com/weather/today/l/25.958056%2C-80.238889 \\n系统地图: bingmaps:?cp=25.958056~-80.238889&lvl=16&where=Hard%20Rock%20Stadium%2C%20Miami%20Gardens \\n通用地图: https://www.google.com/maps/search/?api=1&query=25.958056%2C-80.238889 \\n坐标: 25.958056\, -80.238889
+LOCATION:硬石体育场（迈阿密）
+GEO:25.958056;-80.238889
+URL:https://www.google.com/maps/search/?api=1&query=25.958056%2C-80.238889
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=25.958056~-80.238889&lvl=16&where=Hard%20Rock%20Stadium%2C%20Miami%20Gardens
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=硬石体育场（迈阿密）;X-TITLE=硬石体育场 / 迈阿密体育场:geo:25.958056,-80.238889?q=25.958056,-80.238889
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match088@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260704T093000
+DTEND;TZID=Asia/Shanghai:20260704T113000
+SUMMARY:⚽ K组第1 vs 小组第三(D\, E\, I\, J\, L) (1/16决赛)
+DESCRIPTION:2026世界杯 | 1/16决赛\\nK组第1 vs 小组第三(D\, E\, I\, J\, L)\\n📍 箭头体育场（堪萨斯城）\\n🕐 北京时间: 07月04日 09:30\\n动态天气: https://weather.com/weather/today/l/39.048939%2C-94.483917 \\n系统地图: bingmaps:?cp=39.048939~-94.483917&lvl=16&where=Arrowhead%20Stadium%2C%20Kansas%20City \\n通用地图: https://www.google.com/maps/search/?api=1&query=39.048939%2C-94.483917 \\n坐标: 39.048939\, -94.483917
+LOCATION:箭头体育场（堪萨斯城）
+GEO:39.048939;-94.483917
+URL:https://www.google.com/maps/search/?api=1&query=39.048939%2C-94.483917
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=39.048939~-94.483917&lvl=16&where=Arrowhead%20Stadium%2C%20Kansas%20City
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=箭头体育场（堪萨斯城）;X-TITLE=箭头体育场 / 堪萨斯城体育场:geo:39.048939,-94.483917?q=39.048939,-94.483917
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match089@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260705T010000
+DTEND;TZID=Asia/Shanghai:20260705T030000
+SUMMARY:⚽ M73胜者 vs M75胜者 (1/8决赛)
+DESCRIPTION:2026世界杯 | 1/8决赛 \\nM73胜者 vs M75胜者\\n📍 NRG体育场（休斯敦）\\n🕐 北京时间: 07月05日 01:00\\n动态天气: https://weather.com/weather/today/l/29.684722%2C-95.410833 \\n系统地图: bingmaps:?cp=29.684722~-95.410833&lvl=16&where=NRG%20Stadium%2C%20Houston \\n通用地图: https://www.google.com/maps/search/?api=1&query=29.684722%2C-95.410833 \\n坐标: 29.684722\, -95.410833
+LOCATION:NRG体育场（休斯敦）
+GEO:29.684722;-95.410833
+URL:https://www.google.com/maps/search/?api=1&query=29.684722%2C-95.410833
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=29.684722~-95.410833&lvl=16&where=NRG%20Stadium%2C%20Houston
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=NRG体育场（休斯敦）;X-TITLE=NRG体育场 / 休斯敦体育场:geo:29.684722,-95.410833?q=29.684722,-95.410833
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match090@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260705T050000
+DTEND;TZID=Asia/Shanghai:20260705T070000
+SUMMARY:⚽ M74胜者 vs M77胜者 (1/8决赛)
+DESCRIPTION:2026世界杯 | 1/8决赛 \\nM74胜者 vs M77胜者\\n📍 林肯金融球场（费城）\\n🕐 北京时间: 07月05日 05:00\\n动态天气: https://weather.com/weather/today/l/39.900833%2C-75.167500 \\n系统地图: bingmaps:?cp=39.900833~-75.167500&lvl=16&where=Lincoln%20Financial%20Field%2C%20Philadelphia \\n通用地图: https://www.google.com/maps/search/?api=1&query=39.900833%2C-75.167500 \\n坐标: 39.900833\, -75.167500
+LOCATION:林肯金融球场（费城）
+GEO:39.900833;-75.167500
+URL:https://www.google.com/maps/search/?api=1&query=39.900833%2C-75.167500
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=39.900833~-75.167500&lvl=16&where=Lincoln%20Financial%20Field%2C%20Philadelphia
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=林肯金融球场（费城）;X-TITLE=林肯金融球场 / 费城体育场:geo:39.900833,-75.167500?q=39.900833,-75.167500
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match091@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260706T040000
+DTEND;TZID=Asia/Shanghai:20260706T060000
+SUMMARY:⚽ M76胜者 vs M78胜者 (1/8决赛)
+DESCRIPTION:2026世界杯 | 1/8决赛 \\nM76胜者 vs M78胜者\\n📍 大都会人寿体育场（纽约/新泽西）\\n🕐 北京时间: 07月06日 04:00\\n动态天气: https://weather.com/weather/today/l/40.813500%2C-74.074500 \\n系统地图: bingmaps:?cp=40.813500~-74.074500&lvl=16&where=MetLife%20Stadium%2C%20East%20Rutherford \\n通用地图: https://www.google.com/maps/search/?api=1&query=40.813500%2C-74.074500 \\n坐标: 40.813500\, -74.074500
+LOCATION:大都会人寿体育场（纽约/新泽西）
+GEO:40.813500;-74.074500
+URL:https://www.google.com/maps/search/?api=1&query=40.813500%2C-74.074500
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=40.813500~-74.074500&lvl=16&where=MetLife%20Stadium%2C%20East%20Rutherford
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=大都会人寿体育场（纽约/新泽西）;X-TITLE=大都会人寿体育场 / 纽约-新泽西体育场:geo:40.813500,-74.074500?q=40.813500,-74.074500
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match092@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260706T080000
+DTEND;TZID=Asia/Shanghai:20260706T100000
+SUMMARY:⚽ M79胜者 vs M80胜者 (1/8决赛)
+DESCRIPTION:2026世界杯 | 1/8决赛 \\nM79胜者 vs M80胜者\\n📍 阿兹特克体育场（墨西哥城）\\n🕐 北京时间: 07月06日 08:00\\n动态天气: https://weather.com/weather/today/l/19.302861%2C-99.150528 \\n系统地图: bingmaps:?cp=19.302861~-99.150528&lvl=16&where=Estadio%20Azteca%2C%20Mexico%20City \\n通用地图: https://www.google.com/maps/search/?api=1&query=19.302861%2C-99.150528 \\n坐标: 19.302861\, -99.150528
+LOCATION:阿兹特克体育场（墨西哥城）
+GEO:19.302861;-99.150528
+URL:https://www.google.com/maps/search/?api=1&query=19.302861%2C-99.150528
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=19.302861~-99.150528&lvl=16&where=Estadio%20Azteca%2C%20Mexico%20City
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=阿兹特克体育场（墨西哥城）;X-TITLE=阿兹特克体育场 / 墨西哥城体育场:geo:19.302861,-99.150528?q=19.302861,-99.150528
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match093@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260707T030000
+DTEND;TZID=Asia/Shanghai:20260707T050000
+SUMMARY:⚽ M83胜者 vs M84胜者 (1/8决赛)
+DESCRIPTION:2026世界杯 | 1/8决赛 \\nM83胜者 vs M84胜者\\n📍 AT&T体育场（达拉斯）\\n🕐 北京时间: 07月07日 03:00\\n动态天气: https://weather.com/weather/today/l/32.747778%2C-97.092778 \\n系统地图: bingmaps:?cp=32.747778~-97.092778&lvl=16&where=AT%26T%20Stadium%2C%20Arlington \\n通用地图: https://www.google.com/maps/search/?api=1&query=32.747778%2C-97.092778 \\n坐标: 32.747778\, -97.092778
+LOCATION:AT&T体育场（达拉斯）
+GEO:32.747778;-97.092778
+URL:https://www.google.com/maps/search/?api=1&query=32.747778%2C-97.092778
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=32.747778~-97.092778&lvl=16&where=AT%26T%20Stadium%2C%20Arlington
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=AT&T体育场（达拉斯）;X-TITLE=AT&T体育场 / 达拉斯体育场:geo:32.747778,-97.092778?q=32.747778,-97.092778
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match094@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260707T080000
+DTEND;TZID=Asia/Shanghai:20260707T100000
+SUMMARY:⚽ M81胜者 vs M82胜者 (1/8决赛)
+DESCRIPTION:2026世界杯 | 1/8决赛 \\nM81胜者 vs M82胜者\\n📍 流明球场（西雅图）\\n🕐 北京时间: 07月07日 08:00\\n动态天气: https://weather.com/weather/today/l/47.595200%2C-122.331600 \\n系统地图: bingmaps:?cp=47.595200~-122.331600&lvl=16&where=Lumen%20Field%2C%20Seattle \\n通用地图: https://www.google.com/maps/search/?api=1&query=47.595200%2C-122.331600 \\n坐标: 47.595200\, -122.331600
+LOCATION:流明球场（西雅图）
+GEO:47.595200;-122.331600
+URL:https://www.google.com/maps/search/?api=1&query=47.595200%2C-122.331600
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=47.595200~-122.331600&lvl=16&where=Lumen%20Field%2C%20Seattle
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=流明球场（西雅图）;X-TITLE=流明球场 / 西雅图体育场:geo:47.595200,-122.331600?q=47.595200,-122.331600
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match095@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260708T000000
+DTEND;TZID=Asia/Shanghai:20260708T020000
+SUMMARY:⚽ M86胜者 vs M88胜者 (1/8决赛)
+DESCRIPTION:2026世界杯 | 1/8决赛 \\nM86胜者 vs M88胜者\\n📍 梅赛德斯-奔驰体育场（亚特兰大）\\n🕐 北京时间: 07月08日 00:00\\n动态天气: https://weather.com/weather/today/l/33.755556%2C-84.400833 \\n系统地图: bingmaps:?cp=33.755556~-84.400833&lvl=16&where=Mercedes-Benz%20Stadium%2C%20Atlanta \\n通用地图: https://www.google.com/maps/search/?api=1&query=33.755556%2C-84.400833 \\n坐标: 33.755556\, -84.400833
+LOCATION:梅赛德斯-奔驰体育场（亚特兰大）
+GEO:33.755556;-84.400833
+URL:https://www.google.com/maps/search/?api=1&query=33.755556%2C-84.400833
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=33.755556~-84.400833&lvl=16&where=Mercedes-Benz%20Stadium%2C%20Atlanta
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=梅赛德斯-奔驰体育场（亚特兰大）;X-TITLE=梅赛德斯-奔驰体育场 / 亚特兰大体育场:geo:33.755556,-84.400833?q=33.755556,-84.400833
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match096@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260708T040000
+DTEND;TZID=Asia/Shanghai:20260708T060000
+SUMMARY:⚽ M85胜者 vs M87胜者 (1/8决赛)
+DESCRIPTION:2026世界杯 | 1/8决赛 \\nM85胜者 vs M87胜者\\n📍 卑诗体育馆（温哥华）\\n🕐 北京时间: 07月08日 04:00\\n动态天气: https://weather.com/weather/today/l/49.276750%2C-123.111999 \\n系统地图: bingmaps:?cp=49.276750~-123.111999&lvl=16&where=BC%20Place%2C%20Vancouver \\n通用地图: https://www.google.com/maps/search/?api=1&query=49.276750%2C-123.111999 \\n坐标: 49.276750\, -123.111999
+LOCATION:卑诗体育馆（温哥华）
+GEO:49.276750;-123.111999
+URL:https://www.google.com/maps/search/?api=1&query=49.276750%2C-123.111999
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=49.276750~-123.111999&lvl=16&where=BC%20Place%2C%20Vancouver
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=卑诗体育馆（温哥华）;X-TITLE=卑诗体育馆 / 温哥华体育场:geo:49.276750,-123.111999?q=49.276750,-123.111999
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match097@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260710T040000
+DTEND;TZID=Asia/Shanghai:20260710T060000
+SUMMARY:⚽ M89胜者 vs M90胜者 (1/4决赛)
+DESCRIPTION:2026世界杯 | 1/4决赛 \\nM89胜者 vs M90胜者\\n📍 吉列体育场（波士顿）\\n🕐 北京时间: 07月10日 04:00\\n动态天气: https://weather.com/weather/today/l/42.090944%2C-71.264344 \\n系统地图: bingmaps:?cp=42.090944~-71.264344&lvl=16&where=Gillette%20Stadium%2C%20Foxborough \\n通用地图: https://www.google.com/maps/search/?api=1&query=42.090944%2C-71.264344 \\n坐标: 42.090944\, -71.264344
+LOCATION:吉列体育场（波士顿）
+GEO:42.090944;-71.264344
+URL:https://www.google.com/maps/search/?api=1&query=42.090944%2C-71.264344
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=42.090944~-71.264344&lvl=16&where=Gillette%20Stadium%2C%20Foxborough
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=吉列体育场（波士顿）;X-TITLE=吉列体育场 / 波士顿体育场:geo:42.090944,-71.264344?q=42.090944,-71.264344
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match098@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260711T030000
+DTEND;TZID=Asia/Shanghai:20260711T050000
+SUMMARY:⚽ M93胜者 vs M94胜者 (1/4决赛)
+DESCRIPTION:2026世界杯 | 1/4决赛 \\nM93胜者 vs M94胜者\\n📍 SoFi体育场（洛杉矶）\\n🕐 北京时间: 07月11日 03:00\\n动态天气: https://weather.com/weather/today/l/33.953450%2C-118.339200 \\n系统地图: bingmaps:?cp=33.953450~-118.339200&lvl=16&where=SoFi%20Stadium%2C%20Inglewood \\n通用地图: https://www.google.com/maps/search/?api=1&query=33.953450%2C-118.339200 \\n坐标: 33.953450\, -118.339200
+LOCATION:SoFi体育场（洛杉矶）
+GEO:33.953450;-118.339200
+URL:https://www.google.com/maps/search/?api=1&query=33.953450%2C-118.339200
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=33.953450~-118.339200&lvl=16&where=SoFi%20Stadium%2C%20Inglewood
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=SoFi体育场（洛杉矶）;X-TITLE=SoFi体育场 / 洛杉矶体育场:geo:33.953450,-118.339200?q=33.953450,-118.339200
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match099@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260712T050000
+DTEND;TZID=Asia/Shanghai:20260712T070000
+SUMMARY:⚽ M91胜者 vs M92胜者 (1/4决赛)
+DESCRIPTION:2026世界杯 | 1/4决赛 \\nM91胜者 vs M92胜者\\n📍 硬石体育场（迈阿密）\\n🕐 北京时间: 07月12日 05:00\\n动态天气: https://weather.com/weather/today/l/25.958056%2C-80.238889 \\n系统地图: bingmaps:?cp=25.958056~-80.238889&lvl=16&where=Hard%20Rock%20Stadium%2C%20Miami%20Gardens \\n通用地图: https://www.google.com/maps/search/?api=1&query=25.958056%2C-80.238889 \\n坐标: 25.958056\, -80.238889
+LOCATION:硬石体育场（迈阿密）
+GEO:25.958056;-80.238889
+URL:https://www.google.com/maps/search/?api=1&query=25.958056%2C-80.238889
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=25.958056~-80.238889&lvl=16&where=Hard%20Rock%20Stadium%2C%20Miami%20Gardens
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=硬石体育场（迈阿密）;X-TITLE=硬石体育场 / 迈阿密体育场:geo:25.958056,-80.238889?q=25.958056,-80.238889
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match100@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260712T090000
+DTEND;TZID=Asia/Shanghai:20260712T110000
+SUMMARY:⚽ M95胜者 vs M96胜者 (1/4决赛)
+DESCRIPTION:2026世界杯 | 1/4决赛 \\nM95胜者 vs M96胜者\\n📍 箭头体育场（堪萨斯城）\\n🕐 北京时间: 07月12日 09:00\\n动态天气: https://weather.com/weather/today/l/39.048939%2C-94.483917 \\n系统地图: bingmaps:?cp=39.048939~-94.483917&lvl=16&where=Arrowhead%20Stadium%2C%20Kansas%20City \\n通用地图: https://www.google.com/maps/search/?api=1&query=39.048939%2C-94.483917 \\n坐标: 39.048939\, -94.483917
+LOCATION:箭头体育场（堪萨斯城）
+GEO:39.048939;-94.483917
+URL:https://www.google.com/maps/search/?api=1&query=39.048939%2C-94.483917
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=39.048939~-94.483917&lvl=16&where=Arrowhead%20Stadium%2C%20Kansas%20City
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=箭头体育场（堪萨斯城）;X-TITLE=箭头体育场 / 堪萨斯城体育场:geo:39.048939,-94.483917?q=39.048939,-94.483917
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match101@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260715T030000
+DTEND;TZID=Asia/Shanghai:20260715T050000
+SUMMARY:⚽ M97胜者 vs M98胜者 (半决赛)
+DESCRIPTION:2026世界杯 | 半决赛 \\nM97胜者 vs M98胜者\\n📍 AT&T体育场（达拉斯）\\n🕐 北京时间: 07月15日 03:00\\n动态天气: https://weather.com/weather/today/l/32.747778%2C-97.092778 \\n系统地图: bingmaps:?cp=32.747778~-97.092778&lvl=16&where=AT%26T%20Stadium%2C%20Arlington \\n通用地图: https://www.google.com/maps/search/?api=1&query=32.747778%2C-97.092778 \\n坐标: 32.747778\, -97.092778
+LOCATION:AT&T体育场（达拉斯）
+GEO:32.747778;-97.092778
+URL:https://www.google.com/maps/search/?api=1&query=32.747778%2C-97.092778
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=32.747778~-97.092778&lvl=16&where=AT%26T%20Stadium%2C%20Arlington
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=AT&T体育场（达拉斯）;X-TITLE=AT&T体育场 / 达拉斯体育场:geo:32.747778,-97.092778?q=32.747778,-97.092778
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match102@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260716T030000
+DTEND;TZID=Asia/Shanghai:20260716T050000
+SUMMARY:⚽ M99胜者 vs M100胜者 (半决赛)
+DESCRIPTION:2026世界杯 | 半决赛 \\nM99胜者 vs M100胜者\\n📍 梅赛德斯-奔驰体育场（亚特兰大）\\n🕐 北京时间: 07月16日 03:00\\n动态天气: https://weather.com/weather/today/l/33.755556%2C-84.400833 \\n系统地图: bingmaps:?cp=33.755556~-84.400833&lvl=16&where=Mercedes-Benz%20Stadium%2C%20Atlanta \\n通用地图: https://www.google.com/maps/search/?api=1&query=33.755556%2C-84.400833 \\n坐标: 33.755556\, -84.400833
+LOCATION:梅赛德斯-奔驰体育场（亚特兰大）
+GEO:33.755556;-84.400833
+URL:https://www.google.com/maps/search/?api=1&query=33.755556%2C-84.400833
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=33.755556~-84.400833&lvl=16&where=Mercedes-Benz%20Stadium%2C%20Atlanta
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=梅赛德斯-奔驰体育场（亚特兰大）;X-TITLE=梅赛德斯-奔驰体育场 / 亚特兰大体育场:geo:33.755556,-84.400833?q=33.755556,-84.400833
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match103@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260720T030000
+DTEND;TZID=Asia/Shanghai:20260720T050000
+SUMMARY:⚽ M101胜者 vs M102胜者 (决赛)
+DESCRIPTION:2026世界杯 | 决赛 \\nM101胜者 vs M102胜者\\n📍 大都会人寿体育场（纽约/新泽西）\\n🕐 北京时间: 07月20日 03:00\\n动态天气: https://weather.com/weather/today/l/40.813500%2C-74.074500 \\n系统地图: bingmaps:?cp=40.813500~-74.074500&lvl=16&where=MetLife%20Stadium%2C%20East%20Rutherford \\n通用地图: https://www.google.com/maps/search/?api=1&query=40.813500%2C-74.074500 \\n坐标: 40.813500\, -74.074500
+LOCATION:大都会人寿体育场（纽约/新泽西）
+GEO:40.813500;-74.074500
+URL:https://www.google.com/maps/search/?api=1&query=40.813500%2C-74.074500
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=40.813500~-74.074500&lvl=16&where=MetLife%20Stadium%2C%20East%20Rutherford
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=大都会人寿体育场（纽约/新泽西）;X-TITLE=大都会人寿体育场 / 纽约-新泽西体育场:geo:40.813500,-74.074500?q=40.813500,-74.074500
+END:VEVENT
+END:VCALENDAR
