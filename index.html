@@ -21,9 +21,11 @@
         margin: 0;
         min-height: 100vh;
         background:
-          radial-gradient(circle at 18% 14%, rgba(0, 209, 255, 0.38), transparent 28%),
-          radial-gradient(circle at 80% 20%, rgba(31, 125, 255, 0.46), transparent 32%),
+          radial-gradient(circle at 18% 14%, rgba(0, 209, 255, 0.42), transparent 28%),
+          radial-gradient(circle at 78% 22%, rgba(31, 125, 255, 0.48), transparent 34%),
+          radial-gradient(circle at 54% 70%, rgba(0, 255, 224, 0.16), transparent 32%),
           linear-gradient(135deg, #0572ff 0%, #0630bc 42%, #06115d 100%);
+        background-attachment: fixed;
         color: #f6fbff;
       }
 
@@ -38,15 +40,18 @@
 
       body::before {
         background:
-          linear-gradient(118deg, transparent 0 12%, rgba(59, 224, 255, 0.28) 12.2% 12.6%, transparent 12.8% 100%),
-          linear-gradient(64deg, transparent 0 76%, rgba(67, 206, 255, 0.22) 76.2% 76.6%, transparent 76.8% 100%);
+          linear-gradient(118deg, transparent 0 12%, rgba(59, 224, 255, 0.34) 12.2% 12.6%, transparent 12.8% 100%),
+          linear-gradient(64deg, transparent 0 76%, rgba(67, 206, 255, 0.28) 76.2% 76.6%, transparent 76.8% 100%),
+          linear-gradient(148deg, transparent 0 58%, rgba(135, 238, 255, 0.16) 58.2% 58.7%, transparent 58.9% 100%),
+          repeating-linear-gradient(112deg, transparent 0 92px, rgba(88, 210, 255, 0.06) 94px 96px, transparent 98px 180px);
       }
 
       body::after {
-        opacity: 0.3;
+        opacity: 0.46;
         background:
-          radial-gradient(ellipse at 20% 60%, transparent 0 30%, rgba(79, 195, 255, 0.34) 30.4% 31%, transparent 31.4%),
-          radial-gradient(ellipse at 86% 54%, transparent 0 26%, rgba(52, 188, 255, 0.28) 26.5% 27.2%, transparent 27.7%);
+          radial-gradient(ellipse at 20% 62%, transparent 0 30%, rgba(79, 195, 255, 0.34) 30.4% 31%, transparent 31.4%),
+          radial-gradient(ellipse at 86% 54%, transparent 0 26%, rgba(52, 188, 255, 0.28) 26.5% 27.2%, transparent 27.7%),
+          radial-gradient(ellipse at 50% 8%, transparent 0 20%, rgba(255, 255, 255, 0.12) 20.4% 20.8%, transparent 21.2%);
       }
 
       a {
@@ -58,7 +63,9 @@
         top: 0;
         z-index: 10;
         border-bottom: 1px solid rgba(43, 223, 255, 0.42);
-        background: rgba(3, 24, 111, 0.7);
+        background:
+          linear-gradient(120deg, rgba(3, 26, 127, 0.88), rgba(4, 43, 156, 0.68)),
+          radial-gradient(circle at 82% 18%, rgba(72, 197, 255, 0.26), transparent 30%);
         backdrop-filter: blur(12px);
       }
 
@@ -228,7 +235,7 @@
 
       .match {
         display: grid;
-        grid-template-columns: 104px minmax(0, 1fr) 104px;
+        grid-template-columns: 112px minmax(0, 1fr) 112px;
         align-items: center;
         gap: 14px;
         min-height: 118px;
@@ -294,18 +301,21 @@
 
       .badge {
         display: inline-grid;
-        flex: 0 0 72px;
-        width: 72px;
-        height: 72px;
+        flex: 0 0 88px;
+        width: 88px;
+        height: 60px;
         place-items: center;
         border: 2px solid rgba(207, 244, 255, 0.72);
-        border-radius: 50%;
+        border-radius: 12px;
         background: rgba(255, 255, 255, 0.94);
         color: #07309a;
         font-size: 0;
         font-weight: 800;
         line-height: 1;
         overflow: hidden;
+        box-shadow:
+          0 10px 24px rgba(0, 10, 70, 0.22),
+          inset 0 0 0 1px rgba(255, 255, 255, 0.42);
       }
 
       .badge img {
@@ -429,7 +439,7 @@
         }
 
         .match {
-          grid-template-columns: 52px minmax(0, 1fr) 52px;
+          grid-template-columns: 58px minmax(0, 1fr) 58px;
           gap: 8px;
           min-height: 108px;
           padding: 14px 0;
@@ -440,9 +450,10 @@
         }
 
         .badge {
-          width: 48px;
-          height: 48px;
-          flex-basis: 48px;
+          width: 52px;
+          height: 36px;
+          flex-basis: 52px;
+          border-radius: 8px;
           font-size: 16px;
         }
 
