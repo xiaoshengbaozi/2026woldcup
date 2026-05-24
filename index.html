@@ -444,9 +444,14 @@
         text-align: center;
       }
 
-        @media (max-width: 700px) {
+      @media (max-width: 700px) {
         .wrap {
           padding: 18px;
+        }
+
+        .day-board {
+          padding: 16px;
+          border-radius: 18px;
         }
 
         .summary {
@@ -455,7 +460,8 @@
 
         .day-head {
           grid-template-columns: 1fr;
-          gap: 6px;
+          gap: 8px;
+          margin-bottom: 16px;
         }
 
         .day-status {
@@ -463,25 +469,27 @@
         }
 
         .day-title small {
-          display: block;
-          margin: 6px 0 0;
+          display: inline-flex;
+          width: auto;
+          max-width: max-content;
+          margin: 8px 0 0;
         }
 
         .match {
-          grid-template-columns: 58px minmax(0, 1fr) 58px;
-          gap: 8px;
-          min-height: 108px;
-          padding: 14px 0;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px 14px;
+          min-height: 0;
+          padding: 18px 0;
         }
 
         .team {
-          font-size: 13px;
+          font-size: 14px;
         }
 
         .badge {
-          width: 52px;
-          height: 36px;
-          flex-basis: 52px;
+          width: 66px;
+          height: 44px;
+          flex-basis: 66px;
           border-radius: 8px;
           font-size: 16px;
         }
@@ -495,23 +503,49 @@
           font-size: 18px;
         }
 
+        .match-center {
+          grid-column: 1 / -1;
+          grid-row: 1;
+          gap: 10px;
+        }
+
         .match-main {
-          grid-template-columns: minmax(0, 1fr) 78px minmax(0, 1fr);
-          gap: 6px;
+          grid-template-columns: minmax(0, 1fr) 86px minmax(0, 1fr);
+          gap: 8px;
+        }
+
+        .flag-panel {
+          grid-row: 2;
+          justify-content: center;
+        }
+
+        .flag-panel:first-child {
+          grid-column: 1;
+        }
+
+        .flag-panel:last-child {
+          grid-column: 2;
         }
 
         .match-info {
-          gap: 6px;
-          padding: 0 4px;
+          display: grid;
+          grid-template-columns: 1fr;
+          justify-items: center;
+          gap: 7px;
+          padding: 0;
           text-align: center;
         }
 
-        .stage-chip {
+        .stage-chip,
+        .venue-link,
+        .weather-chip {
           max-width: 100%;
-          text-align: center;
+          min-height: 28px;
+          justify-content: center;
         }
 
-        .venue-link {
+        .venue-link span,
+        .stage-chip {
           max-width: 100%;
         }
       }
