@@ -350,7 +350,7 @@
 
       .badge.code {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        font-size: 18px;
+        font-size: 16px;
       }
 
       .match-info {
@@ -495,7 +495,7 @@
         }
 
         .badge.code {
-          font-size: 9px;
+          font-size: 12px;
         }
 
         .time {
@@ -754,6 +754,8 @@
           .replace(/\u{1F3F4}[\u{E0061}-\u{E007A}\u{E007F}]*/gu, "")
           .replace(/\u{1F3F3}\u{FE0F}?/gu, "")
           .trim();
+        const placeholder = parsePlaceholderTeam(name);
+        if (placeholder) return placeholder;
         const code = name.replace(/[^\p{L}\p{N}]/gu, "").slice(0, 2).toUpperCase() || "T";
         const imageCode = teamFlagCodes.get(name) || flagToCountryCode(flag);
         return {
@@ -762,6 +764,40 @@
           image: imageCode ? `https://flagcdn.com/${imageCode}.svg` : "",
           name: name || team || "待定",
         };
+      }
+
+      function parsePlaceholderTeam(name) {
+        const matchWinner = name.match(/^M(\d+)\s*胜者$/i);
+        if (matchWinner) {
+          return {
+            badge: "待定",
+            badgeType: "code",
+            image: "",
+            name: "晋级球队待定",
+          };
+        }
+
+        const matchLoser = name.match(/^M(\d+)\s*败者$/i);
+        if (matchLoser) {
+          return {
+            badge: "待定",
+            badgeType: "code",
+            image: "",
+            name: "球队待定",
+          };
+        }
+
+        const groupSlot = name.match(/^([A-L])组(第[一二三四]|第一|第二|第三|第四)$/i);
+        if (groupSlot) {
+          return {
+            badge: "待定",
+            badgeType: "code",
+            image: "",
+            name: `${groupSlot[1].toUpperCase()}组${groupSlot[2]}`,
+          };
+        }
+
+        return null;
       }
 
       function flagToCountryCode(flag) {
