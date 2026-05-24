@@ -218,11 +218,11 @@
         z-index: 1;
       }
 
-      .day-count {
+      .day-count,
+      .day-status {
         color: rgba(226, 247, 255, 0.78);
         font-size: 14px;
         font-style: italic;
-        text-transform: uppercase;
       }
 
       .day-title {
@@ -231,6 +231,31 @@
         font-size: clamp(22px, 4vw, 32px);
         font-weight: 750;
         line-height: 1.1;
+      }
+
+      .day-title small {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        margin-left: 12px;
+        padding: 3px 9px;
+        border: 1px solid rgba(91, 222, 255, 0.24);
+        border-radius: 999px;
+        background: rgba(4, 33, 119, 0.32);
+        color: rgba(226, 247, 255, 0.78);
+        font-size: 0.48em;
+        font-style: italic;
+        font-weight: 650;
+        white-space: nowrap;
+      }
+
+      .day-status {
+        justify-self: end;
+        padding: 4px 10px;
+        border: 1px solid rgba(91, 222, 255, 0.3);
+        border-radius: 999px;
+        background: rgba(4, 33, 119, 0.42);
+        white-space: nowrap;
       }
 
       .match {
@@ -434,8 +459,13 @@
           gap: 6px;
         }
 
-        .day-count {
+        .day-status {
           justify-self: start;
+        }
+
+        .day-title small {
+          display: block;
+          margin: 6px 0 0;
         }
 
         .match {
@@ -597,6 +627,23 @@
           minute: "2-digit",
           hour12: false,
         }).format(date);
+      }
+
+      function dayStatus(dayMatches) {
+        const now = new Date();
+        const firstStart = dayMatches[0].start;
+        const lastEnd = dayMatches.reduce((latest, match) => {
+          const end = match.end || match.start;
+          return end > latest ? end : latest;
+        }, dayMatches[0].end || dayMatches[0].start);
+
+        if (now > lastEnd) return "已完赛";
+
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const startDay = new Date(firstStart.getFullYear(), firstStart.getMonth(), firstStart.getDate());
+        const days = Math.ceil((startDay - today) / 86400000);
+        if (days <= 0) return "今日开赛";
+        return `${days}天后开赛`;
       }
 
       function escapeHtml(value) {
@@ -835,8 +882,8 @@
           return `
             <section class="day-board">
               <div class="day-head">
-                <h2 class="day-title">${escapeHtml(dateLabel)}</h2>
-                <div class="day-count">${dayMatches.length} 场比赛</div>
+                <h2 class="day-title">${escapeHtml(dateLabel)} <small>${dayMatches.length} 场比赛</small></h2>
+                <div class="day-status">${escapeHtml(dayStatus(dayMatches))}</div>
               </div>
               ${rows}
             </section>
@@ -860,6 +907,7 @@
             const location = cleanText(parseValue(block, "LOCATION"));
             const url = cleanText(parseValue(block, "URL"));
             const start = parseDate(parseValue(block, "DTSTART"));
+            const end = parseDate(parseValue(block, "DTEND"));
             const uid = cleanText(parseValue(block, "UID"));
             const geo = parseGeo(parseValue(block, "GEO"));
             return {
@@ -869,6 +917,7 @@
               location,
               url,
               start,
+              end,
               geo,
               stage: extractStage(summary, description),
               weather: extractWeather(description),
