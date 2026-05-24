@@ -208,7 +208,9 @@
         display: grid;
         grid-template-columns: minmax(0, 1fr) 118px minmax(0, 1fr);
         align-items: center;
-        min-height: 56px;
+        row-gap: 8px;
+        min-height: 72px;
+        padding: 10px 0 12px;
         border-top: 1px solid rgba(30, 190, 255, 0.58);
         background: linear-gradient(90deg, transparent, rgba(1, 14, 69, 0.72) 18%, rgba(1, 14, 69, 0.72) 82%, transparent);
       }
@@ -240,6 +242,13 @@
         font-size: clamp(16px, 2.6vw, 22px);
         font-weight: 650;
         text-transform: uppercase;
+      }
+
+      .team-name {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .team.home {
@@ -282,11 +291,23 @@
         grid-column: 1 / -1;
         display: flex;
         flex-wrap: wrap;
-        gap: 8px 14px;
+        align-items: center;
         justify-content: center;
-        padding: 2px 0 12px;
+        gap: 8px;
+        width: min(720px, 100%);
+        margin: 0 auto;
+        padding: 0 8px;
         color: rgba(226, 247, 255, 0.74);
         font-size: 13px;
+      }
+
+      .stage-chip {
+        display: inline-flex;
+        align-items: center;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .meta {
@@ -308,16 +329,30 @@
       }
 
       .venue-link,
-      .weather-chip {
+      .weather-chip,
+      .stage-chip {
         display: inline-flex;
         align-items: center;
         gap: 6px;
+        min-width: 0;
+        min-height: 26px;
+        padding: 3px 9px;
+        border: 1px solid rgba(80, 219, 255, 0.26);
+        border-radius: 999px;
+        background: rgba(5, 32, 117, 0.42);
       }
 
       .venue-link {
         color: #62e4ff;
         font-weight: 650;
         text-decoration: none;
+      }
+
+      .venue-link span {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .nav-icon {
@@ -365,7 +400,8 @@
 
         .match {
           grid-template-columns: minmax(0, 1fr) 86px minmax(0, 1fr);
-          min-height: 50px;
+          min-height: 70px;
+          padding: 10px 0 12px;
         }
 
         .team {
@@ -387,6 +423,21 @@
         .time {
           min-height: 34px;
           font-size: 18px;
+        }
+
+        .match-info {
+          gap: 6px;
+          padding: 0 4px;
+          text-align: center;
+        }
+
+        .stage-chip {
+          max-width: 100%;
+          text-align: center;
+        }
+
+        .venue-link {
+          max-width: 100%;
         }
       }
 
@@ -630,7 +681,7 @@
 
       function weatherText(match) {
         const data = weatherCache.get(weatherKey(match));
-        if (!data) return "天气 --°";
+        if (!data) return "○ --°C";
         if (data.error) return "天气暂缺";
         return `${weatherIcon(data.code)} ${Math.round(data.temp)}°C`;
       }
@@ -714,16 +765,16 @@
             return `
               <article class="match">
                 <div class="team home">
-                  <span>${escapeHtml(teams.home.name)}</span>
+                  <span class="team-name">${escapeHtml(teams.home.name)}</span>
                   ${badgeHtml(teams.home)}
                 </div>
                 <div class="time">${escapeHtml(formatTime(match.start))}<span>北京时间</span></div>
                 <div class="team away">
                   ${badgeHtml(teams.away)}
-                  <span>${escapeHtml(teams.away.name)}</span>
+                  <span class="team-name">${escapeHtml(teams.away.name)}</span>
                 </div>
                 <div class="match-info">
-                  <span>${escapeHtml(match.stage)}</span>
+                  <span class="stage-chip">${escapeHtml(match.stage)}</span>
                   <div class="details">${details}</div>
                   <span class="weather-chip" data-weather="${escapeHtml(match.uid)}"><span class="weather-icon">${escapeHtml(weatherText(match).split(" ")[0])}</span><span>${escapeHtml(weatherText(match).split(" ").slice(1).join(" "))}</span></span>
                 </div>
