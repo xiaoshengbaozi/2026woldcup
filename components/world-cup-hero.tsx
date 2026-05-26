@@ -315,4 +315,66 @@ export function WorldCupHero({
                     className="h-4 w-6 shrink-0 rounded object-cover ring-1 ring-white/10"
                     loading="lazy"
                   />
-                  <span className="min-w-0 flex-1 truncate text-sm text-white/82">{player.name}<
+                  <span className="min-w-0 flex-1 truncate text-sm text-white/82">{player.name}</span>
+                  <span className="w-12 shrink-0 text-left text-[10px] text-white/40">{player.nation}</span>
+                  <span className="tabular w-5 shrink-0 text-center text-sm font-semibold text-volt">{player.goals}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </motion.aside>
+      </div>
+    </section>
+  );
+}
+
+function Metric({ label, value, accent = false }: { label: string; value: number | string; accent?: boolean }) {
+  return (
+    <div className="text-center">
+      <p className={`text-2xl font-semibold ${accent ? "text-flare" : "text-volt"}`} style={{ fontFamily: "ScreenMatrix, monospace" }}>{value}</p>
+      <p className="mt-1 text-[10px] uppercase tracking-[0.16em] text-white/36">{label}</p>
+    </div>
+  );
+}
+
+const countryEnglishNames: Record<string, string> = {
+  mx: "Mexico", za: "South Africa", kr: "South Korea", cz: "Czechia",
+  ca: "Canada", ba: "Bosnia & Herz.", us: "United States", py: "Paraguay",
+  qa: "Qatar", ch: "Switzerland", br: "Brazil", ma: "Morocco", ht: "Haiti",
+  "gb-sct": "Scotland", tr: "Turkey", jp: "Japan", de: "Germany",
+  cw: "Curaçao", au: "Australia", eg: "Egypt", fr: "France", co: "Colombia",
+  it: "Italy", tn: "Tunisia", dz: "Algeria", pe: "Peru", ar: "Argentina",
+  at: "Austria", dk: "Denmark", uy: "Uruguay", pt: "Portugal", no: "Norway",
+  "gb-eng": "England", hr: "Croatia", ec: "Ecuador", nl: "Netherlands",
+  sn: "Senegal", ae: "UAE", ir: "Iran", nz: "New Zealand", ci: "Côte d'Ivoire",
+  gh: "Ghana", pa: "Panama", cv: "Cape Verde"
+};
+
+function getEnglishName(image: string | undefined, fallback: string): string {
+  if (!image) return fallback;
+  const code = image.split("/").pop()?.split(".")[0] ?? "";
+  return countryEnglishNames[code] ?? code.toUpperCase();
+}
+
+function TeamSignal({ code, image, name }: { code: string; image?: string; name: string }) {
+  const englishName = getEnglishName(image, name);
+  const shortCode = englishName.length > 3 ? englishName.slice(0, 3).toUpperCase() : englishName.toUpperCase();
+
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <span
+        className="text-7xl font-normal leading-none text-volt/90"
+        style={{ fontFamily: "ScreenMatrix, monospace" }}
+      >
+        {shortCode}
+      </span>
+      <span className="inline-flex items-center gap-1.5">
+        {image && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={image} alt="" className="h-4 w-5 shrink-0 rounded-sm object-cover" loading="lazy" />
+        )}
+        <span className="truncate text-sm font-semibold uppercase text-white/86">{name}</span>
+      </span>
+    </div>
+  );
+}

@@ -27,4 +27,10 @@ export default function Home() {
         completedCount={completedCount}
         ongoingCount={ongoingCount}
         calendarUrl={calendarUrl}
-        webcalUrl={w
+        webcalUrl={webcalUrl}
+        matchCount={matches.length}
+      />
+      <GroupStandings matches={matches} />
+    </DashboardShell>
+  );
+}

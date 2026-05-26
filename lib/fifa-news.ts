@@ -57,4 +57,16 @@ export function useFifaNews() {
     //     .then((data) => {
     //       const items: NewsItem[] = data.items.slice(0, 4).map(
     //         (item: { title: string; link: string; categories: string[] }) => ({
-    //           tag: item.categories?.[0] ??
+    //           tag: item.categories?.[0] ?? "FIFA",
+    //           title: item.title,
+    //           href: item.link
+    //         })
+    //       );
+    //       setNews(items);
+    //     })
+    //     .catch(() => { /* keep fallback */ })
+    //     .finally(() => setLoading(false));
+  }, []);
+
+  return { news, loading };
+}

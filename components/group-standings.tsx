@@ -177,4 +177,8 @@ const countryCodes: Record<string, string> = {
   ch: "SUI",
   br: "BRA",
   ma: "MAR",
-  
+  ht: "HAI",
+  "gb-sct": "SCO",
+  tr: "TUR",
+  au: "AUS"
+};

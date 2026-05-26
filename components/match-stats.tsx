@@ -39,4 +39,12 @@ export function MatchStats({
         detail="剩余 / 全部"
         icon={CalendarDays}
       />
-      <StatCar
+      <StatCard
+        label="球队"
+        value={`${activeTeamCount}/${totalTeamCount}`}
+        detail="未淘汰 / 全部"
+        icon={Flag}
+      />
+    </motion.section>
+  );
+}

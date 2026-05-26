@@ -52,4 +52,30 @@ export function useWorldCupData() {
 
     for (const match of matches) {
       const started = match.start.getTime() <= now;
-      const ended = (match.end || match.start).getTime() <
+      const ended = (match.end || match.start).getTime() < now;
+
+      if (ended) {
+        completed++;
+      } else if (started) {
+        ongoing++;
+      }
+    }
+
+    return { completedCount: completed, ongoingCount: ongoing };
+  }, [matches]);
+
+  return {
+    matches,
+    activeCity,
+    setActiveCity,
+    calendarUrl,
+    webcalUrl: calendarUrl.replace(/^https?:/, "webcal:"),
+    cities,
+    firstMatch: matches[0] ?? null,
+    progress: getTournamentProgress(matches),
+    completedCount: matchStats.completedCount,
+    ongoingCount: matchStats.ongoingCount,
+    loading,
+    error
+  };
+}

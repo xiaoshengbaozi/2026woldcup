@@ -30,4 +30,18 @@ export function StatCard({ label, value, detail: _detail, icon: Icon, accent = f
             <Icon className="h-5 w-5" />
           </div>
           <p className="text-xs uppercase tracking-[0.22em] text-white/38">{label}</p>
-        </
+        </div>
+        <p className="text-4xl font-semibold" style={{ fontFamily: "ScreenMatrix, monospace" }}>
+          {isFraction ? (
+            <>
+              <span style={{ color: "rgb(216 255 62 / 0.9)" }}>{parts[0]}</span>
+              <span className="text-white/50">/{parts[1]}</span>
+            </>
+          ) : (
+            <span className="text-white">{value}</span>
+          )}
+        </p>
+      </div>
+    </motion.div>
+  );
+}

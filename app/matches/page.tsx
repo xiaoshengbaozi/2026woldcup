@@ -63,4 +63,32 @@ export default function MatchesPage() {
       <MatchStats
         totalMatches={matches.length}
         visible={filteredMatches.length}
-        totalMatchDays={totalMatchDay
+        totalMatchDays={totalMatchDays}
+        remainingMatchDays={remainingMatchDays}
+        activeTeamCount={stageTeamCount}
+        totalTeamCount={totalTeams}
+      />
+
+      <MatchFilters
+        query={query}
+        stage={stage}
+        stages={stages}
+        activeCity={activeCity}
+        cities={cities}
+        timezoneOffset={timezoneOffset}
+        onQueryChange={setQuery}
+        onStageChange={setStage}
+        onCityChange={setActiveCity}
+        onTimezoneChange={setTimezoneOffset}
+      />
+
+      <ScheduleList
+        grouped={grouped}
+        loading={loading}
+        error={error}
+        isEmpty={!loading && !error && !filteredMatches.length}
+        timezoneOffset={timezoneOffset}
+      />
+    </DashboardShell>
+  );
+}

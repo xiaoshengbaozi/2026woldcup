@@ -154,4 +154,186 @@ function TimezoneDropdown({
                 key={tz.label}
                 type="button"
                 onClick={() => { onChange(tz.offset); setOpen(false); }}
-                className={`flex w-full items-center gap-3 px-5 py-3 text-sm transition-all du
+                className={`flex w-full items-center gap-3 px-5 py-3 text-sm transition-all duration-150 ${
+                  value === tz.offset
+                    ? "bg-volt/[0.06] text-volt font-medium"
+                    : "text-white/60 hover:bg-white/[0.03] hover:text-white/90"
+                }`}
+              >
+                <span className="truncate">{tz.label}</span>
+                {value === tz.offset && <span className="ml-auto shrink-0 text-volt">✓</span>}
+              </button>
+            ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function StageDropdown({
+  value,
+  stages,
+  onChange
+}: {
+  value: string;
+  stages: string[];
+  onChange: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const label = value || "全部阶段";
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className={`glass-chip flex min-h-14 w-full items-center justify-between gap-2 px-5 text-left transition ${
+          open ? "text-volt ring-1 ring-volt/25" : "text-white/78 hover:text-white"
+        }`}
+      >
+        <Layers className="h-4 w-4 shrink-0 text-volt/80" />
+        <span className="truncate text-sm">{label}</span>
+        <motion.span
+          animate={{ rotate: open ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <ChevronDown className="h-4 w-4 shrink-0" />
+        </motion.span>
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.96 }}
+            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute right-0 top-full z-50 mt-2 w-full min-w-[200px] overflow-hidden rounded-2xl bg-black/90 shadow-[0_24px_64px_rgba(0,0,0,.7),0_0_0_1px_rgba(255,255,255,.08)] backdrop-blur-xl"
+          >
+            <button
+              type="button"
+              onClick={() => { onChange(""); setOpen(false); }}
+              className={`flex w-full items-center gap-3 px-5 py-3 text-sm font-medium transition-all duration-150 ${
+                !value ? "bg-volt/[0.06] text-volt" : "text-white/60 hover:bg-white/[0.03] hover:text-white/90"
+              }`}
+            >
+              全部阶段
+              {!value && <span className="ml-auto shrink-0 text-volt">✓</span>}
+            </button>
+            <div className="h-px bg-white/[0.05]" />
+            <div className="divide-y divide-white/[0.04]">
+              {stages.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => { onChange(s); setOpen(false); }}
+                  className={`flex w-full items-center gap-3 px-5 py-3 text-sm transition-all duration-150 ${
+                    value === s ? "bg-volt/[0.06] text-volt font-medium" : "text-white/60 hover:bg-white/[0.03] hover:text-white/90"
+                  }`}
+                >
+                  <span className="truncate">{s}</span>
+                  {value === s && <span className="ml-auto shrink-0 text-volt">✓</span>}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function CityDropdown({
+  value,
+  cities,
+  onChange
+}: {
+  value: string;
+  cities: string[];
+  onChange: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const label = value === "全部城市" || !value ? "全部城市" : value;
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className={`glass-chip flex min-h-14 w-full items-center justify-between gap-2 px-5 text-left transition ${
+          open ? "text-volt ring-1 ring-volt/25" : "text-white/78 hover:text-white"
+        }`}
+      >
+        <MapPin className="h-4 w-4 shrink-0 text-volt/80" />
+        <span className="truncate text-sm">{label}</span>
+        <motion.span
+          animate={{ rotate: open ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <ChevronDown className="h-4 w-4 shrink-0" />
+        </motion.span>
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.96 }}
+            transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute right-0 top-full z-50 mt-2 w-full min-w-[200px] overflow-hidden rounded-2xl bg-black/90 shadow-[0_24px_64px_rgba(0,0,0,.7),0_0_0_1px_rgba(255,255,255,.08)] backdrop-blur-xl"
+          >
+            <button
+              type="button"
+              onClick={() => { onChange("全部城市"); setOpen(false); }}
+              className={`flex w-full items-center gap-3 px-5 py-3 text-sm font-medium transition-all duration-150 ${
+                value === "全部城市" ? "bg-volt/[0.06] text-volt" : "text-white/60 hover:bg-white/[0.03] hover:text-white/90"
+              }`}
+            >
+              全部城市
+              {value === "全部城市" && <span className="ml-auto shrink-0 text-volt">✓</span>}
+            </button>
+            <div className="h-px bg-white/[0.05]" />
+            <div className="divide-y divide-white/[0.04]">
+              {cities.filter((c) => c !== "全部城市").map((city) => (
+                <button
+                  key={city}
+                  type="button"
+                  onClick={() => { onChange(city); setOpen(false); }}
+                  className={`flex w-full items-center gap-3 px-5 py-3 text-sm transition-all duration-150 ${
+                    value === city ? "bg-volt/[0.06] text-volt font-medium" : "text-white/60 hover:bg-white/[0.03] hover:text-white/90"
+                  }`}
+                >
+                  <span className="truncate">{city}</span>
+                  {value === city && <span className="ml-auto shrink-0 text-volt">✓</span>}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
