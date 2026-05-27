@@ -102,10 +102,11 @@ button {
     position: relative;
     border-radius: 1.75rem;
     background:
-      linear-gradient(135deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
-      rgba(5, 8, 8, 0.72);
+      linear-gradient(135deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015)),
+      rgba(5, 8, 8, 0.88);
     box-shadow:
       0 30px 80px rgba(0, 0, 0, 0.48),
+      0 0 60px -10px rgba(216, 255, 62, 0.08),
       inset 0 1px 0 rgba(255, 255, 255, 0.09),
       inset 0 -1px 0 rgba(216, 255, 62, 0.06);
     backdrop-filter: blur(32px);
@@ -117,7 +118,7 @@ button {
     inset: 0;
     border-radius: inherit;
     padding: 1px;
-    background: linear-gradient(135deg, rgba(216, 255, 62, 0.22), rgba(255, 255, 255, 0.08), rgba(216, 255, 62, 0.06));
+    background: linear-gradient(135deg, rgba(216, 255, 62, 0.12), rgba(255, 255, 255, 0.04), rgba(216, 255, 62, 0.03));
     content: "";
     pointer-events: none;
     mask:
@@ -126,8 +127,29 @@ button {
     mask-composite: exclude;
   }
 
+  .hero-shell::after,
+  .hero-card::after {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse at 20% 10%, rgba(216, 255, 62, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 90%, rgba(216, 255, 62, 0.03) 0%, transparent 50%);
+    content: "";
+  }
+
   .hero-card {
     border-radius: 1.65rem;
+    transition: box-shadow 0.3s ease;
+  }
+
+  .hero-card:hover {
+    box-shadow:
+      0 30px 80px rgba(0, 0, 0, 0.48),
+      0 0 80px -10px rgba(216, 255, 62, 0.14),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
+      inset 0 -1px 0 rgba(216, 255, 62, 0.1);
   }
 
   .hero-link {
@@ -168,4 +190,34 @@ button {
     -webkit-line-clamp: 2;
     overflow: hidden;
   }
+}
+
+@keyframes live-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.75;
+  }
+  75%,
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+@keyframes live-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.live-ping {
+  animation: live-ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.live-dot {
+  animation: live-dot 1.2s ease-in-out infinite;
 }

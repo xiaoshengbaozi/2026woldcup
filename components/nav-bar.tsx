@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search } from "lucide-react";
 
 const navItems = [
   { label: "首页", href: "/" },
@@ -18,7 +17,7 @@ export function NavBar() {
   const pathname = usePathname();
 
   return (
-    <nav className="hero-shell flex min-h-20 items-center justify-between gap-4 px-5 py-4 sm:px-7">
+    <nav className="hero-shell flex min-h-20 items-center justify-between gap-4 px-5 py-4 sm:px-7" style={{ borderRadius: "1.2rem" }}>
       <Link href="/" className="flex items-center gap-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -27,8 +26,13 @@ export function NavBar() {
           className="h-11 w-11 object-contain drop-shadow-[0_0_12px_rgba(216,255,62,.35)]"
         />
         <div className="leading-tight">
-          <p className="text-2xl font-semibold uppercase text-white">FIFA</p>
-          <p className="text-sm font-medium uppercase tracking-[0.08em] text-white/82">2026 世界杯</p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="https://digitalhub.fifa.com/transform/befe3a64-328b-453c-8b58-0faeb9103684/FIFA_Logo_White_Generic?&io=transform:fill&quality=75"
+            alt="FIFA"
+            className="h-6 w-auto object-contain"
+          />
+          <p className="mt-0.5 text-sm font-medium uppercase tracking-[0.08em] text-white/82">2026 世界杯</p>
         </div>
       </Link>
 
@@ -55,13 +59,6 @@ export function NavBar() {
       </div>
 
       <div className="flex items-center gap-2">
-        <button
-          type="button"
-          aria-label="搜索"
-          className="hidden h-11 w-11 place-items-center rounded-2xl bg-white/[0.035] text-white/80 transition hover:bg-white/[0.08] hover:text-volt md:grid"
-        >
-          <Search className="h-5 w-5" />
-        </button>
         <div className="flex h-11 items-center gap-2 rounded-full bg-volt/10 px-5 text-sm font-semibold uppercase tracking-[0.12em] text-volt shadow-[0_0_28px_rgba(216,255,62,.22)] ring-1 ring-volt/35">
           <span className="h-2 w-2 rounded-full bg-volt shadow-[0_0_14px_rgba(216,255,62,.9)]" />
           赛程同步
