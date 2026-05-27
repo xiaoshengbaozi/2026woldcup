@@ -221,3 +221,13 @@ button {
 .live-dot {
   animation: live-dot 1.2s ease-in-out infinite;
 }
+
+@keyframes countdown-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
+.countdown-colon {
+  animation: countdown-blink 1s ease-in-out infinite;
+  font-variant-numeric: tabular-nums;
+}
