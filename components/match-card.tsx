@@ -1,9 +1,15 @@
 import { motion } from "framer-motion";
-import { ExternalLink, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { detailRows } from "@/lib/calendar";
 import { formatTime } from "@/lib/format";
 import { parseTeams } from "@/lib/teams";
 import type { Match, Team } from "@/types/match";
+
+function formatStage(stage: string): string {
+  const groupMatch = stage.match(/Group\s+([A-L])/i);
+  if (groupMatch) return `小组赛 ${groupMatch[1]}组`;
+  return stage;
+}
 
 export function MatchCard({ match, timezoneOffset = 0 }: { match: Match; timezoneOffset?: number }) {
   const teams = parseTeams(match.summary);
@@ -16,14 +22,14 @@ export function MatchCard({ match, timezoneOffset = 0 }: { match: Match; timezon
       layout
       className="relative flex flex-col gap-2 rounded-[1.25rem] p-2.5 sm:gap-3 sm:p-4"
     >
-      <div className="flex items-center justify-between gap-1 sm:gap-3">
+      <div className="relative flex items-center justify-between gap-1 sm:gap-3">
         <TeamBlock team={teams.home} align="left" />
 
-        <div className="flex shrink-0 flex-col items-center">
-          <div className="glass-chip px-2 py-0.5 text-[9px] uppercase tracking-[0.14em] text-white/50 sm:px-3 sm:py-1 sm:text-xs sm:tracking-[0.18em] sm:text-white/56">
-            {match.stage}
+        <div className="absolute left-1/2 -translate-x-1/2 flex shrink-0 flex-col items-center">
+          <div className="text-[9px] uppercase tracking-[0.14em] text-white/40 sm:text-xs sm:tracking-[0.18em]">
+            {formatStage(match.stage)}
           </div>
-          <div className="tabular mt-1 text-xl font-semibold leading-none text-white sm:text-3xl">
+          <div className="tabular mt-1 text-xl font-semibold leading-none text-white sm:text-3xl" style={{ fontFamily: "ScreenMatrix, monospace" }}>
             {formatTime(adjustedStart)}
           </div>
         </div>
@@ -31,21 +37,22 @@ export function MatchCard({ match, timezoneOffset = 0 }: { match: Match; timezon
         <TeamBlock team={teams.away} align="right" />
       </div>
 
-      <div className="flex flex-wrap items-center justify-center gap-1.5">
-        <span className="glass-chip inline-flex min-w-0 items-center gap-1 px-2 py-1 text-[10px] text-white/50 sm:gap-1.5 sm:px-2.5 sm:py-1 sm:text-xs sm:text-white/56">
-          <MapPin className="h-3 w-3 shrink-0 text-flare sm:h-3.5 sm:w-3.5" />
-          <span className="truncate max-w-[130px] sm:max-w-[180px]">{venue}</span>
-        </span>
-        {match.url && (
+      <div className="flex justify-center">
+        {match.url ? (
           <a
             href={match.url}
             target="_blank"
             rel="noreferrer"
-            className="glass-chip inline-flex items-center gap-1 px-2 py-1 text-[10px] text-white/50 transition hover:text-volt sm:gap-1.5 sm:px-2.5 sm:py-1 sm:text-xs sm:text-white/58"
+            className="glass-chip inline-flex items-center gap-1 px-2 py-1 text-[10px] text-white/50 transition hover:text-volt sm:gap-1.5 sm:px-2.5 sm:py-1 sm:text-xs sm:text-white/56"
           >
-            地图
-            <ExternalLink className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+            <MapPin className="h-3 w-3 shrink-0 text-flare sm:h-3.5 sm:w-3.5" />
+            <span className="max-w-[130px] truncate sm:max-w-[180px]">{venue}</span>
           </a>
+        ) : (
+          <span className="glass-chip inline-flex items-center gap-1 px-2 py-1 text-[10px] text-white/50 sm:gap-1.5 sm:px-2.5 sm:py-1 sm:text-xs sm:text-white/56">
+            <MapPin className="h-3 w-3 shrink-0 text-flare sm:h-3.5 sm:w-3.5" />
+            <span className="max-w-[130px] truncate sm:max-w-[180px]">{venue}</span>
+          </span>
         )}
       </div>
     </motion.article>

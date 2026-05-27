@@ -10,13 +10,11 @@ type Timezone = {
 };
 
 const timezones: Timezone[] = [
-  { label: "北京时间 UTC+8", offset: 0 },
-  { label: "美国东部 UTC-4", offset: -12 },
-  { label: "美国中部 UTC-5", offset: -13 },
-  { label: "美国西部 UTC-7", offset: -15 },
-  { label: "墨西哥中部 UTC-6", offset: -14 },
-  { label: "加拿大东部 UTC-4", offset: -12 },
-  { label: "加拿大西部 UTC-7", offset: -15 }
+  { label: "北京 UTC+8", offset: 0 },
+  { label: "美东 UTC-4", offset: -12 },
+  { label: "美中 UTC-5", offset: -13 },
+  { label: "美西 UTC-7", offset: -15 },
+  { label: "墨城 UTC-6", offset: -14 },
 ];
 
 type MatchFiltersProps = {
@@ -31,6 +29,12 @@ type MatchFiltersProps = {
   onCityChange: (value: string) => void;
   onTimezoneChange: (offset: number) => void;
 };
+
+function formatStageLabel(stage: string): string {
+  const groupMatch = stage.match(/Group\s+([A-L])/i);
+  if (groupMatch) return `小组赛 ${groupMatch[1]}组`;
+  return stage;
+}
 
 function stageRank(stage: string) {
   const group = stage.match(/Group ([A-L])$/);
@@ -68,9 +72,9 @@ export function MatchFilters({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.08, duration: 0.65 }}
-      className="relative z-20 grid gap-3 md:grid-cols-[1fr_200px_200px_200px]"
+      className="relative z-20 grid grid-cols-3 gap-3 md:grid-cols-[1fr_200px_200px_200px]"
     >
-      <label className="glass-chip flex min-h-14 items-center gap-3 px-5 text-white/70 transition focus-within:text-white">
+      <label className="glass-chip col-span-3 flex min-h-14 items-center gap-3 px-5 text-white/70 transition focus-within:text-white md:col-span-1">
         <Search className="h-5 w-5 shrink-0 text-volt/80" />
         <input
           value={query}
@@ -119,18 +123,19 @@ function TimezoneDropdown({
   }, []);
 
   const selected = timezones.find((tz) => tz.offset === value) ?? timezones[0];
+  const tzName = selected.label.split(" ")[0];
 
   return (
     <div ref={ref} className="relative">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className={`glass-chip flex min-h-14 w-full items-center justify-between gap-2 px-5 text-left transition ${
+        className={`glass-chip flex min-h-14 w-full items-center justify-between gap-1.5 px-3 text-left transition sm:gap-2 sm:px-5 ${
           open ? "text-volt ring-1 ring-volt/25" : "text-white/78 hover:text-white"
         }`}
       >
         <Clock className="h-4 w-4 shrink-0 text-volt/80" />
-        <span className="truncate text-sm">{selected.label}</span>
+        <span className="truncate text-sm">{tzName}</span>
         <motion.span
           animate={{ rotate: open ? 180 : 0 }}
           transition={{ duration: 0.2 }}
@@ -146,7 +151,7 @@ function TimezoneDropdown({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.96 }}
             transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute right-0 top-full z-50 mt-2 w-full min-w-[200px] overflow-hidden rounded-2xl bg-black/90 shadow-[0_24px_64px_rgba(0,0,0,.7),0_0_0_1px_rgba(255,255,255,.08)] backdrop-blur-xl"
+            className="absolute left-0 top-full z-50 mt-2 w-full min-w-[180px] overflow-hidden rounded-2xl bg-black/90 shadow-[0_24px_64px_rgba(0,0,0,.7),0_0_0_1px_rgba(255,255,255,.08)] backdrop-blur-xl sm:left-auto sm:right-0"
           >
             <div className="divide-y divide-white/[0.04]">
             {timezones.map((tz) => (
@@ -192,14 +197,14 @@ function StageDropdown({
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const label = value || "全部阶段";
+  const label = value ? formatStageLabel(value) : "赛段";
 
   return (
     <div ref={ref} className="relative">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className={`glass-chip flex min-h-14 w-full items-center justify-between gap-2 px-5 text-left transition ${
+        className={`glass-chip flex min-h-14 w-full items-center justify-between gap-1.5 px-3 text-left transition sm:gap-2 sm:px-5 ${
           open ? "text-volt ring-1 ring-volt/25" : "text-white/78 hover:text-white"
         }`}
       >
@@ -229,7 +234,7 @@ function StageDropdown({
                 !value ? "bg-volt/[0.06] text-volt" : "text-white/60 hover:bg-white/[0.03] hover:text-white/90"
               }`}
             >
-              全部阶段
+              全部赛段
               {!value && <span className="ml-auto shrink-0 text-volt">✓</span>}
             </button>
             <div className="h-px bg-white/[0.05]" />
@@ -243,7 +248,7 @@ function StageDropdown({
                     value === s ? "bg-volt/[0.06] text-volt font-medium" : "text-white/60 hover:bg-white/[0.03] hover:text-white/90"
                   }`}
                 >
-                  <span className="truncate">{s}</span>
+                  <span className="truncate">{formatStageLabel(s)}</span>
                   {value === s && <span className="ml-auto shrink-0 text-volt">✓</span>}
                 </button>
               ))}
@@ -275,14 +280,14 @@ function CityDropdown({
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const label = value === "全部城市" || !value ? "全部城市" : value;
+  const label = value === "全部城市" || !value ? "城市" : value;
 
   return (
     <div ref={ref} className="relative">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className={`glass-chip flex min-h-14 w-full items-center justify-between gap-2 px-5 text-left transition ${
+        className={`glass-chip flex min-h-14 w-full items-center justify-between gap-1.5 px-3 text-left transition sm:gap-2 sm:px-5 ${
           open ? "text-volt ring-1 ring-volt/25" : "text-white/78 hover:text-white"
         }`}
       >

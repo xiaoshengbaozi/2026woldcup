@@ -2,22 +2,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Home, Calendar, BarChart3, Newspaper } from "lucide-react";
 
 const navItems = [
-  { label: "首页", href: "/" },
-  { label: "赛程", href: "/matches" },
-  { label: "小组", href: "/#groups" },
-  { label: "球队", href: "#" },
-  { label: "数据", href: "#" },
-  { label: "新闻", href: "#" },
-  { label: "关于", href: "#" }
+  { label: "首页", href: "/", icon: Home },
+  { label: "新闻", href: "#", icon: Newspaper },
+  { label: "赛程", href: "/matches", icon: Calendar },
+  { label: "数据", href: "#", icon: BarChart3 },
 ];
 
 export function NavBar() {
   const pathname = usePathname();
 
   return (
-    <nav className="hero-shell flex min-h-20 items-center justify-between gap-4 px-5 py-4 sm:px-7" style={{ borderRadius: "1.2rem" }}>
+    <nav className="hero-shell hidden min-h-20 items-center justify-between gap-4 px-5 py-4 sm:px-7 lg:flex" style={{ borderRadius: "1.2rem" }}>
       <Link href="/" className="flex items-center gap-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -46,12 +44,13 @@ export function NavBar() {
             <Link
               key={item.label}
               href={item.href}
-              className={`text-sm font-medium uppercase tracking-[0.12em] transition ${
+              className={`flex items-center gap-1.5 text-sm font-medium uppercase tracking-[0.12em] transition ${
                 isActive
                   ? "text-volt drop-shadow-[0_0_12px_rgba(216,255,62,.8)]"
                   : "text-white/45 hover:text-white/82"
               }`}
             >
+              <item.icon className="h-4 w-4" strokeWidth={isActive ? 2.5 : 1.75} />
               {item.label}
             </Link>
           );

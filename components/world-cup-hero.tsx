@@ -254,7 +254,7 @@ export function WorldCupHero({
                 <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
               </a>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {liveMatches.map((match) => (
                 <LiveMatchCard key={`${match.homeCode}-${match.awayCode}`} match={match} />
               ))}
