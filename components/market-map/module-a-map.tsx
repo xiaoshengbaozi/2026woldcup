@@ -509,4 +509,7 @@ export function ModuleA_ProbabilityMap() {
   );
 }
 
-  
+      </div>
+    </section>
+  );
+}

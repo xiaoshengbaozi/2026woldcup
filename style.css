@@ -521,3 +521,37 @@ code {
   }
 
   .flag-panel {
+    grid-row: 2;
+    justify-content: center;
+  }
+
+  .flag-panel:first-child {
+    grid-column: 1;
+  }
+
+  .flag-panel:last-child {
+    grid-column: 2;
+  }
+
+  .match-info {
+    display: grid;
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 7px;
+    padding: 0;
+    text-align: center;
+  }
+
+  .stage-chip,
+  .venue-link,
+  .weather-chip {
+    max-width: 100%;
+    min-height: 28px;
+    justify-content: center;
+  }
+
+  .venue-link span,
+  .stage-chip {
+    max-width: 100%;
+  }
+}

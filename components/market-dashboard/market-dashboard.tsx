@@ -73,4 +73,20 @@ export function MarketDashboard() {
           </div>
 
           {/* Rankings — right */}
-          <div className="her
+          <div className="hero-card relative min-h-[520px] overflow-hidden p-5 xl:min-h-0">
+            <MarketOddsCard />
+          </div>
+
+          {/* Timeline — bottom full width */}
+          <div className="hero-card min-h-[320px] overflow-hidden p-5 xl:col-span-2 xl:min-h-0">
+            <ModuleC_OddsTimeline />
+          </div>
+        </div>
+
+        <StatusBar />
+      </div>
+
+      <MobileNavBar />
+    </div>
+  );
+}
