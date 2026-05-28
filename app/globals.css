@@ -13,6 +13,46 @@
 :root {
   color-scheme: dark;
   background: #050505;
+
+  /* ── Market Prediction OS tokens ── */
+  --bg-primary: #0A0A0F;
+  --bg-secondary: #14141F;
+  --bg-tertiary: #1C1C2E;
+  --bg-ticker: #08080F;
+
+  --text-primary: #EAEAEA;
+  --text-secondary: #8899AA;
+  --text-muted: #556677;
+
+  --sentiment-up: #00E676;
+  --sentiment-down: #FF1744;
+  --sentiment-flat: #78909C;
+  --sentiment-gold: #FFD700;
+  --sentiment-silver: #C0C0C0;
+  --sentiment-bronze: #CD7F32;
+  --sentiment-alert: #FF3D00;
+
+  --probability-cold: #1A1A24;
+  --probability-deep: #1E3A5F;
+  --probability-blue: #2563C7;
+  --probability-blueGold: #4A7FB5;
+  --probability-olive: #7B9E4A;
+  --probability-gold: #E8B830;
+  --probability-orange: #F08020;
+  --probability-red: #E03030;
+  --probability-peak: #C00000;
+
+  --anim-fast: 150ms;
+  --anim-normal: 400ms;
+  --anim-slow: 600ms;
+  --anim-breath: 3200ms;
+
+  --ticker-height: 36px;
+  --row-height-compact: 52px;
+  --row-height-expanded: 64px;
+  --grid-gap: 8px;
+  --grid-cols: 12;
+  --grid-row-height: 48px;
 }
 
 * {
@@ -230,4 +270,84 @@ button {
 .countdown-colon {
   animation: countdown-blink 1s ease-in-out infinite;
   font-variant-numeric: tabular-nums;
+}
+
+@keyframes probability-globe-float {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(-0.4deg) scale(1);
+  }
+  50% {
+    transform: translate3d(10px, -8px, 0) rotate(0.7deg) scale(1.012);
+  }
+}
+
+@keyframes probability-globe-drift {
+  0% {
+    transform: translateX(-8px) rotate(-1deg);
+    opacity: 0.72;
+  }
+  50% {
+    transform: translateX(10px) rotate(1.6deg);
+    opacity: 0.95;
+  }
+  100% {
+    transform: translateX(-8px) rotate(-1deg);
+    opacity: 0.72;
+  }
+}
+
+@keyframes probability-ring-breathe {
+  0%, 100% {
+    opacity: 0.38;
+    stroke-width: 1.1;
+  }
+  50% {
+    opacity: 0.78;
+    stroke-width: 1.8;
+  }
+}
+
+@keyframes probability-label-orbit {
+  0%, 100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -6px;
+  }
+}
+
+.probability-globe {
+  transform-origin: 50% 56%;
+  will-change: transform;
+}
+
+.probability-globe-shell,
+.probability-globe-dots {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.probability-globe-ring {
+  animation: probability-ring-breathe 4.8s ease-in-out infinite;
+}
+
+.probability-map-label {
+  animation: probability-label-orbit 7s ease-in-out infinite;
+}
+
+.probability-map-label:nth-child(2n) {
+  animation-delay: -1.6s;
+}
+
+.probability-map-label:nth-child(3n) {
+  animation-delay: -3.2s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .probability-globe,
+  .probability-globe-dots,
+  .probability-globe-ring,
+  .probability-map-label {
+    animation: none;
+  }
 }

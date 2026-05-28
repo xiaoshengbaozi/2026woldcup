@@ -8,7 +8,7 @@ const navItems = [
   { label: "首页", href: "/", icon: Home },
   { label: "新闻", href: "/news", icon: Newspaper },
   { label: "赛程", href: "/matches", icon: Calendar },
-  { label: "数据", href: "/stats", icon: BarChart3 },
+  { label: "数据", href: "/data", icon: BarChart3 },
 ];
 
 export function MobileNavBar() {
