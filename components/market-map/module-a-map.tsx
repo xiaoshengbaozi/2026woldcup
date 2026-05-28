@@ -508,8 +508,4 @@ export function ModuleA_ProbabilityMap() {
     </section>
   );
 }
-
-      </div>
-    </section>
-  );
-}
+   
