@@ -6,7 +6,6 @@ import { injectMockData } from "@/lib/mock-data";
 import { ModuleD_Ticker } from "@/components/market-ticker/module-d-ticker";
 import { MarketOddsCard } from "@/components/market-ranking/market-odds-card";
 import { ModuleC_OddsTimeline } from "@/components/market-timeline/module-c-timeline";
-import { ModuleA_ProbabilityMap } from "@/components/market-map/module-a-map";
 import { ThreeGlobe } from "@/components/market-map/three-globe";
 import { StatusBar } from "./status-bar";
 import { NavBar } from "@/components/nav-bar";

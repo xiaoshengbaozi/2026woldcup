@@ -1232,6 +1232,18 @@ X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=梅赛德斯-奔驰体育场（�
 END:VEVENT
 BEGIN:VEVENT
 UID:fifa2026-match103@fifa.com
+DTSTART;TZID=Asia/Shanghai:20260719T030000
+DTEND;TZID=Asia/Shanghai:20260719T050000
+SUMMARY:⚽ M101负者 vs M102负者 (三四名决赛)
+DESCRIPTION:2026世界杯 | 三四名决赛 \\nM101负者 vs M102负者\\n📍 硬石体育场（迈阿密）\\n🕐 北京时间: 07月19日 03:00\\n动态天气: https://weather.com/weather/today/l/25.958056%2C-80.238889 \\n系统地图: bingmaps:?cp=25.958056~-80.238889&lvl=16&where=Hard%20Rock%20Stadium%2C%20Miami%20Gardens \\n通用地图: https://www.google.com/maps/search/?api=1&query=25.958056%2C-80.238889 \\n坐标: 25.958056\, -80.238889
+LOCATION:硬石体育场（迈阿密）
+GEO:25.958056;-80.238889
+URL:https://www.google.com/maps/search/?api=1&query=25.958056%2C-80.238889
+X-MICROSOFT-CDO-LOCATION:bingmaps:?cp=25.958056~-80.238889&lvl=16&where=Hard%20Rock%20Stadium%2C%20Miami%20Gardens
+X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=硬石体育场（迈阿密）;X-TITLE=硬石体育场 / 迈阿密体育场:geo:25.958056,-80.238889?q=25.958056,-80.238889
+END:VEVENT
+BEGIN:VEVENT
+UID:fifa2026-match104@fifa.com
 DTSTART;TZID=Asia/Shanghai:20260720T030000
 DTEND;TZID=Asia/Shanghai:20260720T050000
 SUMMARY:⚽ M101胜者 vs M102胜者 (决赛)

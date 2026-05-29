@@ -91,7 +91,7 @@ export function MatchFilters({
         <LayoutToggle layout={layout} onChange={onLayoutChange} />
       </div>
 
-      <div className="grid grid-cols-3 gap-3 sm:flex sm:gap-0">
+      <div className="grid grid-cols-3 gap-3 sm:flex sm:gap-3">
         <TimezoneDropdown value={timezoneOffset} onChange={onTimezoneChange} />
         <StageDropdown value={stage} stages={sorted} onChange={onStageChange} />
         <CityDropdown value={activeCity} cities={cities} onChange={onCityChange} />
@@ -108,11 +108,11 @@ function LayoutToggle({
   onChange: (layout: ScheduleLayout) => void;
 }) {
   return (
-    <div className="glass-chip flex items-center gap-1 p-1">
+    <div className="glass-chip flex shrink-0 items-center overflow-hidden p-1">
       <button
         type="button"
         onClick={() => onChange("default")}
-        className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-all duration-150 ${
+        className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium transition-all duration-150 ${
           layout === "default"
             ? "bg-volt/10 text-volt ring-1 ring-volt/25"
             : "text-white/50 hover:text-white/70"
@@ -124,7 +124,7 @@ function LayoutToggle({
       <button
         type="button"
         onClick={() => onChange("waterfall")}
-        className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-all duration-150 ${
+        className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium transition-all duration-150 ${
           layout === "waterfall"
             ? "bg-volt/10 text-volt ring-1 ring-volt/25"
             : "text-white/50 hover:text-white/70"

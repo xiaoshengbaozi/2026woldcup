@@ -49,24 +49,24 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 const STAGE_LABEL: Record<string, string> = {
-  "小组赛A组": "GROUP A",
-  "小组赛B组": "GROUP B",
-  "小组赛C组": "GROUP C",
-  "小组赛D组": "GROUP D",
-  "小组赛E组": "GROUP E",
-  "小组赛F组": "GROUP F",
-  "小组赛G组": "GROUP G",
-  "小组赛H组": "GROUP H",
-  "小组赛I组": "GROUP I",
-  "小组赛J组": "GROUP J",
-  "小组赛K组": "GROUP K",
-  "小组赛L组": "GROUP L",
-  "1/16决赛": "ROUND OF 32",
-  "1/8决赛": "ROUND OF 16",
-  "1/4决赛": "QUARTER-FINAL",
-  "半决赛": "SEMI-FINAL",
-  "决赛": "FINAL",
-  "三/四名决赛": "3RD PLACE",
+  "小组赛A组": "A 组",
+  "小组赛B组": "B 组",
+  "小组赛C组": "C 组",
+  "小组赛D组": "D 组",
+  "小组赛E组": "E 组",
+  "小组赛F组": "F 组",
+  "小组赛G组": "G 组",
+  "小组赛H组": "H 组",
+  "小组赛I组": "I 组",
+  "小组赛J组": "J 组",
+  "小组赛K组": "K 组",
+  "小组赛L组": "L 组",
+  "1/16决赛": "1/16 决赛",
+  "1/8决赛": "1/8 决赛",
+  "1/4决赛": "1/4 决赛",
+  "半决赛": "半决赛",
+  "决赛": "决赛",
+  "三/四名决赛": "三四名决赛",
 };
 
 const PLAYER_ASSETS: Record<string, { src: string; name: string }> = {
@@ -102,12 +102,32 @@ const PLAYER_ASSETS: Record<string, { src: string; name: string }> = {
 
 const TEAM_ACCENTS: Record<string, { primary: string; secondary: string }> = {
   ARG: { primary: "rgba(80,180,255,0.55)", secondary: "rgba(255,255,255,0.2)" },
-  FRA: { primary: "rgba(38,91,255,0.56)", secondary: "rgba(255,55,72,0.3)" },
+  BEL: { primary: "rgba(230,30,30,0.5)", secondary: "rgba(255,210,0,0.3)" },
   BRA: { primary: "rgba(216,255,62,0.42)", secondary: "rgba(0,190,120,0.28)" },
-  ESP: { primary: "rgba(255,154,31,0.5)", secondary: "rgba(210,30,45,0.32)" },
-  GER: { primary: "rgba(255,255,255,0.28)", secondary: "rgba(216,255,62,0.24)" },
+  CAN: { primary: "rgba(220,30,30,0.48)", secondary: "rgba(255,255,255,0.18)" },
+  COL: { primary: "rgba(255,220,0,0.5)", secondary: "rgba(0,80,200,0.3)" },
+  CRO: { primary: "rgba(220,30,30,0.48)", secondary: "rgba(255,255,255,0.2)" },
+  DEN: { primary: "rgba(200,30,30,0.5)", secondary: "rgba(255,255,255,0.18)" },
+  ECU: { primary: "rgba(255,220,0,0.48)", secondary: "rgba(0,80,200,0.3)" },
+  EGY: { primary: "rgba(200,30,30,0.48)", secondary: "rgba(216,255,62,0.24)" },
   ENG: { primary: "rgba(255,255,255,0.32)", secondary: "rgba(220,40,55,0.28)" },
+  ESP: { primary: "rgba(255,154,31,0.5)", secondary: "rgba(210,30,45,0.32)" },
+  FRA: { primary: "rgba(38,91,255,0.56)", secondary: "rgba(255,55,72,0.3)" },
+  GER: { primary: "rgba(255,255,255,0.28)", secondary: "rgba(216,255,62,0.24)" },
+  JPN: { primary: "rgba(38,91,255,0.5)", secondary: "rgba(255,255,255,0.2)" },
+  KOR: { primary: "rgba(210,30,45,0.5)", secondary: "rgba(0,80,200,0.28)" },
+  MAR: { primary: "rgba(200,30,30,0.5)", secondary: "rgba(0,150,80,0.28)" },
   MEX: { primary: "rgba(0,160,95,0.42)", secondary: "rgba(220,40,55,0.28)" },
+  NED: { primary: "rgba(255,140,0,0.52)", secondary: "rgba(0,80,200,0.25)" },
+  NOR: { primary: "rgba(200,30,30,0.48)", secondary: "rgba(0,80,200,0.25)" },
+  POL: { primary: "rgba(255,255,255,0.3)", secondary: "rgba(200,30,30,0.28)" },
+  POR: { primary: "rgba(0,120,60,0.48)", secondary: "rgba(210,30,45,0.3)" },
+  SEN: { primary: "rgba(0,150,80,0.48)", secondary: "rgba(255,220,0,0.28)" },
+  SRB: { primary: "rgba(200,30,30,0.48)", secondary: "rgba(0,80,200,0.25)" },
+  SUI: { primary: "rgba(220,30,30,0.5)", secondary: "rgba(255,255,255,0.2)" },
+  SWE: { primary: "rgba(0,100,200,0.5)", secondary: "rgba(255,220,0,0.3)" },
+  TUR: { primary: "rgba(220,30,30,0.5)", secondary: "rgba(255,255,255,0.18)" },
+  URU: { primary: "rgba(0,100,200,0.5)", secondary: "rgba(216,255,62,0.24)" },
   USA: { primary: "rgba(35,110,255,0.44)", secondary: "rgba(225,40,60,0.3)" },
 };
 
@@ -143,31 +163,32 @@ export function MatchHero({ detail }: { detail: MatchDetail }) {
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       className="hero-card relative mt-12 min-h-[360px] overflow-visible rounded-[2rem] shadow-none sm:mt-14 sm:min-h-[380px] lg:min-h-[360px]"
     >
-      <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.07),rgba(255,255,255,0.015)_34%,rgba(0,0,0,0.24))]" />
-      <div className="absolute inset-0 opacity-[0.18] [background-image:linear-gradient(rgba(255,255,255,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.09)_1px,transparent_1px)] [background-size:42px_42px]" />
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-volt/35 to-transparent" />
+      <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">
+        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.07),rgba(255,255,255,0.015)_34%,rgba(0,0,0,0.24))]" />
+        <div className="absolute inset-0 opacity-[0.18] [background-image:linear-gradient(rgba(255,255,255,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.09)_1px,transparent_1px)] [background-size:42px_42px]" />
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-volt/35 to-transparent" />
 
-      <PosterWedge side="left" accent={homeAccent} />
-      <PosterWedge side="right" accent={awayAccent} />
-      <div className="pointer-events-none absolute left-1/2 top-12 hidden h-64 w-[520px] -translate-x-1/2 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.13),transparent_68%)] blur-2xl sm:block" />
+        <PosterWedge side="left" accent={homeAccent} />
+        <PosterWedge side="right" accent={awayAccent} />
+        <div className="absolute left-1/2 top-12 hidden h-64 w-[520px] -translate-x-1/2 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.13),transparent_68%)] blur-2xl sm:block" />
+      </div>
 
-      <div className="relative z-10 flex min-h-[360px] flex-col justify-between px-4 pb-0 pt-5 sm:min-h-[380px] sm:px-8 sm:pb-0 sm:pt-7 lg:min-h-[360px]">
-        <div className="flex items-center justify-between gap-3">
-          <span className="glass-chip px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/62">
-            {stageLabel}
-          </span>
-          <div className="flex items-center gap-2">
-            {isLive && (
-              <span className="relative flex h-2 w-2">
-                <span className="live-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+      <div className="relative z-10 flex min-h-[360px] flex-col justify-between pb-0 pt-5 sm:min-h-[380px] sm:pb-0 sm:pt-7 lg:min-h-[360px]">
+        <div className="flex items-center justify-end gap-3">
+          {detail.status !== "not_started" && (
+            <div className="flex items-center gap-2">
+              {isLive && (
+                <span className="relative flex h-2 w-2">
+                  <span className="live-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+                </span>
+              )}
+              <span className={`glass-chip px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] ${statusColor}`}>
+                {statusLabel}
+                {detail.status === "live" && " 63'"}
               </span>
-            )}
-            <span className={`glass-chip px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] ${statusColor}`}>
-              {statusLabel}
-              {detail.status === "live" && " 63'"}
-            </span>
-          </div>
+            </div>
+          )}
         </div>
 
         <div className="relative flex flex-1 items-center justify-center py-6">
@@ -205,6 +226,9 @@ export function MatchHero({ detail }: { detail: MatchDetail }) {
                 </>
               )}
             </div>
+            <span className="glass-chip mt-2 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/62">
+              {stageLabel}
+            </span>
             <div className="mt-3 grid w-[min(100%,560px)] grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-4">
               <MatchupTeam team={teams.home} align="left" />
               <span className="relative z-10 rounded-full bg-white/[0.08] px-4 py-2 text-lg font-black uppercase tracking-[0.08em] text-volt shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_0_24px_rgba(216,255,62,0.16)] ring-1 ring-white/[0.1] sm:px-5 sm:text-xl">
@@ -298,8 +322,8 @@ function PlayerPosterSide({
         <img
           src={player.src}
           alt={player.name}
-          className={`absolute bottom-0 h-[136%] w-auto max-w-none object-contain drop-shadow-[0_18px_28px_rgba(0,0,0,0.42)] ${
-            isRight ? "right-4 scale-x-[-1] origin-bottom-right" : "left-4 origin-bottom-left"
+          className={`absolute bottom-0 h-[125%] w-auto max-w-none object-contain drop-shadow-[0_18px_28px_rgba(0,0,0,0.42)] ${
+            isRight ? "right-0 origin-bottom-right" : "left-0 origin-bottom-left"
           }`}
           loading="eager"
         />

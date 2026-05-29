@@ -3,24 +3,9 @@
 import { useRef, useEffect, useState } from "react";
 import type { CountryData } from "@/types/country";
 import { formatDelta, formatVolume } from "@/lib/format";
+import { getFlagUrl } from "@/lib/world-cup-2026";
 
 // 3-letter → 2-letter country code mapping
-const FLAG_CODE_MAP: Record<string, string> = {
-  MEX: "mx", USA: "us", CAN: "ca", BRA: "br", ARG: "ar", COL: "co",
-  URU: "uy", ECU: "ec", PAR: "py", PER: "pe", CHI: "cl", FRA: "fr",
-  ENG: "gb-eng", ESP: "es", GER: "de", ITA: "it", POR: "pt", NED: "nl",
-  BEL: "be", CRO: "hr", DEN: "dk", SUI: "ch", AUT: "at", SRB: "rs",
-  POL: "pl", UKR: "ua", CZE: "cz", TUR: "tr", JPN: "jp", KOR: "kr",
-  AUS: "au", IRN: "ir", SAU: "sa", QAT: "qa", MAR: "ma", SEN: "sn",
-  NGA: "ng", GHA: "gh", CMR: "cm", TUN: "tn", DZA: "dz", EGY: "eg",
-  CIV: "ci", NZL: "nz", JAM: "jm", HON: "hn", CRC: "cr", PAN: "pa",
-};
-
-function getFlagUrl(code: string): string {
-  const two = FLAG_CODE_MAP[code] ?? code.toLowerCase().slice(0, 2);
-  return `https://flagcdn.com/w80/${two}.png`;
-}
-
 const TOOLTIP_WIDTH = 200;
 const TOOLTIP_HEIGHT = 140;
 const OFFSET = 16;

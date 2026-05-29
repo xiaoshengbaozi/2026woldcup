@@ -6,7 +6,7 @@ import { Home, Calendar, BarChart3, Newspaper } from "lucide-react";
 
 const navItems = [
   { label: "首页", href: "/", icon: Home },
-  { label: "新闻", href: "#", icon: Newspaper },
+  { label: "新闻", href: "/news", icon: Newspaper },
   { label: "赛程", href: "/matches", icon: Calendar },
   { label: "数据", href: "/data", icon: BarChart3 },
 ];

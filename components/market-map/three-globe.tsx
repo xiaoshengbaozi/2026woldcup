@@ -3,24 +3,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useStore } from "@/lib/store";
+import { getFlagUrl } from "@/lib/world-cup-2026";
 
 /* ── flag helpers ── */
-const FLAG_CODE_MAP: Record<string, string> = {
-  MEX: "mx", USA: "us", CAN: "ca", BRA: "br", ARG: "ar", COL: "co",
-  URU: "uy", ECU: "ec", PAR: "py", PER: "pe", CHI: "cl", FRA: "fr",
-  ENG: "gb-eng", ESP: "es", GER: "de", ITA: "it", POR: "pt", NED: "nl",
-  BEL: "be", CRO: "hr", DEN: "dk", SUI: "ch", AUT: "at", SRB: "rs",
-  POL: "pl", UKR: "ua", CZE: "cz", TUR: "tr", JPN: "jp", KOR: "kr",
-  AUS: "au", IRN: "ir", SAU: "sa", QAT: "qa", MAR: "ma", SEN: "sn",
-  NGA: "ng", GHA: "gh", CMR: "cm", TUN: "tn", DZA: "dz", EGY: "eg",
-  CIV: "ci", NZL: "nz", JAM: "jm", HON: "hn", CRC: "cr", PAN: "pa",
-};
-
-function getFlagUrl(code: string): string {
-  const flagCode = FLAG_CODE_MAP[code] ?? code.toLowerCase().slice(0, 2);
-  return `https://flagcdn.com/w80/${flagCode}.png`;
-}
-
 /* ── constants ── */
 const GLOBE_RADIUS = 278;
 const CAMERA_Z = 820;
@@ -304,12 +289,20 @@ function ll2v(lon: number, lat: number, r: number): THREE.Vector3 {
   );
 }
 
+function lonLatToFocusRotation(lon: number, lat: number) {
+  return {
+    y: -toRad(lon + 90),
+    x: toRad(lat),
+  };
+}
+
 /* ── component ── */
 export function ThreeGlobe() {
   const countries = useStore((s) => s.countries);
   const selectCountry = useStore((s) => s.selectCountry);
   const selectedCountry = useStore((s) => s.selectedCountry);
   const hoveredCountry = useStore((s) => s.hoveredCountry);
+  const focusCountryCode = hoveredCountry ?? selectedCountry;
 
   const wrapRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -320,33 +313,41 @@ export function ThreeGlobe() {
   const clockRef = useRef(new THREE.Clock());
   const dragRef = useRef({ on: false, lx: 0, ly: 0 });
   const autoRotRef = useRef(0);
-  const selectedCountryRef = useRef(selectedCountry);
-  selectedCountryRef.current = selectedCountry;
   const targetRef = useRef<{ y: number; x: number; s: number } | null>(null);
+  const labelHoverRef = useRef(false);
 
   const [labels, setLabels] = useState<
     Array<{ code: string; name: string; prob: number; sx: number; sy: number; vis: boolean }>
   >([]);
+  const [hoveredLabelCode, setHoveredLabelCode] = useState<string | null>(null);
+  const expandedCountryCode = hoveredLabelCode ?? focusCountryCode;
 
   const focusTarget = useMemo(() => {
-    const code = hoveredCountry ?? selectedCountry;
-    if (!code) return null;
-    const c = countries.get(code);
+    if (!focusCountryCode) return null;
+    const c = countries.get(focusCountryCode);
     if (!c) return null;
     return {
       lon: c.centroid[0],
       lat: Math.max(-60, Math.min(65, c.centroid[1])),
       scale: 1.9,
     };
-  }, [countries, hoveredCountry, selectedCountry]);
+  }, [focusCountryCode, countries]);
 
-  const topCountries = useMemo(
-    () => Array.from(countries.values()).sort((a, b) => b.impliedProbability - a.impliedProbability).slice(0, 18),
-    [countries]
-  );
+  const labelCountries = useMemo(() => {
+    const ranked = Array.from(countries.values())
+      .sort((a, b) => b.impliedProbability - a.impliedProbability)
+      .slice(0, 18);
 
-  const topRef = useRef(topCountries);
-  topRef.current = topCountries;
+    if (!expandedCountryCode || ranked.some((country) => country.countryCode === expandedCountryCode)) {
+      return ranked;
+    }
+
+    const activeCountry = countries.get(expandedCountryCode);
+    return activeCountry ? [...ranked, activeCountry] : ranked;
+  }, [countries, expandedCountryCode]);
+
+  const topRef = useRef(labelCountries);
+  topRef.current = labelCountries;
 
   useEffect(() => {
     const el = wrapRef.current;
@@ -520,7 +521,7 @@ export function ThreeGlobe() {
       rafRef.current = requestAnimationFrame(tick);
       const dt = clockRef.current.getDelta();
 
-      if (!targetRef.current && !dragRef.current.on) {
+      if (!targetRef.current && !dragRef.current.on && !labelHoverRef.current) {
         autoRotRef.current += dt;
         if (autoRotRef.current > 1.5) {
           const elapsed = autoRotRef.current - 1.5;
@@ -554,7 +555,6 @@ export function ThreeGlobe() {
         const cw = el.clientWidth;
         const ch = el.clientHeight;
         const v = new THREE.Vector3();
-        const code = (hoveredCountry ?? selectedCountryRef.current);
         setLabels(
           topRef.current.map((c) => {
             v.copy(ll2v(c.centroid[0], c.centroid[1], GLOBE_RADIUS + 6));
@@ -565,9 +565,6 @@ export function ThreeGlobe() {
             v.project(camera);
             const sx = ((v.x + 1) / 2) * cw;
             const sy = ((-v.y + 1) / 2) * ch;
-            if (c.countryCode === code && labelFrame % 30 === 0) {
-              console.log(`[Label] ${c.countryCode} sx=${sx.toFixed(0)} sy=${sy.toFixed(0)} vis=${facing} globeRotY=${globe.rotation.y.toFixed(3)} globeRotX=${globe.rotation.x.toFixed(3)}`);
-            }
             return {
               code: c.countryCode,
               name: c.countryName,
@@ -596,8 +593,7 @@ export function ThreeGlobe() {
 
   useEffect(() => {
     if (focusTarget) {
-      const y = -toRad(focusTarget.lon);
-      const x = toRad(focusTarget.lat);
+      const { y, x } = lonLatToFocusRotation(focusTarget.lon, focusTarget.lat);
       targetRef.current = { y, x, s: focusTarget.scale };
       autoRotRef.current = 0;
     } else {
@@ -609,6 +605,14 @@ export function ThreeGlobe() {
     (code: string) => selectCountry(code, "map"),
     [selectCountry]
   );
+
+  const onLabelHover = useCallback((code: string | null) => {
+    labelHoverRef.current = Boolean(code);
+    setHoveredLabelCode(code);
+    if (code) {
+      autoRotRef.current = 0;
+    }
+  }, []);
 
   return (
     <section className="relative h-full min-h-0 overflow-hidden">
@@ -623,19 +627,25 @@ export function ThreeGlobe() {
 
         {labels.map((l) => {
           const sel = selectedCountry === l.code;
+          const isActive = expandedCountryCode === l.code;
           return (
             <button
               key={l.code}
               type="button"
+              onPointerDown={(event) => event.stopPropagation()}
+              onPointerEnter={() => onLabelHover(l.code)}
+              onPointerLeave={() => onLabelHover(null)}
+              onFocus={() => onLabelHover(l.code)}
+              onBlur={() => onLabelHover(null)}
               onClick={() => onLabelClick(l.code)}
-              className={`probability-map-label absolute flex h-[30px] w-max -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full border bg-[rgba(8,12,12,0.82)] px-2.5 py-1.5 text-xs font-bold text-white/90 shadow-[0_12px_30px_rgba(0,0,0,0.4)] backdrop-blur-2xl transition hover:bg-white/[0.1] ${
+              className={`probability-map-label absolute flex h-[30px] w-max -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full border bg-[rgba(8,12,12,0.82)] px-2.5 py-1.5 text-xs font-bold text-white/90 shadow-[0_12px_30px_rgba(0,0,0,0.4)] backdrop-blur-2xl transition-all duration-200 hover:bg-white/[0.1] ${
                 l.vis ? "border-white/[0.08] pointer-events-auto" : "border-transparent pointer-events-none"
               }`}
               style={{
                 left: l.sx,
                 top: l.sy,
                 opacity: l.vis ? 1 : 0,
-                boxShadow: sel ? "0 0 0 2px rgba(216,255,62,0.18), 0 0 24px rgba(216,255,62,0.18)" : undefined,
+                boxShadow: isActive || sel ? "0 0 0 2px rgba(216,255,62,0.18), 0 0 24px rgba(216,255,62,0.18)" : undefined,
               }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -645,6 +655,11 @@ export function ThreeGlobe() {
                 className="h-4 w-5 rounded-sm object-cover"
                 loading="lazy"
               />
+              {isActive && (
+                <span className="max-w-[112px] truncate text-white">
+                  {l.name}
+                </span>
+              )}
               <span>{l.prob > 0 && l.prob < 1 ? "<1%" : `${Math.round(l.prob)}%`}</span>
             </button>
           );

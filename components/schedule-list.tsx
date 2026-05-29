@@ -92,14 +92,10 @@ function DayCard({ day, matches, index, timezoneOffset }: DayCardProps) {
       }}
       className="hero-card overflow-hidden p-2.5 sm:p-3"
     >
-      <div className="mb-2 flex items-center justify-between gap-2">
+      <div className="mb-2 flex items-center justify-center gap-2">
         <h2 className="text-sm font-medium text-white sm:text-base">
           {formatDate(firstStart)}
         </h2>
-        <div className="glass-chip flex items-center gap-1.5 px-2 py-1 text-[10px] text-white/55 sm:text-xs">
-          <Clock className="h-3 w-3 text-flare sm:h-3.5 sm:w-3.5" />
-          {getDayStatus(matches)}
-        </div>
       </div>
 
       <div className="flex flex-col gap-0">
