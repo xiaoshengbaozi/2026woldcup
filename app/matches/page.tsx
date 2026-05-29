@@ -8,11 +8,14 @@ import { ScheduleList } from "@/components/schedule-list";
 import { groupMatchesByDay } from "@/lib/calendar";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
 
+export type ScheduleLayout = "default" | "waterfall";
+
 export default function MatchesPage() {
   const { matches, activeCity, setActiveCity, cities, loading, error } = useWorldCupData();
   const [query, setQuery] = useState("");
   const [stage, setStage] = useState("");
   const [timezoneOffset, setTimezoneOffset] = useState(0);
+  const [layout, setLayout] = useState<ScheduleLayout>("default");
 
   const stages = useMemo(
     () => [...new Set(matches.map((match) => match.stage))],
@@ -76,10 +79,12 @@ export default function MatchesPage() {
         activeCity={activeCity}
         cities={cities}
         timezoneOffset={timezoneOffset}
+        layout={layout}
         onQueryChange={setQuery}
         onStageChange={setStage}
         onCityChange={setActiveCity}
         onTimezoneChange={setTimezoneOffset}
+        onLayoutChange={setLayout}
       />
 
       <ScheduleList
@@ -88,6 +93,7 @@ export default function MatchesPage() {
         error={error}
         isEmpty={!loading && !error && !filteredMatches.length}
         timezoneOffset={timezoneOffset}
+        layout={layout}
       />
     </DashboardShell>
   );

@@ -1,8 +1,9 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, Clock, Layers, MapPin, Search } from "lucide-react";
+import { ChevronDown, Clock, Grid3X3, Layers, LayoutList, MapPin, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import type { ScheduleLayout } from "@/app/matches/page";
 
 type Timezone = {
   label: string;
@@ -24,10 +25,12 @@ type MatchFiltersProps = {
   activeCity: string;
   cities: string[];
   timezoneOffset: number;
+  layout: ScheduleLayout;
   onQueryChange: (value: string) => void;
   onStageChange: (value: string) => void;
   onCityChange: (value: string) => void;
   onTimezoneChange: (offset: number) => void;
+  onLayoutChange: (layout: ScheduleLayout) => void;
 };
 
 function formatStageLabel(stage: string): string {
@@ -39,13 +42,11 @@ function formatStageLabel(stage: string): string {
 function stageRank(stage: string) {
   const group = stage.match(/Group ([A-L])$/);
   if (group) return group[1].charCodeAt(0) - 64;
-
   if (stage.includes("1/16")) return 13;
   if (stage.includes("1/8")) return 14;
   if (stage.includes("1/4")) return 15;
   if (stage.includes("半决赛")) return 16;
   if (stage.includes("决赛")) return 17;
-
   return 99;
 }
 
@@ -60,10 +61,12 @@ export function MatchFilters({
   activeCity,
   cities,
   timezoneOffset,
+  layout,
   onQueryChange,
   onStageChange,
   onCityChange,
-  onTimezoneChange
+  onTimezoneChange,
+  onLayoutChange
 }: MatchFiltersProps) {
   const sorted = sortStages(stages);
 
@@ -72,35 +75,65 @@ export function MatchFilters({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.08, duration: 0.65 }}
-      className="relative z-20 grid grid-cols-3 gap-3 md:grid-cols-[1fr_200px_200px_200px]"
+      className="relative z-20 space-y-3 sm:space-y-0 sm:flex sm:flex-wrap sm:items-center sm:gap-3"
     >
-      <label className="glass-chip col-span-3 flex min-h-14 items-center gap-3 px-5 text-white/70 transition focus-within:text-white md:col-span-1">
+      <label className="glass-chip flex h-10 w-full items-center gap-3 px-5 text-white/70 transition focus-within:text-white sm:flex-1">
         <Search className="h-5 w-5 shrink-0 text-volt/80" />
         <input
           value={query}
           onChange={(event) => onQueryChange(event.target.value)}
           placeholder="搜索球队、场馆、城市或比赛"
-          className="w-full bg-transparent text-base text-white outline-none placeholder:text-white/35"
+          className="w-full bg-transparent text-xs text-white outline-none placeholder:text-white/35"
         />
       </label>
 
-      <TimezoneDropdown
-        value={timezoneOffset}
-        onChange={onTimezoneChange}
-      />
+      <div className="hidden sm:block">
+        <LayoutToggle layout={layout} onChange={onLayoutChange} />
+      </div>
 
-      <StageDropdown
-        value={stage}
-        stages={sorted}
-        onChange={onStageChange}
-      />
-
-      <CityDropdown
-        value={activeCity}
-        cities={cities}
-        onChange={onCityChange}
-      />
+      <div className="grid grid-cols-3 gap-3 sm:flex sm:gap-0">
+        <TimezoneDropdown value={timezoneOffset} onChange={onTimezoneChange} />
+        <StageDropdown value={stage} stages={sorted} onChange={onStageChange} />
+        <CityDropdown value={activeCity} cities={cities} onChange={onCityChange} />
+      </div>
     </motion.section>
+  );
+}
+
+function LayoutToggle({
+  layout,
+  onChange
+}: {
+  layout: ScheduleLayout;
+  onChange: (layout: ScheduleLayout) => void;
+}) {
+  return (
+    <div className="glass-chip flex items-center gap-1 p-1">
+      <button
+        type="button"
+        onClick={() => onChange("default")}
+        className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-all duration-150 ${
+          layout === "default"
+            ? "bg-volt/10 text-volt ring-1 ring-volt/25"
+            : "text-white/50 hover:text-white/70"
+        }`}
+      >
+        <LayoutList className="h-4 w-4" />
+        <span>默认</span>
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange("waterfall")}
+        className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-all duration-150 ${
+          layout === "waterfall"
+            ? "bg-volt/10 text-volt ring-1 ring-volt/25"
+            : "text-white/50 hover:text-white/70"
+        }`}
+      >
+        <Grid3X3 className="h-4 w-4" />
+        <span>瀑布流</span>
+      </button>
+    </div>
   );
 }
 
@@ -130,16 +163,13 @@ function TimezoneDropdown({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className={`glass-chip flex min-h-14 w-full items-center justify-between gap-1.5 px-3 text-left transition sm:gap-2 sm:px-5 ${
+        className={`glass-chip flex h-10 w-full items-center justify-between gap-1.5 px-3 text-left transition sm:gap-2 sm:px-5 ${
           open ? "text-volt ring-1 ring-volt/25" : "text-white/78 hover:text-white"
         }`}
       >
         <Clock className="h-4 w-4 shrink-0 text-volt/80" />
-        <span className="truncate text-sm">{tzName}</span>
-        <motion.span
-          animate={{ rotate: open ? 180 : 0 }}
-          transition={{ duration: 0.2 }}
-        >
+        <span className="truncate text-xs">{tzName}</span>
+        <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
           <ChevronDown className="h-4 w-4 shrink-0" />
         </motion.span>
       </button>
@@ -154,21 +184,21 @@ function TimezoneDropdown({
             className="absolute left-0 top-full z-50 mt-2 w-full min-w-[180px] overflow-hidden rounded-2xl bg-black/90 shadow-[0_24px_64px_rgba(0,0,0,.7),0_0_0_1px_rgba(255,255,255,.08)] backdrop-blur-xl sm:left-auto sm:right-0"
           >
             <div className="divide-y divide-white/[0.04]">
-            {timezones.map((tz) => (
-              <button
-                key={tz.label}
-                type="button"
-                onClick={() => { onChange(tz.offset); setOpen(false); }}
-                className={`flex w-full items-center gap-3 px-5 py-3 text-sm transition-all duration-150 ${
-                  value === tz.offset
-                    ? "bg-volt/[0.06] text-volt font-medium"
-                    : "text-white/60 hover:bg-white/[0.03] hover:text-white/90"
-                }`}
-              >
-                <span className="truncate">{tz.label}</span>
-                {value === tz.offset && <span className="ml-auto shrink-0 text-volt">✓</span>}
-              </button>
-            ))}
+              {timezones.map((tz) => (
+                <button
+                  key={tz.label}
+                  type="button"
+                  onClick={() => { onChange(tz.offset); setOpen(false); }}
+                  className={`flex w-full items-center gap-3 px-5 py-3 text-sm transition-all duration-150 ${
+                    value === tz.offset
+                      ? "bg-volt/[0.06] text-volt font-medium"
+                      : "text-white/60 hover:bg-white/[0.03] hover:text-white/90"
+                  }`}
+                >
+                  <span className="truncate">{tz.label}</span>
+                  {value === tz.offset && <span className="ml-auto shrink-0 text-volt">✓</span>}
+                </button>
+              ))}
             </div>
           </motion.div>
         )}
@@ -204,16 +234,13 @@ function StageDropdown({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className={`glass-chip flex min-h-14 w-full items-center justify-between gap-1.5 px-3 text-left transition sm:gap-2 sm:px-5 ${
+        className={`glass-chip flex h-10 w-full items-center justify-between gap-1.5 px-3 text-left transition sm:gap-2 sm:px-5 ${
           open ? "text-volt ring-1 ring-volt/25" : "text-white/78 hover:text-white"
         }`}
       >
         <Layers className="h-4 w-4 shrink-0 text-volt/80" />
-        <span className="truncate text-sm">{label}</span>
-        <motion.span
-          animate={{ rotate: open ? 180 : 0 }}
-          transition={{ duration: 0.2 }}
-        >
+        <span className="truncate text-xs">{label}</span>
+        <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
           <ChevronDown className="h-4 w-4 shrink-0" />
         </motion.span>
       </button>
@@ -287,16 +314,13 @@ function CityDropdown({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className={`glass-chip flex min-h-14 w-full items-center justify-between gap-1.5 px-3 text-left transition sm:gap-2 sm:px-5 ${
+        className={`glass-chip flex h-10 w-full items-center justify-between gap-1.5 px-3 text-left transition sm:gap-2 sm:px-5 ${
           open ? "text-volt ring-1 ring-volt/25" : "text-white/78 hover:text-white"
         }`}
       >
         <MapPin className="h-4 w-4 shrink-0 text-volt/80" />
-        <span className="truncate text-sm">{label}</span>
-        <motion.span
-          animate={{ rotate: open ? 180 : 0 }}
-          transition={{ duration: 0.2 }}
-        >
+        <span className="truncate text-xs">{label}</span>
+        <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
           <ChevronDown className="h-4 w-4 shrink-0" />
         </motion.span>
       </button>

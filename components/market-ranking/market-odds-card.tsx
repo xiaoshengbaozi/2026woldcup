@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Trophy } from "lucide-react";
 import { useStore } from "@/lib/store";
-import { formatVolume } from "@/lib/format";
 
 const FLAG_CODE_MAP: Record<string, string> = {
   MEX: "mx", USA: "us", CAN: "ca", BRA: "br", ARG: "ar", COL: "co",
@@ -53,8 +52,6 @@ export function MarketOddsCard() {
 
   const maxProbability = Math.max(1, sortedCountries[0]?.impliedProbability ?? 1);
   const filteredCountries = sortedCountries;
-
-  const totalVolume = filteredCountries.reduce((sum, country) => sum + country.volume24h, 0);
 
   return (
     <section
@@ -143,11 +140,6 @@ export function MarketOddsCard() {
             );
           })}
         </div>
-      </div>
-
-      <div className="relative z-10 flex items-center justify-between border-t border-white/[0.06] px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/36">
-        <span>24H 总成交</span>
-        <span className="text-white/54">{formatVolume(totalVolume)}</span>
       </div>
     </section>
   );

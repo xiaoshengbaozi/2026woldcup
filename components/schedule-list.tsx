@@ -1,9 +1,11 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Clock } from "lucide-react";
 import { MatchCard } from "@/components/match-card";
+import { MatchCardCompact } from "@/components/match-card-compact";
 import { getDayStatus } from "@/lib/calendar";
 import { formatDate } from "@/lib/format";
 import type { Match } from "@/types/match";
+import type { ScheduleLayout } from "@/app/matches/page";
 
 type DaySectionProps = {
   day: string;
@@ -68,12 +70,62 @@ export function DaySection({ day, matches, index, timezoneOffset }: DaySectionPr
   );
 }
 
+type DayCardProps = {
+  day: string;
+  matches: Match[];
+  index: number;
+  timezoneOffset: number;
+};
+
+function DayCard({ day, matches, index, timezoneOffset }: DayCardProps) {
+  const firstStart = new Date(matches[0].start.getTime() + timezoneOffset * 3600000);
+
+  return (
+    <motion.section
+      layout
+      initial={{ opacity: 0, y: 16, filter: "blur(12px)" }}
+      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      exit={{ opacity: 0, y: -8, filter: "blur(10px)" }}
+      transition={{
+        delay: Math.min(index * 0.025, 0.22),
+        duration: 0.45
+      }}
+      className="hero-card overflow-hidden p-2.5 sm:p-3"
+    >
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <h2 className="text-sm font-medium text-white sm:text-base">
+          {formatDate(firstStart)}
+        </h2>
+        <div className="glass-chip flex items-center gap-1.5 px-2 py-1 text-[10px] text-white/55 sm:text-xs">
+          <Clock className="h-3 w-3 text-flare sm:h-3.5 sm:w-3.5" />
+          {getDayStatus(matches)}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-0">
+        {matches.map((match, i) => (
+          <div key={match.uid}>
+            {i > 0 && (
+              <div className="h-px w-full bg-gradient-to-r from-transparent via-white/[0.05] to-transparent my-1.5 md:my-2" />
+            )}
+            <MatchCardCompact
+              match={match}
+              timezoneOffset={timezoneOffset}
+            />
+          </div>
+        ))}
+      </div>
+    </motion.section>
+  );
+}
+
 type ScheduleListProps = {
   grouped: Map<string, Match[]>;
   loading: boolean;
   error: string;
   isEmpty: boolean;
   timezoneOffset: number;
+  layout: ScheduleLayout;
 };
 
 export function ScheduleList({
@@ -81,8 +133,11 @@ export function ScheduleList({
   loading,
   error,
   isEmpty,
-  timezoneOffset
+  timezoneOffset,
+  layout
 }: ScheduleListProps) {
+  const days = [...grouped.entries()];
+
   return (
     <main className="space-y-5">
       {loading && (
@@ -103,17 +158,33 @@ export function ScheduleList({
         </div>
       )}
 
-      <AnimatePresence mode="popLayout">
-        {[...grouped.entries()].map(([day, dayMatches], index) => (
-          <DaySection
-            key={day}
-            day={day}
-            matches={dayMatches}
-            index={index}
-            timezoneOffset={timezoneOffset}
-          />
-        ))}
-      </AnimatePresence>
+      {layout === "default" && (
+        <AnimatePresence mode="popLayout">
+          {days.map(([day, dayMatches], index) => (
+            <DaySection
+              key={day}
+              day={day}
+              matches={dayMatches}
+              index={index}
+              timezoneOffset={timezoneOffset}
+            />
+          ))}
+        </AnimatePresence>
+      )}
+
+      {layout === "waterfall" && (
+        <div className="grid grid-cols-1 gap-2 sm:gap-3 md:grid-cols-2 lg:grid-cols-3">
+          {days.map(([day, dayMatches], index) => (
+            <DayCard
+              key={day}
+              day={day}
+              matches={dayMatches}
+              index={index}
+              timezoneOffset={timezoneOffset}
+            />
+          ))}
+        </div>
+      )}
     </main>
   );
 }

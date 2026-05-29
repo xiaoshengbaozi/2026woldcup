@@ -320,6 +320,8 @@ export function ThreeGlobe() {
   const clockRef = useRef(new THREE.Clock());
   const dragRef = useRef({ on: false, lx: 0, ly: 0 });
   const autoRotRef = useRef(0);
+  const selectedCountryRef = useRef(selectedCountry);
+  selectedCountryRef.current = selectedCountry;
   const targetRef = useRef<{ y: number; x: number; s: number } | null>(null);
 
   const [labels, setLabels] = useState<
@@ -334,7 +336,7 @@ export function ThreeGlobe() {
     return {
       lon: c.centroid[0],
       lat: Math.max(-60, Math.min(65, c.centroid[1])),
-      scale: hoveredCountry ? 1.9 : 1.5,
+      scale: 1.9,
     };
   }, [countries, hoveredCountry, selectedCountry]);
 
@@ -421,9 +423,9 @@ export function ThreeGlobe() {
         const nz = tmp.z / GLOBE_RADIUS;
         const depth = Math.max(0, Math.min(1, (nz + 1) * 0.5));
         depthArr[i] = depth;
-        sz[i] = 6.4 + hash21(i, 0) * 1.6;
+        sz[i] = 6.0 + hash21(i, 0) * 0.8;
         col[i * 3] = 0.28; col[i * 3 + 1] = 0.45; col[i * 3 + 2] = 0.58;
-        al[i] = 0.06 + depth * 0.12;
+        al[i] = 0.10 + depth * 0.08;
       });
       const g = new THREE.BufferGeometry();
       g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
@@ -453,15 +455,15 @@ export function ThreeGlobe() {
         depthArr[i] = depth;
         const n1 = fbm(d.lon * 0.05, d.lat * 0.05, 2);
         const n2 = hash21(Math.floor(d.lon * 3), Math.floor(d.lat * 3));
-        const sizeBase = 8.8 + depth * 7.2;
-        const sizeNoise = (n1 - 0.5) * 4.8 + (n2 - 0.5) * 2.4;
-        sz[i] = Math.max(5.6, sizeBase + sizeNoise);
-        const hueShift = (n2 - 0.5) * 0.08;
+        const sizeBase = 9.6 + depth * 4.0;
+        const sizeNoise = (n1 - 0.5) * 1.6 + (n2 - 0.5) * 1.0;
+        sz[i] = Math.max(7.0, sizeBase + sizeNoise);
+        const hueShift = (n2 - 0.5) * 0.04;
         const t = depth;
         col[i * 3] = 0.48 + t * 0.44 + hueShift;
         col[i * 3 + 1] = 0.82 + t * 0.18 - hueShift * 0.5;
         col[i * 3 + 2] = 0.08 + t * 0.14;
-        al[i] = 0.18 + depth * 0.62 + (n2 - 0.5) * 0.08;
+        al[i] = 0.40 + depth * 0.45 + (n2 - 0.5) * 0.04;
       });
       const g = new THREE.BufferGeometry();
       g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
@@ -485,7 +487,7 @@ export function ThreeGlobe() {
       const dy = e.clientY - dragRef.current.ly;
       dragRef.current.lx = e.clientX;
       dragRef.current.ly = e.clientY;
-      globe.rotation.y -= dx * 0.005;
+      globe.rotation.y += dx * 0.005;
       globe.rotation.x += dy * 0.005;
       globe.rotation.x = Math.max(-1.2, Math.min(1.2, globe.rotation.x));
       autoRotRef.current = 0;
@@ -496,8 +498,6 @@ export function ThreeGlobe() {
     };
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      const s = Math.max(0.6, Math.min(2.5, globe.scale.x - e.deltaY * 0.001));
-      globe.scale.setScalar(s);
     };
 
     el.addEventListener("pointerdown", onDown);
@@ -554,6 +554,7 @@ export function ThreeGlobe() {
         const cw = el.clientWidth;
         const ch = el.clientHeight;
         const v = new THREE.Vector3();
+        const code = (hoveredCountry ?? selectedCountryRef.current);
         setLabels(
           topRef.current.map((c) => {
             v.copy(ll2v(c.centroid[0], c.centroid[1], GLOBE_RADIUS + 6));
@@ -562,12 +563,17 @@ export function ThreeGlobe() {
             const toCamera = camera.position.clone().sub(v).normalize();
             const facing = normal.dot(toCamera) > 0.2;
             v.project(camera);
+            const sx = ((v.x + 1) / 2) * cw;
+            const sy = ((-v.y + 1) / 2) * ch;
+            if (c.countryCode === code && labelFrame % 30 === 0) {
+              console.log(`[Label] ${c.countryCode} sx=${sx.toFixed(0)} sy=${sy.toFixed(0)} vis=${facing} globeRotY=${globe.rotation.y.toFixed(3)} globeRotX=${globe.rotation.x.toFixed(3)}`);
+            }
             return {
               code: c.countryCode,
               name: c.countryName,
               prob: c.impliedProbability,
-              sx: ((v.x + 1) / 2) * cw,
-              sy: ((-v.y + 1) / 2) * ch,
+              sx,
+              sy,
               vis: facing && v.z < 1 && v.z > -1,
             };
           })

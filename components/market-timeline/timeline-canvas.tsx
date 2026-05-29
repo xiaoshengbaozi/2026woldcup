@@ -4,6 +4,11 @@ import { useRef, useEffect, useCallback } from "react";
 import { useStore } from "@/lib/store";
 import type { HistoryPoint } from "@/types/country";
 
+interface LineGeometry {
+  code: string;
+  screenPoints: Array<{ x: number; y: number }>;
+}
+
 const LINE_COLORS = [
   "#d8ff3e", "#FF6B35", "#00E676", "#FFD700", "#FF1744",
   "#7B9E4A", "#C0C0C0", "#CD7F32", "#4A7FB5", "#2563C7",
@@ -18,7 +23,9 @@ export function TimelineCanvas({ size }: { size: CanvasSize }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const history = useStore((s) => s.history);
   const selectedCountry = useStore((s) => s.selectedCountry);
+  const selectCountry = useStore((s) => s.selectCountry);
   const activeTimePreset = useStore((s) => s.activeTimePreset);
+  const lineGeosRef = useRef<LineGeometry[]>([]);
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -98,6 +105,7 @@ export function TimelineCanvas({ size }: { size: CanvasSize }) {
     drawGrid(ctx, padding, chartW, chartH, tMin, tMax, pMin, pMax);
 
     // Lines with glow
+    const lineGeos: LineGeometry[] = [];
     entries.forEach((entry, i) => {
       const color = LINE_COLORS[i % LINE_COLORS.length];
       const points = entry.data
@@ -105,6 +113,8 @@ export function TimelineCanvas({ size }: { size: CanvasSize }) {
         .map((pt) => ({ x: toX(pt.timestamp), y: toY(pt.probability) }));
 
       if (points.length < 2) return;
+
+      lineGeos.push({ code: entry.code, screenPoints: points });
 
       // Glow
       ctx.save();
@@ -120,12 +130,50 @@ export function TimelineCanvas({ size }: { size: CanvasSize }) {
       ctx.lineWidth = 1.5;
       drawSmoothLine(ctx, points);
     });
+
+    lineGeosRef.current = lineGeos;
   }, [size, history, selectedCountry, activeTimePreset]);
 
   useEffect(() => { draw(); }, [draw]);
 
+  const handleClick = useCallback(
+    (e: React.MouseEvent<HTMLCanvasElement>) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+
+      const geos = lineGeosRef.current;
+      let bestCode: string | null = null;
+      let bestDist = Infinity;
+
+      for (const geo of geos) {
+        for (const pt of geo.screenPoints) {
+          const dx = mx - pt.x;
+          const dy = my - pt.y;
+          const dist = dx * dx + dy * dy;
+          if (dist < bestDist) {
+            bestDist = dist;
+            bestCode = geo.code;
+          }
+        }
+      }
+
+      if (bestCode && bestDist < 400) {
+        selectCountry(bestCode, "timeline");
+      }
+    },
+    [selectCountry]
+  );
+
   return (
-    <canvas ref={canvasRef} style={{ width: size.width, height: size.height }} className="block" />
+    <canvas
+      ref={canvasRef}
+      style={{ width: size.width, height: size.height }}
+      className="block cursor-crosshair"
+      onClick={handleClick}
+    />
   );
 }
 
