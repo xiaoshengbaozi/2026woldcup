@@ -3,6 +3,7 @@
 import { useStore } from "@/lib/store";
 import type { TimePreset } from "@/lib/store/history";
 import { TrendingUp } from "lucide-react";
+import { localizeTeamName } from "@/lib/team-localization";
 import { getFlagUrl } from "@/lib/world-cup-2026";
 
 const PRESETS: TimePreset[] = ["1H", "24H", "7D", "30D"];
@@ -40,7 +41,7 @@ export function TimelineHeader() {
               className="h-3 w-4 shrink-0 rounded object-cover"
               loading="lazy"
             />
-            {country.countryName}
+            {localizeTeamName(country.countryName, country.countryCode)}
             <span className="ml-1 opacity-50">x</span>
           </button>
         )}

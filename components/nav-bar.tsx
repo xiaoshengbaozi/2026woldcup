@@ -16,12 +16,12 @@ export function NavBar() {
 
   return (
     <nav className="hero-shell hidden min-h-20 items-center justify-between gap-4 px-5 py-4 sm:px-7 lg:flex" style={{ borderRadius: "1.2rem" }}>
-      <Link href="/" className="flex items-center gap-3">
+      <Link href="/" className="group flex items-center gap-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/2026_FIFA_World_Cup_emblem.svg"
-          alt="FIFA World Cup 2026 emblem"
-          className="h-11 w-11 object-contain drop-shadow-[0_0_12px_rgba(216,255,62,.35)]"
+          src="https://digitalhub.fifa.com/transform/157d23bf-7e13-4d7b-949e-5d27d340987e/WC26_Logo?&io=transform:fill&quality=75"
+          alt="FIFA World Cup 2026"
+          className="h-11 w-11 object-contain drop-shadow-[0_10px_24px_rgba(0,0,0,.5)] transition duration-300 group-hover:drop-shadow-[0_0_18px_rgba(216,255,62,.32)]"
         />
         <div className="leading-tight">
           {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useStore } from "@/lib/store";
+import { localizeTeamName } from "@/lib/team-localization";
 import { getFlagUrl } from "@/lib/world-cup-2026";
 import { CAMERA_Z, GLOBE_RADIUS } from "./three-globe/constants";
 import { ll2v, lonLatToFocusRotation } from "./three-globe/geo";
@@ -228,7 +229,7 @@ export function ThreeGlobe() {
           const sy = ((-v.y + 1) / 2) * ch;
           return {
             code: c.countryCode,
-            name: c.countryName,
+            name: localizeTeamName(c.countryName, c.countryCode),
             prob: c.impliedProbability,
             sx,
             sy,

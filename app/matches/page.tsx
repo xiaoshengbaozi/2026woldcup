@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
-import { MatchesHeader } from "@/components/matches-header";
-import { MatchFilters } from "@/components/match-filters";
+import { LiveMatchesStrip } from "@/components/live-matches-strip";
+import { getCityFilterGroup, getStageFilterGroup, MatchFilters, readFilterGroupValue } from "@/components/match-filters";
 import { MatchStats } from "@/components/match-stats";
 import { ScheduleList } from "@/components/schedule-list";
 import { extractCity, groupMatchesByDay } from "@/lib/calendar";
@@ -26,6 +26,8 @@ export default function MatchesPage() {
 
   const filteredMatches = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
+    const stageGroup = readFilterGroupValue(stage);
+    const cityGroup = readFilterGroupValue(activeCity);
 
     return matches.filter((match) => {
       const city = extractCity(match.location);
@@ -35,8 +37,8 @@ export default function MatchesPage() {
 
       return (
         (!normalizedQuery || haystack.includes(normalizedQuery)) &&
-        (!stage || match.stage === stage) &&
-        (activeCity === "全部城市" || city === activeCity)
+        (!stage || (stageGroup ? getStageFilterGroup(match.stage) === stageGroup : match.stage === stage)) &&
+        (activeCity === "全部城市" || (cityGroup ? getCityFilterGroup(city) === cityGroup : city === activeCity))
       );
     });
   }, [activeCity, matches, query, stage]);
@@ -54,6 +56,10 @@ export default function MatchesPage() {
 
   const stageTeamCount = useMemo(() => {
     if (!stage) return totalTeams;
+    const stageGroup = readFilterGroupValue(stage);
+    if (stageGroup === "小组赛") return totalTeams;
+    if (stageGroup === "淘汰赛") return 32;
+    if (stageGroup === "决赛周") return 4;
     if (getStageGroupId(stage)) return totalTeams;
     if (stage.includes("1/16")) return 32;
     if (stage.includes("1/8")) return 16;
@@ -65,7 +71,8 @@ export default function MatchesPage() {
 
   return (
     <DashboardShell>
-      <MatchesHeader matchCount={matches.length} />
+      <LiveMatchesStrip matches={matches} />
+
       <MatchStats
         totalMatches={matches.length}
         visible={filteredMatches.length}

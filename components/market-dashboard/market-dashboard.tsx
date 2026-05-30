@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
-import { useStore } from "@/lib/store";
-import { injectMockData } from "@/lib/mock-data";
+import { useLiveMarketData } from "@/lib/use-live-market-data";
 import { ModuleD_Ticker } from "@/components/market-ticker/module-d-ticker";
 import { MarketOddsCard } from "@/components/market-ranking/market-odds-card";
+import { MatchLinesPanel } from "@/components/market-matches/match-lines-panel";
 import { ModuleC_OddsTimeline } from "@/components/market-timeline/module-c-timeline";
 import { ThreeGlobe } from "@/components/market-map/three-globe";
 import { StatusBar } from "./status-bar";
@@ -12,13 +11,7 @@ import { NavBar } from "@/components/nav-bar";
 import { MobileNavBar } from "@/components/mobile-nav-bar";
 
 export function MarketDashboard() {
-  const countryCount = useStore((s) => s.countries.size);
-
-  useEffect(() => {
-    if (countryCount === 0) {
-      injectMockData();
-    }
-  }, [countryCount]);
+  useLiveMarketData();
 
   return (
     <div className="relative min-h-screen px-4 py-5 pb-28 sm:px-6 lg:px-8 lg:pb-5">
@@ -81,6 +74,8 @@ export function MarketDashboard() {
             <ModuleC_OddsTimeline />
           </div>
         </div>
+
+        <MatchLinesPanel />
 
         <StatusBar />
       </div>

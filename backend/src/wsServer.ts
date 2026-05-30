@@ -79,5 +79,9 @@ export function createWsServer() {
     getClientCount() {
       return clients.size;
     },
+
+    getSubscribedClientCount() {
+      return Array.from(clients.values()).filter((client) => client.subscribed).length;
+    },
   };
 }

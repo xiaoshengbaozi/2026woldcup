@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState } from "react";
 import type { CountryData } from "@/types/country";
 import { formatDelta, formatVolume } from "@/lib/format";
+import { localizeTeamName } from "@/lib/team-localization";
 import { getFlagUrl } from "@/lib/world-cup-2026";
 
 // 3-letter → 2-letter country code mapping
@@ -72,7 +73,7 @@ export function MapTooltip({ country, x, y, containerWidth = 600, containerHeigh
         />
         <div>
           <div className="text-[13px] font-bold text-white">
-            {country.countryName}
+            {localizeTeamName(country.countryName, country.countryCode)}
           </div>
           <div className="text-[10px] text-white/40 tracking-wider">
             {country.countryCode}

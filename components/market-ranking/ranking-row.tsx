@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useStore } from "@/lib/store";
 import type { RankingEntry } from "@/lib/store/rankings";
 import { formatDelta } from "@/lib/format";
+import { localizeTeamName } from "@/lib/team-localization";
 import { getFlagUrl } from "@/lib/world-cup-2026";
 
 // 3-letter → 2-letter country code mapping for flagcdn.com
@@ -96,7 +97,7 @@ export function RankingRow({ entry, isSqueezed }: RankingRowProps) {
           className="font-semibold text-white/85 truncate"
           style={{ fontSize: isTop3 ? 16 : 14 }}
         >
-          {country?.countryName ?? entry.countryCode}
+          {country ? localizeTeamName(country.countryName, country.countryCode) : entry.countryCode}
         </span>
       </div>
 

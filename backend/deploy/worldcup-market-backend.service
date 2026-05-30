@@ -1,0 +1,17 @@
+[Unit]
+Description=World Cup Market Backend
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/2026woldcup/backend
+EnvironmentFile=/opt/2026woldcup/backend/.env
+ExecStart=/usr/local/bin/bun dist/index.js
+Restart=always
+RestartSec=5
+User=www-data
+Group=www-data
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { injectMockData } from "@/lib/mock-data";
 import { useStore } from "@/lib/store";
+import { localizeTeamName } from "@/lib/team-localization";
 import { getFlagCode, getFlagUrl } from "@/lib/world-cup-2026";
 
 export function usePopularTeams() {
@@ -20,7 +21,7 @@ export function usePopularTeams() {
         const iso = getFlagCode(c.countryCode);
         return {
           code: iso,
-          name: c.countryName,
+          name: localizeTeamName(c.countryName, c.countryCode),
           flag: getFlagUrl(c.countryCode, 160),
           pct: Math.round(c.impliedProbability),
         };

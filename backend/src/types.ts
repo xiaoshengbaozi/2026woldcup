@@ -63,3 +63,38 @@ export interface DeltaMessage {
   }>;
   newEvents: ChartEvent[];
 }
+
+export interface MatchLineMarket {
+  id: string;
+  question: string;
+  slug: string;
+  marketType: string;
+  label: string;
+  yesPrice: number;
+  noPrice: number;
+  bestBid: number | null;
+  bestAsk: number | null;
+  spread: number | null;
+  volume24h: number;
+  liquidity: number;
+}
+
+export interface MatchLineEvent {
+  id: string;
+  ticker: string;
+  slug: string;
+  title: string;
+  startTime: number;
+  homeTeam: string;
+  awayTeam: string;
+  volume24h: number;
+  liquidity: number;
+  markets: MatchLineMarket[];
+}
+
+export interface MatchLinesResponse {
+  type: "match_lines";
+  timestamp: number;
+  count: number;
+  events: MatchLineEvent[];
+}

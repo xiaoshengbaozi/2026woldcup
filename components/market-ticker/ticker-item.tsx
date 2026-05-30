@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { useStore } from "@/lib/store";
 import type { CountryData } from "@/types/country";
 import { formatDelta, formatVolume } from "@/lib/format";
+import { localizeTeamName } from "@/lib/team-localization";
 
 interface TickerItemProps {
   country: CountryData;
@@ -32,7 +33,7 @@ export function TickerItem({ country }: TickerItemProps) {
       }}
     >
       <span className="text-[11px] font-bold text-white/70 tracking-wide truncate max-w-[70px]">
-        {country.countryName}
+        {localizeTeamName(country.countryName, country.countryCode)}
       </span>
 
       <span className="text-[13px] font-bold text-white ml-auto">

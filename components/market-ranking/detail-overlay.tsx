@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useStore } from "@/lib/store";
 import { formatDelta, formatVolume, formatNumber } from "@/lib/format";
 import { ArrowLeft } from "lucide-react";
+import { localizeTeamName } from "@/lib/team-localization";
 import { getFlagUrl } from "@/lib/world-cup-2026";
 
 // 3-letter → 2-letter country code mapping
@@ -69,7 +70,9 @@ export function DetailOverlay() {
               className="h-8 w-11 shrink-0 rounded object-cover ring-1 ring-white/10"
             />
             <div className="min-w-0">
-              <h2 className="text-[15px] font-bold text-white truncate">{country.countryName}</h2>
+              <h2 className="text-[15px] font-bold text-white truncate">
+                {localizeTeamName(country.countryName, country.countryCode)}
+              </h2>
               <span className="text-[11px] text-white/45 tracking-wider">
                 {country.countryCode} · #{rankEntry?.rank ?? "—"}
               </span>

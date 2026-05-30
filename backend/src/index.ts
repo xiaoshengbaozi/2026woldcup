@@ -1,9 +1,10 @@
 import { WebSocketServer } from "ws";
-import http from "http";
 import { createPolymarketClient } from "./polymarket";
 import { createDeltaEngine } from "./deltaEngine";
 import { createEventDetector } from "./eventDetector";
 import { createHistoryBuffer } from "./historyBuffer";
+import { createHttpServer } from "./httpServer";
+import { createMatchLinesService } from "./matchLines";
 import { createSnapshotCache } from "./snapshotCache";
 import { createWsServer } from "./wsServer";
 import type { CountryData, HistoryPoint } from "./types";
@@ -20,14 +21,43 @@ async function main() {
   const eventDetector = createEventDetector();
   const snapshotCache = createSnapshotCache();
   const wsServer = createWsServer();
+  const matchLines = createMatchLinesService();
+  matchLines.start();
 
   // 2. Connect to Polymarket
   const polymarket = createPolymarketClient(POLYMARKET_API_KEY);
-  await polymarket.connect();
 
   // 3. State for delta computation
   let currentCountries: Map<string, CountryData> = new Map();
   let sequenceNumber = 0;
+  let lastPolymarketUpdate: number | null = null;
+  const startedAt = Date.now();
+
+  polymarket.on("countryUpdate", (country: CountryData) => {
+    currentCountries.set(country.countryCode, country);
+    lastPolymarketUpdate = Date.now();
+  });
+
+  polymarket.on("ready", (countries?: CountryData[]) => {
+    if (Array.isArray(countries)) {
+      currentCountries = new Map(countries.map((country) => [country.countryCode, country]));
+    }
+    const now = Date.now();
+    snapshotCache.update({
+      type: "snapshot",
+      timestamp: now,
+      countries: Array.from(currentCountries.values()),
+      events: [],
+      history: {},
+    });
+    console.log(`[Backend] Snapshot initialized with ${currentCountries.size} countries.`);
+  });
+
+  polymarket.on("error", (err) => {
+    console.error("[Backend] Polymarket client error:", err);
+  });
+
+  await polymarket.connect();
 
   // 4. Data processing loop (every 3 seconds)
   setInterval(() => {
@@ -54,6 +84,23 @@ async function main() {
     const newEvents = eventDetector.detect(currentCountries, withDeltas);
 
     // Broadcast delta to all clients
+    const snapshotHistory: Record<string, HistoryPoint[]> = {};
+    for (const c of withDeltas) {
+      snapshotHistory[c.countryCode] = historyBuffer.getHistory(
+        c.countryCode,
+        now - 24 * 60 * 60 * 1000,
+        now
+      );
+    }
+
+    snapshotCache.update({
+      type: "snapshot",
+      timestamp: now,
+      countries: withDeltas,
+      events: newEvents,
+      history: snapshotHistory,
+    });
+
     wsServer.broadcast({
       type: "delta",
       timestamp: now,
@@ -79,40 +126,18 @@ async function main() {
   }, 3000);
 
   // 5. HTTP server + WebSocket
-  const server = http.createServer((req, res) => {
-    // CORS headers
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-
-    if (req.method === "OPTIONS") {
-      res.writeHead(200);
-      res.end();
-      return;
-    }
-
-    // REST API endpoints
-    if (req.url === "/api/snapshot") {
-      const snapshot = snapshotCache.getLatest();
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify(snapshot ?? { type: "snapshot", countries: [] }));
-      return;
-    }
-
-    if (req.url === "/api/health") {
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(
-        JSON.stringify({
-          status: "ok",
-          clients: wsServer.getClientCount(),
-          uptime: process.uptime(),
-        })
-      );
-      return;
-    }
-
-    res.writeHead(404);
-    res.end("Not found");
+  const server = createHttpServer({
+    snapshotCache,
+    historyBuffer,
+    wsServer,
+    getState: () => ({
+      countries: Array.from(currentCountries.values()),
+      sequenceNumber,
+      startedAt,
+      polymarketConnected: polymarket.isConnected(),
+      lastPolymarketUpdate,
+      matchLines: matchLines.getLatest(),
+    }),
   });
 
   const wss = new WebSocketServer({ server });

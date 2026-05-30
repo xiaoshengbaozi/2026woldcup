@@ -33,7 +33,7 @@ type WorldCupHeroProps = {
 
 export function WorldCupHero({ matches, firstMatch, progress, completedCount, ongoingCount, calendarUrl, webcalUrl, matchCount }: WorldCupHeroProps) {
   const [currentTime, setCurrentTime] = useState(() => Date.now());
-  const { news: fifaNews } = useFifaNews();
+  const { news: fifaNews, loading: newsLoading } = useFifaNews();
   const popularTeams = usePopularTeams();
 
   useEffect(() => {
@@ -70,6 +70,12 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
         <motion.aside initial={{ opacity: 0, y: 16, filter: "blur(16px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ delay: 0.08, duration: 0.72, ease: [0.16, 1, 0.3, 1] }} className="grid gap-5">
           <div className="hero-card relative h-auto min-h-[230px] overflow-hidden p-5">
             <div className="absolute inset-0 opacity-45 [background-image:radial-gradient(circle_at_78%_62%,rgba(216,255,62,.18),transparent_30%),radial-gradient(circle_at_45%_48%,rgba(255,255,255,.07)_1px,transparent_1px)] [background-size:auto,12px_12px]" />
+            <img
+              src="https://digitalhub.fifa.com/transform/157d23bf-7e13-4d7b-949e-5d27d340987e/WC26_Logo?&io=transform:fill&quality=75"
+              alt=""
+              className="pointer-events-none absolute right-[calc(1rem+10vw)] top-[44px] h-[106px] w-auto object-contain opacity-90 drop-shadow-[0_12px_34px_rgba(0,0,0,.55)] sm:hidden"
+              aria-hidden="true"
+            />
             <div className="relative flex h-full flex-col justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-white/45">全球足球盛会</p>
@@ -171,13 +177,19 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
           <div className="hero-card p-5">
             <div className="mb-4 flex items-center justify-between gap-3 border-b border-white/[0.04] pb-3">
               <div><div className="flex items-center gap-2"><Newspaper className="h-4 w-4 text-volt" /><p className="text-sm font-semibold uppercase text-white">最新动态</p></div></div>
-              <a href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026" target="_blank" rel="noreferrer" className="group inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40 transition hover:text-volt">查看全部<ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" /></a>
+              <div className="flex items-center gap-3">
+                {newsLoading && <span className="h-1.5 w-1.5 rounded-full bg-volt shadow-[0_0_12px_rgba(216,255,62,.75)]" />}
+                <a href="/news" className="group inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40 transition hover:text-volt">查看全部<ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" /></a>
+              </div>
             </div>
             <div className="divide-y divide-white/[0.04]">
               {fifaNews.map((item) => (
-                <a key={item.title} href={item.href} target="_blank" rel="noreferrer" className="group grid grid-cols-[90px_1fr] gap-3 py-3 transition hover:opacity-80">
-                  {item.thumbnail ? (<img src={item.thumbnail} alt={item.tag} className="h-[60px] w-[90px] shrink-0 rounded-xl object-cover ring-1 ring-white/10" loading="lazy" />) : (<span className="grid h-[60px] w-[90px] shrink-0 place-items-center rounded-xl bg-volt/10 text-xs font-semibold text-volt ring-1 ring-volt/20">FIFA</span>)}
-                  <span className="min-w-0"><span className="line-clamp-2 block text-sm leading-5 text-white/82 transition group-hover:text-volt">{item.title}</span><span className="mt-1 block text-[10px] tracking-[0.08em] text-white/32">{item.date}</span></span>
+                <a key={item.id} href={item.href} target="_blank" rel="noreferrer" className="group grid min-h-[84px] grid-cols-[88px_minmax(0,1fr)] gap-3 py-3 transition hover:opacity-80">
+                  {item.thumbnail ? (<img src={item.thumbnail} alt={item.tag} className="h-[58px] w-[88px] shrink-0 rounded-2xl object-cover ring-1 ring-white/10" loading="lazy" />) : (<span className="grid h-[58px] w-[88px] shrink-0 place-items-center rounded-2xl bg-volt/10 text-[10px] font-semibold uppercase tracking-[0.12em] text-volt ring-1 ring-volt/20">{item.tag.slice(0, 8)}</span>)}
+                  <span className="flex min-w-0 flex-col justify-center">
+                    <span className="line-clamp-2 min-h-10 text-sm font-medium leading-5 text-white/82 transition group-hover:text-volt">{item.title}</span>
+                    <span className="mt-1 block truncate text-[10px] tracking-[0.08em] text-white/32">{item.source} · {item.date}</span>
+                  </span>
                 </a>
               ))}
             </div>

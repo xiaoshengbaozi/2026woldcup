@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Trophy } from "lucide-react";
 import { useStore } from "@/lib/store";
+import { localizeTeamName } from "@/lib/team-localization";
 import { getFlagUrl } from "@/lib/world-cup-2026";
 
 function probabilityLabel(value: number) {
@@ -88,13 +89,13 @@ export function MarketOddsCard() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={getFlagUrl(country.countryCode)}
-                  alt={country.countryName}
+                  alt={localizeTeamName(country.countryName, country.countryCode)}
                   className="h-4 w-6 shrink-0 rounded object-cover ring-1 ring-white/10"
                   loading="lazy"
                 />
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-[13px] font-bold text-white/90">
-                    {country.countryName}
+                    {localizeTeamName(country.countryName, country.countryCode)}
                   </div>
                   <div className="mt-1 h-0.5 overflow-hidden rounded-full bg-white/[0.06]">
                     <motion.div
