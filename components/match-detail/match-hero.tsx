@@ -2,10 +2,22 @@
 
 import { motion } from "framer-motion";
 import { CalendarDays, Clock, MapPin, Trophy } from "lucide-react";
+import carrasquillaImage from "@/assets/players/PAN-panama/headshots/adalberto-carrasquilla.png";
+import afifImage from "@/assets/players/QAT-qatar/headshots/akram-afif.png";
 import messiImage from "@/assets/players/ARG-argentina/headshots/lionel-messi.png";
+import husseinImage from "@/assets/players/IRQ-iraq/headshots/aymen-hussein.png";
 import deBruyneImage from "@/assets/players/BEL-belgium/headshots/kevin-de-bruyne.png";
 import viniciusImage from "@/assets/players/BRA-brazil/headshots/vinicius-junior.png";
 import daviesImage from "@/assets/players/CAN-canada/headshots/alphonso-davies.png";
+import woodImage from "@/assets/players/NZL-new-zealand/headshots/chris-wood.png";
+import alabaImage from "@/assets/players/AUT-austria/headshots/david-alaba.png";
+import nazonImage from "@/assets/players/HAI-haiti/headshots/duckens-nazon.png";
+import dzekoImage from "@/assets/players/BIH-bosnia-and-herzegovina/headshots/edin-dzeko.png";
+import shomurodovImage from "@/assets/players/UZB-uzbekistan/headshots/eldor-shomurodov.png";
+import skhiriImage from "@/assets/players/TUN-tunisia/headshots/ellyes-skhiri.png";
+import kessieImage from "@/assets/players/CIV-ivory-coast/headshots/franck-kessie.png";
+import bacunaImage from "@/assets/players/CUW-curacao/headshots/juninho-bacuna.png";
+import ryanImage from "@/assets/players/AUS-australia/headshots/mathew-ryan.png";
 import diazImage from "@/assets/players/COL-colombia/headshots/luis-diaz.png";
 import modricImage from "@/assets/players/CRO-croatia/headshots/luka-modric.png";
 import hojlundImage from "@/assets/players/DEN-denmark/headshots/rasmus-hojlund.png";
@@ -19,10 +31,20 @@ import mitomaImage from "@/assets/players/JPN-japan/headshots/kaoru-mitoma.png";
 import sonImage from "@/assets/players/KOR-south-korea/headshots/son-heung-min.png";
 import hakimiImage from "@/assets/players/MAR-morocco/headshots/achraf-hakimi.png";
 import gimenezImage from "@/assets/players/MEX-mexico/headshots/santiago-gimenez.png";
+import taremiImage from "@/assets/players/IRN-iran/headshots/mehdi-taremi.png";
+import almironImage from "@/assets/players/PAR-paraguay/headshots/miguel-almiron.png";
+import kudusImage from "@/assets/players/GHA-ghana/headshots/mohammed-kudus.png";
+import taamariImage from "@/assets/players/JOR-jordan/headshots/musa-al-taamari.png";
 import vanDijkImage from "@/assets/players/NED-netherlands/headshots/virgil-van-dijk.png";
 import haalandImage from "@/assets/players/NOR-norway/headshots/erling-haaland.png";
 import lewandowskiImage from "@/assets/players/POL-poland/headshots/robert-lewandowski.png";
 import ronaldoImage from "@/assets/players/POR-portugal/headshots/cristiano-ronaldo.png";
+import schickImage from "@/assets/players/CZE-czech-republic/headshots/patrik-schick.png";
+import tauImage from "@/assets/players/RSA-south-africa/headshots/percy-tau.png";
+import mahrezImage from "@/assets/players/DZA-algeria/headshots/riyad-mahrez.png";
+import mendesImage from "@/assets/players/CPV-cape-verde/headshots/ryan-mendes.png";
+import alDawsariImage from "@/assets/players/SAU-saudi-arabia/headshots/salem-al-dawsari.png";
+import mctominayImage from "@/assets/players/SCO-scotland/headshots/scott-mctominay.png";
 import maneImage from "@/assets/players/SEN-senegal/headshots/sadio-mane.png";
 import vlahovicImage from "@/assets/players/SRB-serbia/headshots/dusan-vlahovic.png";
 import xhakaImage from "@/assets/players/SUI-switzerland/headshots/granit-xhaka.png";
@@ -30,7 +52,9 @@ import isakImage from "@/assets/players/SWE-sweden/headshots/alexander-isak.png"
 import gulerImage from "@/assets/players/TUR-turkey/headshots/arda-guler.png";
 import valverdeImage from "@/assets/players/URU-uruguay/headshots/federico-valverde.png";
 import pulisicImage from "@/assets/players/USA-united-states/headshots/christian-pulisic.png";
+import wissaImage from "@/assets/players/COD-dr-congo/headshots/yoane-wissa.png";
 import { formatTime } from "@/lib/format";
+import { formatStageLabel } from "@/lib/stage";
 import { parseTeams } from "@/lib/teams";
 import type { MatchDetail } from "@/types/match";
 
@@ -71,64 +95,108 @@ const STAGE_LABEL: Record<string, string> = {
 
 const PLAYER_ASSETS: Record<string, { src: string; name: string }> = {
   ARG: { src: messiImage.src, name: "Lionel Messi" },
+  AUS: { src: ryanImage.src, name: "Mathew Ryan" },
+  AUT: { src: alabaImage.src, name: "David Alaba" },
   BEL: { src: deBruyneImage.src, name: "Kevin De Bruyne" },
+  BIH: { src: dzekoImage.src, name: "Edin Dzeko" },
   BRA: { src: viniciusImage.src, name: "Vinicius Junior" },
   CAN: { src: daviesImage.src, name: "Alphonso Davies" },
+  CIV: { src: kessieImage.src, name: "Franck Kessie" },
+  COD: { src: wissaImage.src, name: "Yoane Wissa" },
   COL: { src: diazImage.src, name: "Luis Diaz" },
+  CPV: { src: mendesImage.src, name: "Ryan Mendes" },
   CRO: { src: modricImage.src, name: "Luka Modric" },
+  CUW: { src: bacunaImage.src, name: "Juninho Bacuna" },
+  CZE: { src: schickImage.src, name: "Patrik Schick" },
   DEN: { src: hojlundImage.src, name: "Rasmus Hojlund" },
+  DZA: { src: mahrezImage.src, name: "Riyad Mahrez" },
   ECU: { src: caicedoImage.src, name: "Moises Caicedo" },
   EGY: { src: salahImage.src, name: "Mohamed Salah" },
   ENG: { src: bellinghamImage.src, name: "Jude Bellingham" },
   ESP: { src: yamalImage.src, name: "Lamine Yamal" },
   FRA: { src: mbappeImage.src, name: "Kylian Mbappe" },
   GER: { src: musialaImage.src, name: "Jamal Musiala" },
+  GHA: { src: kudusImage.src, name: "Mohammed Kudus" },
+  HAI: { src: nazonImage.src, name: "Duckens Nazon" },
+  IRN: { src: taremiImage.src, name: "Mehdi Taremi" },
+  IRQ: { src: husseinImage.src, name: "Aymen Hussein" },
   JPN: { src: mitomaImage.src, name: "Kaoru Mitoma" },
+  JOR: { src: taamariImage.src, name: "Musa Al-Taamari" },
   KOR: { src: sonImage.src, name: "Son Heung-min" },
   MAR: { src: hakimiImage.src, name: "Achraf Hakimi" },
   MEX: { src: gimenezImage.src, name: "Santiago Gimenez" },
   NED: { src: vanDijkImage.src, name: "Virgil van Dijk" },
   NOR: { src: haalandImage.src, name: "Erling Haaland" },
+  NZL: { src: woodImage.src, name: "Chris Wood" },
+  PAN: { src: carrasquillaImage.src, name: "Adalberto Carrasquilla" },
+  PAR: { src: almironImage.src, name: "Miguel Almiron" },
   POL: { src: lewandowskiImage.src, name: "Robert Lewandowski" },
   POR: { src: ronaldoImage.src, name: "Cristiano Ronaldo" },
+  QAT: { src: afifImage.src, name: "Akram Afif" },
+  RSA: { src: tauImage.src, name: "Percy Tau" },
+  SAU: { src: alDawsariImage.src, name: "Salem Al-Dawsari" },
+  SCO: { src: mctominayImage.src, name: "Scott McTominay" },
   SEN: { src: maneImage.src, name: "Sadio Mane" },
   SRB: { src: vlahovicImage.src, name: "Dusan Vlahovic" },
   SUI: { src: xhakaImage.src, name: "Granit Xhaka" },
   SWE: { src: isakImage.src, name: "Alexander Isak" },
   TUR: { src: gulerImage.src, name: "Arda Guler" },
+  TUN: { src: skhiriImage.src, name: "Ellyes Skhiri" },
   URU: { src: valverdeImage.src, name: "Federico Valverde" },
   USA: { src: pulisicImage.src, name: "Christian Pulisic" },
+  UZB: { src: shomurodovImage.src, name: "Eldor Shomurodov" },
 };
 
 const TEAM_ACCENTS: Record<string, { primary: string; secondary: string }> = {
   ARG: { primary: "rgba(80,180,255,0.55)", secondary: "rgba(255,255,255,0.2)" },
+  AUT: { primary: "rgba(210,30,30,0.5)", secondary: "rgba(255,255,255,0.2)" },
   BEL: { primary: "rgba(230,30,30,0.5)", secondary: "rgba(255,210,0,0.3)" },
+  BIH: { primary: "rgba(38,91,255,0.5)", secondary: "rgba(255,210,0,0.3)" },
   BRA: { primary: "rgba(216,255,62,0.42)", secondary: "rgba(0,190,120,0.28)" },
   CAN: { primary: "rgba(220,30,30,0.48)", secondary: "rgba(255,255,255,0.18)" },
+  COD: { primary: "rgba(38,91,255,0.5)", secondary: "rgba(255,210,0,0.28)" },
   COL: { primary: "rgba(255,220,0,0.5)", secondary: "rgba(0,80,200,0.3)" },
+  CPV: { primary: "rgba(38,91,255,0.5)", secondary: "rgba(210,30,45,0.28)" },
   CRO: { primary: "rgba(220,30,30,0.48)", secondary: "rgba(255,255,255,0.2)" },
+  CUW: { primary: "rgba(38,91,255,0.5)", secondary: "rgba(255,210,0,0.28)" },
+  CZE: { primary: "rgba(38,91,255,0.5)", secondary: "rgba(210,30,45,0.28)" },
   DEN: { primary: "rgba(200,30,30,0.5)", secondary: "rgba(255,255,255,0.18)" },
+  DZA: { primary: "rgba(0,160,95,0.48)", secondary: "rgba(255,255,255,0.2)" },
   ECU: { primary: "rgba(255,220,0,0.48)", secondary: "rgba(0,80,200,0.3)" },
   EGY: { primary: "rgba(200,30,30,0.48)", secondary: "rgba(216,255,62,0.24)" },
   ENG: { primary: "rgba(255,255,255,0.32)", secondary: "rgba(220,40,55,0.28)" },
   ESP: { primary: "rgba(255,154,31,0.5)", secondary: "rgba(210,30,45,0.32)" },
   FRA: { primary: "rgba(38,91,255,0.56)", secondary: "rgba(255,55,72,0.3)" },
   GER: { primary: "rgba(255,255,255,0.28)", secondary: "rgba(216,255,62,0.24)" },
+  GHA: { primary: "rgba(255,210,0,0.48)", secondary: "rgba(200,30,30,0.28)" },
+  HAI: { primary: "rgba(38,91,255,0.5)", secondary: "rgba(210,30,45,0.3)" },
+  IRN: { primary: "rgba(0,160,95,0.48)", secondary: "rgba(210,30,45,0.28)" },
+  IRQ: { primary: "rgba(200,30,30,0.48)", secondary: "rgba(255,255,255,0.2)" },
   JPN: { primary: "rgba(38,91,255,0.5)", secondary: "rgba(255,255,255,0.2)" },
+  JOR: { primary: "rgba(200,30,30,0.48)", secondary: "rgba(0,160,95,0.28)" },
   KOR: { primary: "rgba(210,30,45,0.5)", secondary: "rgba(0,80,200,0.28)" },
   MAR: { primary: "rgba(200,30,30,0.5)", secondary: "rgba(0,150,80,0.28)" },
   MEX: { primary: "rgba(0,160,95,0.42)", secondary: "rgba(220,40,55,0.28)" },
   NED: { primary: "rgba(255,140,0,0.52)", secondary: "rgba(0,80,200,0.25)" },
   NOR: { primary: "rgba(200,30,30,0.48)", secondary: "rgba(0,80,200,0.25)" },
+  NZL: { primary: "rgba(40,40,40,0.55)", secondary: "rgba(255,255,255,0.2)" },
+  PAN: { primary: "rgba(210,30,45,0.5)", secondary: "rgba(38,91,255,0.28)" },
+  PAR: { primary: "rgba(210,30,45,0.5)", secondary: "rgba(38,91,255,0.28)" },
   POL: { primary: "rgba(255,255,255,0.3)", secondary: "rgba(200,30,30,0.28)" },
   POR: { primary: "rgba(0,120,60,0.48)", secondary: "rgba(210,30,45,0.3)" },
+  QAT: { primary: "rgba(140,20,60,0.52)", secondary: "rgba(255,255,255,0.18)" },
+  RSA: { primary: "rgba(255,210,0,0.48)", secondary: "rgba(0,160,95,0.28)" },
   SEN: { primary: "rgba(0,150,80,0.48)", secondary: "rgba(255,220,0,0.28)" },
   SRB: { primary: "rgba(200,30,30,0.48)", secondary: "rgba(0,80,200,0.25)" },
+  SAU: { primary: "rgba(0,160,95,0.48)", secondary: "rgba(255,255,255,0.2)" },
+  SCO: { primary: "rgba(38,91,255,0.5)", secondary: "rgba(255,255,255,0.2)" },
   SUI: { primary: "rgba(220,30,30,0.5)", secondary: "rgba(255,255,255,0.2)" },
   SWE: { primary: "rgba(0,100,200,0.5)", secondary: "rgba(255,220,0,0.3)" },
+  TUN: { primary: "rgba(210,30,45,0.5)", secondary: "rgba(255,255,255,0.2)" },
   TUR: { primary: "rgba(220,30,30,0.5)", secondary: "rgba(255,255,255,0.18)" },
   URU: { primary: "rgba(0,100,200,0.5)", secondary: "rgba(216,255,62,0.24)" },
   USA: { primary: "rgba(35,110,255,0.44)", secondary: "rgba(225,40,60,0.3)" },
+  UZB: { primary: "rgba(38,91,255,0.5)", secondary: "rgba(210,30,45,0.28)" },
 };
 
 function getAccent(teamCode: string) {
@@ -146,7 +214,7 @@ function fadeToTransparent(color: string) {
 
 export function MatchHero({ detail }: { detail: MatchDetail }) {
   const teams = parseTeams(detail.match.summary);
-  const stageLabel = STAGE_LABEL[detail.match.stage] ?? detail.match.stage;
+  const stageLabel = formatStageLabel(STAGE_LABEL[detail.match.stage] ?? detail.match.stage);
   const statusLabel = STATUS_LABEL[detail.status];
   const statusColor = STATUS_COLOR[detail.status];
   const adjustedStart = detail.match.start;
@@ -319,14 +387,24 @@ function PlayerPosterSide({
         style={{ backgroundColor: accent.primary }}
       />
       {player ? (
-        <img
-          src={player.src}
-          alt={player.name}
-          className={`absolute bottom-0 h-[125%] w-auto max-w-none object-contain drop-shadow-[0_18px_28px_rgba(0,0,0,0.42)] ${
-            isRight ? "right-0 origin-bottom-right" : "left-0 origin-bottom-left"
-          }`}
-          loading="eager"
-        />
+        <>
+          <img
+            src={player.src}
+            alt={player.name}
+            className={`absolute bottom-0 h-[125%] w-auto max-w-none object-contain drop-shadow-[0_18px_28px_rgba(0,0,0,0.42)] ${
+              isRight ? "right-0 origin-bottom-right" : "left-0 origin-bottom-left"
+            }`}
+            loading="eager"
+          />
+          <span
+            className={`absolute text-[13px] font-bold uppercase tracking-[0.18em] text-white/80 drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)] ${
+              isRight ? "right-12 top-[68%] origin-bottom-right" : "left-12 top-[68%] origin-bottom-left"
+            }`}
+            style={{ fontFamily: "ScreenMatrix, monospace" }}
+          >
+            {player.name}
+          </span>
+        </>
       ) : (
         <div
           className={`absolute bottom-0 grid h-full w-64 place-items-center rounded-[2rem] bg-black/20 p-8 shadow-none ring-1 ring-white/[0.1] backdrop-blur-xl ${

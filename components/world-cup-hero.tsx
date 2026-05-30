@@ -13,37 +13,15 @@ import { useEffect, useMemo, useState } from "react";
 import { useFifaNews } from "@/lib/fifa-news";
 import { formatCountdown, formatDate } from "@/lib/format";
 import { parseTeams } from "@/lib/teams";
-import { useStore } from "@/lib/store";
-import { injectMockData } from "@/lib/mock-data";
-import { getFlagCode, getFlagUrl } from "@/lib/world-cup-2026";
 import type { Match } from "@/types/match";
-
-function usePopularTeams() {
-  const countries = useStore((s) => s.countries);
-  const countryCount = countries.size;
-
-  useEffect(() => {
-    if (countryCount === 0) injectMockData();
-  }, [countryCount]);
-
-  return useMemo(() => {
-    if (countryCount === 0) return [];
-    return Array.from(countries.values())
-      .sort((a, b) => b.impliedProbability - a.impliedProbability)
-      .slice(0, 5)
-      .map((c) => {
-        const iso = getFlagCode(c.countryCode);
-        return {
-          code: iso,
-          name: c.countryName,
-          flag: getFlagUrl(c.countryCode, 160),
-          pct: Math.round(c.impliedProbability),
-        };
-      });
-  }, [countries, countryCount]);
-}
+import { topScorers } from "./world-cup-hero/hero-data";
+import { LiveMatchCard } from "./world-cup-hero/live-match-card";
+import { Metric } from "./world-cup-hero/metric";
+import { TeamSignal } from "./world-cup-hero/team-signal";
+import { usePopularTeams } from "./world-cup-hero/use-popular-teams";
 
 type WorldCupHeroProps = {
+  matches: Match[];
   firstMatch: Match | null;
   progress: number;
   completedCount: number;
@@ -53,28 +31,13 @@ type WorldCupHeroProps = {
   matchCount: number;
 };
 
-const topScorers = [
-  { name: "姆巴佩", nation: "法国", flag: "https://flagcdn.com/w160/fr.png", goals: 0 },
-  { name: "亚马尔", nation: "西班牙", flag: "https://flagcdn.com/w160/es.png", goals: 0 },
-  { name: "维尼修斯", nation: "巴西", flag: "https://flagcdn.com/w160/br.png", goals: 0 },
-  { name: "凯恩", nation: "英格兰", flag: "https://flagcdn.com/w160/gb-eng.png", goals: 0 },
-  { name: "哈兰德", nation: "挪威", flag: "https://flagcdn.com/w160/no.png", goals: 0 }
-];
-
-const liveMatches = [
-  { group: "A 组", homeFlag: "https://flagcdn.com/w160/br.png", homeCode: "巴西", homeName: "巴西", awayFlag: "https://flagcdn.com/w160/ar.png", awayCode: "阿根廷", awayName: "阿根廷", homeScore: 2, awayScore: 1, minute: "72'", status: "live" as const },
-  { group: "B 组", homeFlag: "https://flagcdn.com/w160/gb-eng.png", homeCode: "英格兰", homeName: "英格兰", awayFlag: "https://flagcdn.com/w160/fr.png", awayCode: "法国", awayName: "法国", homeScore: 1, awayScore: 1, minute: "45+2'", status: "live" as const },
-  { group: "C 组", homeFlag: "https://flagcdn.com/w160/pt.png", homeCode: "葡萄牙", homeName: "葡萄牙", awayFlag: "https://flagcdn.com/w160/gh.png", awayCode: "加纳", awayName: "加纳", homeScore: 3, awayScore: 0, minute: "68'", status: "live" as const },
-  { group: "D 组", homeFlag: "https://flagcdn.com/w160/nl.png", homeCode: "荷兰", homeName: "荷兰", awayFlag: "https://flagcdn.com/w160/us.png", awayCode: "美国", awayName: "美国", homeScore: 0, awayScore: 0, minute: "HT", status: "ht" as const },
-];
-
-export function WorldCupHero({ firstMatch, progress, completedCount, ongoingCount, calendarUrl, webcalUrl, matchCount }: WorldCupHeroProps) {
-  const [, setTick] = useState(0);
+export function WorldCupHero({ matches, firstMatch, progress, completedCount, ongoingCount, calendarUrl, webcalUrl, matchCount }: WorldCupHeroProps) {
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
   const { news: fifaNews } = useFifaNews();
   const popularTeams = usePopularTeams();
 
   useEffect(() => {
-    const timer = window.setInterval(() => setTick((v) => v + 1), 30000);
+    const timer = window.setInterval(() => setCurrentTime(Date.now()), 30000);
     return () => window.clearInterval(timer);
   }, []);
 
@@ -83,12 +46,29 @@ export function WorldCupHero({ firstMatch, progress, completedCount, ongoingCoun
   const dateLabel = firstMatch ? formatDate(firstMatch.start) : "等待官方赛程";
   const homeCode = teams?.home.name.slice(0, 3).toUpperCase() || "FIFA";
   const awayCode = teams?.away.name.slice(0, 3).toUpperCase() || "2026";
+  const liveNow = useMemo(() => {
+    return matches
+      .filter((match) => {
+        const start = match.start.getTime();
+        const end = match.end?.getTime() ?? start + 2 * 60 * 60 * 1000;
+        return start <= currentTime && currentTime <= end;
+      })
+      .sort((a, b) => a.start.getTime() - b.start.getTime())
+      .slice(0, 4);
+  }, [currentTime, matches]);
+  const upcomingMatches = useMemo(() => {
+    return matches
+      .filter((match) => match.start.getTime() > currentTime)
+      .sort((a, b) => a.start.getTime() - b.start.getTime())
+      .slice(0, 4);
+  }, [currentTime, matches]);
+  const displayMatches = liveNow.length ? liveNow : upcomingMatches;
 
   return (
     <section className="space-y-5">
-      <div className="grid gap-5 lg:grid-cols-[.78fr_1.45fr_.78fr]">
+      <div className="grid min-w-0 gap-5 lg:grid-cols-[.78fr_1.45fr_.78fr]">
         <motion.aside initial={{ opacity: 0, y: 16, filter: "blur(16px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ delay: 0.08, duration: 0.72, ease: [0.16, 1, 0.3, 1] }} className="grid gap-5">
-          <div className="hero-card relative h-[230px] overflow-hidden p-5">
+          <div className="hero-card relative h-auto min-h-[230px] overflow-hidden p-5">
             <div className="absolute inset-0 opacity-45 [background-image:radial-gradient(circle_at_78%_62%,rgba(216,255,62,.18),transparent_30%),radial-gradient(circle_at_45%_48%,rgba(255,255,255,.07)_1px,transparent_1px)] [background-size:auto,12px_12px]" />
             <div className="relative flex h-full flex-col justify-between">
               <div>
@@ -139,26 +119,26 @@ export function WorldCupHero({ firstMatch, progress, completedCount, ongoingCoun
         </motion.aside>
 
         <motion.div initial={{ opacity: 0, y: 16, filter: "blur(16px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ delay: 0.14, duration: 0.78, ease: [0.16, 1, 0.3, 1] }} className="grid gap-5">
-          <div className="hero-card relative h-[330px] overflow-hidden p-0">
+          <div className="hero-card relative h-[360px] overflow-hidden p-0 sm:h-[330px]">
             <img src="/estadio-azteca-aerial.jpg" alt="Aerial view of Estadio Azteca" className="absolute inset-0 h-full w-full object-cover object-[78%_50%] opacity-[.82] saturate-[1.08]" />
             <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(5,8,8,.98)_0%,rgba(5,8,8,.9)_34%,rgba(5,8,8,.42)_58%,rgba(5,8,8,.08)_100%),linear-gradient(0deg,rgba(5,8,8,.72)_0%,rgba(5,8,8,.08)_32%,rgba(5,8,8,.1)_100%),radial-gradient(circle_at_76%_52%,rgba(216,255,62,.2),transparent_26%)]" />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_24%_20%,rgba(216,255,62,.13),transparent_24%),radial-gradient(circle_at_68%_72%,rgba(255,154,31,.1),transparent_34%)]" />
-            <div className="relative z-10 flex h-full flex-col items-center justify-between p-6 sm:p-8">
+            <div className="relative z-10 flex h-full flex-col items-center justify-between p-4 sm:p-8">
               <div className="flex w-full flex-col items-center">
-                <div className="flex w-full items-center justify-between">
-                  <div className="flex items-center gap-3 text-sm uppercase tracking-[0.16em] text-white/52"><span className="h-2 w-2 rounded-full bg-volt shadow-[0_0_16px_rgba(216,255,62,.85)]" />下一场比赛</div>
-                  <p className="text-base font-semibold uppercase tracking-[0.08em] text-white/72">{dateLabel}</p>
+                <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-3 text-xs uppercase tracking-[0.12em] text-white/52 sm:text-sm sm:tracking-[0.16em]"><span className="h-2 w-2 rounded-full bg-volt shadow-[0_0_16px_rgba(216,255,62,.85)]" />下一场比赛</div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.06em] text-white/72 sm:text-base sm:tracking-[0.08em]">{dateLabel}</p>
                 </div>
-                <div className="mt-6 flex items-start justify-center gap-4 sm:gap-8">
+                <div className="mt-7 flex w-full min-w-0 items-start justify-center gap-3 sm:mt-6 sm:gap-8">
                   <TeamSignal code={homeCode} image={teams?.home.image} name={teams?.home.name || "揭幕战"} />
-                  <div className="flex h-16 items-center justify-center"><ArrowRight className="h-8 w-8 shrink-0 text-flare drop-shadow-[0_0_16px_rgba(255,154,31,.55)]" /></div>
+                  <div className="flex h-12 items-center justify-center sm:h-16"><ArrowRight className="h-6 w-6 shrink-0 text-flare drop-shadow-[0_0_16px_rgba(255,154,31,.55)] sm:h-8 sm:w-8" /></div>
                   <TeamSignal code={awayCode} image={teams?.away.image} name={teams?.away.name || "官方赛程"} />
                 </div>
               </div>
               <div className="mt-5 w-full max-w-sm grid gap-3 rounded-[1.45rem] bg-black/34 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.08)] backdrop-blur-2xl sm:grid-cols-[1fr_auto] sm:items-center">
                 <div>
                   <p className="text-xs uppercase tracking-[0.18em] text-white/42">距离开赛</p>
-                  <p className="mt-1 flex items-baseline text-4xl font-semibold leading-none text-volt" style={{ fontFamily: "ScreenMatrix, monospace" }}><span style={{ fontFamily: "Inter, system-ui, sans-serif" }}>{countdown.days}<span className="text-base font-normal text-white/38">天</span></span><span className="ml-2">{countdown.hours}</span><span className="countdown-colon text-4xl">:</span><span>{countdown.minutes}</span></p>
+                  <p className="mt-1 flex items-baseline text-3xl font-semibold leading-none text-volt sm:text-4xl" style={{ fontFamily: "ScreenMatrix, monospace" }}><span style={{ fontFamily: "Inter, system-ui, sans-serif" }}>{countdown.days}<span className="text-base font-normal text-white/38">天</span></span><span className="ml-2">{countdown.hours}</span><span className="countdown-colon text-3xl sm:text-4xl">:</span><span>{countdown.minutes}</span></p>
                 </div>
                 <div className="hidden rounded-full bg-volt/15 p-4 text-volt shadow-[0_0_44px_rgba(216,255,62,.34)] ring-1 ring-volt/25 sm:block"><ArrowRight className="h-7 w-7" /></div>
               </div>
@@ -174,9 +154,16 @@ export function WorldCupHero({ firstMatch, progress, completedCount, ongoingCoun
               </div>
               <a href="/matches" className="group inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40 transition hover:text-volt">查看全部<ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" /></a>
             </div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {liveMatches.map((match) => (<LiveMatchCard key={`${match.homeCode}-${match.awayCode}`} match={match} />))}
-            </div>
+            {displayMatches.length ? (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {displayMatches.map((match) => (<LiveMatchCard key={match.uid} match={match} isLive={liveNow.length > 0} />))}
+              </div>
+            ) : (
+              <div className="rounded-3xl bg-white/[0.035] px-5 py-6 text-center ring-1 ring-white/[0.06]">
+                <p className="text-sm font-semibold text-white/78">暂无正在直播的比赛</p>
+                <p className="mt-2 text-xs leading-5 text-white/42">直播窗口会自动匹配官方赛程中的真实对阵。</p>
+              </div>
+            )}
           </div>
         </motion.div>
 
@@ -217,73 +204,5 @@ export function WorldCupHero({ firstMatch, progress, completedCount, ongoingCoun
         </motion.aside>
       </div>
     </section>
-  );
-}
-
-function Metric({ label, value, accent = false }: { label: string; value: number | string; accent?: boolean }) {
-  return (<div className="text-center"><p className={`text-2xl font-semibold ${accent ? "text-flare" : "text-volt"}`} style={{ fontFamily: "ScreenMatrix, monospace" }}>{value}</p><p className="mt-1 text-[10px] uppercase tracking-[0.16em] text-white/36">{label}</p></div>);
-}
-
-const countryEnglishNames: Record<string, string> = {
-  mx: "Mexico", za: "South Africa", kr: "South Korea", cz: "Czechia",
-  ca: "Canada", ba: "Bosnia & Herz.", us: "United States", py: "Paraguay",
-  qa: "Qatar", ch: "Switzerland", br: "Brazil", ma: "Morocco", ht: "Haiti",
-  "gb-sct": "Scotland", tr: "Turkey", jp: "Japan", de: "Germany",
-  cw: "Curacao", au: "Australia", eg: "Egypt", fr: "France", co: "Colombia",
-  it: "Italy", tn: "Tunisia", dz: "Algeria", pe: "Peru", ar: "Argentina",
-  at: "Austria", dk: "Denmark", uy: "Uruguay", pt: "Portugal", no: "Norway",
-  "gb-eng": "England", hr: "Croatia", ec: "Ecuador", nl: "Netherlands",
-  sn: "Senegal", ae: "UAE", ir: "Iran", nz: "New Zealand", ci: "Cote d'Ivoire",
-  gh: "Ghana", pa: "Panama", cv: "Cape Verde"
-};
-
-function getEnglishName(image: string | undefined, fallback: string): string {
-  if (!image) return fallback;
-  const code = image.split("/").pop()?.split(".")[0] ?? "";
-  return countryEnglishNames[code] ?? code.toUpperCase();
-}
-
-function TeamSignal({ code, image, name }: { code: string; image?: string; name: string }) {
-  const englishName = getEnglishName(image, name);
-  const shortCode = englishName.length > 3 ? englishName.slice(0, 3).toUpperCase() : englishName.toUpperCase();
-  return (
-    <div className="flex flex-col items-center gap-1">
-      <span className="text-7xl font-normal leading-none text-volt/90" style={{ fontFamily: "ScreenMatrix, monospace" }}>{shortCode}</span>
-      <span className="inline-flex items-center gap-1.5">
-        {image && (<img src={image} alt="" className="h-4 w-5 shrink-0 rounded-sm object-cover" loading="lazy" />)}
-        <span className="truncate text-sm font-semibold uppercase text-white/86">{name}</span>
-      </span>
-    </div>
-  );
-}
-
-function LiveMatchCard({ match }: { match: typeof liveMatches[0] }) {
-  const isHT = match.status === "ht";
-  return (
-    <div className="group relative flex flex-col overflow-hidden rounded-2xl transition" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)), rgba(5,8,8,0.7)", boxShadow: isHT ? "0 20px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(251,191,36,0.1), 0 0 40px rgba(251,191,36,0.08)" : "0 20px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(216,255,62,0.08), 0 0 40px rgba(216,255,62,0.06)" }}>
-      <div className="pointer-events-none absolute inset-0 rounded-2xl" style={{ background: isHT ? "radial-gradient(ellipse at 50% 0%, rgba(251,191,36,0.12) 0%, transparent 60%)" : "radial-gradient(ellipse at 50% 0%, rgba(239,68,68,0.12) 0%, transparent 60%)" }} />
-      <div className="pointer-events-none absolute inset-0 rounded-2xl" style={{ padding: "1px", background: isHT ? "linear-gradient(135deg, rgba(251,191,36,0.3), rgba(255,255,255,0.08), rgba(251,191,36,0.1))" : "linear-gradient(135deg, rgba(216,255,62,0.3), rgba(255,255,255,0.08), rgba(216,255,62,0.1))", mask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)", maskComposite: "exclude" }} />
-      <div className="relative z-10">
-        <div className="flex items-center justify-between px-3.5 pt-3">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">{match.group}</span>
-          <span className={`tabular text-xs font-bold ${isHT ? "text-amber-400" : "text-volt"}`}>{match.minute}</span>
-        </div>
-        <div className="flex items-center justify-between gap-2 px-3.5 py-4">
-          <div className="flex items-center gap-1.5"><img src={match.homeFlag} alt={match.homeName} className="h-5 w-7 shrink-0 rounded-sm object-cover ring-1 ring-white/10" loading="lazy" /><span className="text-sm font-bold text-white/90">{match.homeCode}</span></div>
-          <span className="tabular text-xl font-bold text-white" style={{ fontFamily: "ScreenMatrix, monospace" }}>{match.homeScore}</span>
-          <span className="text-xs text-white/25">-</span>
-          <span className="tabular text-xl font-bold text-white" style={{ fontFamily: "ScreenMatrix, monospace" }}>{match.awayScore}</span>
-          <div className="flex items-center gap-1.5"><span className="text-sm font-bold text-white/90">{match.awayCode}</span><img src={match.awayFlag} alt={match.awayName} className="h-5 w-7 shrink-0 rounded-sm object-cover ring-1 ring-white/10" loading="lazy" /></div>
-        </div>
-        <div className="flex justify-center pb-3">
-          <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${isHT ? "bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30 shadow-[0_0_12px_rgba(251,191,36,0.3)]" : "bg-volt/15 text-volt ring-1 ring-volt/25 shadow-[0_0_12px_rgba(216,255,62,0.25)]"}`}>
-            <span className={`h-1.5 w-1.5 rounded-full ${isHT ? "bg-amber-400" : "bg-volt live-dot"}`} />{isHT ? "中场" : "直播中"}
-          </span>
-        </div>
-        <div className="h-1 w-full bg-white/[0.04]">
-          <motion.div initial={{ width: 0 }} animate={{ width: isHT ? "45%" : `${Math.min((parseInt(match.minute) || 0) / 90 * 100, 100)}%` }} transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }} className={`h-full ${isHT ? "bg-gradient-to-r from-amber-500 to-amber-400" : "bg-gradient-to-r from-volt to-volt/80"}`} style={{ boxShadow: isHT ? "0 0 16px rgba(251,191,36,0.6)" : "0 0 16px rgba(216,255,62,0.5)" }} />
-        </div>
-      </div>
-    </div>
   );
 }

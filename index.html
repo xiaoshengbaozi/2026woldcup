@@ -23,10 +23,21 @@
 
     <main class="wrap">
       <section class="filters" aria-label="筛选赛程">
-        <input id="search" type="search" placeholder="搜索球队、场馆、城市或比赛">
-        <select id="stage">
-          <option value="">全部阶段</option>
-        </select>
+        <div class="filter-group">
+          <div class="custom-select" id="tz-select" data-value="">
+            <button class="select-trigger" type="button"><span class="select-label">全部时区</span><svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4.5L6 8.5L10 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <div class="select-panel"><ul class="select-options"></ul></div>
+          </div>
+          <div class="custom-select" id="stage-select" data-value="">
+            <button class="select-trigger" type="button"><span class="select-label">全部赛段</span><svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4.5L6 8.5L10 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <div class="select-panel"><ul class="select-options"></ul></div>
+          </div>
+          <div class="custom-select" id="city-select" data-value="">
+            <button class="select-trigger" type="button"><span class="select-label">全部城市</span><svg class="select-arrow" viewBox="0 0 12 12"><path d="M2 4.5L6 8.5L10 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <div class="select-panel"><ul class="select-options"></ul></div>
+          </div>
+          <input id="search" type="search" placeholder="搜索球队、场馆或比赛">
+        </div>
       </section>
 
       <section class="summary" aria-label="赛程概览">

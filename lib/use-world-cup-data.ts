@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { getTournamentProgress, parseCalendar } from "@/lib/calendar";
+import { extractCity, getTournamentProgress, parseCalendar } from "@/lib/calendar";
 import type { Match } from "@/types/match";
 
 export function useWorldCupData() {
@@ -26,7 +26,7 @@ export function useWorldCupData() {
         setMatches(parseCalendar(text));
       })
       .catch(() => {
-        if (active) setError("赛程同步失败，请直接下载日历文件。");
+        if (active) setError("Calendar sync failed. Please download the calendar file directly.");
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -39,10 +39,10 @@ export function useWorldCupData() {
 
   const cities = useMemo(() => {
     const values = matches
-      .map((match) => match.location.split(",").slice(-1)[0]?.trim())
+      .map((match) => extractCity(match.location))
       .filter(Boolean);
 
-    return ["全部城市", ...Array.from(new Set(values)).slice(0, 8)];
+    return ["全部城市", ...Array.from(new Set(values)).sort((a, b) => a.localeCompare(b, "zh-CN"))];
   }, [matches]);
 
   const matchStats = useMemo(() => {
@@ -79,3 +79,5 @@ export function useWorldCupData() {
     error
   };
 }
+
+

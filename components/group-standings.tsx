@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Table } from "lucide-react";
 import { useMemo } from "react";
+import { getStageGroupId } from "@/lib/stage";
 import { parseTeams } from "@/lib/teams";
 import type { Match, Team } from "@/types/match";
 
@@ -117,9 +118,10 @@ function GroupTable({ group }: { group: GroupStanding }) {
 }
 
 function buildGroupStandings(matches: Match[]): GroupStanding[] {
-  const groupMatches = matches.filter((match) => /Group [A-L]$/.test(match.stage));
+  const groupMatches = matches.filter((match) => getStageGroupId(match.stage));
   const grouped = groupMatches.reduce<Map<string, Match[]>>((acc, match) => {
-    const id = match.stage.slice(-1);
+    const id = getStageGroupId(match.stage);
+    if (!id) return acc;
     if (!acc.has(id)) acc.set(id, []);
     acc.get(id)?.push(match);
     return acc;
@@ -129,7 +131,7 @@ function buildGroupStandings(matches: Match[]): GroupStanding[] {
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([id, items]) => ({
       id,
-      label: `${id} 组`,
+      label: `${id}组`,
       teams: collectTeams(items, id)
     }));
 }

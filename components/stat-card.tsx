@@ -17,22 +17,22 @@ export function StatCard({ label, value, detail: _detail, icon: Icon, accent = f
     <motion.div
       whileHover={{ y: -4, scale: 1.01 }}
       transition={{ type: "spring", stiffness: 260, damping: 22 }}
-      className="glass-panel group relative overflow-hidden p-4 sm:p-5"
+      className="glass-panel group relative overflow-hidden p-2.5 sm:p-5"
     >
       <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/18 to-transparent" />
       {/* Mobile: stacked vertical — icon + label top, number bottom */}
-      <div className="flex flex-col items-center gap-2 sm:hidden">
+      <div className="flex min-w-0 flex-col items-center gap-2 sm:hidden">
         <div className="flex items-center gap-1.5">
           <div
-            className={`grid h-7 w-7 place-items-center rounded-lg ${
+            className={`grid h-6 w-6 shrink-0 place-items-center rounded-lg ${
               accent ? "bg-volt/16 text-volt" : "bg-white/[0.055] text-white/64"
             } transition group-hover:shadow-glow`}
           >
-            <Icon className="h-3.5 w-3.5" />
+            <Icon className="h-3 w-3" />
           </div>
-          <p className="text-[10px] uppercase tracking-[0.16em] text-white/38">{label}</p>
+          <p className="truncate text-[9px] uppercase tracking-[0.08em] text-white/38">{label}</p>
         </div>
-        <p className="text-2xl font-semibold" style={{ fontFamily: "ScreenMatrix, monospace" }}>
+        <p className="text-xl font-semibold leading-none" style={{ fontFamily: "ScreenMatrix, monospace" }}>
           {isFraction ? (
             <>
               <span style={{ color: "rgb(216 255 62 / 0.9)" }}>{parts[0]}</span>

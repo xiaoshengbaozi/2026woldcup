@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   Match,
   MatchDetail,
   MatchOdds,
@@ -10,7 +10,7 @@ import type {
   MatchStatus,
 } from "@/types/match";
 
-// ── Helper ──────────────────────────────────────────────────────
+// 鈹€鈹€ Helper 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
 function rand(min: number, max: number): number {
   return Math.round((Math.random() * (max - min) + min) * 10) / 10;
@@ -20,7 +20,7 @@ function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-// ── Odds ────────────────────────────────────────────────────────
+// 鈹€鈹€ Odds 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
 function generateOdds(homeProb: number): MatchOdds {
   const draw = rand(18, 28);
@@ -41,11 +41,11 @@ function generateOdds(homeProb: number): MatchOdds {
   };
 }
 
-// ── Lineups ─────────────────────────────────────────────────────
+// 鈹€鈹€ Lineups 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
 const PLAYER_POOLS: Record<string, Array<{ name: string; number: number; position: string; club: string; age: number }>> = {
   ESP: [
-    { name: "Unai Simón", number: 23, position: "GK", club: "Athletic Bilbao", age: 28 },
+    { name: "Unai Sim贸n", number: 23, position: "GK", club: "Athletic Bilbao", age: 28 },
     { name: "Carvajal", number: 2, position: "RB", club: "Real Madrid", age: 33 },
     { name: "Laporte", number: 24, position: "CB", club: "Al Nassr", age: 31 },
     { name: "Le Normand", number: 3, position: "CB", club: "Real Sociedad", age: 27 },
@@ -62,25 +62,25 @@ const PLAYER_POOLS: Record<string, Array<{ name: string; number: number; positio
     { name: "Danilo", number: 2, position: "RB", club: "Juventus", age: 33 },
     { name: "Marquinhos", number: 3, position: "CB", club: "PSG", age: 30 },
     { name: "Gabriel", number: 4, position: "CB", club: "Arsenal", age: 26 },
-    { name: "Vinícius Jr.", number: 20, position: "LB", club: "Real Madrid", age: 24 },
+    { name: "Vin铆cius Jr.", number: 20, position: "LB", club: "Real Madrid", age: 24 },
     { name: "Casemiro", number: 5, position: "CDM", club: "Manchester United", age: 32 },
-    { name: "Bruno Guimarães", number: 8, position: "CM", club: "Newcastle", age: 27 },
-    { name: "Lucas Paquetá", number: 7, position: "CAM", club: "West Ham", age: 26 },
+    { name: "Bruno Guimar茫es", number: 8, position: "CM", club: "Newcastle", age: 27 },
+    { name: "Lucas Paquet谩", number: 7, position: "CAM", club: "West Ham", age: 26 },
     { name: "Raphinha", number: 11, position: "RW", club: "Barcelona", age: 27 },
-    { name: "Vinícius Jr.", number: 20, position: "LW", club: "Real Madrid", age: 24 },
+    { name: "Vin铆cius Jr.", number: 20, position: "LW", club: "Real Madrid", age: 24 },
     { name: "Rodrygo", number: 9, position: "ST", club: "Real Madrid", age: 24 },
   ],
   FRA: [
     { name: "Maignan", number: 16, position: "GK", club: "AC Milan", age: 29 },
-    { name: "Koundé", number: 5, position: "RB", club: "Barcelona", age: 25 },
+    { name: "Kound茅", number: 5, position: "RB", club: "Barcelona", age: 25 },
     { name: "Saliba", number: 17, position: "CB", club: "Arsenal", age: 23 },
     { name: "Upamecano", number: 2, position: "CB", club: "Bayern Munich", age: 25 },
-    { name: "Theo Hernández", number: 22, position: "LB", club: "AC Milan", age: 26 },
-    { name: "Tchouaméni", number: 8, position: "CDM", club: "Real Madrid", age: 24 },
+    { name: "Theo Hern谩ndez", number: 22, position: "LB", club: "AC Milan", age: 26 },
+    { name: "Tchouam茅ni", number: 8, position: "CDM", club: "Real Madrid", age: 24 },
     { name: "Camavinga", number: 6, position: "CM", club: "Real Madrid", age: 21 },
-    { name: "Zaïre-Emery", number: 18, position: "CM", club: "PSG", age: 19 },
-    { name: "Dembélé", number: 7, position: "RW", club: "PSG", age: 27 },
-    { name: "Mbappé", number: 10, position: "ST", club: "Real Madrid", age: 26 },
+    { name: "Za茂re-Emery", number: 18, position: "CM", club: "PSG", age: 19 },
+    { name: "Demb茅l茅", number: 7, position: "RW", club: "PSG", age: 27 },
+    { name: "Mbapp茅", number: 10, position: "ST", club: "Real Madrid", age: 26 },
     { name: "Thuram", number: 15, position: "LW", club: "Inter Milan", age: 26 },
   ],
   ENG: [
@@ -97,28 +97,28 @@ const PLAYER_POOLS: Record<string, Array<{ name: string; number: number; positio
     { name: "Palmer", number: 11, position: "LW", club: "Chelsea", age: 22 },
   ],
   ARG: [
-    { name: "Dibu Martínez", number: 23, position: "GK", club: "Aston Villa", age: 31 },
-    { name: "Molina", number: 4, position: "RB", club: "Atlético Madrid", age: 26 },
+    { name: "Dibu Mart铆nez", number: 23, position: "GK", club: "Aston Villa", age: 31 },
+    { name: "Molina", number: 4, position: "RB", club: "Atl茅tico Madrid", age: 26 },
     { name: "Romero", number: 13, position: "CB", club: "Tottenham", age: 26 },
     { name: "Otamendi", number: 19, position: "CB", club: "Benfica", age: 36 },
     { name: "Tagliafico", number: 3, position: "LB", club: "Lyon", age: 31 },
-    { name: "De Paul", number: 7, position: "CM", club: "Atlético Madrid", age: 30 },
-    { name: "Enzo Fernández", number: 24, position: "CM", club: "Chelsea", age: 23 },
+    { name: "De Paul", number: 7, position: "CM", club: "Atl茅tico Madrid", age: 30 },
+    { name: "Enzo Fern谩ndez", number: 24, position: "CM", club: "Chelsea", age: 23 },
     { name: "Mac Allister", number: 20, position: "CAM", club: "Liverpool", age: 25 },
     { name: "Messi", number: 10, position: "RW", club: "Inter Miami", age: 38 },
-    { name: "Álvarez", number: 9, position: "ST", club: "Atlético Madrid", age: 24 },
-    { name: "Di María", number: 11, position: "LW", club: "Benfica", age: 36 },
+    { name: "脕lvarez", number: 9, position: "ST", club: "Atl茅tico Madrid", age: 24 },
+    { name: "Di Mar铆a", number: 11, position: "LW", club: "Benfica", age: 36 },
   ],
   GER: [
     { name: "Ter Stegen", number: 1, position: "GK", club: "Barcelona", age: 32 },
     { name: "Kimmich", number: 6, position: "RB", club: "Bayern Munich", age: 29 },
-    { name: "Rüdiger", number: 2, position: "CB", club: "Real Madrid", age: 31 },
+    { name: "R眉diger", number: 2, position: "CB", club: "Real Madrid", age: 31 },
     { name: "Tah", number: 4, position: "CB", club: "Bayer Leverkusen", age: 28 },
-    { name: "Mittelstädt", number: 3, position: "LB", club: "VfB Stuttgart", age: 27 },
+    { name: "Mittelst盲dt", number: 3, position: "LB", club: "VfB Stuttgart", age: 27 },
     { name: "Andrich", number: 5, position: "CDM", club: "Bayer Leverkusen", age: 28 },
     { name: "Musiala", number: 10, position: "CAM", club: "Bayern Munich", age: 21 },
     { name: "Wirtz", number: 7, position: "CM", club: "Bayer Leverkusen", age: 21 },
-    { name: "Sané", number: 19, position: "RW", club: "Bayern Munich", age: 28 },
+    { name: "San茅", number: 19, position: "RW", club: "Bayern Munich", age: 28 },
     { name: "Havertz", number: 9, position: "ST", club: "Arsenal", age: 25 },
     { name: "Musiala", number: 10, position: "LW", club: "Bayern Munich", age: 21 },
   ],
@@ -126,12 +126,12 @@ const PLAYER_POOLS: Record<string, Array<{ name: string; number: number; positio
     { name: "Diogo Costa", number: 1, position: "GK", club: "Porto", age: 25 },
     { name: "Dalot", number: 2, position: "RB", club: "Manchester United", age: 25 },
     { name: "Pepe", number: 3, position: "CB", club: "Porto", age: 41 },
-    { name: "António Silva", number: 4, position: "CB", club: "Benfica", age: 21 },
+    { name: "Ant贸nio Silva", number: 4, position: "CB", club: "Benfica", age: 21 },
     { name: "Nuno Mendes", number: 19, position: "LB", club: "PSG", age: 22 },
     { name: "Palhinha", number: 6, position: "CDM", club: "Bayern Munich", age: 29 },
     { name: "Bernardo Silva", number: 8, position: "CM", club: "Manchester City", age: 29 },
     { name: "Bruno Fernandes", number: 10, position: "CAM", club: "Manchester United", age: 29 },
-    { name: "Rafael Leão", number: 11, position: "RW", club: "AC Milan", age: 24 },
+    { name: "Rafael Le茫o", number: 11, position: "RW", club: "AC Milan", age: 24 },
     { name: "Cristiano Ronaldo", number: 7, position: "ST", club: "Al Nassr", age: 39 },
     { name: "Pedro Neto", number: 17, position: "LW", club: "Chelsea", age: 24 },
   ],
@@ -151,7 +151,7 @@ const PLAYER_POOLS: Record<string, Array<{ name: string; number: number; positio
   JPN: [
     { name: "Gonda", number: 1, position: "GK", club: "Shimizu S-Pulse", age: 35 },
     { name: "Yamane", number: 2, position: "RB", club: "Kawasaki Frontale", age: 31 },
-    { name: "Itakura", number: 4, position: "CB", club: "Borussia Mönchengladbach", age: 27 },
+    { name: "Itakura", number: 4, position: "CB", club: "Borussia M枚nchengladbach", age: 27 },
     { name: "Taniguchi", number: 22, position: "CB", club: "Kawasaki Frontale", age: 32 },
     { name: "Daiichi Kamada", number: 3, position: "LB", club: "Crystal Palace", age: 27 },
     { name: "Endo", number: 6, position: "CDM", club: "Liverpool", age: 31 },
@@ -162,16 +162,16 @@ const PLAYER_POOLS: Record<string, Array<{ name: string; number: number; positio
     { name: "Mitoma", number: 10, position: "LW", club: "Brighton", age: 27 },
   ],
   COL: [
-    { name: "Sánchez", number: 1, position: "GK", club: "Porto", age: 28 },
-    { name: "Arias", number: 4, position: "RB", club: "Atlético Nacional", age: 32 },
-    { name: "Sánchez", number: 2, position: "CB", club: "Tottenham", age: 26 },
+    { name: "S谩nchez", number: 1, position: "GK", club: "Porto", age: 28 },
+    { name: "Arias", number: 4, position: "RB", club: "Atl茅tico Nacional", age: 32 },
+    { name: "S谩nchez", number: 2, position: "CB", club: "Tottenham", age: 26 },
     { name: "Mina", number: 13, position: "CB", club: "Flamengo", age: 32 },
-    { name: "Estupiñán", number: 17, position: "LB", club: "Brighton", age: 26 },
+    { name: "Estupi帽谩n", number: 17, position: "LB", club: "Brighton", age: 26 },
     { name: "Barrios", number: 5, position: "CDM", club: "Portland Timbers", age: 31 },
     { name: "Lerma", number: 15, position: "CM", club: "Crystal Palace", age: 29 },
-    { name: "James Rodríguez", number: 10, position: "CAM", club: "Rayo Vallecano", age: 33 },
-    { name: "Luis Díaz", number: 7, position: "RW", club: "Liverpool", age: 27 },
-    { name: "Muriel", number: 9, position: "ST", club: "Atlético Mineiro", age: 33 },
+    { name: "James Rodr铆guez", number: 10, position: "CAM", club: "Rayo Vallecano", age: 33 },
+    { name: "Luis D铆az", number: 7, position: "RW", club: "Liverpool", age: 27 },
+    { name: "Muriel", number: 9, position: "ST", club: "Atl茅tico Mineiro", age: 33 },
     { name: "Arias", number: 11, position: "LW", club: "Cruzeiro", age: 32 },
   ],
   USA: [
@@ -225,28 +225,28 @@ function generateGenericLineup(teamCode: string, formation: string): any[] {
     position: pos,
     isStarter: true,
     country: teamCode,
-    club: "—",
+    club: "TBD",
     age: 25,
     rating: Math.round(rand(6.0, 8.5) * 10) / 10,
     isCaptain: i === 4,
   }));
 }
 
-// ── Events ──────────────────────────────────────────────────────
+// 鈹€鈹€ Events 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
 function generateEvents(homeTeam: string, awayTeam: string): MatchEvent[] {
   const eventPool: Omit<MatchEvent, "id">[] = [
-    { minute: 12, type: "goal", player: "Morata", team: "home", description: "头球破门" },
-    { minute: 23, type: "yellow_card", player: "Casemiro", team: "away", description: "战术犯规" },
-    { minute: 34, type: "goal", player: "Vinícius Jr.", team: "away", description: "内切射门" },
-    { minute: 41, type: "var_review", team: "home", description: "VAR 判罚点球" },
-    { minute: 42, type: "penalty_goal", player: "Morata", team: "home", description: "点球命中" },
+    { minute: 12, type: "goal", player: "Morata", team: "home", description: "澶寸悆鐮撮棬" },
+    { minute: 23, type: "yellow_card", player: "Casemiro", team: "away", description: "鎴樻湳鐘" },
+    { minute: 34, type: "goal", player: "Vin铆cius Jr.", team: "away", description: "鍐呭垏灏勯棬" },
+    { minute: 41, type: "var_review", team: "home", description: "VAR 鍒ょ綒鐐圭悆" },
+    { minute: 42, type: "penalty_goal", player: "Morata", team: "home", description: "鐐圭悆鍛戒腑" },
     { minute: 45, type: "halftime", team: "home" },
     { minute: 56, type: "substitution", player: "Gavi", playerOut: "Pedri", team: "home" },
-    { minute: 67, type: "goal", player: "Rodrygo", team: "away", description: "反击破门" },
+    { minute: 67, type: "goal", player: "Rodrygo", team: "away", description: "鍙嶅嚮鐮撮棬" },
     { minute: 72, type: "substitution", player: "Nico Williams", playerOut: "Lamine Yamal", team: "home" },
-    { minute: 78, type: "yellow_card", player: "Marquinhos", team: "away", description: "拖延时间" },
-    { minute: 85, type: "goal", player: "Nico Williams", team: "home", description: "远射世界波" },
+    { minute: 78, type: "yellow_card", player: "Marquinhos", team: "away", description: "鎷栧欢鏃堕棿" },
+    { minute: 85, type: "goal", player: "Nico Williams", team: "home", description: "Long-range finish" },
     { minute: 90, type: "fulltime", team: "home" },
   ];
 
@@ -257,7 +257,7 @@ function generateEvents(homeTeam: string, awayTeam: string): MatchEvent[] {
   }));
 }
 
-// ── Stats ───────────────────────────────────────────────────────
+// 鈹€鈹€ Stats 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
 function generateStats(): MatchStats {
   return {
@@ -274,18 +274,18 @@ function generateStats(): MatchStats {
   };
 }
 
-// ── News ────────────────────────────────────────────────────────
+// 鈹€鈹€ News 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
 function generateNews(homeTeam: string, awayTeam: string): MatchNewsItem[] {
   const templates = [
-    { title: `${homeTeam} vs ${awayTeam}: 完整赛前分析与预测`, source: "ESPN", category: "analysis" as const },
-    { title: `世界杯焦点战：${homeTeam}对阵${awayTeam}前瞻`, source: "BBC Sport", category: "preview" as const },
-    { title: `${homeTeam}首发阵容公布：关键球员入选`, source: "FIFA.com", category: "lineup" as const },
-    { title: `${awayTeam}伤病更新：主力中场出战成疑`, source: "Sky Sports", category: "injury" as const },
-    { title: `赔率分析：${homeTeam}被看好拿下关键三分`, source: "Polymarket", category: "analysis" as const },
-    { title: `${homeTeam}教练赛前发布会：我们已做好准备`, source: "Marca", category: "preview" as const },
-    { title: `世界杯数据：${homeTeam} vs ${awayTeam}历史交锋全记录`, source: "Transfermarkt", category: "analysis" as const },
-    { title: `${awayTeam}核心球员伤愈回归大名单`, source: "Goal", category: "injury" as const },
+    { title: `${homeTeam} vs ${awayTeam}: complete match preview`, source: "ESPN", category: "analysis" as const },
+    { title: `World Cup focus: ${homeTeam} face ${awayTeam}`, source: "BBC Sport", category: "preview" as const },
+    { title: `${homeTeam} expected lineup and key players`, source: "FIFA.com", category: "lineup" as const },
+    { title: `${awayTeam} squad and fitness update`, source: "Sky Sports", category: "injury" as const },
+    { title: `Market odds: ${homeTeam} vs ${awayTeam}`, source: "Polymarket", category: "analysis" as const },
+    { title: `${homeTeam} coach speaks before kickoff`, source: "Marca", category: "preview" as const },
+    { title: `Historical data: ${homeTeam} vs ${awayTeam}`, source: "Transfermarkt", category: "analysis" as const },
+    { title: `${awayTeam} key player returns to squad`, source: "Goal", category: "injury" as const },
   ];
 
   return templates.map((t, i) => ({
@@ -298,19 +298,19 @@ function generateNews(homeTeam: string, awayTeam: string): MatchNewsItem[] {
   }));
 }
 
-// ── Head to Head ────────────────────────────────────────────────
+// 鈹€鈹€ Head to Head 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
 function generateHeadToHead(homeTeam: string, awayTeam: string): HeadToHeadMatch[] {
   return [
-    { date: "2024-03-26", competition: "国际友谊赛", homeTeam, awayTeam, score: "2 - 1" },
-    { date: "2022-11-23", competition: "世界杯小组赛", homeTeam, awayTeam, score: "1 - 0" },
-    { date: "2018-07-01", competition: "世界杯1/8决赛", homeTeam, awayTeam, score: "1 - 1 (4-3 pen)" },
-    { date: "2013-06-06", competition: "联合会杯", homeTeam, awayTeam, score: "3 - 0" },
-    { date: "2010-07-10", competition: "世界杯半决赛", homeTeam, awayTeam, score: "1 - 0" },
+    { date: "2024-03-26", competition: "International Friendly", homeTeam, awayTeam, score: "2 - 1" },
+    { date: "2022-11-23", competition: "World Cup Group Stage", homeTeam, awayTeam, score: "1 - 0" },
+    { date: "2018-07-01", competition: "World Cup Round of 16", homeTeam, awayTeam, score: "1 - 1 (4-3 pen)" },
+    { date: "2013-06-06", competition: "Confederations Cup", homeTeam, awayTeam, score: "3 - 0" },
+    { date: "2010-07-10", competition: "World Cup Semifinal", homeTeam, awayTeam, score: "1 - 0" },
   ];
 }
 
-// ── Status Derivation ───────────────────────────────────────────
+// 鈹€鈹€ Status Derivation 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
 function deriveStatus(matchStart: Date, matchEnd: Date | null): MatchStatus {
   const now = Date.now();
@@ -333,21 +333,52 @@ function normalizeTeamName(value: string): string {
 }
 
 function getTeamCode(name: string): string {
-  if (name === "刚果(金)" || name === "刚果金") return "COD";
-  return CN_TO_CODE[name] ?? name.slice(0, 3).toUpperCase();
+  const specialTeamCode = getSpecialTeamCode(name);
+  if (specialTeamCode) return specialTeamCode;
+
+  const flagCode = getCodeFromFlag(name);
+  return CN_TO_CODE[name] ?? flagCode ?? name.slice(0, 3).toUpperCase();
 }
 
-// ── Public API ──────────────────────────────────────────────────
+function getSpecialTeamCode(value: string): string | undefined {
+  if (value.includes("苏格兰")) return "SCO";
+  if (value.includes("英格兰")) return "ENG";
+  return undefined;
+}
+
+function getCodeFromFlag(value: string): string | undefined {
+  const chars = [...value];
+  for (let index = 0; index < chars.length - 1; index++) {
+    if (isRegionalIndicator(chars[index]) && isRegionalIndicator(chars[index + 1])) {
+      const iso2 = `${regionalIndicatorToLetter(chars[index])}${regionalIndicatorToLetter(chars[index + 1])}`;
+      return ISO2_TO_CODE[iso2];
+    }
+  }
+
+  return undefined;
+}
+
+function isRegionalIndicator(char: string) {
+  const codePoint = char.codePointAt(0) ?? 0;
+  return codePoint >= 0x1f1e6 && codePoint <= 0x1f1ff;
+}
+
+function regionalIndicatorToLetter(char: string) {
+  const codePoint = char.codePointAt(0) ?? 0;
+  return String.fromCharCode(codePoint - 0x1f1e6 + 65);
+}
+
+// 鈹€鈹€ Public API 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
 export function generateMatchDetail(
   match: Match,
 ): MatchDetail {
-  const parts = match.summary.replace(/^⚽\s*/, "").split(/\s+vs\s+/i);
-  const homeName = normalizeTeamName(parts[0] ?? "待定");
-  const awayName = normalizeTeamName(parts[1]?.replace(/\s*\([^)]+\)\s*$/, "") ?? "待定");
+  const parts = match.summary.replace(/^鈿絓s*/, "").split(/\s+vs\s+/i);
+  const homeName = normalizeTeamName(parts[0] ?? "寰呭畾");
+  const awayName = normalizeTeamName(parts[1]?.replace(/\s*\([^)]+\)\s*$/, "") ?? "寰呭畾");
 
-  const homeCode = getTeamCode(homeName);
-  const awayCode = getTeamCode(awayName);
+  const homeCode = getTeamCode(parts[0] ?? homeName);
+  const awayCode = getTeamCode(parts[1]?.replace(/\s*\([^)]+\)\s*$/, "") ?? awayName);
 
   const status = deriveStatus(match.start, match.end);
   const isFinished = status === "finished";
@@ -380,20 +411,59 @@ export function generateMatchDetail(
   };
 }
 
-// ── CN → FIFA Code mapping ──────────────────────────────────────
+// 鈹€鈹€ CN 鈫?FIFA Code mapping 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
-const CN_TO_CODE: Record<string, string> = {
-  "西班牙": "ESP", "巴西": "BRA", "法国": "FRA", "英格兰": "ENG",
-  "阿根廷": "ARG", "德国": "GER", "葡萄牙": "POR", "荷兰": "NED",
-  "日本": "JPN", "哥伦比亚": "COL", "美国": "USA", "比利时": "BEL",
-  "摩洛哥": "MAR", "瑞士": "SUI", "乌拉圭": "URU", "墨西哥": "MEX",
-  "厄瓜多尔": "ECU", "克罗地亚": "CRO", "土耳其": "TUR", "塞内加尔": "SEN",
-  "奥地利": "AUT", "加拿大": "CAN", "韩国": "KOR", "加纳": "GHA",
-  "巴拉圭": "PAR", "科特迪瓦": "CIV", "捷克": "CZE", "埃及": "EGY",
-  "伊朗": "IRN", "阿尔及利亚": "DZA", "突尼斯": "TUN", "澳大利亚": "AUS",
-  "新西兰": "NZL", "卡塔尔": "QAT", "沙特阿拉伯": "SAU", "意大利": "ITA",
-  "秘鲁": "PER", "丹麦": "DEN", "塞尔维亚": "SRB", "波兰": "POL",
-  "乌克兰": "UKR", "喀麦隆": "CMR", "牙买加": "JAM", "洪都拉斯": "HON",
-  "哥斯达黎加": "CRC", "巴拿马": "PAN", "智利": "CHI", "挪威": "NOR",
-  "瑞典": "SWE",
+const CN_TO_CODE: Record<string, string> = {};
+
+const ISO2_TO_CODE: Record<string, string> = {
+  AR: "ARG",
+  AU: "AUS",
+  AT: "AUT",
+  BE: "BEL",
+  BA: "BIH",
+  BR: "BRA",
+  CA: "CAN",
+  CI: "CIV",
+  CD: "COD",
+  CO: "COL",
+  CV: "CPV",
+  CW: "CUW",
+  CZ: "CZE",
+  DK: "DEN",
+  DZ: "DZA",
+  EC: "ECU",
+  EG: "EGY",
+  ES: "ESP",
+  FR: "FRA",
+  DE: "GER",
+  GH: "GHA",
+  HT: "HAI",
+  HR: "CRO",
+  IR: "IRN",
+  IQ: "IRQ",
+  JO: "JOR",
+  JP: "JPN",
+  KR: "KOR",
+  MA: "MAR",
+  MX: "MEX",
+  NL: "NED",
+  NO: "NOR",
+  NZ: "NZL",
+  PA: "PAN",
+  PY: "PAR",
+  PL: "POL",
+  PT: "POR",
+  QA: "QAT",
+  ZA: "RSA",
+  SA: "SAU",
+  SN: "SEN",
+  RS: "SRB",
+  CH: "SUI",
+  SE: "SWE",
+  TN: "TUN",
+  TR: "TUR",
+  UY: "URU",
+  US: "USA",
+  UZ: "UZB",
 };
+

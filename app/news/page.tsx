@@ -125,20 +125,30 @@ export default function NewsPage() {
         </div>
 
         <div className="scrollbar-hidden flex gap-2 overflow-x-auto pb-1 lg:pb-0">
-          {filters.map((filter) => (
-            <button
-              key={filter.value}
-              type="button"
-              onClick={() => setActiveTag(filter.value)}
-              className={`h-12 shrink-0 rounded-2xl px-4 text-xs font-semibold uppercase tracking-[0.12em] transition ${
-                activeTag === filter.value
-                  ? "bg-volt text-black shadow-[0_0_28px_rgba(216,255,62,0.25)]"
-                  : "bg-white/[0.045] text-white/52 ring-1 ring-white/[0.07] hover:bg-white/[0.075] hover:text-white"
-              }`}
-            >
-              {filter.label}
-            </button>
-          ))}
+          {filters.map((filter) => {
+            const isActive = activeTag === filter.value;
+            return (
+              <button
+                key={filter.value}
+                type="button"
+                onClick={() => setActiveTag(filter.value)}
+                className={`relative h-12 shrink-0 rounded-2xl px-4 text-xs font-semibold uppercase tracking-[0.12em] transition-colors duration-300 ${
+                  isActive
+                    ? "text-black"
+                    : "text-white/52 bg-white/[0.045] ring-1 ring-white/[0.07] hover:bg-white/[0.075] hover:text-white"
+                }`}
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="activeFilter"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    className="absolute inset-0 rounded-2xl bg-volt shadow-[0_0_28px_rgba(216,255,62,0.25)]"
+                  />
+                )}
+                <span className="relative z-10">{filter.label}</span>
+              </button>
+            );
+          })}
         </div>
       </section>
 
@@ -148,9 +158,53 @@ export default function NewsPage() {
         ) : items.length ? (
           items.map((item, index) => <NewsCard key={`${item.id}-${item.url}`} item={item} index={index} />)
         ) : (
-          <div className="hero-card col-span-full flex min-h-56 flex-col items-center justify-center gap-3 p-8 text-center">
-            <RefreshCw className="h-6 w-6 text-white/38" />
-            <p className="text-sm text-white/58">暂时没有匹配新闻，换个关键词或筛选项再试。</p>
+          <div className="hero-card col-span-full flex min-h-[350px] flex-col items-center justify-center gap-6 p-8 text-center overflow-hidden relative">
+            {/* Radar Animation Grid/Circles */}
+            <div className="relative flex items-center justify-center w-40 h-40">
+              {/* Radial grid lines */}
+              <div className="absolute inset-0 rounded-full border border-white/5" />
+              <div className="absolute inset-4 rounded-full border border-white/5" />
+              <div className="absolute inset-8 rounded-full border border-white/5" />
+              <div className="absolute inset-12 rounded-full border border-white/5" />
+              <div className="absolute inset-16 rounded-full border border-white/5" />
+              
+              {/* Radar sweeping scan line */}
+              <motion.div 
+                animate={{ rotate: 360 }}
+                transition={{ repeat: Infinity, duration: 4, ease: "linear" }}
+                className="absolute inset-0 origin-center rounded-full pointer-events-none"
+                style={{
+                  background: "conic-gradient(from 0deg, rgba(216, 255, 62, 0.15) 0deg, rgba(216, 255, 62, 0) 90deg, transparent 360deg)"
+                }}
+              />
+              
+              {/* Pulsing circles */}
+              <motion.div
+                animate={{ scale: [1, 2], opacity: [0.6, 0] }}
+                transition={{ repeat: Infinity, duration: 2.5, ease: "easeOut" }}
+                className="absolute w-20 h-20 rounded-full border border-volt/30 pointer-events-none"
+              />
+              <motion.div
+                animate={{ scale: [1, 2], opacity: [0.4, 0] }}
+                transition={{ repeat: Infinity, duration: 2.5, delay: 1.25, ease: "easeOut" }}
+                className="absolute w-20 h-20 rounded-full border border-flare/20 pointer-events-none"
+              />
+
+              {/* Center blip */}
+              <div className="absolute w-2.5 h-2.5 rounded-full bg-volt shadow-[0_0_12px_rgba(216,255,62,0.8)] animate-pulse" />
+            </div>
+
+            <div className="space-y-2 relative z-10">
+              <h3 
+                className="text-xs uppercase tracking-[0.3em] text-volt font-medium"
+                style={{ fontFamily: "ScreenMatrix, monospace" }}
+              >
+                Signal Scanning...
+              </h3>
+              <p className="text-sm text-white/58 max-w-sm mx-auto">
+                未检索到匹配信号。请尝试调整筛选标签或检索词重新搜索。
+              </p>
+            </div>
           </div>
         )}
       </section>
@@ -170,6 +224,10 @@ function Stat({ label, value, compact = false }: { label: string; value: string;
 function NewsCard({ item, index }: { item: NewsItem; index: number }) {
   const published = dateFormatter.format(new Date(item.publishedAt));
   const firstTag = item.tags[0]?.replaceAll("-", " ") ?? "world cup";
+  
+  const textLength = (item.title || "").length + (item.summary || "").length;
+  const byteCount = textLength * 2 + 128;
+  const readTimeMin = Math.max(1, Math.ceil(textLength / 250));
 
   return (
     <motion.a
@@ -179,8 +237,13 @@ function NewsCard({ item, index }: { item: NewsItem; index: number }) {
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(index * 0.025, 0.25), duration: 0.36 }}
-      className="hero-card group flex min-h-[260px] flex-col overflow-hidden transition hover:-translate-y-1"
+      className="hero-card group flex min-h-[260px] flex-col overflow-hidden transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_0_30px_rgba(216,255,62,0.12)] hover:ring-1 hover:ring-volt/30"
     >
+      {/* Top neon glow line */}
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-volt via-flare to-volt opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20" />
+      {/* Ambient hover glow */}
+      <div className="absolute -inset-px rounded-[1.65rem] bg-gradient-to-r from-volt/5 to-flare/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none blur-sm z-0" />
+
       <div className="relative h-32 overflow-hidden bg-white/[0.035]">
         {item.image ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -190,13 +253,13 @@ function NewsCard({ item, index }: { item: NewsItem; index: number }) {
             <Newspaper className="h-9 w-9 text-volt/70" />
           </div>
         )}
-        <div className="absolute left-3 top-3 rounded-full bg-black/55 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-volt backdrop-blur-xl">
+        <div className="absolute left-3 top-3 rounded-full bg-black/55 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-volt backdrop-blur-xl z-10">
           {firstTag}
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-3 p-4">
-        <div className="flex items-center justify-between gap-3 text-[11px] uppercase tracking-[0.12em] text-white/35">
+      <div className="flex flex-1 flex-col gap-3 p-4 z-10">
+        <div className="flex items-center justify-between gap-3 text-[10px] font-mono uppercase tracking-[0.14em] text-white/35">
           <span className="truncate">{item.source}</span>
           <span className="shrink-0 tabular">{published}</span>
         </div>
@@ -206,9 +269,13 @@ function NewsCard({ item, index }: { item: NewsItem; index: number }) {
         </h2>
         <p className="line-clamp-2 text-sm leading-6 text-white/52">{item.summary}</p>
 
-        <div className="mt-auto flex items-center justify-between gap-3 pt-2">
-          <span className="truncate text-xs text-white/32">{item.sourceFeed}</span>
-          <ExternalLink className="h-4 w-4 shrink-0 text-white/28 transition group-hover:text-volt" />
+        <div className="mt-auto flex items-center justify-between gap-3 pt-2 border-t border-white/[0.04]">
+          <span className="truncate text-xs text-white/32 font-mono">{item.sourceFeed}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono text-white/25 uppercase tracking-wider">{readTimeMin}m read</span>
+            <span className="text-[10px] font-mono text-volt/40 uppercase">/ {byteCount}b</span>
+            <ExternalLink className="h-3.5 w-3.5 shrink-0 text-white/28 transition group-hover:text-volt" />
+          </div>
         </div>
       </div>
     </motion.a>

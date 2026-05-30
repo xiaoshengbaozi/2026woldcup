@@ -1,4 +1,4 @@
-import type { DetailRow, Match } from "@/types/match";
+﻿import type { DetailRow, Match } from "@/types/match";
 
 export function unfoldIcs(text: string) {
   return text.replace(/\r?\n[ \t]/g, "");
@@ -55,12 +55,22 @@ export function extractStage(summary: string, description: string) {
     .map((part) => part.trim())
     .filter(Boolean);
 
-  return parts[1] || "其他";
+  return parts[1] || "鍏朵粬";
 }
 
 export function extractWeather(description: string) {
-  const match = description.match(/动态天气\s*(https?:\/\/\S+)/);
+  const match = description.match(/鍔ㄦ€佸ぉ姘擻s*(https?:\/\/\S+)/);
   return match ? match[1] : "";
+}
+
+export function extractCity(location: string) {
+  const openIndex = location.lastIndexOf("\uFF08");
+  const closeIndex = location.lastIndexOf("\uFF09");
+  if (openIndex >= 0 && closeIndex > openIndex) {
+    return location.slice(openIndex + 1, closeIndex).trim();
+  }
+
+  return location.split(",").slice(-1)[0]?.trim() || location.trim();
 }
 
 export function parseCalendar(text: string): Match[] {
@@ -107,19 +117,19 @@ export function detailRows(match: Match): DetailRow[] {
     .filter(
       (line) =>
         !line.startsWith("动态天气") &&
-        !line.startsWith("系统地图:") &&
-        !line.startsWith("通用地图:")
+        !line.startsWith("绯荤粺鍦板浘:") &&
+        !line.startsWith("閫氱敤鍦板浘:")
     )
     .map((line) => {
-      if (line.startsWith("📍")) {
+      if (line.startsWith("馃搷")) {
         return { icon: "LOC", text: line.slice(2).trim(), type: "venue" };
       }
 
-      if (line.startsWith("🏟")) {
+      if (line.startsWith("馃彑")) {
         return { icon: "STAD", text: line.slice(2).trim(), type: "meta" };
       }
 
-      if (line.startsWith("坐标:")) {
+      if (line.startsWith("鍧愭爣:")) {
         return { icon: "GPS", text: line, type: "meta" };
       }
 
@@ -144,14 +154,14 @@ export function getDayStatus(dayMatches: Match[]) {
     return end > latest ? end : latest;
   }, dayMatches[0].end?.getTime() || dayMatches[0].start.getTime());
 
-  if (now > lastEnd) return "已完赛";
+  if (now > lastEnd) return "Finished";
 
   const inProgress = dayMatches.some((match) => {
     const start = match.start.getTime();
     const end = match.end?.getTime() || start;
     return now >= start && now <= end;
   });
-  if (inProgress) return "进行中";
+  if (inProgress) return "Live";
 
   const diff = firstStart - now;
   const hoursTotal = diff / 3600000;
@@ -159,11 +169,11 @@ export function getDayStatus(dayMatches: Match[]) {
   if (hoursTotal < 24) {
     const h = Math.floor(hoursTotal);
     const m = Math.floor((hoursTotal - h) * 60);
-    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")} 后`;
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")} left`;
   }
 
   const days = Math.ceil(hoursTotal / 24);
-  return `${days} 天后`;
+  return `${days} days later`;
 }
 
 export function getTournamentProgress(matches: Match[]) {
@@ -177,3 +187,4 @@ export function getTournamentProgress(matches: Match[]) {
 
   return Math.round((completed / matches.length) * 100);
 }
+

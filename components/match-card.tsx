@@ -5,13 +5,8 @@ import { detailRows } from "@/lib/calendar";
 import { formatTime } from "@/lib/format";
 import { parseTeams } from "@/lib/teams";
 import { generateMatchSlug } from "@/lib/match-detail";
+import { formatStageLabel } from "@/lib/stage";
 import type { Match, Team } from "@/types/match";
-
-function formatStage(stage: string): string {
-  const groupMatch = stage.match(/小组赛([A-L])组/);
-  if (groupMatch) return groupMatch[1] + " 组";
-  return stage;
-}
 
 export function MatchCard({ match, timezoneOffset = 0 }: { match: Match; timezoneOffset?: number }) {
   const teams = parseTeams(match.summary);
@@ -24,15 +19,15 @@ export function MatchCard({ match, timezoneOffset = 0 }: { match: Match; timezon
     <Link href={"/matches/" + slug}>
     <motion.article
       layout
-      className="group relative flex flex-col gap-2 rounded-3xl p-2.5 transition sm:gap-3 sm:p-4 cursor-pointer"
+      className="group relative flex min-w-0 flex-col gap-2 rounded-3xl p-2.5 transition sm:gap-3 sm:p-4 cursor-pointer"
     >
       <div className="relative flex items-center justify-between gap-1 sm:gap-3">
         <TeamBlock team={teams.home} align="left" />
-        <div className="absolute left-1/2 -translate-x-1/2 flex shrink-0 flex-col items-center">
-          <div className="text-xs uppercase tracking-widest text-white/40 transition group-hover:text-volt/60">
-            {formatStage(match.stage)}
+        <div className="absolute left-1/2 -translate-x-1/2 flex w-20 shrink-0 flex-col items-center sm:w-auto">
+          <div className="max-w-full truncate text-[10px] uppercase tracking-[0.12em] text-white/40 transition group-hover:text-volt/60 sm:text-xs sm:tracking-widest">
+            {formatStageLabel(match.stage)}
           </div>
-          <div className="mt-1 text-xl font-semibold leading-none text-white transition group-hover:text-volt sm:text-3xl">
+          <div className="mt-1 text-lg font-semibold leading-none text-white transition group-hover:text-volt sm:text-3xl">
             {formatTime(adjustedStart)}
           </div>
         </div>
@@ -53,8 +48,8 @@ function TeamBlock({ team, align }: { team: Team; align: "left" | "right" }) {
   const isRight = align === "right";
   const localName = getLocalName(team);
   return (
-    <div className={`flex min-w-0 items-center gap-2 ${isRight ? "flex-row-reverse text-right" : "flex-row text-left"}`}>
-      <div className="grid h-10 w-14 shrink-0 place-items-center overflow-hidden rounded-lg bg-white/10">
+    <div className={`flex min-w-0 max-w-[38%] items-center gap-1.5 sm:max-w-none sm:gap-2 ${isRight ? "flex-row-reverse text-right" : "flex-row text-left"}`}>
+      <div className="grid h-8 w-11 shrink-0 place-items-center overflow-hidden rounded-lg bg-white/10 sm:h-10 sm:w-14">
         {team.image ? (
           <img src={team.image} alt="" className="h-full w-full object-cover" loading="lazy" />
         ) : (
@@ -62,8 +57,8 @@ function TeamBlock({ team, align }: { team: Team; align: "left" | "right" }) {
         )}
       </div>
       <div className="min-w-0">
-        <p className="truncate text-sm font-semibold text-white transition group-hover:text-volt sm:text-base">{team.name}</p>
-        <p className="mt-0.5 truncate text-[10px] uppercase tracking-[0.1em] text-white/30 transition group-hover:text-volt/40 sm:text-xs">{localName}</p>
+        <p className="truncate text-xs font-semibold text-white transition group-hover:text-volt sm:text-base">{team.name}</p>
+        <p className="mt-0.5 hidden truncate text-[10px] uppercase tracking-[0.1em] text-white/30 transition group-hover:text-volt/40 sm:block sm:text-xs">{localName}</p>
       </div>
     </div>
   );

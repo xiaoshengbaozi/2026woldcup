@@ -22,6 +22,7 @@ export default function Home() {
   return (
     <DashboardShell>
       <WorldCupHero
+        matches={matches}
         firstMatch={firstMatch}
         progress={progress}
         completedCount={completedCount}

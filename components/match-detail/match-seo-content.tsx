@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { parseTeams } from "@/lib/teams";
 import { formatDate } from "@/lib/format";
+import { formatStageLabel } from "@/lib/stage";
 import type { MatchDetail } from "@/types/match";
 
 export function MatchSeoContent({ detail }: { detail: MatchDetail }) {
@@ -10,7 +11,7 @@ export function MatchSeoContent({ detail }: { detail: MatchDetail }) {
   const home = teams.home.name;
   const away = teams.away.name;
   const date = formatDate(detail.match.start);
-  const stage = detail.match.stage;
+  const stage = formatStageLabel(detail.match.stage);
 
   return (
     <motion.div

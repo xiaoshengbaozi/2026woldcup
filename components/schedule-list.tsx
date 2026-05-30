@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Clock } from "lucide-react";
 import { MatchCard } from "@/components/match-card";
 import { MatchCardCompact } from "@/components/match-card-compact";
+import { TopologyBracket } from "@/components/topology-bracket";
 import { getDayStatus } from "@/lib/calendar";
 import { formatDate } from "@/lib/format";
 import type { Match } from "@/types/match";
@@ -180,6 +181,12 @@ export function ScheduleList({
             />
           ))}
         </div>
+      )}
+      {layout === "topology" && (
+        <TopologyBracket
+          matches={Array.from(grouped.values()).flat()}
+          timezoneOffset={timezoneOffset}
+        />
       )}
     </main>
   );

@@ -1,14 +1,16 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { MatchesHeader } from "@/components/matches-header";
 import { MatchFilters } from "@/components/match-filters";
 import { MatchStats } from "@/components/match-stats";
 import { ScheduleList } from "@/components/schedule-list";
-import { groupMatchesByDay } from "@/lib/calendar";
+import { extractCity, groupMatchesByDay } from "@/lib/calendar";
+import { getStageGroupId } from "@/lib/stage";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
 
-export type ScheduleLayout = "default" | "waterfall";
+export type ScheduleLayout = "default" | "waterfall" | "topology";
 
 export default function MatchesPage() {
   const { matches, activeCity, setActiveCity, cities, loading, error } = useWorldCupData();
@@ -26,7 +28,7 @@ export default function MatchesPage() {
     const normalizedQuery = query.trim().toLowerCase();
 
     return matches.filter((match) => {
-      const city = match.location.split(",").slice(-1)[0]?.trim();
+      const city = extractCity(match.location);
       const haystack = [match.summary, match.location, match.description, match.stage]
         .join(" ")
         .toLowerCase();
@@ -52,7 +54,7 @@ export default function MatchesPage() {
 
   const stageTeamCount = useMemo(() => {
     if (!stage) return totalTeams;
-    if (/Group [A-L]$/.test(stage)) return totalTeams;
+    if (getStageGroupId(stage)) return totalTeams;
     if (stage.includes("1/16")) return 32;
     if (stage.includes("1/8")) return 16;
     if (stage.includes("1/4")) return 8;
@@ -63,6 +65,7 @@ export default function MatchesPage() {
 
   return (
     <DashboardShell>
+      <MatchesHeader matchCount={matches.length} />
       <MatchStats
         totalMatches={matches.length}
         visible={filteredMatches.length}
@@ -98,3 +101,4 @@ export default function MatchesPage() {
     </DashboardShell>
   );
 }
+

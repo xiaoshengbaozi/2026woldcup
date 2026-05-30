@@ -5,13 +5,8 @@ import { detailRows } from "@/lib/calendar";
 import { formatTime } from "@/lib/format";
 import { parseTeams } from "@/lib/teams";
 import { generateMatchSlug } from "@/lib/match-detail";
+import { formatStageLabel } from "@/lib/stage";
 import type { Match, Team } from "@/types/match";
-
-function formatStage(stage: string): string {
-  const groupMatch = stage.match(/小组赛([A-L])组/);
-  if (groupMatch) return groupMatch[1] + " 组";
-  return stage;
-}
 
 export function MatchCardCompact({
   match,
@@ -34,14 +29,14 @@ export function MatchCardCompact({
     <Link href={"/matches/" + slug}>
     <motion.article
       layout
-      className="group relative flex flex-col gap-1.5 rounded-[1.25rem] p-2 transition sm:gap-2 sm:p-3 cursor-pointer"
+      className="group relative flex min-w-0 flex-col gap-1.5 rounded-[1.25rem] p-2 transition sm:gap-2 sm:p-3 cursor-pointer"
     >
       <div className="relative flex items-center justify-between gap-1 sm:gap-3">
         <TeamBlockCompact team={teams.home} align="left" />
 
-        <div className="absolute left-1/2 -translate-x-1/2 flex shrink-0 flex-col items-center">
-          <div className="text-[9px] uppercase tracking-[0.14em] text-white/40 transition group-hover:text-volt/60 sm:text-xs sm:tracking-[0.18em]">
-            {formatStage(match.stage)}
+        <div className="absolute left-1/2 -translate-x-1/2 flex w-16 shrink-0 flex-col items-center sm:w-auto">
+          <div className="max-w-full truncate text-[9px] uppercase tracking-[0.1em] text-white/40 transition group-hover:text-volt/60 sm:text-xs sm:tracking-[0.18em]">
+            {formatStageLabel(match.stage)}
           </div>
           <div
             className="mt-1 text-xl font-semibold leading-none text-white transition group-hover:text-volt sm:text-2xl"
@@ -70,7 +65,7 @@ function TeamBlockCompact({
 
   return (
     <div
-      className={`flex min-w-0 items-center gap-1 sm:gap-2 ${
+      className={`flex min-w-0 max-w-[38%] items-center gap-1 sm:max-w-none sm:gap-2 ${
         isRight ? "flex-row-reverse text-right" : "flex-row text-left"
       }`}
     >
@@ -89,7 +84,7 @@ function TeamBlockCompact({
         )}
       </div>
       <div className="min-w-0">
-        <p className="truncate text-[10px] font-medium text-white transition group-hover:text-volt sm:text-[13px] sm:font-semibold">
+        <p className="truncate text-[9px] font-medium text-white transition group-hover:text-volt sm:text-[13px] sm:font-semibold">
           {team.name}
         </p>
         <p className="mt-0.5 hidden text-[9px] uppercase tracking-[0.12em] text-white/24 sm:block">

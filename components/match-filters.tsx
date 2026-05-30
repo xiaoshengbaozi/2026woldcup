@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, Clock, Grid3X3, Layers, LayoutList, MapPin, Search } from "lucide-react";
+import { ChevronDown, Clock, GitFork, Grid3X3, Layers, LayoutList, MapPin, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { ScheduleLayout } from "@/app/matches/page";
 
@@ -132,6 +132,18 @@ function LayoutToggle({
       >
         <Grid3X3 className="h-4 w-4" />
         <span>瀑布流</span>
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange("topology")}
+        className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium transition-all duration-150 ${
+          layout === "topology"
+            ? "bg-volt/10 text-volt ring-1 ring-volt/25"
+            : "text-white/50 hover:text-white/70"
+        }`}
+      >
+        <GitFork className="h-4 w-4" />
+        <span>拓扑图</span>
       </button>
     </div>
   );
@@ -366,3 +378,5 @@ function CityDropdown({
     </div>
   );
 }
+
+
