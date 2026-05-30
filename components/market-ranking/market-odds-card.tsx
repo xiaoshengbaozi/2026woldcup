@@ -37,7 +37,7 @@ export function MarketOddsCard() {
   );
 
   const maxProbability = Math.max(1, sortedCountries[0]?.impliedProbability ?? 1);
-  const filteredCountries = sortedCountries;
+  const topCountries = sortedCountries.slice(0, 10);
 
   return (
     <section
@@ -51,14 +51,14 @@ export function MarketOddsCard() {
             概率排名
           </p>
           <span className="rounded-full bg-volt/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-volt ring-1 ring-volt/20">
-            {sortedCountries.length} 队
+            TOP 10
           </span>
         </div>
       </div>
 
-      <div className="relative z-10 min-h-0 flex-1 overflow-y-auto scrollbar-hidden">
+      <div className="relative z-10">
         <div>
-          {filteredCountries.map((country, index) => {
+          {topCountries.map((country, index) => {
             const rank = sortedCountries.findIndex((item) => item.countryCode === country.countryCode) + 1;
             const isSelected = selectedCountry === country.countryCode;
             const width = Math.max(2, (country.impliedProbability / maxProbability) * 100);

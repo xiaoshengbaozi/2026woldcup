@@ -3,6 +3,7 @@
 import { useLiveMarketData } from "@/lib/use-live-market-data";
 import { ModuleD_Ticker } from "@/components/market-ticker/module-d-ticker";
 import { MarketOddsCard } from "@/components/market-ranking/market-odds-card";
+import { RankingOverflowCard } from "@/components/market-ranking/ranking-overflow-card";
 import { MatchLinesPanel } from "@/components/market-matches/match-lines-panel";
 import { ModuleC_OddsTimeline } from "@/components/market-timeline/module-c-timeline";
 import { ThreeGlobe } from "@/components/market-map/three-globe";
@@ -50,9 +51,9 @@ export function MarketDashboard() {
         </div>
 
         {/* Main grid — same max-w-7xl as homepage */}
-        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(620px,780px)_minmax(280px,1fr)] xl:grid-rows-[minmax(600px,1.08fr)_minmax(260px,0.82fr)] xl:[height:calc(100vh-230px)] xl:min-h-[900px]">
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(620px,780px)_minmax(280px,1fr)] xl:grid-rows-[auto_auto] xl:min-h-[900px]">
           {/* Map — left */}
-          <div className="hero-card relative min-h-[540px] overflow-hidden xl:min-h-0">
+          <div className="hero-card relative min-h-[320px] overflow-hidden sm:min-h-[420px] xl:min-h-0">
             {/* Subtle dot matrix background */}
             <div
               className="pointer-events-none absolute inset-0 opacity-[0.04]"
@@ -65,7 +66,7 @@ export function MarketDashboard() {
           </div>
 
           {/* Rankings — right */}
-          <div className="hero-card relative min-h-[520px] overflow-hidden p-5 xl:min-h-0">
+          <div className="hero-card relative min-h-[520px] p-5 xl:min-h-0">
             <MarketOddsCard />
           </div>
 
@@ -75,6 +76,7 @@ export function MarketDashboard() {
           </div>
         </div>
 
+        <RankingOverflowCard />
         <MatchLinesPanel />
 
         <StatusBar />

@@ -1,7 +1,7 @@
 "use client";
 
-import { Radio } from "lucide-react";
 import { motion } from "framer-motion";
+import { BarChart3 } from "lucide-react";
 import { getTeamCodeFromName, localizeTeamName } from "@/lib/team-localization";
 import { useMatchLines } from "@/lib/use-match-lines";
 import { formatDateTime } from "@/lib/format";
@@ -10,32 +10,27 @@ import type { MatchLineEvent, MatchLineMarket } from "@/types/messages";
 
 export function MatchLinesPanel() {
   const { events, timestamp, loading, error } = useMatchLines();
-  const visibleEvents = events.slice(0, 18);
+  const visibleEvents = events;
 
   return (
-    <section className="hero-card relative overflow-hidden p-5">
+    <section className="hero-card relative p-5">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(216,255,62,0.10),transparent_30%),radial-gradient(circle_at_90%_20%,rgba(255,154,31,0.08),transparent_32%)]" />
 
-      <div className="relative mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <div className="mb-2 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-volt">
-            <Radio className="h-3.5 w-3.5" />
-            Polymarket 比赛盘口
-          </div>
-          <h2 className="text-xl font-semibold text-white">每场比赛盘口</h2>
-          <p className="mt-1 text-xs text-white/42">独赢盘主胜 / 平局 / 客胜</p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.12em] text-white/38">
-          <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5">
-            {events.length} 场比赛
+      <div className="relative flex items-center justify-between border-b border-white/[0.04] pb-3 mb-5">
+        <div className="flex items-center gap-2">
+          <BarChart3 className="h-4 w-4 text-volt" />
+          <p className="text-sm font-semibold uppercase tracking-[0.08em] text-white">
+            比赛盘口
+          </p>
+          <span className="rounded-full bg-volt/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-volt ring-1 ring-volt/20">
+            {events.length} 场
           </span>
-          {timestamp && (
-            <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5">
-              更新时间 {formatDateTime(timestamp)}
-            </span>
-          )}
         </div>
+        {timestamp && (
+          <span className="text-[10px] uppercase tracking-[0.12em] text-white/38">
+            {formatDateTime(timestamp)}
+          </span>
+        )}
       </div>
 
       <div className="relative">
@@ -52,7 +47,7 @@ export function MatchLinesPanel() {
         )}
 
         {!loading && !error && (
-          <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {visibleEvents.map((event, index) => (
               <MatchLineCard key={event.id} event={event} index={index} />
             ))}
@@ -75,20 +70,18 @@ function MatchLineCard({ event, index }: { event: MatchLineEvent; index: number 
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(index * 0.025, 0.25), duration: 0.45 }}
-      className="group relative overflow-hidden rounded-3xl border border-white/[0.07] bg-white/[0.035] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.28)] backdrop-blur-2xl transition hover:border-volt/20 hover:bg-white/[0.055]"
+      className="group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4 transition hover:border-volt/15 hover:bg-white/[0.05]"
     >
-      <div className="mb-3 flex items-center justify-between gap-4">
+      <div className="mb-3 flex items-center justify-between gap-3">
         <TeamSide
           name={event.homeTeam}
           market={findTeamMarket(moneyline, event.homeTeam)}
           isHot={sameMarket(strongest, findTeamMarket(moneyline, event.homeTeam))}
           align="left"
         />
-        <div className="shrink-0 px-2 text-center">
-          <p className="text-[10px] font-medium tracking-[0.06em] text-white/42">
-            {formatDateTime(event.startTime)}
-          </p>
-        </div>
+        <span className="shrink-0 text-[11px] tabular-nums text-white/30">
+          {formatDateTime(event.startTime)}
+        </span>
         <TeamSide
           name={event.awayTeam}
           market={findTeamMarket(moneyline, event.awayTeam)}
@@ -104,7 +97,6 @@ function MatchLineCard({ event, index }: { event: MatchLineEvent; index: number 
 
 function TeamSide({
   name,
-  market,
   isHot,
   align,
 }: {
@@ -114,30 +106,33 @@ function TeamSide({
   align: "left" | "right";
 }) {
   const localized = localizeTeamName(name);
+  const teamCode = getTeamCodeFromName(name);
   const isRight = align === "right";
 
   return (
-    <div className={`flex min-w-0 flex-1 items-center gap-2 ${isRight ? "flex-row-reverse text-right" : ""}`}>
-      <div
-        className={[
-          "grid h-9 w-12 shrink-0 place-items-center rounded-2xl border text-xs font-bold transition",
-          isHot
-            ? "border-volt/30 bg-volt/10 text-volt shadow-[0_0_26px_rgba(216,255,62,0.14)]"
-            : "border-white/10 bg-white/[0.04] text-white/62",
-        ].join(" ")}
-      >
-        {localized.slice(0, 2)}
-      </div>
-      <div className="min-w-0">
-        <p className={isHot ? "truncate text-sm font-bold text-volt" : "truncate text-sm font-semibold text-white/85"}>
-          {localized}
-        </p>
-        {market && (
-          <p className="mt-0.5 text-[10px] font-semibold text-white/36">
-            {market.yesPrice.toFixed(market.yesPrice < 10 ? 1 : 0)}¢
-          </p>
-        )}
-      </div>
+    <div className={`flex min-w-0 flex-1 items-center gap-2.5 ${isRight ? "flex-row-reverse text-right" : ""}`}>
+      {teamCode ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={getFlagUrl(teamCode, 40)}
+          alt={localized}
+          className={`h-6 w-8 shrink-0 rounded object-cover transition ${
+            isHot ? "ring-1 ring-volt/40 shadow-[0_0_12px_rgba(216,255,62,0.2)]" : "ring-1 ring-white/10"
+          }`}
+          loading="lazy"
+        />
+      ) : (
+        <div
+          className={`grid h-6 w-8 shrink-0 place-items-center rounded text-[10px] font-bold transition ${
+            isHot ? "bg-volt/10 text-volt" : "bg-white/[0.04] text-white/50"
+          }`}
+        >
+          {localized.slice(0, 2)}
+        </div>
+      )}
+      <span className={isHot ? "truncate text-sm font-bold text-volt" : "truncate text-sm font-semibold text-white/80"}>
+        {localized}
+      </span>
     </div>
   );
 }
@@ -150,37 +145,24 @@ function OddsBar({
   strongest: MatchLineMarket | null;
 }) {
   return (
-    <div>
-      <div className="flex h-3 overflow-hidden rounded-full bg-white/[0.055]">
-        {markets.map((market, index) => {
-          const isHot = sameMarket(strongest, market);
-          return (
-            <div
-              key={market.id}
-              className={[
-                "h-full transition-all",
-                isHot
-                  ? "bg-volt shadow-[0_0_18px_rgba(216,255,62,0.42)]"
-                  : index === 1
-                    ? "bg-white/35"
-                    : "bg-flare/70",
-              ].join(" ")}
-              style={{ width: `${Math.max(2, market.yesPrice)}%` }}
-            />
-          );
-        })}
-      </div>
-      <div className="mt-2 grid grid-cols-3 gap-2 text-[10px] uppercase tracking-[0.1em] text-white/34">
-        {markets.map((market) => {
-          const isHot = sameMarket(strongest, market);
-          return (
-            <div key={market.id} className={isHot ? "font-bold text-volt" : ""}>
-              <span className="block truncate">{localizeMarketLabel(market.label)}</span>
-              <span>{market.yesPrice.toFixed(market.yesPrice < 10 ? 1 : 0)}¢</span>
-            </div>
-          );
-        })}
-      </div>
+    <div className="flex h-1.5 overflow-hidden rounded-full bg-white/[0.055]">
+      {markets.map((market, index) => {
+        const isHot = sameMarket(strongest, market);
+        return (
+          <div
+            key={market.id}
+            className={[
+              "h-full transition-all",
+              isHot
+                ? "bg-volt shadow-[0_0_14px_rgba(216,255,62,0.4)]"
+                : index === 1
+                  ? "bg-white/30"
+                  : "bg-flare/60",
+            ].join(" ")}
+            style={{ width: `${Math.max(2, market.yesPrice)}%` }}
+          />
+        );
+      })}
     </div>
   );
 }
@@ -193,11 +175,6 @@ function pickMoneyline(event: MatchLineEvent) {
 
 function findTeamMarket(markets: MatchLineMarket[], teamName: string) {
   return markets.find((market) => normalize(market.label) === normalize(teamName));
-}
-
-function localizeMarketLabel(label: string) {
-  if (label === "Draw") return "平局";
-  return localizeTeamName(label);
 }
 
 function sameMarket(a?: MatchLineMarket | null, b?: MatchLineMarket | null) {
