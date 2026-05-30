@@ -16,7 +16,6 @@ export function ThreeGlobe() {
   const selectCountry = useStore((s) => s.selectCountry);
   const selectedCountry = useStore((s) => s.selectedCountry);
   const hoveredCountry = useStore((s) => s.hoveredCountry);
-  const focusCountryCode = hoveredCountry ?? selectedCountry;
 
   const wrapRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -35,7 +34,8 @@ export function ThreeGlobe() {
     Array<{ code: string; name: string; prob: number; sx: number; sy: number; vis: boolean }>
   >([]);
   const [hoveredLabelCode, setHoveredLabelCode] = useState<string | null>(null);
-  const expandedCountryCode = hoveredLabelCode ?? focusCountryCode;
+  const focusCountryCode = hoveredCountry ?? hoveredLabelCode;
+  const expandedCountryCode = focusCountryCode;
 
   const focusTarget = useMemo(() => {
     if (!focusCountryCode) return null;

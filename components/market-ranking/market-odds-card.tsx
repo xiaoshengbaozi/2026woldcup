@@ -50,10 +50,13 @@ export function MarketOddsCard() {
           <p className="text-sm font-semibold uppercase tracking-[0.08em] text-white">
             概率排名
           </p>
-          <span className="rounded-full bg-volt/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-volt ring-1 ring-volt/20">
-            TOP 10
-          </span>
         </div>
+        <span
+          className="text-[10px] font-black uppercase tracking-[0.12em] text-volt"
+          style={{ fontFamily: "ScreenMatrix" }}
+        >
+          TOP 10
+        </span>
       </div>
 
       <div className="relative z-10">
@@ -75,7 +78,7 @@ export function MarketOddsCard() {
                 onMouseLeave={() => hoverCountry(null, "ranking")}
                 onFocus={() => hoverCountry(country.countryCode, "ranking")}
                 onBlur={() => hoverCountry(null, "ranking")}
-                className="group flex w-full items-center gap-3 px-3 py-2.5 text-left transition duration-150 hover:bg-white/[0.04]"
+                className="group flex w-full items-center gap-3 px-3 py-2.5 text-left transition duration-150"
                 style={{
                   background: isSelected ? "rgba(216,255,62,0.06)" : undefined,
                 }}

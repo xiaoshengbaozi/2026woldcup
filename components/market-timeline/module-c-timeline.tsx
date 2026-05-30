@@ -3,11 +3,10 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { TimelineHeader } from "./timeline-header";
 import { TimelineCanvas } from "./timeline-canvas";
-import { TimelineLegend } from "./timeline-legend";
 
 export function ModuleC_OddsTimeline() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [size, setSize] = useState({ width: 800, height: 300 });
+  const [size, setSize] = useState({ width: 800, height: 150 });
 
   const updateSize = useCallback(() => {
     if (containerRef.current) {
@@ -29,7 +28,6 @@ export function ModuleC_OddsTimeline() {
       <div ref={containerRef} className="flex-1 relative overflow-hidden">
         <TimelineCanvas size={size} />
       </div>
-      <TimelineLegend />
     </div>
   );
 }

@@ -13,7 +13,7 @@ export function MatchLinesPanel() {
   const visibleEvents = events;
 
   return (
-    <section className="hero-card relative p-5">
+    <section className="hero-card relative overflow-hidden p-5">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(216,255,62,0.10),transparent_30%),radial-gradient(circle_at_90%_20%,rgba(255,154,31,0.08),transparent_32%)]" />
 
       <div className="relative flex items-center justify-between border-b border-white/[0.04] pb-3 mb-5">
@@ -22,15 +22,13 @@ export function MatchLinesPanel() {
           <p className="text-sm font-semibold uppercase tracking-[0.08em] text-white">
             比赛盘口
           </p>
-          <span className="rounded-full bg-volt/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-volt ring-1 ring-volt/20">
-            {events.length} 场
-          </span>
         </div>
-        {timestamp && (
-          <span className="text-[10px] uppercase tracking-[0.12em] text-white/38">
-            {formatDateTime(timestamp)}
-          </span>
-        )}
+        <span
+          className="text-[10px] font-black uppercase tracking-[0.12em] text-volt"
+          style={{ fontFamily: "ScreenMatrix" }}
+        >
+          {events.length} 场
+        </span>
       </div>
 
       <div className="relative">
@@ -145,7 +143,7 @@ function OddsBar({
   strongest: MatchLineMarket | null;
 }) {
   return (
-    <div className="flex h-1.5 overflow-hidden rounded-full bg-white/[0.055]">
+    <div className="flex h-1 overflow-hidden rounded-full bg-white/[0.055]">
       {markets.map((market, index) => {
         const isHot = sameMarket(strongest, market);
         return (

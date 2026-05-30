@@ -51,7 +51,7 @@ export function MarketDashboard() {
         </div>
 
         {/* Main grid — same max-w-7xl as homepage */}
-        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(620px,780px)_minmax(280px,1fr)] xl:grid-rows-[auto_auto] xl:min-h-[900px]">
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(620px,780px)_minmax(280px,1fr)]">
           {/* Map — left */}
           <div className="hero-card relative min-h-[320px] overflow-hidden sm:min-h-[420px] xl:min-h-0">
             {/* Subtle dot matrix background */}
@@ -70,13 +70,12 @@ export function MarketDashboard() {
             <MarketOddsCard />
           </div>
 
-          {/* Timeline — bottom full width */}
-          <div className="hero-card min-h-[320px] overflow-hidden p-5 xl:col-span-2 xl:min-h-0">
-            <ModuleC_OddsTimeline />
-          </div>
         </div>
 
         <RankingOverflowCard />
+        <div className="hero-card h-[220px] overflow-hidden p-4">
+          <ModuleC_OddsTimeline />
+        </div>
         <MatchLinesPanel />
 
         <StatusBar />

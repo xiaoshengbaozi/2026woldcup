@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { Users } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { localizeTeamName } from "@/lib/team-localization";
 import { getFlagUrl } from "@/lib/world-cup-2026";
@@ -27,8 +28,19 @@ export function RankingOverflowCard() {
 
   return (
     <section className="hero-card overflow-hidden px-5 py-4">
-      <div className="mb-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/38">
-        其余 {overflowCountries.length} 队
+      <div className="flex items-center justify-between border-b border-white/[0.04] pb-3 mb-5">
+        <div className="flex items-center gap-2">
+          <Users className="h-4 w-4 text-volt" />
+          <p className="text-sm font-semibold uppercase tracking-[0.08em] text-white">
+            其余队伍
+          </p>
+        </div>
+        <span
+          className="text-[10px] font-black uppercase tracking-[0.12em] text-volt"
+          style={{ fontFamily: "ScreenMatrix" }}
+        >
+          {overflowCountries.length} 队
+        </span>
       </div>
       <div className="flex flex-wrap gap-2">
         {overflowCountries.map((country) => {

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { BackToTopButton } from "./back-to-top-button";
 import { NavBar } from "./nav-bar";
 import { MobileNavBar } from "./mobile-nav-bar";
 
@@ -12,6 +13,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         {children}
       </div>
       <MobileNavBar />
+      <BackToTopButton />
     </div>
   );
 }
