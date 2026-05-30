@@ -9,13 +9,19 @@ import type {
   SnapshotMessage,
 } from "@/types/messages";
 
-const DEFAULT_API_URL = "http://localhost:3001";
+const LOCAL_API_URL = "http://localhost:3001";
+const PRODUCTION_API_URL = "https://api-2026.20250114.xyz";
 const STALE_AFTER_MS = 15_000;
 const RECONNECT_BASE_MS = 1_000;
 const RECONNECT_MAX_MS = 30_000;
 
 function getApiUrl() {
-  return (process.env.NEXT_PUBLIC_MARKET_API_URL || DEFAULT_API_URL).replace(/\/$/, "");
+  const fallbackUrl =
+    typeof window !== "undefined" && window.location.hostname === "localhost"
+      ? LOCAL_API_URL
+      : PRODUCTION_API_URL;
+
+  return (process.env.NEXT_PUBLIC_MARKET_API_URL || fallbackUrl).replace(/\/$/, "");
 }
 
 function getWsUrl(apiUrl: string) {
