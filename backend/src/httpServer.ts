@@ -22,7 +22,7 @@ interface HttpServerOptions {
 
 export function createHttpServer(options: HttpServerOptions) {
   return http.createServer((req, res) => {
-    setCorsHeaders(res);
+    setCorsHeaders(req, res);
 
     if (req.method === "OPTIONS") {
       sendEmpty(res, 200);
@@ -147,8 +147,20 @@ function toMarketSummary(country: CountryData) {
   };
 }
 
-function setCorsHeaders(res: http.ServerResponse) {
-  res.setHeader("Access-Control-Allow-Origin", process.env.CORS_ORIGIN || "*");
+function setCorsHeaders(req: http.IncomingMessage, res: http.ServerResponse) {
+  const allowedOrigins = (process.env.CORS_ORIGIN || "*")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+  const requestOrigin = req.headers.origin;
+
+  if (allowedOrigins.includes("*")) {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+  } else if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
+    res.setHeader("Access-Control-Allow-Origin", requestOrigin);
+    res.setHeader("Vary", "Origin");
+  }
+
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 }

@@ -53,6 +53,12 @@ NEXT_PUBLIC_MARKET_WS_URL=wss://api.your-domain.com
 
 Then rebuild the Pages project.
 
+For backend CORS, `CORS_ORIGIN` supports a comma-separated allowlist:
+
+```bash
+CORS_ORIGIN=https://your-domain.pages.dev,https://preview.your-domain.pages.dev
+```
+
 ## Update Deploy
 
 After pushing changes:
