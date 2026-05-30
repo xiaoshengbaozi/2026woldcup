@@ -10,6 +10,7 @@ const CODE_TO_CN: Record<string, string> = {
   COD: "刚果民主共和国",
   COL: "哥伦比亚",
   CPV: "佛得角",
+  CRO: "\u514b\u7f57\u5730\u4e9a",
   CUW: "库拉索",
   CZE: "捷克",
   DZA: "阿尔及利亚",
@@ -48,6 +49,11 @@ const CODE_TO_CN: Record<string, string> = {
   UZB: "乌兹别克斯坦",
 };
 
+const CODE_ALIASES: Record<string, string> = {
+  HR: "CRO",
+  IR: "IRN",
+};
+
 const NAME_TO_CODE: Record<string, string> = {
   "algeria": "DZA",
   "argentina": "ARG",
@@ -65,6 +71,8 @@ const NAME_TO_CODE: Record<string, string> = {
   "congo dr": "COD",
   "cote d'ivoire": "CIV",
   "cote divoire": "CIV",
+  "croatia": "CRO",
+  "克罗地亚": "CRO",
   "curacao": "CUW",
   "curaçao": "CUW",
   "czech republic": "CZE",
@@ -78,6 +86,9 @@ const NAME_TO_CODE: Record<string, string> = {
   "ghana": "GHA",
   "haiti": "HAI",
   "iran": "IRN",
+  "伊朗": "IRN",
+  "ir iran": "IRN",
+  "islamic republic of iran": "IRN",
   "iraq": "IRQ",
   "ivory coast": "CIV",
   "japan": "JPN",
@@ -111,11 +122,13 @@ const NAME_TO_CODE: Record<string, string> = {
 };
 
 export function localizeCountryCode(code: string) {
-  return CODE_TO_CN[code] ?? code;
+  const normalizedCode = normalizeCode(code);
+  return CODE_TO_CN[normalizedCode] ?? code;
 }
 
 export function localizeTeamName(name: string, code?: string) {
-  if (code && CODE_TO_CN[code]) return CODE_TO_CN[code];
+  const normalizedCode = code ? normalizeCode(code) : "";
+  if (normalizedCode && CODE_TO_CN[normalizedCode]) return CODE_TO_CN[normalizedCode];
   const normalized = normalizeName(name);
   const mappedCode = NAME_TO_CODE[normalized];
   return mappedCode ? CODE_TO_CN[mappedCode] : name;
@@ -139,4 +152,9 @@ function normalizeName(name: string) {
     .replace(/\s+/g, " ")
     .trim()
     .toLowerCase();
+}
+
+function normalizeCode(code: string) {
+  const normalized = code.trim().toUpperCase();
+  return CODE_ALIASES[normalized] ?? normalized;
 }

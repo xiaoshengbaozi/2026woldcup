@@ -70,14 +70,14 @@ function MatchLineCard({ event, index }: { event: MatchLineEvent; index: number 
       transition={{ delay: Math.min(index * 0.025, 0.25), duration: 0.45 }}
       className="group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4 transition hover:border-volt/15 hover:bg-white/[0.05]"
     >
-      <div className="mb-3 flex items-center justify-between gap-3">
+      <div className="mb-3 grid grid-cols-[minmax(82px,1fr)_auto_minmax(82px,1fr)] items-center gap-2.5 sm:gap-3">
         <TeamSide
           name={event.homeTeam}
           market={findTeamMarket(moneyline, event.homeTeam)}
           isHot={sameMarket(strongest, findTeamMarket(moneyline, event.homeTeam))}
           align="left"
         />
-        <span className="shrink-0 text-[11px] tabular-nums text-white/30">
+        <span className="shrink-0 justify-self-center text-[11px] tabular-nums text-white/30">
           {formatDateTime(event.startTime)}
         </span>
         <TeamSide
@@ -103,12 +103,12 @@ function TeamSide({
   isHot: boolean;
   align: "left" | "right";
 }) {
-  const localized = localizeTeamName(name);
   const teamCode = getTeamCodeFromName(name);
+  const localized = localizeTeamName(name, teamCode);
   const isRight = align === "right";
 
   return (
-    <div className={`flex min-w-0 flex-1 items-center gap-2.5 ${isRight ? "flex-row-reverse text-right" : ""}`}>
+    <div className={`flex min-w-0 items-center gap-2 ${isRight ? "flex-row-reverse text-right" : ""}`}>
       {teamCode ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -128,7 +128,7 @@ function TeamSide({
           {localized.slice(0, 2)}
         </div>
       )}
-      <span className={isHot ? "truncate text-sm font-bold text-volt" : "truncate text-sm font-semibold text-white/80"}>
+      <span className={isHot ? "block min-w-0 max-w-full truncate text-[13px] font-bold leading-tight text-volt" : "block min-w-0 max-w-full truncate text-[13px] font-semibold leading-tight text-white/80"}>
         {localized}
       </span>
     </div>
