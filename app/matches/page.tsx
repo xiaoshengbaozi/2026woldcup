@@ -10,7 +10,7 @@ import { extractCity, groupMatchesByDay } from "@/lib/calendar";
 import { getStageGroupId } from "@/lib/stage";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
 
-export type ScheduleLayout = "default" | "waterfall" | "topology";
+export type ScheduleLayout = "default" | "waterfall" | "topology" | "calendar";
 
 export default function MatchesPage() {
   const { matches, activeCity, setActiveCity, cities, loading, error } = useWorldCupData();
@@ -50,6 +50,16 @@ export default function MatchesPage() {
   const totalTeams = 48;
   const now = Date.now();
 
+  const totalCities = useMemo(
+    () => new Set(matches.map((m) => extractCity(m.location)).filter(Boolean)).size,
+    [matches]
+  );
+
+  const filteredCities = useMemo(
+    () => new Set(filteredMatches.map((m) => extractCity(m.location)).filter(Boolean)).size,
+    [filteredMatches]
+  );
+
   const remainingMatchDays = new Set(
     matches.filter((m) => m.start.getTime() > now).map((m) => m.start.toDateString())
   ).size;
@@ -80,6 +90,8 @@ export default function MatchesPage() {
         remainingMatchDays={remainingMatchDays}
         activeTeamCount={stageTeamCount}
         totalTeamCount={totalTeams}
+        visibleCities={filteredCities}
+        totalCities={totalCities}
       />
 
       <MatchFilters

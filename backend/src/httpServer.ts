@@ -1,7 +1,15 @@
 import http from "http";
+import type { ApiFootballEndpoint, ApiFootballService } from "./apiFootball";
 import type { HistoryBuffer } from "./historyBuffer";
 import type { SnapshotCache } from "./snapshotCache";
 import type { CountryData, MatchLinesResponse } from "./types";
+import {
+  getWorldCupFixtures,
+  getWorldCupLiveFixtures,
+  getWorldCupMatchDetail,
+  getWorldCupRounds,
+  getWorldCupStandings,
+} from "./worldCupData";
 
 interface HttpServerOptions {
   snapshotCache: SnapshotCache;
@@ -10,6 +18,7 @@ interface HttpServerOptions {
     getClientCount: () => number;
     getSubscribedClientCount: () => number;
   };
+  apiFootball?: ApiFootballService;
   getState: () => {
     countries: CountryData[];
     sequenceNumber: number;
@@ -48,6 +57,7 @@ export function createHttpServer(options: HttpServerOptions) {
         upstream: {
           polymarketConnected: state.polymarketConnected,
           lastUpdateTimestamp: state.lastPolymarketUpdate,
+          apiFootballConfigured: options.apiFootball?.isConfigured() ?? false,
         },
         clients: options.wsServer.getClientCount(),
         subscribedClients: options.wsServer.getSubscribedClientCount(),
@@ -74,6 +84,7 @@ export function createHttpServer(options: HttpServerOptions) {
         upstream: {
           polymarketConnected: state.polymarketConnected,
           lastUpdateTimestamp: state.lastPolymarketUpdate,
+          apiFootballConfigured: options.apiFootball?.isConfigured() ?? false,
         },
         data: {
           sequenceNumber: state.sequenceNumber,
@@ -84,6 +95,16 @@ export function createHttpServer(options: HttpServerOptions) {
           leaders: sorted.slice(0, 8).map(toMarketSummary),
         },
       });
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname.startsWith("/api/football/")) {
+      handleApiFootballRequest(options.apiFootball, url, res);
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname.startsWith("/api/worldcup/")) {
+      handleWorldCupRequest(options.apiFootball, url, res);
       return;
     }
 
@@ -126,6 +147,103 @@ export function createHttpServer(options: HttpServerOptions) {
 
     sendJson(res, { error: "not_found", path: url.pathname }, 404);
   });
+}
+
+function handleWorldCupRequest(
+  apiFootball: ApiFootballService | undefined,
+  url: URL,
+  res: http.ServerResponse
+) {
+  if (!apiFootball) {
+    sendJson(res, { error: "api_football_gateway_unavailable" }, 503);
+    return;
+  }
+
+  const handlers: Record<string, (apiFootball: ApiFootballService, url: URL) => Promise<unknown>> = {
+    "/api/worldcup/fixtures": getWorldCupFixtures,
+    "/api/worldcup/live": getWorldCupLiveFixtures,
+    "/api/worldcup/rounds": getWorldCupRounds,
+    "/api/worldcup/standings": getWorldCupStandings,
+    "/api/worldcup/match-detail": getWorldCupMatchDetail,
+  };
+
+  const handler = handlers[url.pathname.replace(/\/+$/, "")];
+  if (!handler) {
+    sendJson(res, { error: "worldcup_endpoint_not_found" }, 404);
+    return;
+  }
+
+  handler(apiFootball, url)
+    .then((payload) => sendJson(res, payload))
+    .catch((error: Error & { statusCode?: number; details?: unknown }) => {
+      sendJson(
+        res,
+        {
+          error: error.message || "worldcup_data_request_failed",
+          details: error.details,
+        },
+        error.statusCode ?? 500
+      );
+    });
+}
+
+function handleApiFootballRequest(
+  apiFootball: ApiFootballService | undefined,
+  url: URL,
+  res: http.ServerResponse
+) {
+  if (!apiFootball) {
+    sendJson(res, { error: "api_football_gateway_unavailable" }, 503);
+    return;
+  }
+
+  const endpoint = parseApiFootballEndpoint(url.pathname);
+  if (!endpoint) {
+    sendJson(res, { error: "api_football_endpoint_not_allowed" }, 404);
+    return;
+  }
+
+  apiFootball
+    .request(endpoint, url.searchParams)
+    .then((payload) => sendJson(res, payload))
+    .catch((error: Error & { statusCode?: number; details?: unknown }) => {
+      sendJson(
+        res,
+        {
+          error: error.message || "api_football_request_failed",
+          details: error.details,
+        },
+        error.statusCode ?? 500
+      );
+    });
+}
+
+function parseApiFootballEndpoint(pathname: string): ApiFootballEndpoint | null {
+  const endpoint = pathname.replace(/^\/api\/football\/?/, "").replace(/\/+$/, "");
+  const allowed = new Set<ApiFootballEndpoint>([
+    "fixtures",
+    "fixtures/rounds",
+    "fixtures/statistics",
+    "fixtures/lineups",
+    "fixtures/events",
+    "fixtures/players",
+    "fixtures/headtohead",
+    "players",
+    "players/topscorers",
+    "players/topassists",
+    "players/topyellowcards",
+    "players/topredcards",
+    "standings",
+    "injuries",
+    "teams",
+    "leagues",
+    "coachs",
+    "predictions",
+    "odds",
+    "odds/live",
+  ]);
+
+  return allowed.has(endpoint as ApiFootballEndpoint) ? (endpoint as ApiFootballEndpoint) : null;
 }
 
 function toMarketSummary(country: CountryData) {

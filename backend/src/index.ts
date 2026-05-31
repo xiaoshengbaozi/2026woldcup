@@ -1,4 +1,5 @@
 import { WebSocketServer } from "ws";
+import { createApiFootballService } from "./apiFootball";
 import { createPolymarketClient } from "./polymarket";
 import { createDeltaEngine } from "./deltaEngine";
 import { createEventDetector } from "./eventDetector";
@@ -22,6 +23,7 @@ async function main() {
   const snapshotCache = createSnapshotCache();
   const wsServer = createWsServer();
   const matchLines = createMatchLinesService();
+  const apiFootball = createApiFootballService();
   matchLines.start();
 
   // 2. Connect to Polymarket
@@ -130,6 +132,7 @@ async function main() {
     snapshotCache,
     historyBuffer,
     wsServer,
+    apiFootball,
     getState: () => ({
       countries: Array.from(currentCountries.values()),
       sequenceNumber,

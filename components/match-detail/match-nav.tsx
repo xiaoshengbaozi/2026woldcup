@@ -30,7 +30,7 @@ export function MatchNav({
 }) {
   return (
     <div className="sticky top-0 z-30 mb-5 -mx-1 overflow-x-auto px-1 py-3 scrollbar-hidden">
-      <nav className="relative mx-auto flex w-max min-w-full items-center gap-1 rounded-[2rem] bg-white/[0.055] p-1.5 shadow-[0_20px_60px_rgba(0,0,0,0.42),inset_0_1px_0_rgba(255,255,255,0.12)] ring-1 ring-white/[0.09] backdrop-blur-2xl sm:min-w-0">
+      <nav className="relative mx-auto flex w-max min-w-full items-center gap-1 rounded-[2rem] bg-white/[0.055] p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.22),inset_0_1px_0_rgba(255,255,255,0.08)] ring-1 ring-white/[0.06] backdrop-blur-2xl sm:min-w-0">
         <div className="pointer-events-none absolute inset-0 rounded-[2rem] bg-[radial-gradient(circle_at_50%_0%,rgba(216,255,62,0.10),transparent_58%)]" />
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
@@ -49,7 +49,7 @@ export function MatchNav({
               {isActive && (
                 <motion.span
                   layoutId="match-nav-indicator"
-                  className="absolute inset-0 rounded-[1.45rem] bg-[linear-gradient(145deg,rgba(255,255,255,0.16),rgba(8,10,10,0.92)_46%,rgba(216,255,62,0.12))] shadow-[0_14px_32px_rgba(0,0,0,0.5),0_0_28px_rgba(216,255,62,0.14),inset_0_1px_0_rgba(255,255,255,0.18)] ring-1 ring-white/[0.12]"
+                  className="absolute inset-0 rounded-[1.45rem] bg-[linear-gradient(145deg,rgba(255,255,255,0.12),rgba(8,10,10,0.88)_46%,rgba(216,255,62,0.08))] shadow-[0_6px_20px_rgba(0,0,0,0.28),0_0_18px_rgba(216,255,62,0.08),inset_0_1px_0_rgba(255,255,255,0.12)] ring-1 ring-white/[0.08]"
                   transition={{ type: "spring", stiffness: 420, damping: 34 }}
                 />
               )}

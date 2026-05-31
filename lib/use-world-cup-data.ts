@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { extractCity, getTournamentProgress, parseCalendar } from "@/lib/calendar";
+import { fetchWorldCupFixtures } from "@/lib/world-cup-api";
 import type { Match } from "@/types/match";
 
 export function useWorldCupData() {
@@ -16,21 +17,35 @@ export function useWorldCupData() {
 
     let active = true;
 
-    fetch("/calendar.ics")
-      .then((response) => {
+    async function loadMatches() {
+      try {
+        const liveMatches = await fetchWorldCupFixtures();
+        if (!active) return;
+        if (liveMatches.length) {
+          setMatches(liveMatches);
+          setError("");
+          setLoading(false);
+          return;
+        }
+      } catch (err) {
+        console.warn("[WorldCupData] API-Football normalized fixtures unavailable, falling back to calendar:", err);
+      }
+
+      try {
+        const response = await fetch("/calendar.ics");
         if (!response.ok) throw new Error("calendar fetch failed");
-        return response.text();
-      })
-      .then((text) => {
+        const text = await response.text();
         if (!active) return;
         setMatches(parseCalendar(text));
-      })
-      .catch(() => {
-        if (active) setError("Calendar sync failed. Please download the calendar file directly.");
-      })
-      .finally(() => {
+        setError("");
+      } catch {
+        if (active) setError("赛程同步失败，请直接下载日历文件。");
+      } finally {
         if (active) setLoading(false);
-      });
+      }
+    }
+
+    void loadMatches();
 
     return () => {
       active = false;

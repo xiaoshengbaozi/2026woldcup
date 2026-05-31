@@ -1,5 +1,7 @@
 "use client";
 
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useLiveMarketData } from "@/lib/use-live-market-data";
 import { ModuleD_Ticker } from "@/components/market-ticker/module-d-ticker";
 import { MarketOddsCard } from "@/components/market-ranking/market-odds-card";
@@ -13,6 +15,38 @@ import { MobileNavBar } from "@/components/mobile-nav-bar";
 
 export function MarketDashboard() {
   useLiveMarketData();
+  const [webFullscreen, setWebFullscreen] = useState(false);
+  const [systemFsPending, setSystemFsPending] = useState(false);
+  const overlayRef = useRef<HTMLDivElement>(null);
+
+  const handleFullscreenChange = useCallback((v: boolean, system = false) => {
+    setWebFullscreen(v);
+    document.body.style.overflow = v ? "hidden" : "";
+    if (system && v) setSystemFsPending(true);
+  }, []);
+
+  // Restore body overflow on unmount
+  useEffect(() => () => { document.body.style.overflow = ""; }, []);
+
+  // Trigger native fullscreen on overlay when pending
+  useEffect(() => {
+    if (systemFsPending && overlayRef.current) {
+      setSystemFsPending(false);
+      overlayRef.current.requestFullscreen().catch(() => {});
+    }
+  }, [systemFsPending]);
+
+  // Sync state when user exits native fullscreen via browser controls
+  useEffect(() => {
+    const handler = () => {
+      if (!document.fullscreenElement && webFullscreen) {
+        setWebFullscreen(false);
+        document.body.style.overflow = "";
+      }
+    };
+    document.addEventListener("fullscreenchange", handler);
+    return () => document.removeEventListener("fullscreenchange", handler);
+  }, [webFullscreen]);
 
   return (
     <div className="relative min-h-screen px-4 py-5 pb-28 sm:px-6 lg:px-8 lg:pb-5">
@@ -62,7 +96,11 @@ export function MarketDashboard() {
                 backgroundSize: "16px 16px",
               }}
             />
-            <ThreeGlobe />
+            <ThreeGlobe
+              webFullscreen={webFullscreen}
+              onWebFullscreenChange={(v) => handleFullscreenChange(v, false)}
+              onSystemFullscreen={() => handleFullscreenChange(true, true)}
+            />
           </div>
 
           {/* Rankings — right */}
@@ -82,6 +120,42 @@ export function MarketDashboard() {
       </div>
 
       <MobileNavBar />
+
+      {/* Web fullscreen overlay — globe + rankings + overflow */}
+      {createPortal(
+        webFullscreen ? (
+          <div ref={overlayRef} className="fixed inset-0 z-[9999] overflow-hidden bg-[#050505]">
+            {/* Globe remains full-frame; panels float above it. */}
+            <div className="pointer-events-none absolute inset-0">
+              {/* Globe */}
+              <div className="pointer-events-auto absolute inset-0 overflow-hidden">
+                <div
+                  className="pointer-events-none absolute inset-0 opacity-[0.04]"
+                  style={{
+                    backgroundImage: "radial-gradient(circle, rgba(216,255,62,0.9) 0.8px, transparent 0.8px)",
+                    backgroundSize: "16px 16px",
+                  }}
+                />
+                <ThreeGlobe
+                  webFullscreen={webFullscreen}
+                  onWebFullscreenChange={(v) => handleFullscreenChange(v, false)}
+                  onSystemFullscreen={() => handleFullscreenChange(true, true)}
+                  className="absolute inset-0"
+                />
+              </div>
+              {/* Ranking card */}
+              <div className="hero-card pointer-events-auto absolute right-5 top-1/2 z-20 max-h-[calc(100vh-2.5rem)] w-[340px] max-w-[calc(100vw-2.5rem)] -translate-y-1/2 overflow-y-auto p-5">
+                <MarketOddsCard />
+              </div>
+            </div>
+            {/* Bottom overflow card */}
+            <div className="pointer-events-auto absolute bottom-5 left-1/2 z-20 max-h-[32vh] w-[calc(100vw-2.5rem)] max-w-5xl -translate-x-1/2 overflow-y-auto">
+              <RankingOverflowCard />
+            </div>
+          </div>
+        ) : null,
+        document.body,
+      )}
     </div>
   );
 }

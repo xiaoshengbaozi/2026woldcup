@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Clock } from "lucide-react";
 import { MatchCard } from "@/components/match-card";
 import { MatchCardCompact } from "@/components/match-card-compact";
+import { MatchCalendarView } from "@/components/match-calendar-view";
 import { TopologyBracket } from "@/components/topology-bracket";
 import { getDayStatus } from "@/lib/calendar";
 import { formatDate } from "@/lib/format";
@@ -184,6 +185,12 @@ export function ScheduleList({
       )}
       {layout === "topology" && (
         <TopologyBracket
+          matches={Array.from(grouped.values()).flat()}
+          timezoneOffset={timezoneOffset}
+        />
+      )}
+      {layout === "calendar" && (
+        <MatchCalendarView
           matches={Array.from(grouped.values()).flat()}
           timezoneOffset={timezoneOffset}
         />

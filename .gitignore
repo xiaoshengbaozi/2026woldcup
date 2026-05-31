@@ -4,3 +4,6 @@ node_modules/
 .npm-cache/
 *.tsbuildinfo
 .next-dev*.log
+.codex-*.log
+backend/.codex-*.log
+backend/dist/

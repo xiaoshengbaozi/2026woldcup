@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, ChevronDown, Clock, GitFork, Grid3X3, Layers, LayoutList, MapPin, Search } from "lucide-react";
+import { CalendarDays, Check, ChevronDown, Clock, GitFork, Grid3X3, Layers, LayoutList, MapPin, Search } from "lucide-react";
 import { ComponentType, useEffect, useMemo, useRef, useState } from "react";
 import type { ScheduleLayout } from "@/app/matches/page";
 
@@ -222,6 +222,19 @@ function LayoutToggle({
         }`}
       >
         <GitFork className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange("calendar")}
+        aria-label="日历视图"
+        title="日历视图"
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-medium transition-all duration-150 ${
+          layout === "calendar"
+            ? "bg-volt/10 text-volt ring-1 ring-volt/25"
+            : "text-white/50 hover:text-white/70"
+        }`}
+      >
+        <CalendarDays className="h-4 w-4" />
       </button>
     </div>
   );

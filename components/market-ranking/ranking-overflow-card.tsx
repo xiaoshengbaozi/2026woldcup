@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
-import { Users } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Users, ChevronDown } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { localizeTeamName } from "@/lib/team-localization";
 import { getFlagUrl } from "@/lib/world-cup-2026";
@@ -11,11 +11,15 @@ function probabilityLabel(value: number) {
   return `${Math.round(value)}%`;
 }
 
+/** Approximate height for 2 rows of pills (36px row + 8px gap) */
+const COLLAPSED_PX = 80;
+
 export function RankingOverflowCard() {
   const countries = useStore((s) => s.countries);
   const selectedCountry = useStore((s) => s.selectedCountry);
   const selectCountry = useStore((s) => s.selectCountry);
   const hoverCountry = useStore((s) => s.hoverCountry);
+  const [expanded, setExpanded] = useState(false);
 
   const overflowCountries = useMemo(() => {
     const sorted = Array.from(countries.values()).sort(
@@ -35,14 +39,27 @@ export function RankingOverflowCard() {
             其余队伍
           </p>
         </div>
-        <span
-          className="text-[10px] font-black uppercase tracking-[0.12em] text-volt"
-          style={{ fontFamily: "ScreenMatrix" }}
-        >
-          {overflowCountries.length} 队
-        </span>
+        <div className="flex items-center gap-3">
+          <span
+            className="text-[10px] font-black uppercase tracking-[0.12em] text-volt"
+            style={{ fontFamily: "ScreenMatrix" }}
+          >
+            {overflowCountries.length} 队
+          </span>
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="flex items-center gap-1 text-[10px] text-white/30 transition hover:text-volt/60"
+          >
+            <span>{expanded ? "收起" : "展开"}</span>
+            <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${expanded ? "rotate-180" : ""}`} />
+          </button>
+        </div>
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div
+        className="flex flex-wrap gap-2 overflow-hidden transition-all duration-300"
+        style={{ maxHeight: expanded ? "2000px" : `${COLLAPSED_PX}px` }}
+      >
         {overflowCountries.map((country) => {
           const isSelected = selectedCountry === country.countryCode;
 
@@ -76,6 +93,14 @@ export function RankingOverflowCard() {
           );
         })}
       </div>
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="mt-3 flex w-full items-center justify-center gap-1 text-[11px] text-white/30 transition hover:text-volt/60"
+      >
+        <span>{expanded ? "收起" : "展开更多"}</span>
+        <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${expanded ? "rotate-180" : ""}`} />
+      </button>
     </section>
   );
 }

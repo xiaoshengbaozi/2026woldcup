@@ -229,7 +229,7 @@ export function MatchHero({ detail }: { detail: MatchDetail }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      className="hero-card relative mt-12 min-h-[360px] overflow-visible rounded-[2rem] shadow-none sm:mt-14 sm:min-h-[380px] lg:min-h-[360px]"
+      className="hero-card relative mt-0 min-h-[280px] overflow-visible rounded-[2rem] shadow-none sm:mt-14 sm:min-h-[380px] lg:min-h-[360px]"
     >
       <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">
         <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.07),rgba(255,255,255,0.015)_34%,rgba(0,0,0,0.24))]" />
@@ -241,7 +241,7 @@ export function MatchHero({ detail }: { detail: MatchDetail }) {
         <div className="absolute left-1/2 top-12 hidden h-64 w-[520px] -translate-x-1/2 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.13),transparent_68%)] blur-2xl sm:block" />
       </div>
 
-      <div className="relative z-10 flex min-h-[360px] flex-col justify-between pb-0 pt-5 sm:min-h-[380px] sm:pb-0 sm:pt-7 lg:min-h-[360px]">
+      <div className="relative z-10 flex min-h-[280px] flex-col justify-between pb-0 pt-1 sm:min-h-[380px] sm:pb-0 sm:pt-7 lg:min-h-[360px]">
         <div className="flex items-center justify-end gap-3">
           {detail.status !== "not_started" && (
             <div className="flex items-center gap-2">
@@ -259,7 +259,7 @@ export function MatchHero({ detail }: { detail: MatchDetail }) {
           )}
         </div>
 
-        <div className="relative flex flex-1 items-center justify-center py-6">
+        <div className="relative flex flex-1 items-center justify-center py-2 sm:py-6">
           <PlayerPosterSide
             side="left"
             team={teams.home}
@@ -275,15 +275,15 @@ export function MatchHero({ detail }: { detail: MatchDetail }) {
             accent={awayAccent}
           />
 
-          <div className="relative z-20 flex max-w-[580px] -translate-y-4 flex-col items-center text-center sm:-translate-y-5">
+          <div className="relative z-20 flex max-w-[580px] -translate-y-1 flex-col items-center text-center sm:-translate-y-5">
             <img
               src="https://digitalhub.fifa.com/transform/157d23bf-7e13-4d7b-949e-5d27d340987e/WC26_Logo?&io=transform:fill&quality=75"
               alt="FIFA World Cup 2026"
-              className="h-auto max-h-[98px] w-auto object-contain drop-shadow-[0_12px_40px_rgba(0,0,0,0.5)] sm:max-h-[126px]"
+              className="hidden h-auto w-auto object-contain drop-shadow-[0_12px_40px_rgba(0,0,0,0.5)] sm:block sm:max-h-[126px]"
               loading="eager"
             />
             <div
-              className="mt-3 text-5xl font-bold tabular-nums text-white sm:text-6xl"
+              className="mt-2 text-4xl font-bold tabular-nums text-white sm:mt-3 sm:text-5xl lg:text-6xl"
               style={{ fontFamily: "ScreenMatrix, monospace" }}
             >
               {detail.status === "not_started" ? (
@@ -297,14 +297,14 @@ export function MatchHero({ detail }: { detail: MatchDetail }) {
             <span className="glass-chip mt-2 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/62">
               {stageLabel}
             </span>
-            <div className="mt-3 grid w-[min(100%,560px)] grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-4">
+            <div className="mt-2 grid w-[min(100%,560px)] grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:mt-3 sm:gap-4">
               <MatchupTeam team={teams.home} align="left" />
               <span className="relative z-10 rounded-full bg-white/[0.08] px-4 py-2 text-lg font-black uppercase tracking-[0.08em] text-volt shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_0_24px_rgba(216,255,62,0.16)] ring-1 ring-white/[0.1] sm:px-5 sm:text-xl">
                 VS
               </span>
               <MatchupTeam team={teams.away} align="right" />
             </div>
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-[11px] font-medium uppercase tracking-[0.12em] text-white/50">
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-[10px] font-medium uppercase tracking-[0.12em] text-white/50 sm:mt-4 sm:gap-3 sm:text-[11px]">
               <span className="inline-flex items-center gap-1.5">
                 <CalendarDays className="h-3.5 w-3.5 text-volt/70" />
                 {adjustedStart.toLocaleDateString("zh-CN", { month: "2-digit", day: "2-digit" })}
@@ -376,13 +376,13 @@ function PlayerPosterSide({
       initial={{ opacity: 0, x: isRight ? 34 : -34 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      className={`absolute inset-y-0 z-10 hidden w-[42%] sm:block ${
+      className={`absolute inset-y-0 z-10 w-[30%] sm:w-[42%] ${
         isRight ? "right-0" : "left-0"
       }`}
     >
       <div
-        className={`absolute top-10 h-44 w-44 rounded-full blur-[80px] ${
-          isRight ? "right-16" : "left-16"
+        className={`absolute top-10 h-28 w-28 rounded-full blur-[60px] sm:h-44 sm:w-44 sm:blur-[80px] ${
+          isRight ? "right-8 sm:right-16" : "left-8 sm:left-16"
         }`}
         style={{ backgroundColor: accent.primary }}
       />
@@ -391,13 +391,13 @@ function PlayerPosterSide({
           <img
             src={player.src}
             alt={player.name}
-            className={`absolute bottom-0 h-[125%] w-auto max-w-none object-contain drop-shadow-[0_18px_28px_rgba(0,0,0,0.42)] ${
-              isRight ? "right-0 origin-bottom-right" : "left-0 origin-bottom-left"
+            className={`absolute bottom-0 h-[80%] w-auto max-w-none object-contain drop-shadow-[0_12px_16px_rgba(0,0,0,0.35)] sm:h-[125%] sm:drop-shadow-[0_18px_28px_rgba(0,0,0,0.42)] ${
+              isRight ? "right-[-4%] origin-bottom-right sm:right-0" : "left-[-4%] origin-bottom-left sm:left-0"
             }`}
             loading="eager"
           />
           <span
-            className={`absolute text-[13px] font-bold uppercase tracking-[0.18em] text-white/80 drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)] ${
+            className={`absolute hidden text-[13px] font-bold uppercase tracking-[0.18em] text-white/80 drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)] sm:block ${
               isRight ? "right-12 top-[68%] origin-bottom-right" : "left-12 top-[68%] origin-bottom-left"
             }`}
             style={{ fontFamily: "ScreenMatrix, monospace" }}
@@ -407,12 +407,12 @@ function PlayerPosterSide({
         </>
       ) : (
         <div
-          className={`absolute bottom-0 grid h-full w-64 place-items-center rounded-[2rem] bg-black/20 p-8 shadow-none ring-1 ring-white/[0.1] backdrop-blur-xl ${
-            isRight ? "right-12" : "left-12"
+          className={`absolute bottom-0 grid h-full w-36 place-items-center rounded-[1.5rem] bg-black/20 p-5 shadow-none ring-1 ring-white/[0.1] backdrop-blur-xl sm:w-64 sm:rounded-[2rem] sm:p-8 ${
+            isRight ? "right-6 sm:right-12" : "left-6 sm:left-12"
           }`}
         >
           <MiniFlag team={team} large />
-          <span className="mt-4 text-xs font-semibold uppercase tracking-[0.22em] text-white/36">
+          <span className="mt-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/36 sm:mt-4 sm:text-xs">
             {teamCode}
           </span>
         </div>

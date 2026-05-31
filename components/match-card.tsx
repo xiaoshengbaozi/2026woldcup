@@ -27,7 +27,10 @@ export function MatchCard({ match, timezoneOffset = 0 }: { match: Match; timezon
           <div className="max-w-full truncate text-[10px] uppercase tracking-[0.12em] text-white/40 transition group-hover:text-volt/60 sm:text-xs sm:tracking-widest">
             {formatStageLabel(match.stage)}
           </div>
-          <div className="mt-1 text-lg font-semibold leading-none text-white transition group-hover:text-volt sm:text-3xl">
+          <div
+            className="mt-1 text-lg font-semibold leading-none text-white transition group-hover:text-volt sm:text-3xl"
+            style={{ fontFamily: "ScreenMatrix, monospace" }}
+          >
             {formatTime(adjustedStart)}
           </div>
         </div>

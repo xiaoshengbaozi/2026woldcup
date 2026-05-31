@@ -23,7 +23,7 @@ export function TeamSignal({ image, name }: { code: string; image?: string; name
 
   return (
     <div className="flex min-w-0 flex-1 flex-col items-center gap-1 sm:flex-none">
-      <span className="text-5xl font-normal leading-none text-volt/90 sm:text-7xl" style={{ fontFamily: "ScreenMatrix, monospace" }}>{shortCode}</span>
+      <span className="text-4xl font-normal leading-none text-volt/90 sm:text-7xl" style={{ fontFamily: "ScreenMatrix, monospace" }}>{shortCode}</span>
       <span className="inline-flex max-w-full items-center gap-1.5">
         {image && (<img src={image} alt="" className="h-4 w-5 shrink-0 rounded-sm object-cover" loading="lazy" />)}
         <span className="truncate text-xs font-semibold uppercase text-white/86 sm:text-sm">{name}</span>

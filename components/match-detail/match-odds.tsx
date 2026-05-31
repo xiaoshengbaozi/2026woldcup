@@ -1,228 +1,328 @@
 "use client";
 
+import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { TrendingUp, Activity } from "lucide-react";
-import { useState } from "react";
+import { Activity, BarChart3, Clock, Globe2, TrendingUp, Zap } from "lucide-react";
+import { formatDateTime, formatVolume } from "@/lib/format";
+import { getTeamCodeFromName, localizeTeamName } from "@/lib/team-localization";
+import { useMatchLines } from "@/lib/use-match-lines";
+import { getFlagUrl } from "@/lib/world-cup-2026";
 import type { MatchDetail } from "@/types/match";
+import type { MatchLineEvent, MatchLineMarket } from "@/types/messages";
+import type { ReactNode } from "react";
+
+type OddsSelection = {
+  event: MatchLineEvent | null;
+  markets: MatchLineMarket[];
+  source: "api" | "mock";
+  updatedAt: number | null;
+};
 
 export function MatchOdds({ detail }: { detail: MatchDetail }) {
-  const { odds } = detail;
-  const [hovered, setHovered] = useState<"home" | "draw" | "away" | null>(null);
+  const { events, timestamp, loading, error } = useMatchLines();
+  const selection = useMemo(
+    () => buildOddsSelection(detail, events, timestamp),
+    [detail, events, timestamp],
+  );
 
-  const total = odds.homeWin + odds.draw + odds.awayWin;
-  const homePct = (odds.homeWin / total) * 100;
-  const drawPct = (odds.draw / total) * 100;
-  const awayPct = (odds.awayWin / total) * 100;
-
-  const maxProb = Math.max(odds.homeWin, odds.draw, odds.awayWin);
+  const homeCode = normalizeCode(detail.homeTeamCode);
+  const awayCode = normalizeCode(detail.awayTeamCode);
+  const homeName = localizeTeamName(selection.event?.homeTeam ?? homeCode, homeCode);
+  const awayName = localizeTeamName(selection.event?.awayTeam ?? awayCode, awayCode);
+  const homeMarket = selection.markets[0];
+  const drawMarket = selection.markets[1];
+  const awayMarket = selection.markets[2];
+  const strongest = selection.markets.reduce<MatchLineMarket | null>(
+    (best, market) => (!best || market.yesPrice > best.yesPrice ? market : best),
+    null,
+  );
+  const total = selection.markets.reduce((sum, market) => sum + market.yesPrice, 0) || 100;
 
   return (
-    <motion.div
+    <motion.section
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.15, duration: 0.5 }}
-      className="hero-card overflow-hidden"
+      transition={{ delay: 0.12, duration: 0.45 }}
+      className="hero-card relative overflow-hidden p-4 sm:p-5"
     >
-      {/* Top accent line */}
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-volt/25 to-transparent" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(216,255,62,0.12),transparent_32%),radial-gradient(circle_at_92%_18%,rgba(255,154,31,0.10),transparent_34%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-volt/30 to-transparent" />
 
-      <div className="relative px-4 py-5 sm:px-6 sm:py-6">
-        {/* Header */}
-        <div className="mb-5 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Activity className="h-4 w-4 text-volt" />
-            <h3 className="text-xs font-semibold uppercase tracking-[0.1em] text-white">
-              胜率分析
-            </h3>
-          </div>
-          <div className="flex items-center gap-1.5 text-[10px] text-white/40">
-            <TrendingUp className="h-3 w-3" />
-            <span>AI 预测模型</span>
-          </div>
+      <div className="relative mb-4 flex items-center justify-between border-b border-white/[0.04] pb-3">
+        <div className="flex items-center gap-2">
+          <Activity className="h-4 w-4 text-volt" />
+          <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-white">
+            Match Odds
+          </h3>
         </div>
-
-        {/* Probability bars */}
-        <div className="space-y-3">
-          <ProbabilityBar
-            label="胜"
-            value={odds.homeWin}
-            pct={homePct}
-            color="volt"
-            isMax={odds.homeWin === maxProb}
-            isHovered={hovered === "home"}
-            onHover={() => setHovered("home")}
-            onLeave={() => setHovered(null)}
-          />
-          <ProbabilityBar
-            label="平"
-            value={odds.draw}
-            pct={drawPct}
-            color="white"
-            isMax={odds.draw === maxProb}
-            isHovered={hovered === "draw"}
-            onHover={() => setHovered("draw")}
-            onLeave={() => setHovered(null)}
-          />
-          <ProbabilityBar
-            label="负"
-            value={odds.awayWin}
-            pct={awayPct}
-            color="flare"
-            isMax={odds.awayWin === maxProb}
-            isHovered={hovered === "away"}
-            onHover={() => setHovered("away")}
-            onLeave={() => setHovered(null)}
-          />
+        <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.12em] text-white/35">
+          <span className={selection.source === "api" ? "text-volt" : "text-white/35"}>
+            {selection.source === "api" ? "Polymarket Live" : "Projection"}
+          </span>
+          {loading && <span>Syncing</span>}
         </div>
+      </div>
 
-        {/* Stacked bar visualization */}
-        <div className="mt-6 overflow-hidden rounded-lg bg-black/30 ring-1 ring-white/[0.06]">
-          <div className="flex h-2">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${homePct}%` }}
-              transition={{ delay: 0.3, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="bg-volt"
-            />
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${drawPct}%` }}
-              transition={{ delay: 0.4, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="bg-white/40"
-            />
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${awayPct}%` }}
-              transition={{ delay: 0.5, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="bg-flare"
-            />
-          </div>
-          <div className="flex justify-between px-3 py-2 text-[10px] text-white/45">
-            <span>{homePct.toFixed(1)}%</span>
-            <span>{drawPct.toFixed(1)}%</span>
-            <span>{awayPct.toFixed(1)}%</span>
-          </div>
+      {error && selection.source === "mock" && (
+        <div className="relative mb-4 rounded-2xl border border-flare/15 bg-flare/[0.04] px-4 py-3 text-xs text-flare/80">
+          Live odds unavailable: {error}
         </div>
+      )}
 
-        {/* Mini sparkline */}
-        <div className="mt-4">
-          <p className="mb-2 text-[10px] uppercase tracking-[0.12em] text-white/35">
-            24h 概率走势
-          </p>
-          <div className="h-16 overflow-hidden rounded-lg bg-black/20 ring-1 ring-white/[0.04]">
-            <svg
-              viewBox="0 0 480 64"
-              className="h-full w-full"
-              preserveAspectRatio="none"
-            >
-              <defs>
-                <linearGradient id="sparkHome" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#D8FF3E" stopOpacity="0.3" />
-                  <stop offset="100%" stopColor="#D8FF3E" stopOpacity="0" />
-                </linearGradient>
-                <linearGradient id="sparkAway" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#FF9A1F" stopOpacity="0.3" />
-                  <stop offset="100%" stopColor="#FF9A1F" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              {/* Home line */}
-              <path
-                d={generateSparklinePath(odds.history.map((h) => h.homeWin), 480, 64)}
-                fill="url(#sparkHome)"
-                stroke="#D8FF3E"
-                strokeWidth="1.5"
-              />
-              {/* Away line */}
-              <path
-                d={generateSparklinePath(odds.history.map((h) => h.awayWin), 480, 64)}
-                fill="url(#sparkAway)"
-                stroke="#FF9A1F"
-                strokeWidth="1.5"
-              />
-            </svg>
+      <div className="relative mx-auto max-w-[520px] overflow-hidden rounded-[24px] border border-white/[0.08] bg-[#111113]/90 shadow-[0_32px_64px_rgba(0,0,0,0.34)] backdrop-blur-xl">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-volt/[0.07] to-transparent" />
+
+        <div className="relative px-5 py-5 sm:px-6 sm:py-6">
+          <div className="mb-5 flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.12em] text-white/28">
+              <Clock className="h-3 w-3" />
+              <span>{selection.event ? formatDateTime(selection.event.startTime) : "Scheduled"}</span>
+            </div>
+            <span className="text-[10px] uppercase tracking-[0.12em] text-white/25">
+              {selection.event?.ticker ?? detail.match.stage}
+            </span>
           </div>
-          <div className="mt-1 flex justify-between text-[9px] text-white/30">
-            <span>24h 前</span>
-            <span>现在</span>
+
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+            <TeamNode code={homeCode} label={homeName} market={homeMarket} strongest={strongest} tone="home" />
+
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex items-center gap-1.5 text-white/30">
+                <div className="h-px w-9 bg-white/10" />
+                <div className="grid h-7 w-7 place-items-center rounded-full border border-white/10 bg-white/[0.035] shadow-[0_0_22px_rgba(216,255,62,0.10)]">
+                  <Zap className="h-3.5 w-3.5 text-volt/70" />
+                </div>
+                <div className="h-px w-9 bg-white/10" />
+              </div>
+              <div className="flex items-center gap-1 text-[11px]">
+                <span className="font-black tabular-nums text-volt">
+                  {homeMarket.yesPrice.toFixed(0)}%
+                </span>
+                <span className="text-white/20">:</span>
+                <span className="font-black tabular-nums text-flare">
+                  {awayMarket.yesPrice.toFixed(0)}%
+                </span>
+              </div>
+            </div>
+
+            <TeamNode code={awayCode} label={awayName} market={awayMarket} strongest={strongest} tone="away" />
+          </div>
+
+          <div className="relative mt-5 h-px">
+            <div className="absolute inset-x-0 top-1/2 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+          </div>
+
+          <div className="mt-5 grid grid-cols-3 gap-2">
+            <MarketTile label="Home" market={homeMarket} color="volt" isHot={sameMarket(homeMarket, strongest)} />
+            <MarketTile label="Draw" market={drawMarket} color="white" isHot={sameMarket(drawMarket, strongest)} />
+            <MarketTile label="Away" market={awayMarket} color="flare" isHot={sameMarket(awayMarket, strongest)} />
+          </div>
+
+          <div className="mt-5 overflow-hidden rounded-full bg-white/[0.06]">
+            <div className="flex h-2">
+              {selection.markets.map((market, index) => (
+                <motion.div
+                  key={market.id}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${Math.max(2, (market.yesPrice / total) * 100)}%` }}
+                  transition={{ delay: 0.18 + index * 0.08, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                  className={index === 0 ? "bg-volt" : index === 1 ? "bg-white/45" : "bg-flare"}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 gap-2 border-t border-white/[0.04] pt-3 text-[10px] text-white/25 sm:grid-cols-3">
+            <FooterStat icon={<BarChart3 className="h-3 w-3" />} label="Markets" value={`${selection.markets.length}`} />
+            <FooterStat
+              icon={<Globe2 className="h-3 w-3" />}
+              label="Liquidity"
+              value={formatVolume(selection.event?.liquidity ?? sumBy(selection.markets, "liquidity"))}
+            />
+            <FooterStat
+              icon={<TrendingUp className="h-3 w-3" />}
+              label="Updated"
+              value={selection.updatedAt ? formatDateTime(selection.updatedAt) : "Local model"}
+            />
           </div>
         </div>
       </div>
-    </motion.div>
+    </motion.section>
   );
 }
 
-function ProbabilityBar({
+function TeamNode({
+  code,
   label,
-  value,
-  pct,
-  color,
-  isMax,
-  isHovered,
-  onHover,
-  onLeave,
+  market,
+  strongest,
+  tone,
 }: {
+  code: string;
   label: string;
-  value: number;
-  pct: number;
-  color: "volt" | "white" | "flare";
-  isMax: boolean;
-  isHovered: boolean;
-  onHover: () => void;
-  onLeave: () => void;
+  market: MatchLineMarket;
+  strongest: MatchLineMarket | null;
+  tone: "home" | "away";
 }) {
-  const colorMap = {
-    volt: { bar: "bg-volt", text: "text-volt", glow: "shadow-[0_0_20px_rgba(216,255,62,0.3)]" },
-    white: { bar: "bg-white/60", text: "text-white", glow: "shadow-[0_0_20px_rgba(255,255,255,0.15)]" },
-    flare: { bar: "bg-flare", text: "text-flare", glow: "shadow-[0_0_20px_rgba(255,154,31,0.3)]" },
-  };
-  const c = colorMap[color];
+  const hot = sameMarket(market, strongest);
 
   return (
-    <div
-      className="group cursor-default"
-      onMouseEnter={onHover}
-      onMouseLeave={onLeave}
-    >
-      <div className="mb-1.5 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-white/70">{label}</span>
-          {isMax && (
-            <span className="rounded bg-volt/15 px-1.5 py-0.5 text-[9px] font-semibold text-volt">
-              FAVORITE
-            </span>
-          )}
-        </div>
-        <span className={`tabular text-sm font-bold ${c.text}`}>
-          {value.toFixed(1)}%
-        </span>
-      </div>
-      <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${pct}%` }}
-          transition={{ delay: 0.2, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className={`h-full rounded-full ${c.bar} ${isHovered ? c.glow : ""} transition-shadow duration-300`}
+    <div className="flex min-w-0 flex-col items-center gap-1.5">
+      <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-white/35">
+        {code || "TBD"}
+      </span>
+      {code ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={getFlagUrl(code, 80)}
+          alt={label}
+          className={`h-10 w-14 rounded-xl object-cover ring-1 shadow-[0_4px_14px_rgba(0,0,0,0.42)] transition ${
+            hot ? "ring-volt/45 shadow-[0_0_18px_rgba(216,255,62,0.18)]" : "ring-white/10"
+          }`}
+          loading="lazy"
         />
-      </div>
+      ) : (
+        <div className="grid h-10 w-14 place-items-center rounded-xl bg-white/[0.06] text-[10px] font-bold text-white/40">
+          TBD
+        </div>
+      )}
+      <span className={`max-w-[112px] truncate text-center text-xs font-semibold ${hot ? "text-volt" : tone === "away" ? "text-white/80" : "text-white/85"}`}>
+        {label}
+      </span>
     </div>
   );
 }
 
-function generateSparklinePath(data: number[], width: number, height: number): string {
-  if (!data.length) return "";
+function MarketTile({
+  label,
+  market,
+  color,
+  isHot,
+}: {
+  label: string;
+  market: MatchLineMarket;
+  color: "volt" | "white" | "flare";
+  isHot: boolean;
+}) {
+  const colorClass = color === "volt" ? "text-volt" : color === "flare" ? "text-flare" : "text-white/70";
 
-  const min = Math.min(...data);
-  const max = Math.max(...data);
-  const range = max - min || 1;
+  return (
+    <div
+      className={`flex min-h-[94px] flex-col items-center justify-center gap-1 rounded-2xl border px-2 py-3 transition ${
+        isHot
+          ? "border-volt/20 bg-volt/[0.055] shadow-[0_0_22px_rgba(216,255,62,0.08)]"
+          : "border-white/[0.055] bg-white/[0.025]"
+      }`}
+    >
+      <span className="text-[9px] uppercase tracking-[0.12em] text-white/30">{label}</span>
+      <span className={`text-xl font-black tabular-nums ${colorClass}`}>{market.yesPrice.toFixed(0)}%</span>
+      <span className="text-[9px] tabular-nums text-white/22">
+        Bid {formatOptionalPrice(market.bestBid)}
+      </span>
+      <span className="text-[9px] tabular-nums text-white/18">
+        Ask {formatOptionalPrice(market.bestAsk)}
+      </span>
+    </div>
+  );
+}
 
-  const points = data.map((val, i) => {
-    const x = (i / (data.length - 1)) * width;
-    const y = height - ((val - min) / range) * (height - 8) - 4;
-    return `${i === 0 ? "M" : "L"}${x},${y}`;
+function FooterStat({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+  return (
+    <div className="flex min-w-0 items-center gap-1.5">
+      {icon}
+      <span className="shrink-0 uppercase tracking-[0.08em]">{label}</span>
+      <span className="min-w-0 truncate text-white/42">{value}</span>
+    </div>
+  );
+}
+
+function buildOddsSelection(
+  detail: MatchDetail,
+  events: MatchLineEvent[],
+  timestamp: number | null,
+): OddsSelection {
+  const event = findMatchingEvent(detail, events);
+  if (event) {
+    const markets = pickMoneyline(detail, event);
+    if (markets.length >= 3) {
+      return { event, markets: markets.slice(0, 3), source: "api", updatedAt: timestamp };
+    }
+  }
+
+  return {
+    event: null,
+    markets: [
+      mockMarket("mock-home", "Home", detail.odds.homeWin),
+      mockMarket("mock-draw", "Draw", detail.odds.draw),
+      mockMarket("mock-away", "Away", detail.odds.awayWin),
+    ],
+    source: "mock",
+    updatedAt: null,
+  };
+}
+
+function findMatchingEvent(detail: MatchDetail, events: MatchLineEvent[]) {
+  const homeCode = normalizeCode(detail.homeTeamCode);
+  const awayCode = normalizeCode(detail.awayTeamCode);
+
+  return events.find((event) => {
+    const eventHomeCode = normalizeCode(getTeamCodeFromName(event.homeTeam));
+    const eventAwayCode = normalizeCode(getTeamCodeFromName(event.awayTeam));
+    return (
+      (eventHomeCode === homeCode && eventAwayCode === awayCode) ||
+      (eventHomeCode === awayCode && eventAwayCode === homeCode)
+    );
   });
+}
 
-  const linePath = points.join(" ");
-  const fillPath = `${linePath} L${width},${height} L0,${height} Z`;
+function pickMoneyline(detail: MatchDetail, event: MatchLineEvent) {
+  const markets = event.markets.filter((market) => market.marketType === "moneyline");
+  const home = findMarketByCode(markets, detail.homeTeamCode);
+  const draw = markets.find((market) => normalizeText(market.label) === "draw");
+  const away = findMarketByCode(markets, detail.awayTeamCode);
+  const ordered = [home, draw, away].filter((market): market is MatchLineMarket => Boolean(market));
 
-  return fillPath;
+  return ordered.length >= 3 ? ordered : markets.slice(0, 3);
+}
+
+function findMarketByCode(markets: MatchLineMarket[], code: string) {
+  const normalizedCode = normalizeCode(code);
+  return markets.find((market) => normalizeCode(getTeamCodeFromName(market.label)) === normalizedCode);
+}
+
+function mockMarket(id: string, label: string, yesPrice: number): MatchLineMarket {
+  return {
+    id,
+    question: label,
+    slug: id,
+    marketType: "moneyline",
+    label,
+    yesPrice,
+    noPrice: Math.max(0, 100 - yesPrice),
+    bestBid: null,
+    bestAsk: null,
+    spread: null,
+    volume24h: 0,
+    liquidity: 0,
+  };
+}
+
+function sameMarket(a?: MatchLineMarket | null, b?: MatchLineMarket | null) {
+  return Boolean(a && b && a.id === b.id);
+}
+
+function normalizeCode(code?: string) {
+  return (code ?? "").trim().toUpperCase();
+}
+
+function normalizeText(value: string) {
+  return value.normalize("NFKD").replace(/\p{Diacritic}/gu, "").trim().toLowerCase();
+}
+
+function sumBy(markets: MatchLineMarket[], key: "liquidity" | "volume24h") {
+  return markets.reduce((sum, market) => sum + market[key], 0);
+}
+
+function formatOptionalPrice(value: number | null) {
+  return value == null ? "--" : `${value.toFixed(0)}%`;
 }

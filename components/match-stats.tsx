@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { CalendarDays, Flag, Trophy } from "lucide-react";
+import { CalendarDays, Flag, MapPin, Trophy } from "lucide-react";
 import { StatCard } from "@/components/stat-card";
 
 type MatchStatsProps = {
@@ -9,6 +9,8 @@ type MatchStatsProps = {
   remainingMatchDays: number;
   activeTeamCount: number;
   totalTeamCount: number;
+  visibleCities: number;
+  totalCities: number;
 };
 
 export function MatchStats({
@@ -17,14 +19,16 @@ export function MatchStats({
   totalMatchDays,
   remainingMatchDays,
   activeTeamCount,
-  totalTeamCount
+  totalTeamCount,
+  visibleCities,
+  totalCities,
 }: MatchStatsProps) {
   return (
     <motion.section
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.65 }}
-      className="grid grid-cols-3 gap-2 sm:gap-3"
+      className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3"
     >
       <StatCard
         label="比赛"
@@ -44,6 +48,12 @@ export function MatchStats({
         value={`${activeTeamCount}/${totalTeamCount}`}
         detail="未淘汰 / 全部"
         icon={Flag}
+      />
+      <StatCard
+        label="城市"
+        value={`${visibleCities}/${totalCities}`}
+        detail="筛选 / 全部"
+        icon={MapPin}
       />
     </motion.section>
   );
