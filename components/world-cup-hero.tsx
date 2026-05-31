@@ -90,9 +90,9 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
   const progressMarker = Math.min(100, Math.max(0, progress || 0));
 
   return (
-    <section className="w-full min-w-0 max-w-full space-y-5 overflow-x-hidden">
-      <div className="grid w-full min-w-0 max-w-full gap-5 lg:grid-cols-[.78fr_1.45fr_.78fr]">
-        <motion.aside initial={{ opacity: 0, y: 16, filter: "blur(16px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ delay: 0.08, duration: 0.72, ease: [0.16, 1, 0.3, 1] }} className="grid w-full min-w-0 max-w-full gap-5">
+    <section className="space-y-5">
+      <div className="grid min-w-0 gap-5 lg:grid-cols-[.78fr_1.45fr_.78fr]">
+        <motion.aside initial={{ opacity: 0, y: 16, filter: "blur(16px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ delay: 0.08, duration: 0.72, ease: [0.16, 1, 0.3, 1] }} className="grid gap-5">
           <div className="hero-card relative h-auto min-h-[230px] overflow-hidden p-5">
             <div className="absolute inset-0 opacity-45 [background-image:radial-gradient(circle_at_78%_62%,rgba(216,255,62,.18),transparent_30%),radial-gradient(circle_at_45%_48%,rgba(255,255,255,.07)_1px,transparent_1px)] [background-size:auto,12px_12px]" />
             <img
@@ -115,7 +115,7 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
             </div>
           </div>
 
-          <div className="hero-card p-4 sm:p-5">
+          <div className="hero-card p-5">
             <div className="mb-5 hidden items-center justify-between border-b border-white/[0.04] pb-3 sm:flex">
               <div className="flex items-center gap-2"><BarChart3 className="h-4 w-4 text-volt" /><p className="text-sm font-semibold uppercase text-white">赛事进度</p></div>
               <span className="tabular text-sm text-volt">{progress}%</span>
@@ -163,12 +163,12 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
           <PopularTeamsCard popularTeams={popularTeams} className="hidden lg:block" />
         </motion.aside>
 
-        <motion.div initial={{ opacity: 0, y: 16, filter: "blur(16px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ delay: 0.14, duration: 0.78, ease: [0.16, 1, 0.3, 1] }} className="grid w-full min-w-0 max-w-full gap-5">
-          <div className="hero-card relative min-h-[288px] overflow-hidden p-0 sm:h-[330px]">
+        <motion.div initial={{ opacity: 0, y: 16, filter: "blur(16px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ delay: 0.14, duration: 0.78, ease: [0.16, 1, 0.3, 1] }} className="grid gap-5">
+          <div className="hero-card relative h-[288px] overflow-hidden p-0 sm:h-[330px]">
             <img src="/estadio-azteca-aerial.jpg" alt="Aerial view of Estadio Azteca" className="absolute inset-0 h-full w-full object-cover object-[78%_50%] opacity-[.82] saturate-[1.08]" />
             <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(5,8,8,.98)_0%,rgba(5,8,8,.9)_34%,rgba(5,8,8,.42)_58%,rgba(5,8,8,.08)_100%),linear-gradient(0deg,rgba(5,8,8,.72)_0%,rgba(5,8,8,.08)_32%,rgba(5,8,8,.1)_100%),radial-gradient(circle_at_76%_52%,rgba(216,255,62,.2),transparent_26%)]" />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_24%_20%,rgba(216,255,62,.13),transparent_24%),radial-gradient(circle_at_68%_72%,rgba(255,154,31,.1),transparent_34%)]" />
-            <div className="relative z-10 flex min-h-[288px] flex-col items-center justify-between p-4 sm:h-full sm:min-h-0 sm:p-8">
+            <div className="relative z-10 flex h-full flex-col items-center justify-between p-4 sm:p-8">
               <div className="flex w-full flex-col items-center">
                 <div className="flex w-full items-start justify-between gap-3">
                   <div className="flex shrink-0 items-center gap-3 text-xs uppercase tracking-[0.12em] text-white/52 sm:text-sm sm:tracking-[0.16em]"><span className="h-2 w-2 rounded-full bg-volt shadow-[0_0_16px_rgba(216,255,62,.85)]" />下一场比赛</div>
@@ -183,14 +183,16 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
               <div className="mt-3 grid w-full max-w-sm grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[1.45rem] bg-black/34 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,.08)] backdrop-blur-2xl sm:mt-5 sm:p-4">
                 <div>
                   <p className="text-xs uppercase tracking-[0.18em] text-white/42">距离开赛</p>
-                  <p className="mt-1 flex min-w-0 items-baseline text-2xl font-semibold leading-none text-volt sm:text-4xl" style={{ fontFamily: "ScreenMatrix, monospace" }}><span className="shrink-0" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>{countdown.days}<span className="text-sm font-normal text-white/38 sm:text-base">天</span></span><span className="ml-2">{countdown.hours}</span><span className="countdown-colon text-2xl sm:text-4xl">:</span><span>{countdown.minutes}</span></p>
+                  <p className="mt-1 flex items-baseline text-3xl font-semibold leading-none text-volt sm:text-4xl" style={{ fontFamily: "ScreenMatrix, monospace" }}><span style={{ fontFamily: "Inter, system-ui, sans-serif" }}>{countdown.days}<span className="text-base font-normal text-white/38">天</span></span><span className="ml-2">{countdown.hours}</span><span className="countdown-colon text-3xl sm:text-4xl">:</span><span>{countdown.minutes}</span></p>
                 </div>
-                <div className="rounded-full bg-volt/15 p-2.5 text-volt shadow-[0_0_44px_rgba(216,255,62,.34)] ring-1 ring-volt/25 sm:p-4"><ArrowRight className="h-5 w-5 sm:h-7 sm:w-7" /></div>
+                <div className="rounded-full bg-volt/15 p-3 text-volt shadow-[0_0_44px_rgba(216,255,62,.34)] ring-1 ring-volt/25 sm:p-4"><ArrowRight className="h-5 w-5 sm:h-7 sm:w-7" /></div>
               </div>
             </div>
           </div>
 
-          <div className="hero-card p-4 sm:p-5">
+          <PopularTeamsCard popularTeams={popularTeams} className="lg:hidden" />
+
+          <div className="hero-card p-5">
             <div className="mb-5 flex items-center justify-between border-b border-white/[0.04] pb-3">
               <div className="flex items-center gap-2.5">
                 <span className="relative flex h-2.5 w-2.5"><span className="live-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" /><span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,.7)]" /></span>
@@ -200,12 +202,8 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
               <a href="/matches" className="group inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40 transition hover:text-volt">查看全部<ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" /></a>
             </div>
             {displayMatches.length ? (
-              <div className="scrollbar-hidden flex w-full min-w-0 max-w-full snap-x snap-mandatory gap-3 overflow-x-auto pb-1 sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0">
-                {displayMatches.map((match) => (
-                  <div key={match.uid} className="basis-[82%] shrink-0 snap-start sm:min-w-0 sm:basis-auto sm:shrink">
-                    <LiveMatchCard match={match} isLive={liveNow.length > 0} />
-                  </div>
-                ))}
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {displayMatches.map((match) => (<LiveMatchCard key={match.uid} match={match} isLive={liveNow.length > 0} />))}
               </div>
             ) : (
               <div className="rounded-3xl bg-white/[0.035] px-5 py-6 text-center ring-1 ring-white/[0.06]">
@@ -214,11 +212,9 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
               </div>
             )}
           </div>
-
-          <PopularTeamsCard popularTeams={popularTeams} className="lg:hidden" />
         </motion.div>
 
-        <motion.aside initial={{ opacity: 0, y: 16, filter: "blur(16px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ delay: 0.2, duration: 0.72, ease: [0.16, 1, 0.3, 1] }} className="grid w-full min-w-0 max-w-full gap-5">
+        <motion.aside initial={{ opacity: 0, y: 16, filter: "blur(16px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ delay: 0.2, duration: 0.72, ease: [0.16, 1, 0.3, 1] }} className="grid gap-5">
           <div className="hero-card hidden p-5 lg:block">
             <div className="mb-4 flex items-center justify-between gap-3 border-b border-white/[0.04] pb-3">
               <div><div className="flex items-center gap-2"><Newspaper className="h-4 w-4 text-volt" /><p className="text-sm font-semibold uppercase text-white">最新动态</p></div></div>
