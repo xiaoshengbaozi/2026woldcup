@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Newspaper, Calendar, BarChart3 } from "lucide-react";
+import { BarChart3, Calendar, Home, Newspaper, UserRound } from "lucide-react";
 
 const navItems = [
   { label: "首页", href: "/", icon: Home },
   { label: "新闻", href: "/news", icon: Newspaper },
   { label: "赛程", href: "/matches", icon: Calendar },
   { label: "数据", href: "/data", icon: BarChart3 },
+  { label: "我的", href: "/me", icon: UserRound },
 ];
 
 export function MobileNavBar() {
@@ -24,7 +25,6 @@ export function MobileNavBar() {
       className="fixed bottom-0 left-0 right-0 z-50 lg:hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 12px)" }}
     >
-      {/* Background with glass effect */}
       <div
         className="mx-3 mb-3 flex items-center justify-around rounded-2xl px-2 py-2"
         style={{
@@ -36,7 +36,6 @@ export function MobileNavBar() {
           WebkitBackdropFilter: "blur(32px)",
         }}
       >
-        {/* Gradient border top */}
         <div
           className="pointer-events-none absolute inset-x-3 top-0 h-px rounded-full"
           style={{
@@ -53,9 +52,8 @@ export function MobileNavBar() {
             <Link
               key={item.label}
               href={item.href}
-              className="relative flex flex-col items-center gap-1 px-3 py-1.5 transition-colors"
+              className="relative flex flex-col items-center gap-1 px-2 py-1.5 transition-colors sm:px-3"
             >
-              {/* Active indicator glow */}
               {active && (
                 <span
                   className="absolute -top-1 left-1/2 h-1 w-8 -translate-x-1/2 rounded-full"

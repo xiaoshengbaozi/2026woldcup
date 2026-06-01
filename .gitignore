@@ -10,3 +10,5 @@ node_modules/
 backend/.codex-*.log
 backend/dist/
 backend/.env
+/data/user-system.json
+/backend/data/user-system.json

@@ -2,6 +2,7 @@ import http from "http";
 import type { ApiFootballEndpoint, ApiFootballService } from "./apiFootball";
 import type { HistoryBuffer } from "./historyBuffer";
 import type { SnapshotCache } from "./snapshotCache";
+import type { UserSystem } from "./userSystem";
 import { renderAdminPageHtml } from "./adminPage";
 import type { CountryData, MatchLinesResponse } from "./types";
 import { getWorldCupPlayerProfile, getWorldCupTopScorers } from "./playerProfileData";
@@ -30,6 +31,7 @@ interface HttpServerOptions {
     lastPolymarketUpdate: number | null;
     matchLines: MatchLinesResponse;
   };
+  userSystem?: UserSystem;
 }
 
 export function createHttpServer(options: HttpServerOptions) {
@@ -42,6 +44,11 @@ export function createHttpServer(options: HttpServerOptions) {
     }
 
     const url = new URL(req.url ?? "/", "http://localhost");
+
+    if (options.userSystem && (url.pathname.startsWith("/api/auth/") || url.pathname.startsWith("/api/me/"))) {
+      options.userSystem.handleRequest(req, res, url);
+      return;
+    }
 
     if (req.method === "GET" && url.pathname === "/") {
       redirect(res, "/admin");
@@ -418,14 +425,16 @@ function setCorsHeaders(req: http.IncomingMessage, res: http.ServerResponse) {
   const requestOrigin = req.headers.origin;
 
   if (allowedOrigins.includes("*")) {
-    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Origin", requestOrigin || "*");
+    if (requestOrigin) res.setHeader("Vary", "Origin");
   } else if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
     res.setHeader("Access-Control-Allow-Origin", requestOrigin);
     res.setHeader("Vary", "Origin");
   }
 
-  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
 }
 
 function sendEmpty(res: http.ServerResponse, statusCode: number) {
