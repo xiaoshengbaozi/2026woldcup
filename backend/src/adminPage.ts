@@ -1,5 +1,5 @@
 export function renderAdminPageHtml() {
-  return String.raw`<!doctype html>
+  return `<!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
@@ -315,12 +315,12 @@ export function renderAdminPageHtml() {
         upstreamRow(apiConfigured, "api-football", apiConfigured ? "API Key 已配置，可读取赛程与实况" : "缺少 API_FOOTBALL_KEY", apiConfigured ? "已配置" : "不可用");
 
       byId("leaders").innerHTML = data.data.leaders.map(function (item) {
-        return "<tr><td>" + item.flagEmoji + " " + item.countryName + "</td><td class=\"muted\">" + item.countryCode + "</td><td class=\"prob\">" + percent(item.impliedProbability) + "</td><td>" + percent(item.delta24h) + "</td><td>" + fmt.format(item.spread) + "¢</td></tr>";
+        return "<tr><td>" + item.flagEmoji + " " + item.countryName + "</td><td class=\\"muted\\">" + item.countryCode + "</td><td class=\\"prob\\">" + percent(item.impliedProbability) + "</td><td>" + percent(item.delta24h) + "</td><td>" + fmt.format(item.spread) + "¢</td></tr>";
       }).join("");
     }
 
     function upstreamRow(ok, title, text, badge) {
-      return "<div class=\"status-row\"><i class=\"" + statusDotClass(ok, false) + "\"></i><div><h3>" + title + "</h3><p>" + text + "</p></div><span class=\"badge\">" + badge + "</span></div>";
+      return "<div class=\\"status-row\\"><i class=\\"" + statusDotClass(ok, false) + "\\"></i><div><h3>" + title + "</h3><p>" + text + "</p></div><span class=\\"badge\\">" + badge + "</span></div>";
     }
 
     async function refreshLive() {
@@ -337,7 +337,7 @@ export function renderAdminPageHtml() {
 
         const fixtures = Array.isArray(data.fixtures) ? data.fixtures : [];
         if (!fixtures.length) {
-          byId("liveMatches").innerHTML = "<div class=\"status-row\"><i class=\"dot warn\"></i><div><h3>当前没有进行中的世界杯比赛</h3><p>接口正常返回，暂无 live=all 的比赛数据。</p></div><span class=\"badge\">0 场</span></div>";
+          byId("liveMatches").innerHTML = "<div class=\\"status-row\\"><i class=\\"dot warn\\"></i><div><h3>当前没有进行中的世界杯比赛</h3><p>接口正常返回，暂无 live=all 的比赛数据。</p></div><span class=\\"badge\\">0 场</span></div>";
           return;
         }
 
@@ -347,7 +347,7 @@ export function renderAdminPageHtml() {
           const score = ((match.score && match.score.home) ?? "-") + " : " + ((match.score && match.score.away) ?? "-");
           const minute = match.elapsed ? match.elapsed + "'" : match.statusLabel || "实况";
           const venue = match.location || match.stage || "";
-          return "<article class=\"match-row\"><div class=\"team\"><strong>" + (home.name || "主队") + "</strong><span class=\"muted\">" + (home.code || "") + "</span></div><div class=\"score\">" + score + "</div><div class=\"team\"><strong>" + (away.name || "客队") + "</strong><span class=\"muted\">" + (away.code || venue) + "</span></div><span class=\"badge\">" + minute + "</span></article>";
+          return "<article class=\\"match-row\\"><div class=\\"team\\"><strong>" + (home.name || "主队") + "</strong><span class=\\"muted\\">" + (home.code || "") + "</span></div><div class=\\"score\\">" + score + "</div><div class=\\"team\\"><strong>" + (away.name || "客队") + "</strong><span class=\\"muted\\">" + (away.code || venue) + "</span></div><span class=\\"badge\\">" + minute + "</span></article>";
         }).join("");
       } catch (error) {
         byId("liveCount").textContent = "--";
@@ -355,7 +355,7 @@ export function renderAdminPageHtml() {
         byId("footballFreshness").textContent = "api-football 实况读取失败";
         byId("footballCache").textContent = "不可用";
         byId("footballDot").className = statusDotClass(false, false);
-        byId("liveMatches").innerHTML = "<div class=\"status-row\"><i class=\"dot bad\"></i><div><h3>比赛实况不可用</h3><p>" + String(error.message || error) + "</p></div><span class=\"badge\">错误</span></div>";
+        byId("liveMatches").innerHTML = "<div class=\\"status-row\\"><i class=\\"dot bad\\"></i><div><h3>比赛实况不可用</h3><p>" + String(error.message || error) + "</p></div><span class=\\"badge\\">错误</span></div>";
       }
     }
 
@@ -409,8 +409,8 @@ export function renderAdminPageHtml() {
         byId("upcomingMatches").innerHTML = upcoming.length ? upcoming.map(function (match) {
           const home = match.homeTeam || {};
           const away = match.awayTeam || {};
-          return "<article class=\"match-row\"><div class=\"team\"><strong>" + (home.name || "主队") + "</strong><span class=\"muted\">" + (home.code || "") + "</span></div><div class=\"score\">VS</div><div class=\"team\"><strong>" + (away.name || "客队") + "</strong><span class=\"muted\">" + (away.code || match.stage || "") + "</span></div><span class=\"badge\">" + fixtureTime(match.startIso) + "</span></article>";
-        }).join("") : "<div class=\"status-row\"><i class=\"dot warn\"></i><div><h3>暂无即将开始的比赛</h3><p>赛程接口已返回，但没有未来比赛。</p></div><span class=\"badge\">0 场</span></div>";
+          return "<article class=\\"match-row\\"><div class=\\"team\\"><strong>" + (home.name || "主队") + "</strong><span class=\\"muted\\">" + (home.code || "") + "</span></div><div class=\\"score\\">VS</div><div class=\\"team\\"><strong>" + (away.name || "客队") + "</strong><span class=\\"muted\\">" + (away.code || match.stage || "") + "</span></div><span class=\\"badge\\">" + fixtureTime(match.startIso) + "</span></article>";
+        }).join("") : "<div class=\\"status-row\\"><i class=\\"dot warn\\"></i><div><h3>暂无即将开始的比赛</h3><p>赛程接口已返回，但没有未来比赛。</p></div><span class=\\"badge\\">0 场</span></div>";
 
         if (teamIds.length) {
           const squadsRes = await fetch("/api/worldcup/squads?team=" + teamIds.slice(0, 8).join(","), { cache: "no-store" });
@@ -425,7 +425,7 @@ export function renderAdminPageHtml() {
         ["fixtureCount", "teamCount", "standingGroupCount", "thirdPlaceGroupCount", "standingRowCount", "scheduledCount", "finishedCount", "interruptedCount", "playerCount", "squadTeamCount"].forEach(function (id) {
           byId(id).textContent = "--";
         });
-        byId("upcomingMatches").innerHTML = "<div class=\"status-row\"><i class=\"dot bad\"></i><div><h3>详细数据不可用</h3><p>" + String(error.message || error) + "</p></div><span class=\"badge\">错误</span></div>";
+        byId("upcomingMatches").innerHTML = "<div class=\\"status-row\\"><i class=\\"dot bad\\"></i><div><h3>详细数据不可用</h3><p>" + String(error.message || error) + "</p></div><span class=\\"badge\\">错误</span></div>";
       }
     }
 
@@ -454,14 +454,14 @@ export function renderAdminPageHtml() {
         byId("newsEndpoint").textContent = data.endpoint || "--";
 
         byId("newsSources").innerHTML = sources.length ? sources.slice(0, 6).map(function (source) {
-          return "<div class=\"status-row\"><i class=\"dot ok\"></i><div><h3>" + source + "</h3><p>当前返回 " + sourceCounts[source] + " 条新闻</p></div><span class=\"badge\">" + sourceCounts[source] + "</span></div>";
-        }).join("") : "<div class=\"status-row\"><i class=\"dot warn\"></i><div><h3>暂无来源</h3><p>新闻 API 未返回 items。</p></div><span class=\"badge\">0</span></div>";
+          return "<div class=\\"status-row\\"><i class=\\"dot ok\\"></i><div><h3>" + source + "</h3><p>当前返回 " + sourceCounts[source] + " 条新闻</p></div><span class=\\"badge\\">" + sourceCounts[source] + "</span></div>";
+        }).join("") : "<div class=\\"status-row\\"><i class=\\"dot warn\\"></i><div><h3>暂无来源</h3><p>新闻 API 未返回 items。</p></div><span class=\\"badge\\">0</span></div>";
 
         byId("newsItems").innerHTML = items.length ? items.slice(0, 10).map(function (item) {
           const tag = Array.isArray(item.tags) && item.tags.length ? item.tags[0].replaceAll("-", " ") : (item.sourceFeed || "新闻");
           const summary = item.summary || item.source || "";
-          return "<article class=\"status-row\"><i class=\"dot ok\"></i><div><h3>" + (item.title || "未命名新闻") + "</h3><p>" + summary + "</p></div><span class=\"badge\">" + tag + " · " + newsTime(item.publishedAt) + "</span></article>";
-        }).join("") : "<div class=\"status-row\"><i class=\"dot warn\"></i><div><h3>暂无新闻</h3><p>新闻 API 当前没有返回内容。</p></div><span class=\"badge\">0 条</span></div>";
+          return "<article class=\\"status-row\\"><i class=\\"dot ok\\"></i><div><h3>" + (item.title || "未命名新闻") + "</h3><p>" + summary + "</p></div><span class=\\"badge\\">" + tag + " · " + newsTime(item.publishedAt) + "</span></article>";
+        }).join("") : "<div class=\\"status-row\\"><i class=\\"dot warn\\"></i><div><h3>暂无新闻</h3><p>新闻 API 当前没有返回内容。</p></div><span class=\\"badge\\">0 条</span></div>";
       } catch (error) {
         byId("newsCount").textContent = "--";
         byId("newsTotal").textContent = "--";
@@ -471,8 +471,8 @@ export function renderAdminPageHtml() {
         byId("newsFreshness").textContent = "新闻 API 读取失败";
         byId("newsErrors").textContent = "错误";
         byId("newsEndpoint").textContent = "--";
-        byId("newsSources").innerHTML = "<div class=\"status-row\"><i class=\"dot bad\"></i><div><h3>新闻来源不可用</h3><p>" + String(error.message || error) + "</p></div><span class=\"badge\">错误</span></div>";
-        byId("newsItems").innerHTML = "<div class=\"status-row\"><i class=\"dot bad\"></i><div><h3>新闻列表不可用</h3><p>" + String(error.message || error) + "</p></div><span class=\"badge\">错误</span></div>";
+        byId("newsSources").innerHTML = "<div class=\\"status-row\\"><i class=\\"dot bad\\"></i><div><h3>新闻来源不可用</h3><p>" + String(error.message || error) + "</p></div><span class=\\"badge\\">错误</span></div>";
+        byId("newsItems").innerHTML = "<div class=\\"status-row\\"><i class=\\"dot bad\\"></i><div><h3>新闻列表不可用</h3><p>" + String(error.message || error) + "</p></div><span class=\\"badge\\">错误</span></div>";
       }
     }
 
