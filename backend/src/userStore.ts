@@ -36,9 +36,11 @@ export interface MatchReminder {
   id: string;
   matchId: string;
   title: string;
+  startsAt?: string;
   remindBeforeMinutes: number;
   channel: "site" | "email" | "push";
   enabled: boolean;
+  lastQueuedAt?: number;
   createdAt: number;
 }
 
@@ -68,6 +70,17 @@ export interface NewsSubscription {
   updatedAt: number;
 }
 
+export interface UserNotification {
+  id: string;
+  type: "match_reminder" | "system";
+  title: string;
+  body: string;
+  channel: "site" | "email" | "push";
+  read: boolean;
+  createdAt: number;
+  metadata?: Record<string, string | number | boolean | null>;
+}
+
 export interface WorldCupUser {
   id: string;
   email: string;
@@ -83,6 +96,7 @@ export interface WorldCupUser {
   predictions: MatchPrediction[];
   watchHistory: WatchRecord[];
   newsSubscriptions: NewsSubscription[];
+  notifications: UserNotification[];
 }
 
 interface UserDatabase {
@@ -105,6 +119,10 @@ export class UserStore {
 
   getUserById(id: string) {
     return this.data.users.find((user) => user.id === id) ?? null;
+  }
+
+  listUsers() {
+    return [...this.data.users];
   }
 
   createUser(input: { email: string; password: string; displayName?: string }) {
@@ -144,6 +162,7 @@ export class UserStore {
         enabled: topic !== "赛前发布会",
         updatedAt: now,
       })),
+      notifications: [],
     };
 
     this.data.users.push(user);
@@ -219,9 +238,11 @@ export class UserStore {
       id,
       matchId: input.matchId,
       title: input.title,
+      startsAt: input.startsAt,
       remindBeforeMinutes: input.remindBeforeMinutes,
       channel: input.channel,
       enabled: input.enabled,
+      lastQueuedAt: input.lastQueuedAt,
       createdAt: Date.now(),
     });
     this.touch(user);
@@ -266,6 +287,39 @@ export class UserStore {
     return user;
   }
 
+  queueNotification(userId: string, input: Omit<UserNotification, "id" | "createdAt" | "read">) {
+    const user = this.requireUser(userId);
+    const duplicate = user.notifications.some((item) => (
+      item.type === input.type &&
+      item.metadata?.reminderId !== undefined &&
+      item.metadata.reminderId === input.metadata?.reminderId
+    ));
+
+    if (!duplicate) {
+      user.notifications = [
+        {
+          id: randomUUID(),
+          ...input,
+          read: false,
+          createdAt: Date.now(),
+        },
+        ...user.notifications,
+      ].slice(0, 200);
+    }
+
+    this.touch(user);
+    return user;
+  }
+
+  markReminderQueued(userId: string, reminderId: string, queuedAt = Date.now()) {
+    const user = this.requireUser(userId);
+    user.reminders = user.reminders.map((reminder) => (
+      reminder.id === reminderId ? { ...reminder, lastQueuedAt: queuedAt } : reminder
+    ));
+    this.touch(user);
+    return user;
+  }
+
   private requireUser(userId: string) {
     const user = this.getUserById(userId);
     if (!user) throw createUserStoreError("user_not_found", 404);
@@ -281,6 +335,7 @@ export class UserStore {
     if (!existsSync(this.filePath)) return;
     try {
       this.data = JSON.parse(readFileSync(this.filePath, "utf8")) as UserDatabase;
+      this.data.users = this.data.users.map(normalizeStoredUser);
     } catch {
       this.data = { users: [] };
     }
@@ -315,6 +370,20 @@ function upsertById<T extends { id: string }>(items: T[], item: T) {
   const index = items.findIndex((current) => current.id === item.id);
   if (index === -1) return [item, ...items];
   return items.map((current) => (current.id === item.id ? item : current));
+}
+
+function normalizeStoredUser(user: WorldCupUser) {
+  return {
+    ...user,
+    followedTeams: user.followedTeams ?? [],
+    followedPlayers: user.followedPlayers ?? [],
+    favoriteMatches: user.favoriteMatches ?? [],
+    reminders: user.reminders ?? [],
+    predictions: user.predictions ?? [],
+    watchHistory: user.watchHistory ?? [],
+    newsSubscriptions: user.newsSubscriptions ?? [],
+    notifications: user.notifications ?? [],
+  };
 }
 
 function slugify(value: string) {

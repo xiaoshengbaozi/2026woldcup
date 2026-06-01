@@ -206,6 +206,7 @@ function buildHomePayload(user: WorldCupUser) {
       predictionCount: user.predictions.length,
       watchedMatchCount: user.watchHistory.filter((item) => item.status === "watched").length,
       activeNewsTopicCount: user.newsSubscriptions.filter((item) => item.enabled).length,
+      unreadNotificationCount: user.notifications.filter((item) => !item.read).length,
     },
   };
 }
@@ -242,6 +243,7 @@ function normalizeReminder(body: Record<string, unknown>) {
     id: typeof body.id === "string" ? body.id : undefined,
     matchId: String(body.matchId || body.id || "next-match"),
     title: String(body.title || "世界杯比赛提醒"),
+    startsAt: typeof body.startsAt === "string" ? body.startsAt : undefined,
     remindBeforeMinutes: clampNumber(body.remindBeforeMinutes, 5, 1440, 30),
     channel: channel as "site" | "email" | "push",
     enabled: body.enabled !== false,

@@ -334,7 +334,7 @@ function UserCommandCenter({
       <div className="grid gap-3 sm:grid-cols-3">
         <MetricCard icon={Users} label="关注" value={home.summary.followedTeamCount + home.summary.followedPlayerCount} />
         <MetricCard icon={Bell} label="提醒" value={home.summary.enabledReminderCount} />
-        <MetricCard icon={Target} label="预测" value={home.summary.predictionCount} />
+        <MetricCard icon={Target} label="通知" value={home.summary.unreadNotificationCount} />
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">

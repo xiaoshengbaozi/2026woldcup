@@ -45,9 +45,23 @@ create table if not exists user_match_reminders (
   user_id uuid not null references users(id) on delete cascade,
   match_id text not null,
   title text not null,
+  starts_at timestamptz,
   remind_before_minutes integer not null default 30,
   channel text not null default 'site',
   enabled boolean not null default true,
+  last_queued_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists user_notifications (
+  id uuid primary key,
+  user_id uuid not null references users(id) on delete cascade,
+  type text not null,
+  title text not null,
+  body text not null,
+  channel text not null default 'site',
+  read boolean not null default false,
+  metadata jsonb not null default '{}',
   created_at timestamptz not null default now()
 );
 
@@ -82,7 +96,10 @@ create table if not exists user_news_subscriptions (
 );
 
 create index if not exists idx_user_match_reminders_due
-  on user_match_reminders (enabled, match_id, created_at);
+  on user_match_reminders (enabled, starts_at, last_queued_at);
 
 create index if not exists idx_user_predictions_match
   on user_match_predictions (match_id, updated_at desc);
+
+create index if not exists idx_user_notifications_unread
+  on user_notifications (user_id, read, created_at desc);

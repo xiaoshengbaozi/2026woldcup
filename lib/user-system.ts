@@ -21,9 +21,11 @@ export interface PublicUser {
     id: string;
     matchId: string;
     title: string;
+    startsAt?: string;
     remindBeforeMinutes: number;
     channel: "site" | "email" | "push";
     enabled: boolean;
+    lastQueuedAt?: number;
     createdAt: number;
   }>;
   predictions: Array<{
@@ -44,6 +46,16 @@ export interface PublicUser {
     watchedAt: number;
   }>;
   newsSubscriptions: Array<{ id: string; topic: string; enabled: boolean; updatedAt: number }>;
+  notifications: Array<{
+    id: string;
+    type: "match_reminder" | "system";
+    title: string;
+    body: string;
+    channel: "site" | "email" | "push";
+    read: boolean;
+    createdAt: number;
+    metadata?: Record<string, string | number | boolean | null>;
+  }>;
 }
 
 export interface UserHomePayload {
@@ -56,6 +68,7 @@ export interface UserHomePayload {
     predictionCount: number;
     watchedMatchCount: number;
     activeNewsTopicCount: number;
+    unreadNotificationCount: number;
   };
 }
 
