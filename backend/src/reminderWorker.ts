@@ -124,5 +124,7 @@ function loadLocalEnv(path: string) {
 }
 
 if (import.meta.main) {
-  createReminderWorker().start();
+  const store = new UserStore();
+  await store.ready();
+  createReminderWorker(store).start();
 }

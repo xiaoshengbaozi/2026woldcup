@@ -6,13 +6,16 @@
   "scripts": {
     "dev": "bun --watch src/index.ts",
     "worker": "bun src/reminderWorker.ts",
+    "db:migrate": "bun src/migrate.ts",
     "build": "bun build src/index.ts --outdir dist --target bun",
     "start": "bun dist/index.js"
   },
   "dependencies": {
+    "pg": "^8.21.0",
     "ws": "^8.17.1"
   },
   "devDependencies": {
+    "@types/pg": "^8.20.0",
     "@types/ws": "^8.5.10",
     "bun-types": "^1.1.12",
     "typescript": "^5.4.5"

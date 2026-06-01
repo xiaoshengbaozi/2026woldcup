@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { dirname, resolve } from "path";
 import { pbkdf2Sync, randomBytes, randomUUID, timingSafeEqual } from "crypto";
+import type { Pool } from "pg";
 
 export interface UserProfile {
   displayName: string;
@@ -108,9 +109,17 @@ const DEFAULT_TOPICS = ["球队动态", "伤停情报", "赔率波动", "赛前�
 
 export class UserStore {
   private data: UserDatabase = { users: [] };
+  private pool: Pool | null = null;
+  private readonly readyPromise: Promise<void>;
 
   constructor(private readonly filePath = resolve(process.cwd(), "data", "user-system.json")) {
-    this.load();
+    this.readyPromise = process.env.DATABASE_URL
+      ? this.loadFromPostgres(process.env.DATABASE_URL)
+      : Promise.resolve(this.loadFromFile());
+  }
+
+  ready() {
+    return this.readyPromise;
   }
 
   getUserByEmail(email: string) {
@@ -168,7 +177,7 @@ export class UserStore {
     };
 
     this.data.users.push(user);
-    this.save();
+    void this.save();
     return user;
   }
 
@@ -366,10 +375,10 @@ export class UserStore {
 
   private touch(user: WorldCupUser) {
     user.updatedAt = Date.now();
-    this.save();
+    void this.save();
   }
 
-  private load() {
+  private loadFromFile() {
     if (!existsSync(this.filePath)) return;
     try {
       this.data = JSON.parse(readFileSync(this.filePath, "utf8")) as UserDatabase;
@@ -379,9 +388,46 @@ export class UserStore {
     }
   }
 
-  private save() {
+  private async loadFromPostgres(databaseUrl: string) {
+    const { Pool } = await import("pg");
+    this.pool = new Pool({ connectionString: databaseUrl });
+    await this.pool.query(`
+      create table if not exists user_store_documents (
+        id text primary key,
+        data jsonb not null,
+        updated_at timestamptz not null default now()
+      )
+    `);
+
+    const result = await this.pool.query<{ data: UserDatabase }>(
+      "select data from user_store_documents where id = $1",
+      ["default"]
+    );
+
+    if (result.rows[0]?.data) {
+      this.data = result.rows[0].data;
+      this.data.users = this.data.users.map(normalizeStoredUser);
+      return;
+    }
+
+    this.loadFromFile();
+    await this.save();
+  }
+
+  private async save() {
     mkdirSync(dirname(this.filePath), { recursive: true });
     writeFileSync(this.filePath, JSON.stringify(this.data, null, 2));
+    if (!this.pool) return;
+
+    await this.pool.query(
+      `
+      insert into user_store_documents (id, data, updated_at)
+      values ($1, $2, now())
+      on conflict (id)
+      do update set data = excluded.data, updated_at = now()
+      `,
+      ["default", this.data]
+    );
   }
 }
 

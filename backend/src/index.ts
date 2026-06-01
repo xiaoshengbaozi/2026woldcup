@@ -9,6 +9,7 @@ import { createHistoryBuffer } from "./historyBuffer";
 import { createHttpServer } from "./httpServer";
 import { createMatchLinesService } from "./matchLines";
 import { createSnapshotCache } from "./snapshotCache";
+import { UserStore } from "./userStore";
 import { createUserSystem } from "./userSystem";
 import { createWsServer } from "./wsServer";
 import type { CountryData, HistoryPoint } from "./types";
@@ -49,7 +50,9 @@ async function main() {
   const wsServer = createWsServer();
   const matchLines = createMatchLinesService();
   const apiFootball = createApiFootballService();
-  const userSystem = createUserSystem();
+  const userStore = new UserStore();
+  await userStore.ready();
+  const userSystem = createUserSystem(userStore);
   matchLines.start();
 
   // 2. Connect to Polymarket

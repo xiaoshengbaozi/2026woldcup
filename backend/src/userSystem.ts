@@ -244,8 +244,8 @@ export class UserSystem {
   }
 }
 
-export function createUserSystem() {
-  return new UserSystem();
+export function createUserSystem(store = new UserStore()) {
+  return new UserSystem(store);
 }
 
 function buildAdminUsersPayload(users: WorldCupUser[]) {
