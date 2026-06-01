@@ -48,7 +48,7 @@ export function createHttpServer(options: HttpServerOptions) {
       return;
     }
 
-    if (req.method === "GET" && url.pathname === "/admin") {
+    if (req.method === "GET" && (url.pathname === "/admin" || url.pathname === "/admini")) {
       sendHtml(res, renderAdminPage());
       return;
     }

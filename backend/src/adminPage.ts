@@ -19,7 +19,6 @@ export function renderAdminPageHtml() {
       --cyan: #5ce1e6;
       --red: #ff5b6e;
       --amber: #ffd166;
-      --violet: #b9a7ff;
     }
     * { box-sizing: border-box; }
     body {
@@ -87,7 +86,7 @@ export function renderAdminPageHtml() {
     .badge {
       display: inline-flex; width: fit-content; align-items: center; gap: 6px; border-radius: 999px;
       padding: 7px 10px; border: 1px solid rgba(255,255,255,.09); background: rgba(255,255,255,.055);
-      color: rgba(255,255,255,.76); font-size: 12px;
+      color: rgba(255,255,255,.76); font-size: 12px; white-space: nowrap;
     }
     table { width: 100%; border-collapse: collapse; }
     th, td { padding: 13px 10px; border-bottom: 1px solid rgba(255,255,255,.075); text-align: left; font-size: 13px; }
@@ -104,6 +103,7 @@ export function renderAdminPageHtml() {
       header { align-items: start; flex-direction: column; }
       .grid { grid-template-columns: 1fr; }
       .wide { grid-column: span 1; }
+      .mini-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .match-row { grid-template-columns: 1fr auto; }
       .match-row .score { order: 3; text-align: left; }
     }
@@ -330,7 +330,6 @@ export function renderAdminPageHtml() {
         if (!res.ok) throw new Error(data.error || "worldcup_live_failed");
 
         byId("liveCount").textContent = data.count;
-        byId("liveCacheState").textContent = data.cached ? "命中" : "新取";
         byId("liveUpdatedAt").textContent = data.timestamp ? timeFmt.format(new Date(data.timestamp)) : "--";
         byId("footballFreshness").textContent = fromNow(data.timestamp);
         byId("footballCache").textContent = data.cached ? "缓存命中" : "实时请求";
@@ -352,7 +351,6 @@ export function renderAdminPageHtml() {
         }).join("");
       } catch (error) {
         byId("liveCount").textContent = "--";
-        byId("liveCacheState").textContent = "--";
         byId("liveUpdatedAt").textContent = "--";
         byId("footballFreshness").textContent = "api-football 实况读取失败";
         byId("footballCache").textContent = "不可用";
@@ -393,7 +391,7 @@ export function renderAdminPageHtml() {
 
         byId("fixtureCount").textContent = fixtures.length;
         byId("teamCount").textContent = teamCodes.size || "--";
-        const officialGroups = groups.filter(function (group) { return /^[A-L] 组$/.test(group); });
+        const officialGroups = groups.filter(function (group) { return /^[A-L] 组/.test(group); });
         const thirdPlaceGroups = groups.filter(function (group) { return group.indexOf("第三") !== -1; });
         byId("standingGroupCount").textContent = officialGroups.length;
         byId("thirdPlaceGroupCount").textContent = thirdPlaceGroups.length;
