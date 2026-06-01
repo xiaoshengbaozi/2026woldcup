@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from "fs";
+import { resolve } from "path";
 import { WebSocketServer } from "ws";
 import { createApiFootballService } from "./apiFootball";
 import { createPolymarketClient } from "./polymarket";
@@ -10,8 +12,30 @@ import { createSnapshotCache } from "./snapshotCache";
 import { createWsServer } from "./wsServer";
 import type { CountryData, HistoryPoint } from "./types";
 
+loadLocalEnv(resolve(process.cwd(), ".env"));
+
 const PORT = parseInt(process.env.PORT || "3001");
 const POLYMARKET_API_KEY = process.env.POLYMARKET_API_KEY || "";
+
+function loadLocalEnv(path: string) {
+  if (!existsSync(path)) return;
+
+  const lines = readFileSync(path, "utf8").split(/\r?\n/);
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+
+    const separatorIndex = trimmed.indexOf("=");
+    if (separatorIndex === -1) continue;
+
+    const key = trimmed.slice(0, separatorIndex).trim();
+    const rawValue = trimmed.slice(separatorIndex + 1).trim();
+    const value = rawValue.replace(/^['"]|['"]$/g, "");
+    if (key && process.env[key] === undefined) {
+      process.env[key] = value;
+    }
+  }
+}
 
 async function main() {
   console.log("[Backend] Starting World Cup Prediction OS backend...");

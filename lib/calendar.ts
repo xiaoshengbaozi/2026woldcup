@@ -70,6 +70,10 @@ export function extractCity(location: string) {
     return location.slice(openIndex + 1, closeIndex).trim();
   }
 
+  if (location.includes("·")) {
+    return location.split("·").pop()?.trim() || location.trim();
+  }
+
   return location.split(",").slice(-1)[0]?.trim() || location.trim();
 }
 

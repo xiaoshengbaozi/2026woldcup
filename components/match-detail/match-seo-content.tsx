@@ -43,7 +43,7 @@ export function MatchSeoContent({ detail }: { detail: MatchDetail }) {
 
           <h3 className="text-sm font-semibold text-white/80">阵容展望</h3>
           <p>
-            {home}预计将派出${detail.homeLineup.formation}阵型，而${away}则可能采用${detail.awayLineup.formation}应对。
+            当前阵容栏展示候选大名单与球员池信息，正式世界杯名单和本场首发会在可靠数据更新后再呈现。
             两队的核心球员状态将直接影响比赛走势。
           </p>
 

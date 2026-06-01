@@ -7,6 +7,8 @@ export type ApiFootballEndpoint =
   | "fixtures/players"
   | "fixtures/headtohead"
   | "players"
+  | "players/profiles"
+  | "players/squads"
   | "players/topscorers"
   | "players/topassists"
   | "players/topyellowcards"
@@ -14,6 +16,9 @@ export type ApiFootballEndpoint =
   | "standings"
   | "injuries"
   | "teams"
+  | "transfers"
+  | "trophies"
+  | "sidelined"
   | "leagues"
   | "coachs"
   | "predictions"
@@ -46,6 +51,8 @@ const CACHE_TTL_BY_ENDPOINT: Partial<Record<ApiFootballEndpoint, number>> = {
   "fixtures/statistics": 30_000,
   "fixtures/lineups": 60_000,
   "fixtures/players": 60_000,
+  "players/squads": 24 * 60 * 60_000,
+  "players/profiles": 24 * 60 * 60_000,
   "players/topscorers": 5 * 60_000,
   "players/topassists": 5 * 60_000,
   "players/topyellowcards": 5 * 60_000,
@@ -56,6 +63,9 @@ const CACHE_TTL_BY_ENDPOINT: Partial<Record<ApiFootballEndpoint, number>> = {
   odds: 5 * 60_000,
   "odds/live": 15_000,
   teams: 24 * 60 * 60_000,
+  transfers: 24 * 60 * 60_000,
+  trophies: 24 * 60 * 60_000,
+  sidelined: 24 * 60 * 60_000,
   leagues: 24 * 60 * 60_000,
   coachs: 24 * 60 * 60_000,
 };

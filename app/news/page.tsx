@@ -74,14 +74,16 @@ export default function NewsPage() {
   }, [endpoint]);
 
   const items = payload?.items ?? [];
+  const itemsWithImages = items.filter((item) => item.image.trim().length > 0);
+  const itemsWithoutImages = items.filter((item) => item.image.trim().length === 0);
+  const visualItems = [...itemsWithImages, ...itemsWithoutImages];
 
-  // Split items into layout sections
-  const heroItem = items[0];
-  const sideItems = items.slice(1, 5);
-  const editorItems = items.slice(5, 8);
-  const latestItems = items.slice(8, 14);
+  const heroItem = visualItems[0];
+  const sideItems = visualItems.slice(1, 5);
+  const editorItems = visualItems.slice(5, 8);
+  const latestItems = visualItems.slice(8, 14);
   const listItems = items.slice(14, 21);
-  const featureItems = items.slice(21, 24);
+  const featureItems = visualItems.slice(14, 17);
 
   return (
     <DashboardShell>
@@ -116,18 +118,12 @@ export default function NewsPage() {
               rel="noreferrer"
               className="hero-card group relative overflow-hidden transition-all duration-300 hover:-translate-y-1"
             >
-              {heroItem.image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={heroItem.image}
-                  alt=""
-                  className="h-[400px] w-full object-cover opacity-80 transition duration-500 group-hover:scale-105 group-hover:opacity-100"
-                />
-              ) : (
-                <div className="flex h-[400px] items-center justify-center bg-[radial-gradient(circle_at_50%_30%,rgba(216,255,62,0.16),transparent_36%)]">
-                  <Newspaper className="h-12 w-12 text-volt/50" />
-                </div>
-              )}
+              <NewsImage
+                src={heroItem.image}
+                imageClassName="h-[400px] w-full object-cover opacity-80 transition duration-500 group-hover:scale-105 group-hover:opacity-100"
+                fallbackClassName="flex h-[400px] items-center justify-center bg-[radial-gradient(circle_at_50%_30%,rgba(216,255,62,0.16),transparent_36%)]"
+                iconClassName="h-12 w-12 text-volt/50"
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-6">
                 <span className="mb-3 inline-block rounded-full bg-volt/90 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-black">
@@ -157,18 +153,12 @@ export default function NewsPage() {
                   rel="noreferrer"
                   className="group flex gap-3.5 border-b border-white/[0.04] py-3.5 transition-colors hover:bg-white/[0.02] last:border-b-0"
                 >
-                  {item.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={item.image}
-                      alt=""
-                      className="h-20 w-28 shrink-0 rounded object-cover opacity-75 transition group-hover:opacity-100"
-                    />
-                  ) : (
-                    <div className="flex h-20 w-28 shrink-0 items-center justify-center rounded bg-white/[0.04]">
-                      <Newspaper className="h-5 w-5 text-white/20" />
-                    </div>
-                  )}
+                  <NewsImage
+                    src={item.image}
+                    imageClassName="h-20 w-28 shrink-0 rounded object-cover opacity-75 transition group-hover:opacity-100"
+                    fallbackClassName="flex h-20 w-28 shrink-0 items-center justify-center rounded bg-white/[0.04]"
+                    iconClassName="h-5 w-5 text-white/20"
+                  />
                   <div className="flex flex-1 flex-col justify-center gap-1.5">
                     <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-volt/70">
                       {item.tags[0]?.replaceAll("-", " ") || "News"}
@@ -221,18 +211,12 @@ export default function NewsPage() {
                 className="hero-card group overflow-hidden transition-all duration-300 hover:-translate-y-1"
               >
                 <div className="relative h-44 overflow-hidden">
-                  {item.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={item.image}
-                      alt=""
-                      className="h-full w-full object-cover opacity-80 transition duration-500 group-hover:scale-105 group-hover:opacity-100"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center bg-[radial-gradient(circle_at_50%_30%,rgba(216,255,62,0.12),transparent_36%)]">
-                      <Newspaper className="h-8 w-8 text-volt/40" />
-                    </div>
-                  )}
+                  <NewsImage
+                    src={item.image}
+                    imageClassName="h-full w-full object-cover opacity-80 transition duration-500 group-hover:scale-105 group-hover:opacity-100"
+                    fallbackClassName="flex h-full items-center justify-center bg-[radial-gradient(circle_at_50%_30%,rgba(216,255,62,0.12),transparent_36%)]"
+                    iconClassName="h-8 w-8 text-volt/40"
+                  />
                 </div>
                 <div className="p-4">
                   <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-volt/70">
@@ -314,18 +298,12 @@ export default function NewsPage() {
                 className="hero-card group overflow-hidden transition-all duration-300 hover:-translate-y-1"
               >
                 <div className="relative h-48 overflow-hidden">
-                  {item.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={item.image}
-                      alt=""
-                      className="h-full w-full object-cover opacity-80 transition duration-500 group-hover:scale-105 group-hover:opacity-100"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center bg-[radial-gradient(circle_at_50%_30%,rgba(216,255,62,0.12),transparent_36%)]">
-                      <Newspaper className="h-8 w-8 text-volt/40" />
-                    </div>
-                  )}
+                  <NewsImage
+                    src={item.image}
+                    imageClassName="h-full w-full object-cover opacity-80 transition duration-500 group-hover:scale-105 group-hover:opacity-100"
+                    fallbackClassName="flex h-full items-center justify-center bg-[radial-gradient(circle_at_50%_30%,rgba(216,255,62,0.12),transparent_36%)]"
+                    iconClassName="h-8 w-8 text-volt/40"
+                  />
                 </div>
                 <div className="p-4">
                   <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-volt/70">
@@ -365,6 +343,40 @@ function SectionHeader({ title, actionLabel }: { title: string; actionLabel?: st
   );
 }
 
+function NewsImage({
+  src,
+  imageClassName,
+  fallbackClassName,
+  iconClassName,
+}: {
+  src: string;
+  imageClassName: string;
+  fallbackClassName: string;
+  iconClassName: string;
+}) {
+  const [failed, setFailed] = useState(false);
+
+  if (!src.trim() || failed) {
+    return (
+      <div className={fallbackClassName}>
+        <Newspaper className={iconClassName} />
+      </div>
+    );
+  }
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt=""
+      className={imageClassName}
+      loading="lazy"
+      referrerPolicy="no-referrer"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 function NewsCard({ item, index }: { item: NewsItem; index: number }) {
   const published = dateFormatter.format(new Date(item.publishedAt));
   const firstTag = item.tags[0]?.replaceAll("-", " ") ?? "world cup";
@@ -380,18 +392,12 @@ function NewsCard({ item, index }: { item: NewsItem; index: number }) {
       className="hero-card group flex min-h-[240px] flex-col overflow-hidden transition-all duration-300 hover:-translate-y-1"
     >
       <div className="relative h-36 overflow-hidden bg-white/[0.035]">
-        {item.image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={item.image}
-            alt=""
-            className="h-full w-full object-cover opacity-80 transition duration-500 group-hover:scale-105 group-hover:opacity-100"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center bg-[radial-gradient(circle_at_50%_30%,rgba(216,255,62,0.16),transparent_36%)]">
-            <Newspaper className="h-8 w-8 text-volt/60" />
-          </div>
-        )}
+        <NewsImage
+          src={item.image}
+          imageClassName="h-full w-full object-cover opacity-80 transition duration-500 group-hover:scale-105 group-hover:opacity-100"
+          fallbackClassName="flex h-full items-center justify-center bg-[radial-gradient(circle_at_50%_30%,rgba(216,255,62,0.16),transparent_36%)]"
+          iconClassName="h-8 w-8 text-volt/60"
+        />
         <div className="absolute left-3 top-3 rounded-full bg-black/55 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-volt backdrop-blur-xl">
           {firstTag}
         </div>

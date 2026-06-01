@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useRef, useState, useEffect, useCallback } from "react";
+import React, { useRef, useState, useEffect, useLayoutEffect, useCallback } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Move, Minus, Plus, RotateCcw, Maximize2, Minimize2, Expand, Shrink } from "lucide-react";
+import { Minus, Plus, RotateCcw, Maximize2, Minimize2, Expand, Shrink } from "lucide-react";
 import { parseTeams } from "@/lib/teams";
 import { formatTime } from "@/lib/format";
 import { formatStageLabel } from "@/lib/stage";
@@ -135,9 +135,10 @@ export function TopologyBracket({ matches, timezoneOffset = 0 }: TopologyBracket
   const isDragging = useRef(false);
   const startX = useRef(0);
   const scrollLeft = useRef(0);
+  const hasCenteredLogo = useRef(false);
 
-  // Canvas dimensions — generous vertical space to prevent any clipping
-  const CANVAS_W = 2080;
+  // Canvas dimensions — extra horizontal space keeps bracket columns and connector curves readable.
+  const CANVAS_W = 2920;
   const CANVAS_H = 1060;
 
   /* ── Data ── */
@@ -201,7 +202,24 @@ export function TopologyBracket({ matches, timezoneOffset = 0 }: TopologyBracket
     setCoords(nc);
   }, [scale]);
 
-  useEffect(() => {
+  const centerLogoInView = useCallback((behavior: ScrollBehavior = "auto") => {
+    const scroller = scrollContainerRef.current;
+    const logo = document.getElementById("bracket-center-logo");
+    if (!scroller || !logo) return;
+
+    const scrollerRect = scroller.getBoundingClientRect();
+    const logoRect = logo.getBoundingClientRect();
+    const logoCenter = logoRect.left + logoRect.width / 2;
+    const viewportCenter = scrollerRect.left + scrollerRect.width / 2;
+    const nextLeft = scroller.scrollLeft + logoCenter - viewportCenter;
+
+    scroller.scrollTo({
+      left: Math.max(0, nextLeft),
+      behavior,
+    });
+  }, []);
+
+  useLayoutEffect(() => {
     updateCoords();
     const t = setTimeout(updateCoords, 300);
     window.addEventListener("resize", updateCoords);
@@ -209,10 +227,28 @@ export function TopologyBracket({ matches, timezoneOffset = 0 }: TopologyBracket
   }, [updateCoords, matches, scale]);
 
   useEffect(() => {
-    const h = () => { setIsSystemFullscreen(document.fullscreenElement === rootRef.current); setTimeout(updateCoords, 150); };
+    if (!matches.length || hasCenteredLogo.current) return;
+    const t = window.setTimeout(() => {
+      centerLogoInView("auto");
+      updateCoords();
+      hasCenteredLogo.current = true;
+    }, 420);
+
+    return () => window.clearTimeout(t);
+  }, [centerLogoInView, matches.length, updateCoords]);
+
+  useEffect(() => {
+    const h = () => {
+      const active = document.fullscreenElement === rootRef.current;
+      setIsSystemFullscreen(active);
+      window.setTimeout(() => {
+        if (active) centerLogoInView("auto");
+        updateCoords();
+      }, 180);
+    };
     document.addEventListener("fullscreenchange", h);
     return () => document.removeEventListener("fullscreenchange", h);
-  }, [updateCoords]);
+  }, [centerLogoInView, updateCoords]);
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === "Escape" && isBrowserFullscreen) { setIsBrowserFullscreen(false); document.body.style.overflow = ""; setTimeout(updateCoords, 150); } };
@@ -229,26 +265,50 @@ export function TopologyBracket({ matches, timezoneOffset = 0 }: TopologyBracket
     const next = !isBrowserFullscreen;
     setIsBrowserFullscreen(next);
     document.body.style.overflow = next ? "hidden" : "";
-    setTimeout(updateCoords, 150);
+    window.setTimeout(() => {
+      if (next) centerLogoInView("auto");
+      updateCoords();
+    }, 180);
   };
 
   /* ── Zoom ── */
   const handleZoomIn = () => setScale(p => Math.min(p + 0.08, 1.5));
   const handleZoomOut = () => setScale(p => Math.max(p - 0.08, 0.35));
-  const handleZoomReset = () => setScale(0.72);
+  const handleZoomReset = () => {
+    setScale(0.72);
+    window.setTimeout(() => {
+      centerLogoInView("smooth");
+      updateCoords();
+    }, 120);
+  };
 
   /* ── Wheel zoom ── */
   const handleWheel = useCallback((e: React.WheelEvent) => {
-    // Only zoom when Ctrl or Meta is held, otherwise let native scroll work
-    if (!e.ctrlKey && !e.metaKey) return;
+    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+
     e.preventDefault();
     e.stopPropagation();
-    const delta = -e.deltaY * 0.002;
+
+    const scroller = scrollContainerRef.current;
+    const rect = scroller?.getBoundingClientRect();
+    const pointerX = rect ? e.clientX - rect.left : 0;
+    const delta = -e.deltaY * 0.0014;
+
     setScale(p => {
       const next = Math.min(Math.max(p + delta, 0.35), 1.5);
-      return Math.round(next * 100) / 100;
+      const rounded = Math.round(next * 100) / 100;
+
+      if (scroller && rect) {
+        const contentX = (scroller.scrollLeft + pointerX) / p;
+        window.requestAnimationFrame(() => {
+          scroller.scrollLeft = contentX * rounded - pointerX;
+          window.requestAnimationFrame(updateCoords);
+        });
+      }
+
+      return rounded;
     });
-  }, []);
+  }, [updateCoords]);
 
   /* ── Drag scroll (uses clientX for fullscreen compat) ── */
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -467,7 +527,7 @@ export function TopologyBracket({ matches, timezoneOffset = 0 }: TopologyBracket
     ? "fixed inset-0 z-[9999] w-screen h-screen p-5 sm:p-8 flex flex-col overflow-hidden bg-gradient-to-br from-[#050505] via-[#0A0A0F] to-[#14141F]"
     : isSystemFullscreen
     ? "w-screen h-screen p-5 sm:p-8 flex flex-col overflow-hidden bg-gradient-to-br from-[#050505] via-[#0A0A0F] to-[#14141F]"
-    : "hero-card relative overflow-hidden p-5 sm:p-6 flex flex-col";
+    : "hero-card relative h-[720px] overflow-hidden p-5 sm:h-[760px] sm:p-6 flex flex-col";
 
   return (
     <div ref={rootRef} className={rootClasses}>
@@ -490,16 +550,6 @@ export function TopologyBracket({ matches, timezoneOffset = 0 }: TopologyBracket
               按 Esc 退出
             </span>
           )}
-          <div className="hidden lg:flex items-center gap-3 text-[11px] text-white/30">
-            <span className="flex items-center gap-1.5 rounded-full bg-white/[0.03] px-3 py-1.5">
-              <Move className="h-3.5 w-3.5 text-volt/60" />
-              拖拽移动
-            </span>
-            <span className="flex items-center gap-1.5 rounded-full bg-white/[0.03] px-3 py-1.5">
-              <svg className="h-3.5 w-3.5 text-volt/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="8" y="2" width="8" height="12" rx="4"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="6" x2="16" y2="6"/></svg>
-              Ctrl+滚轮缩放
-            </span>
-          </div>
         </div>
       </div>
 
@@ -516,7 +566,7 @@ export function TopologyBracket({ matches, timezoneOffset = 0 }: TopologyBracket
         }`}
       >
         <div
-          className="relative transition-[width,height] duration-200 ease-out"
+          className="relative"
           style={{ width: `${CANVAS_W * scale}px`, height: `${CANVAS_H * scale}px` }}
         >
           <div
@@ -551,17 +601,17 @@ export function TopologyBracket({ matches, timezoneOffset = 0 }: TopologyBracket
                     <path
                       d={path}
                       fill="none"
-                      stroke="rgba(255,255,255,0.09)"
-                      strokeWidth={1.5}
-                      className="transition-all duration-300"
+                      stroke="rgba(255,255,255,0.14)"
+                      strokeWidth={2}
+                      className="transition-opacity duration-150"
                     />
                     {/* Subtle background glow on inactive paths */}
                     <path
                       d={path}
                       fill="none"
-                      stroke="rgba(216,255,62,0.04)"
-                      strokeWidth={4}
-                      className="transition-all duration-300"
+                      stroke="rgba(216,255,62,0.055)"
+                      strokeWidth={6}
+                      className="transition-opacity duration-150"
                     />
                     {/* Active glow */}
                     {active && (
@@ -573,7 +623,7 @@ export function TopologyBracket({ matches, timezoneOffset = 0 }: TopologyBracket
                           strokeWidth={5}
                           strokeOpacity={0.3}
                           filter="url(#neon-glow)"
-                          className="transition-all duration-300"
+                          className="transition-opacity duration-150"
                         />
                         <path
                           d={path}
@@ -583,7 +633,7 @@ export function TopologyBracket({ matches, timezoneOffset = 0 }: TopologyBracket
                           strokeDasharray="8 6"
                           strokeOpacity={0.8}
                           style={{ animation: "bracketFlow 14s linear infinite" }}
-                          className="transition-all duration-300"
+                          className="transition-opacity duration-150"
                         />
                       </>
                     )}
@@ -593,23 +643,23 @@ export function TopologyBracket({ matches, timezoneOffset = 0 }: TopologyBracket
             </svg>
 
             {/* ── Bracket Grid ── */}
-            <div className="absolute inset-0 z-10 flex items-center justify-between px-6 gap-2">
+            <div className="absolute inset-0 z-10 flex items-center justify-center gap-16 px-14">
               {/* Left Groups */}
-              <div className="flex h-full flex-col justify-center gap-5 py-6">
+              <div className="flex h-full shrink-0 flex-col justify-center gap-5 py-6">
                 {LEFT_GROUPS.map(g => renderGroupCard(g))}
               </div>
 
               {/* Left Knockout Columns */}
               {LEFT_COLUMNS.map((col, i) => (
-                <div key={`lc-${i}`} className="flex h-full flex-col justify-center gap-5 py-6">
+                <div key={`lc-${i}`} className="flex h-full shrink-0 flex-col justify-center gap-5 py-6">
                   {col.matchIds.map(id => renderMatchCard(id))}
                 </div>
               ))}
 
               {/* ── CENTER: World Cup Logo + Finals ── */}
-              <div className="flex h-full flex-col items-center justify-center gap-6 px-4 py-6">
+              <div className="flex h-full w-[248px] shrink-0 flex-col items-center justify-center gap-6 px-4 py-6">
                 {/* World Cup Logo */}
-                <div className="flex flex-col items-center">
+                <div id="bracket-center-logo" className="flex flex-col items-center">
                   <div className="relative flex items-center justify-center">
                     {/* Outer ring pulse */}
                     <div className="absolute -inset-4 rounded-full border border-volt/10" style={{ animation: "breatheRing 4s ease-in-out infinite" }} />
@@ -646,13 +696,13 @@ export function TopologyBracket({ matches, timezoneOffset = 0 }: TopologyBracket
 
               {/* Right Knockout Columns */}
               {RIGHT_COLUMNS.map((col, i) => (
-                <div key={`rc-${i}`} className="flex h-full flex-col justify-center gap-5 py-6">
+                <div key={`rc-${i}`} className="flex h-full shrink-0 flex-col justify-center gap-5 py-6">
                   {col.matchIds.map(id => renderMatchCard(id))}
                 </div>
               ))}
 
               {/* Right Groups */}
-              <div className="flex h-full flex-col justify-center gap-5 py-6">
+              <div className="flex h-full shrink-0 flex-col justify-center gap-5 py-6">
                 {RIGHT_GROUPS.map(g => renderGroupCard(g))}
               </div>
             </div>
@@ -661,7 +711,7 @@ export function TopologyBracket({ matches, timezoneOffset = 0 }: TopologyBracket
       </div>
 
       {/* ── Floating Controls ── */}
-      <div className="absolute bottom-4 right-4 z-30 flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-black/70 p-1.5 shadow-xl backdrop-blur-xl zoom-controls-panel">
+      <div className={`absolute ${isAnyFullscreen ? "right-5 top-5" : "bottom-4 right-4"} z-30 flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-black/70 p-1.5 shadow-xl backdrop-blur-xl zoom-controls-panel`}>
         <button
           onClick={handleZoomOut}
           disabled={scale <= 0.35}

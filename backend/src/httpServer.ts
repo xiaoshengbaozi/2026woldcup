@@ -2,12 +2,15 @@ import http from "http";
 import type { ApiFootballEndpoint, ApiFootballService } from "./apiFootball";
 import type { HistoryBuffer } from "./historyBuffer";
 import type { SnapshotCache } from "./snapshotCache";
+import { renderAdminPageHtml } from "./adminPage";
 import type { CountryData, MatchLinesResponse } from "./types";
+import { getWorldCupPlayerProfile, getWorldCupTopScorers } from "./playerProfileData";
 import {
   getWorldCupFixtures,
   getWorldCupLiveFixtures,
   getWorldCupMatchDetail,
   getWorldCupRounds,
+  getWorldCupSquads,
   getWorldCupStandings,
 } from "./worldCupData";
 
@@ -98,8 +101,22 @@ export function createHttpServer(options: HttpServerOptions) {
       return;
     }
 
+    if (req.method === "GET" && url.pathname === "/api/news") {
+      handleNewsRequest(url, res);
+      return;
+    }
+
     if (req.method === "GET" && url.pathname.startsWith("/api/football/")) {
       handleApiFootballRequest(options.apiFootball, url, res);
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/player/one-vs-one") {
+      getOneVsOnePlayerSummary(url)
+        .then((payload) => sendJson(res, payload))
+        .catch((error: Error & { statusCode?: number }) => {
+          sendJson(res, { error: error.message || "one_vs_one_unavailable" }, error.statusCode ?? 500);
+        });
       return;
     }
 
@@ -165,6 +182,9 @@ function handleWorldCupRequest(
     "/api/worldcup/rounds": getWorldCupRounds,
     "/api/worldcup/standings": getWorldCupStandings,
     "/api/worldcup/match-detail": getWorldCupMatchDetail,
+    "/api/worldcup/player-profile": getWorldCupPlayerProfile,
+    "/api/worldcup/top-scorers": getWorldCupTopScorers,
+    "/api/worldcup/squads": getWorldCupSquads,
   };
 
   const handler = handlers[url.pathname.replace(/\/+$/, "")];
@@ -229,6 +249,8 @@ function parseApiFootballEndpoint(pathname: string): ApiFootballEndpoint | null 
     "fixtures/players",
     "fixtures/headtohead",
     "players",
+    "players/profiles",
+    "players/squads",
     "players/topscorers",
     "players/topassists",
     "players/topyellowcards",
@@ -236,6 +258,9 @@ function parseApiFootballEndpoint(pathname: string): ApiFootballEndpoint | null 
     "standings",
     "injuries",
     "teams",
+    "transfers",
+    "trophies",
+    "sidelined",
     "leagues",
     "coachs",
     "predictions",
@@ -244,6 +269,126 @@ function parseApiFootballEndpoint(pathname: string): ApiFootballEndpoint | null 
   ]);
 
   return allowed.has(endpoint as ApiFootballEndpoint) ? (endpoint as ApiFootballEndpoint) : null;
+}
+
+function handleNewsRequest(url: URL, res: http.ServerResponse) {
+  const newsApi = (process.env.NEWS_API_URL || process.env.NEXT_PUBLIC_NEWS_API_URL || "https://news.20250114.xyz")
+    .replace(/\/+$/, "");
+  const params = new URLSearchParams(url.searchParams);
+  if (!params.has("limit")) params.set("limit", "24");
+
+  fetch(`${newsApi}/api/news?${params.toString()}`, { cache: "no-store" })
+    .then(async (response) => {
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) {
+        sendJson(res, { error: "news_api_request_failed", status: response.status, details: payload }, response.status);
+        return;
+      }
+      sendJson(res, {
+        source: "news-api",
+        endpoint: newsApi,
+        timestamp: Date.now(),
+        ...payload,
+      });
+    })
+    .catch((error: Error) => {
+      sendJson(res, { error: error.message || "news_api_unavailable" }, 502);
+    });
+}
+
+async function getOneVsOnePlayerSummary(url: URL) {
+  const name = url.searchParams.get("name")?.trim();
+  if (!name) {
+    const error = new Error("missing_name") as Error & { statusCode?: number };
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const candidates = buildOneVsOneSlugCandidates(name);
+  for (const slug of candidates) {
+    const profileUrl = `https://one-versus-one.com/en/players/${slug}`;
+    const response = await fetch(profileUrl, {
+      headers: {
+        "user-agent": "Mozilla/5.0 compatible; WorldCupDashboard/1.0",
+      },
+    });
+
+    if (!response.ok) continue;
+
+    const html = await response.text();
+    const jsonLd = parseOneVsOnePersonJsonLd(html);
+    return {
+      source: "one-versus-one",
+      url: profileUrl,
+      found: true,
+      player: {
+        name: [jsonLd?.givenName, jsonLd?.familyName].filter(Boolean).join(" ") || name,
+        birthDate: jsonLd?.birthDate ?? null,
+        nationality: jsonLd?.nationality ?? null,
+        image: toOneVsOneAbsoluteUrl(jsonLd?.image),
+        teamName: extractOneVsOneTeamName(jsonLd?.affiliation?.["@id"]),
+        teamUrl: jsonLd?.affiliation?.["@id"] ?? null,
+      },
+    };
+  }
+
+  return {
+    source: "one-versus-one",
+    found: false,
+    url: null,
+    player: null,
+  };
+}
+
+function buildOneVsOneSlugCandidates(name: string) {
+  const cleaned = name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\w\s-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const parts = cleaned.split(" ").filter(Boolean);
+  const candidates = new Set<string>();
+
+  if (parts.length >= 2) {
+    candidates.add(parts.join("-"));
+    candidates.add([parts[0], parts[parts.length - 1]].join("-"));
+    candidates.add(parts.slice(0, 3).join("-"));
+  }
+  candidates.add(cleaned.replace(/\s+/g, "-"));
+
+  return [...candidates].filter(Boolean);
+}
+
+function parseOneVsOnePersonJsonLd(html: string) {
+  const blocks = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi) ?? [];
+  for (const block of blocks) {
+    const raw = block
+      .replace(/^<script type="application\/ld\+json">/i, "")
+      .replace(/<\/script>$/i, "")
+      .replace(/,\s*}/g, "}")
+      .trim();
+
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed?.["@type"] === "Person") return parsed;
+    } catch {
+      // Some 1vs1 pages include permissive JSON-LD. Ignore malformed blocks.
+    }
+  }
+  return null;
+}
+
+function toOneVsOneAbsoluteUrl(value: string | null | undefined) {
+  if (!value) return null;
+  if (value.startsWith("http")) return value;
+  return `https://one-versus-one.com${value.startsWith("/") ? "" : "/"}${value}`;
+}
+
+function extractOneVsOneTeamName(value: string | null | undefined) {
+  if (!value) return null;
+  const slug = value.split("/").filter(Boolean).pop();
+  return slug ? decodeURIComponent(slug).replace(/-/g, " ") : null;
 }
 
 function toMarketSummary(country: CountryData) {
@@ -304,6 +449,10 @@ function sendHtml(res: http.ServerResponse, html: string) {
 }
 
 function renderAdminPage() {
+  return renderAdminPageHtml();
+}
+
+function renderAdminPageLegacy() {
   return `<!doctype html>
 <html lang="en">
 <head>

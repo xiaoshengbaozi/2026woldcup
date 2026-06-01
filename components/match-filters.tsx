@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { CalendarDays, Check, ChevronDown, Clock, GitFork, Grid3X3, Layers, LayoutList, MapPin, Search } from "lucide-react";
 import { ComponentType, useEffect, useMemo, useRef, useState } from "react";
 import type { ScheduleLayout } from "@/app/matches/page";
+import { formatStageLabel, getStageGroupId, rankStage } from "@/lib/stage";
 
 type Timezone = {
   label: string;
@@ -51,39 +52,22 @@ export function readFilterGroupValue(value: string) {
 }
 
 export function getStageFilterGroup(stage: string) {
-  if (/Group\s+[A-L]/i.test(stage)) return "小组赛";
+  if (getStageGroupId(stage) || stage.includes("小组赛")) return "小组赛";
   if (stage.includes("1/16") || stage.includes("1/8") || stage.includes("1/4")) return "淘汰赛";
   if (stage.includes("半决赛") || stage.includes("决赛")) return "决赛周";
   return "赛段";
 }
 
 export function getCityFilterGroup(city: string) {
-  const mexicoCities = ["Mexico City", "Guadalajara", "Monterrey", "墨西哥城", "瓜达拉哈拉", "蒙特雷"];
+  const mexicoCities = ["Mexico City", "Guadalajara", "Monterrey", "墨西哥城", "瓜达拉哈拉", "萨波潘", "蒙特雷"];
   const canadaCities = ["Toronto", "Vancouver", "多伦多", "温哥华"];
   if (mexicoCities.includes(city)) return "墨西哥";
   if (canadaCities.includes(city)) return "加拿大";
   return "美国";
 }
 
-function formatStageLabel(stage: string): string {
-  const groupMatch = stage.match(/Group\s+([A-L])/i);
-  if (groupMatch) return `小组赛 ${groupMatch[1]}组`;
-  return stage;
-}
-
-function stageRank(stage: string) {
-  const group = stage.match(/Group ([A-L])$/);
-  if (group) return group[1].charCodeAt(0) - 64;
-  if (stage.includes("1/16")) return 13;
-  if (stage.includes("1/8")) return 14;
-  if (stage.includes("1/4")) return 15;
-  if (stage.includes("半决赛")) return 16;
-  if (stage.includes("决赛")) return 17;
-  return 99;
-}
-
 function sortStages(stages: string[]): string[] {
-  return [...stages].sort((a, b) => stageRank(a) - stageRank(b));
+  return [...stages].sort((a, b) => rankStage(a) - rankStage(b));
 }
 
 export function MatchFilters({

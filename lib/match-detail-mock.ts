@@ -373,12 +373,12 @@ function regionalIndicatorToLetter(char: string) {
 export function generateMatchDetail(
   match: Match,
 ): MatchDetail {
-  const parts = match.summary.replace(/^鈿絓s*/, "").split(/\s+vs\s+/i);
-  const homeName = normalizeTeamName(parts[0] ?? "寰呭畾");
-  const awayName = normalizeTeamName(parts[1]?.replace(/\s*\([^)]+\)\s*$/, "") ?? "寰呭畾");
+  const parts = match.summary.replace(/^⚽\s*/, "").split(/\s+vs\s+/i);
+  const homeName = normalizeTeamName(parts[0] ?? "待定");
+  const awayName = normalizeTeamName(parts[1]?.replace(/\s*(?:\([^)]+\)|（[^）]+）)\s*$/, "") ?? "待定");
 
-  const homeCode = getTeamCode(parts[0] ?? homeName);
-  const awayCode = getTeamCode(parts[1]?.replace(/\s*\([^)]+\)\s*$/, "") ?? awayName);
+  const homeCode = getTeamCode(homeName);
+  const awayCode = getTeamCode(awayName);
 
   const status = deriveStatus(match.start, match.end);
   const isFinished = status === "finished";
@@ -388,8 +388,6 @@ export function generateMatchDetail(
   const awayScore = isFinished || isLive ? Math.round(rand(0, 3)) : 0;
 
   const homeProb = rand(30, 65);
-  const formations = ["4-3-3", "4-2-3-1", "3-5-2", "4-4-2", "4-1-4-1"];
-
   return {
     match,
     slug: "",
@@ -398,8 +396,8 @@ export function generateMatchDetail(
     status,
     score: { home: homeScore, away: awayScore },
     odds: generateOdds(homeProb),
-    homeLineup: buildLineup(homeCode, pick(formations)),
-    awayLineup: buildLineup(awayCode, pick(formations)),
+    homeLineup: { formation: "候选大名单", players: [], listType: "squad_pool", officialWorldCupSquad: false },
+    awayLineup: { formation: "候选大名单", players: [], listType: "squad_pool", officialWorldCupSquad: false },
     events: isFinished || isLive ? generateEvents(homeName, awayName) : [],
     stats: isFinished || isLive ? generateStats() : {
       possession: [50, 50], shots: [0, 0], shotsOnTarget: [0, 0],
@@ -413,7 +411,70 @@ export function generateMatchDetail(
 
 // 鈹€鈹€ CN 鈫?FIFA Code mapping 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
-const CN_TO_CODE: Record<string, string> = {};
+const CN_TO_CODE: Record<string, string> = {
+  阿根廷: "ARG",
+  阿尔及利亚: "DZA",
+  阿联酋: "UAE",
+  澳大利亚: "AUS",
+  奥地利: "AUT",
+  巴拉圭: "PAR",
+  巴拿马: "PAN",
+  巴西: "BRA",
+  比利时: "BEL",
+  波黑: "BIH",
+  丹麦: "DEN",
+  德国: "GER",
+  俄罗斯: "RUS",
+  厄瓜多尔: "ECU",
+  法国: "FRA",
+  佛得角: "CPV",
+  哥伦比亚: "COL",
+  哥斯达黎加: "CRC",
+  韩国: "KOR",
+  荷兰: "NED",
+  加纳: "GHA",
+  加拿大: "CAN",
+  捷克: "CZE",
+  喀麦隆: "CMR",
+  卡塔尔: "QAT",
+  科特迪瓦: "CIV",
+  克罗地亚: "CRO",
+  库拉索: "CUW",
+  墨西哥: "MEX",
+  摩洛哥: "MAR",
+  南非: "RSA",
+  挪威: "NOR",
+  葡萄牙: "POR",
+  日本: "JPN",
+  瑞典: "SWE",
+  瑞士: "SUI",
+  沙特阿拉伯: "SAU",
+  塞尔维亚: "SRB",
+  塞内加尔: "SEN",
+  苏格兰: "SCO",
+  突尼斯: "TUN",
+  土耳其: "TUR",
+  乌拉圭: "URU",
+  乌兹别克斯坦: "UZB",
+  西班牙: "ESP",
+  新西兰: "NZL",
+  伊拉克: "IRQ",
+  伊朗: "IRN",
+  意大利: "ITA",
+  英格兰: "ENG",
+  约旦: "JOR",
+  刚果民主共和国: "COD",
+  海地: "HAI",
+  埃及: "EGY",
+  秘鲁: "PER",
+  波兰: "POL",
+  乌克兰: "UKR",
+  尼日利亚: "NGA",
+  牙买加: "JAM",
+  洪都拉斯: "HON",
+  美国: "USA",
+  威尔士: "WAL",
+};
 
 const ISO2_TO_CODE: Record<string, string> = {
   AR: "ARG",

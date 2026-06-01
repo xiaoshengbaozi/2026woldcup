@@ -4,13 +4,12 @@ import { motion } from "framer-motion";
 import {
   Activity,
   BarChart3,
-  Newspaper,
   RadioTower,
   Shield,
   Swords,
 } from "lucide-react";
 
-export type MatchTab = "lineup" | "odds" | "timeline" | "stats" | "h2h" | "news";
+export type MatchTab = "lineup" | "odds" | "timeline" | "stats" | "h2h";
 
 const NAV_ITEMS: { id: MatchTab; label: string; icon: typeof Shield }[] = [
   { id: "lineup", label: "阵容", icon: Shield },
@@ -18,7 +17,6 @@ const NAV_ITEMS: { id: MatchTab; label: string; icon: typeof Shield }[] = [
   { id: "timeline", label: "事件", icon: RadioTower },
   { id: "stats", label: "统计", icon: BarChart3 },
   { id: "h2h", label: "交锋", icon: Swords },
-  { id: "news", label: "新闻", icon: Newspaper },
 ];
 
 export function MatchNav({

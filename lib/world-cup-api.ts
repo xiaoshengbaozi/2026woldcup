@@ -5,6 +5,7 @@ const PRODUCTION_API_URL = "https://api-2026.20250114.xyz";
 
 export type NormalizedWorldCupFixture = {
   uid: string;
+  apiFixtureId: number;
   summary: string;
   description: string;
   location: string;
@@ -14,6 +15,8 @@ export type NormalizedWorldCupFixture = {
   geo: null;
   stage: string;
   weather: string;
+  homeTeam?: Match["homeTeam"];
+  awayTeam?: Match["awayTeam"];
 };
 
 type FixturesResponse = {
@@ -49,6 +52,7 @@ export async function fetchWorldCupFixtures(options: { season?: number; league?:
 function toMatch(fixture: NormalizedWorldCupFixture): Match {
   return {
     uid: fixture.uid,
+    apiFixtureId: fixture.apiFixtureId,
     summary: fixture.summary,
     description: fixture.description,
     location: fixture.location,
@@ -58,5 +62,7 @@ function toMatch(fixture: NormalizedWorldCupFixture): Match {
     geo: fixture.geo,
     stage: fixture.stage,
     weather: fixture.weather,
+    homeTeam: fixture.homeTeam,
+    awayTeam: fixture.awayTeam,
   };
 }

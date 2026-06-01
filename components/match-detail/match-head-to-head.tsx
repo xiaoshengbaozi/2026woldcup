@@ -59,8 +59,9 @@ export function MatchHeadToHead({ detail }: { detail: MatchDetail }) {
         </div>
 
         {/* Match list */}
-        <div className="space-y-2">
-          {headToHead.map((m, i) => (
+        {headToHead.length ? (
+          <div className="space-y-2">
+            {headToHead.map((m, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, x: -10 }}
@@ -81,8 +82,13 @@ export function MatchHeadToHead({ detail }: { detail: MatchDetail }) {
                 <span className="text-[10px] font-medium text-white/60">{m.awayTeam}</span>
               </div>
             </motion.div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl bg-white/[0.035] px-4 py-8 text-center ring-1 ring-white/[0.06]">
+            <p className="text-sm font-semibold text-white/72">暂无历史交锋数据</p>
+          </div>
+        )}
       </div>
     </motion.div>
   );

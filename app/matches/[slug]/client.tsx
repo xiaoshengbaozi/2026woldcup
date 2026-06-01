@@ -49,12 +49,16 @@ export function MatchDetailClient({ slug }: { slug: string }) {
       <div className="space-y-5">
         {activeTab === "odds" && <MatchOdds detail={detail} />}
         {activeTab === "lineup" && <MatchLineup detail={detail} />}
-        {activeTab === "timeline" && detail.events.length > 0 && <MatchTimeline detail={detail} />}
+        {activeTab === "timeline" && (
+          <>
+            {detail.events.length > 0 && <MatchTimeline detail={detail} />}
+            {detail.news.length > 0 && <MatchNews detail={detail} />}
+          </>
+        )}
         {activeTab === "stats" && (detail.status === "finished" || detail.status === "live") && (
           <MatchStatsPanel detail={detail} />
         )}
         {activeTab === "h2h" && <MatchHeadToHead detail={detail} />}
-        {activeTab === "news" && <MatchNews detail={detail} />}
       </div>
 
       <MatchSeoContent detail={detail} />

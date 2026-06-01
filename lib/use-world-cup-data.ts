@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { extractCity, getTournamentProgress, parseCalendar } from "@/lib/calendar";
+import { parseTeams } from "@/lib/teams";
 import { fetchWorldCupFixtures } from "@/lib/world-cup-api";
 import type { Match } from "@/types/match";
 
@@ -18,11 +19,22 @@ export function useWorldCupData() {
     let active = true;
 
     async function loadMatches() {
+      let calendarMatches: Match[] = [];
+
+      try {
+        const response = await fetch("/calendar.ics");
+        if (!response.ok) throw new Error("calendar fetch failed");
+        const text = await response.text();
+        calendarMatches = parseCalendar(text);
+      } catch {
+        if (active) setError("赛程同步失败，请直接下载日历文件。");
+      }
+
       try {
         const liveMatches = await fetchWorldCupFixtures();
         if (!active) return;
         if (liveMatches.length) {
-          setMatches(liveMatches);
+          setMatches(mergeCalendarWithLiveFixtures(calendarMatches, liveMatches));
           setError("");
           setLoading(false);
           return;
@@ -31,18 +43,13 @@ export function useWorldCupData() {
         console.warn("[WorldCupData] API-Football normalized fixtures unavailable, falling back to calendar:", err);
       }
 
-      try {
-        const response = await fetch("/calendar.ics");
-        if (!response.ok) throw new Error("calendar fetch failed");
-        const text = await response.text();
+      if (calendarMatches.length) {
         if (!active) return;
-        setMatches(parseCalendar(text));
+        setMatches(calendarMatches);
         setError("");
-      } catch {
-        if (active) setError("赛程同步失败，请直接下载日历文件。");
-      } finally {
-        if (active) setLoading(false);
       }
+
+      if (active) setLoading(false);
     }
 
     void loadMatches();
@@ -93,6 +100,64 @@ export function useWorldCupData() {
     loading,
     error
   };
+}
+
+export function mergeCalendarWithLiveFixtures(calendarMatches: Match[], liveMatches: Match[]) {
+  if (!calendarMatches.length) return liveMatches;
+
+  const liveByIdentity = new Map(liveMatches.map((match) => [getMatchIdentity(match), match]));
+  const usedLiveIds = new Set<string>();
+
+  const merged = calendarMatches.map((calendarMatch) => {
+    const liveMatch = liveByIdentity.get(getMatchIdentity(calendarMatch));
+    if (!liveMatch) return calendarMatch;
+
+    usedLiveIds.add(liveMatch.uid);
+
+    return {
+      ...calendarMatch,
+      ...liveMatch,
+      location: mergeMatchLocation(calendarMatch.location, liveMatch.location),
+      stage: calendarMatch.stage,
+      weather: liveMatch.weather || calendarMatch.weather,
+      geo: liveMatch.geo || calendarMatch.geo,
+    };
+  });
+
+  const unmatchedLive = liveMatches.filter((match) => !usedLiveIds.has(match.uid));
+  return [...merged, ...unmatchedLive].sort((a, b) => a.start.getTime() - b.start.getTime());
+}
+
+function mergeMatchLocation(calendarLocation: string, liveLocation: string) {
+  if (!liveLocation) return calendarLocation;
+  if (hasExplicitCity(liveLocation)) return liveLocation;
+
+  const city = extractCity(calendarLocation);
+  if (!city || city === calendarLocation) return liveLocation;
+  return `${liveLocation} · ${city}`;
+}
+
+function hasExplicitCity(location: string) {
+  return (
+    location.includes("·") ||
+    /（[^）]+）/.test(location) ||
+    location.split(",").length > 1
+  );
+}
+
+function getMatchIdentity(match: Match) {
+  const teams = parseTeams(match.summary);
+  return [
+    match.start.getTime(),
+    normalizeTeamName(teams.home.name),
+    normalizeTeamName(teams.away.name),
+  ].join("|");
+}
+
+function normalizeTeamName(name: string) {
+  const normalized = name.replace(/[^\p{L}\p{N}]/gu, "").toLowerCase();
+  if (normalized === "刚果金") return "刚果民主共和国";
+  return normalized;
 }
 
 

@@ -1,4 +1,6 @@
 import type { ApiFootballService } from "./apiFootball";
+import { localizePlayer as localizeFootballPlayer, localizePosition as localizeFootballPosition } from "./footballLocalization";
+import { localizePlayerName } from "./playerTranslations";
 
 export interface NormalizedWorldCupFixture {
   uid: string;
@@ -48,6 +50,24 @@ export interface NormalizedTeam {
   englishName: string;
   code: string;
   logo: string;
+}
+
+export interface NormalizedSquadPlayer {
+  id: number | null;
+  nameEn: string;
+  nameCn: string;
+  age: number | null;
+  number: number | null;
+  position: string;
+  positionCn: string;
+  photo: string;
+}
+
+export interface NormalizedSquad {
+  team: NormalizedTeam;
+  listType: "squad_pool";
+  officialWorldCupSquad: false;
+  players: NormalizedSquadPlayer[];
 }
 
 const DEFAULT_LEAGUE = "1";
@@ -175,6 +195,35 @@ export async function getWorldCupMatchDetail(apiFootball: ApiFootballService, ur
   };
 }
 
+export async function getWorldCupSquads(apiFootball: ApiFootballService, url: URL) {
+  const teamIds = url.searchParams
+    .getAll("team")
+    .flatMap((value) => value.split(","))
+    .map((value) => Number(value.trim()))
+    .filter((value) => Number.isFinite(value) && value > 0);
+
+  if (!teamIds.length) {
+    throw createHttpError(400, "missing_team");
+  }
+
+  const squads = await Promise.all(
+    [...new Set(teamIds)].slice(0, 8).map(async (teamId) => {
+      const payload = await apiFootball.request("players/squads", new URLSearchParams({ team: String(teamId) }));
+      const upstream = payload.upstream as ApiFootballSquadsResponse;
+      assertNoApiFootballErrors(upstream);
+      return normalizeSquad(upstream.response?.[0]);
+    })
+  );
+
+  return {
+    source: "api-football",
+    normalized: true,
+    timestamp: Date.now(),
+    count: squads.filter(Boolean).length,
+    squads: squads.filter((squad): squad is NormalizedSquad => Boolean(squad)),
+  };
+}
+
 function getTournamentParams(url: URL) {
   const params = new URLSearchParams(url.searchParams);
   if (!params.has("league")) params.set("league", DEFAULT_LEAGUE);
@@ -195,7 +244,7 @@ function normalizeFixture(raw: ApiFootballFixture): NormalizedWorldCupFixture {
     apiFixtureId: raw.fixture?.id ?? 0,
     summary: `${homeTeam.name} vs ${awayTeam.name}${stage ? `（${stage}）` : ""}`,
     description: buildFixtureDescription(raw, homeTeam, awayTeam, stage),
-    location: [raw.fixture?.venue?.name, raw.fixture?.venue?.city].filter(Boolean).join(" · "),
+    location: localizeFixtureLocation(raw),
     url: "",
     startIso: start?.toISOString() ?? "",
     endIso: end?.toISOString() ?? null,
@@ -304,6 +353,29 @@ function normalizePlayers(items: unknown[]) {
   }));
 }
 
+function normalizeSquad(raw: ApiFootballSquad | undefined): NormalizedSquad | null {
+  if (!raw?.team) return null;
+
+  return {
+    team: normalizeTeam(raw.team),
+    listType: "squad_pool",
+    officialWorldCupSquad: false,
+    players: (raw.players ?? []).map((player) => {
+      const localized = localizeFootballPlayer(player);
+      return {
+        id: player.id ?? null,
+        nameEn: localized?.nameEn ?? player.name ?? "TBD",
+        nameCn: localized?.nameCn ?? localizePlayerName(player.id, player.name ?? ""),
+        age: player.age ?? null,
+        number: player.number ?? null,
+        position: localized?.positionEn ?? player.position ?? "Unknown",
+        positionCn: localized?.position ?? localizeFootballPosition(player.position),
+        photo: player.photo ?? "",
+      };
+    }),
+  };
+}
+
 function normalizeTeam(team: ApiFootballTeam | undefined): NormalizedTeam {
   const englishName = team?.name ?? "TBD";
   const code = TEAM_NAME_TO_CODE[normalizeName(englishName)] ?? "";
@@ -341,8 +413,34 @@ function buildFixtureDescription(
         minute: "2-digit",
       })
     : "时间待定";
-  const venue = [raw.fixture?.venue?.name, raw.fixture?.venue?.city].filter(Boolean).join(" · ") || "场馆待定";
+  const venue = localizeFixtureLocation(raw) || "场馆待定";
   return `${homeTeam.name} 对阵 ${awayTeam.name}，${stage || "阶段待定"}，北京时间 ${date}，${venue}`;
+}
+
+function localizeFixtureLocation(raw: ApiFootballFixture) {
+  const location = localizeVenueLocation(raw.fixture?.venue?.name, raw.fixture?.venue?.city);
+  if (location) return location;
+
+  const fixtureId = raw.fixture?.id;
+  return fixtureId ? FIXTURE_LOCATION_FALLBACK_CN[fixtureId] ?? "" : "";
+}
+
+function localizeVenueLocation(name: string | null | undefined, city: string | null | undefined) {
+  const venue = localizeVenueName(name);
+  const cityName = localizeCityName(city);
+  return [venue, cityName].filter(Boolean).join(" · ");
+}
+
+function localizeVenueName(name: string | null | undefined) {
+  const normalized = name?.trim() ?? "";
+  if (!normalized) return "";
+  return VENUE_NAME_TO_CN[normalized] ?? normalized;
+}
+
+function localizeCityName(city: string | null | undefined) {
+  const normalized = city?.trim() ?? "";
+  if (!normalized) return "";
+  return CITY_NAME_TO_CN[normalized] ?? normalized;
 }
 
 function normalizeStatus(shortStatus = ""): NormalizedWorldCupFixture["status"] {
@@ -375,6 +473,7 @@ function localizeRound(round: string) {
 }
 
 function localizeGroup(group: string) {
+  if (/Ranking of third-placed teams/i.test(group)) return "小组第三排名";
   const match = group.match(/^Group\s+([A-Z])$/i);
   return match ? `${match[1].toUpperCase()} 组` : group;
 }
@@ -486,74 +585,177 @@ const STATUS_LABELS: Record<NormalizedWorldCupFixture["status"], string> = {
   cancelled: "已取消",
 };
 
+const VENUE_NAME_TO_CN: Record<string, string> = {
+  "AT&T Stadium": "AT&T 体育场",
+  "Arrowhead Stadium": "箭头体育场",
+  "BC Place": "卑诗体育馆",
+  "BMO Field": "BMO 球场",
+  "Estadio Akron": "阿克伦体育场",
+  "Estadio Azteca": "阿兹特克体育场",
+  "Estadio Banorte": "巴诺尔特体育场",
+  "Estadio BBVA": "BBVA 体育场",
+  "Gillette Stadium": "吉列体育场",
+  "Hard Rock Stadium": "硬石体育场",
+  "Levi's Stadium": "李维斯体育场",
+  "Lincoln Financial Field": "林肯金融球场",
+  "Lumen Field": "流明球场",
+  "Mercedes-Benz Stadium": "梅赛德斯-奔驰体育场",
+  "MetLife Stadium": "大都会人寿体育场",
+  "NRG Stadium": "NRG 体育场",
+  "SoFi Stadium": "SoFi 体育场",
+};
+
+const FIXTURE_LOCATION_FALLBACK_CN: Record<number, string> = {
+  1489373: "李维斯体育场 · 旧金山湾区",
+  1489376: "AT&T 体育场 · 达拉斯",
+  1489382: "李维斯体育场 · 旧金山湾区",
+  1489384: "AT&T 体育场 · 达拉斯",
+  1539006: "李维斯体育场 · 旧金山湾区",
+  1489399: "AT&T 体育场 · 达拉斯",
+  1489400: "李维斯体育场 · 旧金山湾区",
+  1539011: "AT&T 体育场 · 达拉斯",
+  1489411: "李维斯体育场 · 旧金山湾区",
+  1489421: "AT&T 体育场 · 达拉斯",
+};
+
+const CITY_NAME_TO_CN: Record<string, string> = {
+  "Atlanta, Georgia": "佐治亚州亚特兰大",
+  "Boston, Massachusetts": "马萨诸塞州波士顿",
+  "Dallas, Texas": "得克萨斯州达拉斯",
+  "East Rutherford, New Jersey": "新泽西州东卢瑟福",
+  "Guadalajara": "瓜达拉哈拉",
+  "Houston, Texas": "得克萨斯州休斯敦",
+  "Kansas City, Missouri": "密苏里州堪萨斯城",
+  "Los Angeles, California": "加利福尼亚州洛杉矶",
+  "Mexico City": "墨西哥城",
+  "Miami Gardens, Florida": "佛罗里达州迈阿密花园",
+  "Monterrey": "蒙特雷",
+  "Philadelphia, Pennsylvania": "宾夕法尼亚州费城",
+  "Seattle, Washington": "华盛顿州西雅图",
+  "Toronto, Ontario": "安大略省多伦多",
+  "Vancouver, British Columbia": "不列颠哥伦比亚省温哥华",
+  "Zapopan": "萨波潘",
+};
+
 const TEAM_CODE_TO_CN: Record<string, string> = {
   ARG: "阿根廷",
+  ALG: "阿尔及利亚",
   AUS: "澳大利亚",
+  AUT: "奥地利",
   BEL: "比利时",
+  BIH: "波黑",
   BRA: "巴西",
   CAN: "加拿大",
+  CIV: "科特迪瓦",
   CMR: "喀麦隆",
+  COD: "刚果民主共和国",
+  COL: "哥伦比亚",
+  CPV: "佛得角",
   CRC: "哥斯达黎加",
   CRO: "克罗地亚",
+  CUW: "库拉索",
+  CZE: "捷克",
   DEN: "丹麦",
   ECU: "厄瓜多尔",
+  EGY: "埃及",
   ENG: "英格兰",
   ESP: "西班牙",
   FRA: "法国",
   GER: "德国",
   GHA: "加纳",
+  HAI: "海地",
   IRN: "伊朗",
+  IRQ: "伊拉克",
+  JOR: "约旦",
   JPN: "日本",
   KOR: "韩国",
   MAR: "摩洛哥",
   MEX: "墨西哥",
   NED: "荷兰",
+  NOR: "挪威",
+  NZL: "新西兰",
+  PAN: "巴拿马",
+  PAR: "巴拉圭",
   POL: "波兰",
   POR: "葡萄牙",
   QAT: "卡塔尔",
+  RSA: "南非",
   KSA: "沙特阿拉伯",
+  SCO: "苏格兰",
   SEN: "塞内加尔",
   SRB: "塞尔维亚",
   SUI: "瑞士",
+  SWE: "瑞典",
+  TUR: "土耳其",
   TUN: "突尼斯",
   URU: "乌拉圭",
   USA: "美国",
+  UZB: "乌兹别克斯坦",
   WAL: "威尔士",
 };
 
 const TEAM_NAME_TO_CODE: Record<string, string> = {
   argentina: "ARG",
+  algeria: "ALG",
   australia: "AUS",
+  austria: "AUT",
   belgium: "BEL",
+  "bosnia & herzegovina": "BIH",
+  "bosnia and herzegovina": "BIH",
   brazil: "BRA",
   cameroon: "CMR",
   canada: "CAN",
+  "cape verde islands": "CPV",
+  "cape verde": "CPV",
+  colombia: "COL",
+  "congo dr": "COD",
+  "congo democratic republic": "COD",
   "costa rica": "CRC",
   croatia: "CRO",
+  curacao: "CUW",
+  curaçao: "CUW",
+  "czech republic": "CZE",
+  czechia: "CZE",
   denmark: "DEN",
   ecuador: "ECU",
+  egypt: "EGY",
   england: "ENG",
   france: "FRA",
   germany: "GER",
   ghana: "GHA",
+  haiti: "HAI",
   iran: "IRN",
+  iraq: "IRQ",
+  "ivory coast": "CIV",
   japan: "JPN",
+  jordan: "JOR",
   mexico: "MEX",
   morocco: "MAR",
   netherlands: "NED",
+  "new zealand": "NZL",
+  norway: "NOR",
+  panama: "PAN",
+  paraguay: "PAR",
   poland: "POL",
   portugal: "POR",
   qatar: "QAT",
   "saudi arabia": "KSA",
+  scotland: "SCO",
   senegal: "SEN",
   serbia: "SRB",
+  "south africa": "RSA",
   "south korea": "KOR",
   spain: "ESP",
+  sweden: "SWE",
   switzerland: "SUI",
+  turkiye: "TUR",
+  türkiye: "TUR",
+  turkey: "TUR",
   tunisia: "TUN",
   uruguay: "URU",
   usa: "USA",
   "united states": "USA",
+  uzbekistan: "UZB",
   wales: "WAL",
 };
 
@@ -573,6 +775,11 @@ interface ApiFootballStandingsResponse {
 
 interface ApiFootballListResponse {
   response?: unknown[];
+  errors?: unknown;
+}
+
+interface ApiFootballSquadsResponse {
+  response?: ApiFootballSquad[];
   errors?: unknown;
 }
 
@@ -613,6 +820,18 @@ interface ApiFootballTeam {
   id?: number | null;
   name?: string;
   logo?: string;
+}
+
+interface ApiFootballSquad {
+  team?: ApiFootballTeam;
+  players?: Array<{
+    id?: number | null;
+    name?: string;
+    age?: number | null;
+    number?: number | null;
+    position?: string;
+    photo?: string;
+  }>;
 }
 
 interface ApiFootballStanding {

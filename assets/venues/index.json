@@ -1,0 +1,343 @@
+{
+  "generatedAt": "2026-06-01T08:26:59.488Z",
+  "sourcePolicy": "Wikimedia Commons image files; review each sourceUrl for exact license and attribution before public release.",
+  "selectionNote": "Each venue has day.jpg and night.jpg. Some night entries are dusk, event-night, or lit-interior fallbacks when a clean open-license exterior night photo was unavailable.",
+  "venues": [
+    {
+      "slug": "metlife-stadium",
+      "name": "MetLife Stadium",
+      "nameZh": "????????",
+      "city": "New York / New Jersey",
+      "images": {
+        "day": {
+          "path": "assets/venues/metlife-stadium/day.jpg",
+          "commonsFile": "Metlife stadium (Aerial view).jpg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Metlife_stadium_(Aerial_view).jpg",
+          "bytes": 5931297
+        },
+        "night": {
+          "path": "assets/venues/metlife-stadium/night.jpg",
+          "commonsFile": "MetLife Stadium exterior Super Bowl XLVIII.jpg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:MetLife_Stadium_exterior_Super_Bowl_XLVIII.jpg",
+          "bytes": 11437896,
+          "variant": "night-exterior"
+        }
+      }
+    },
+    {
+      "slug": "sofi-stadium",
+      "name": "SoFi Stadium",
+      "nameZh": "SoFi ???",
+      "city": "Los Angeles",
+      "images": {
+        "day": {
+          "path": "assets/venues/sofi-stadium/day.jpg",
+          "commonsFile": "Aerial view of SoFi Stadium (July 2022).jpg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Aerial_view_of_SoFi_Stadium_(July_2022).jpg",
+          "bytes": 2245829
+        },
+        "night": {
+          "path": "assets/venues/sofi-stadium/night.jpg",
+          "commonsFile": "Tonight they were testing the OCULUS (50050739593).jpg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Tonight_they_were_testing_the_OCULUS_(50050739593).jpg",
+          "bytes": 4191186,
+          "variant": "night-interior/exterior"
+        }
+      }
+    },
+    {
+      "slug": "att-stadium",
+      "name": "AT&T Stadium",
+      "nameZh": "AT&T ???",
+      "city": "Dallas",
+      "images": {
+        "day": {
+          "path": "assets/venues/att-stadium/day.jpg",
+          "commonsFile": "AT&T Stadium Aerial.jpeg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:AT%26T_Stadium_Aerial.jpeg",
+          "bytes": 1269721
+        },
+        "night": {
+          "path": "assets/venues/att-stadium/night.jpg",
+          "commonsFile": "Dallas-cowboys-stadium-at-night.jpg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Dallas-cowboys-stadium-at-night.jpg",
+          "bytes": 922851,
+          "variant": "night-exterior"
+        }
+      }
+    },
+    {
+      "slug": "mercedes-benz-stadium",
+      "name": "Mercedes-Benz Stadium",
+      "nameZh": "????-?????",
+      "city": "Atlanta",
+      "images": {
+        "day": {
+          "path": "assets/venues/mercedes-benz-stadium/day.jpg",
+          "commonsFile": "Mercedes-Benz Stadium in Atlanta three days prior to the 2019 Super Bowl.jpg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Mercedes-Benz_Stadium_in_Atlanta_three_days_prior_to_the_2019_Super_Bowl.jpg",
+          "bytes": 7931172
+        },
+        "night": {
+          "path": "assets/venues/mercedes-benz-stadium/night.jpg",
+          "commonsFile": "Mercedes Benz Stadium time lapse capture 2017-08-13.jpg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Mercedes_Benz_Stadium_time_lapse_capture_2017-08-13.jpg",
+          "bytes": 304254,
+          "variant": "dusk/night-exterior"
+        }
+      }
+    },
+    {
+      "slug": "hard-rock-stadium",
+      "name": "Hard Rock Stadium",
+      "nameZh": "?????",
+      "city": "Miami",
+      "images": {
+        "day": {
+          "path": "assets/venues/hard-rock-stadium/day.jpg",
+          "commonsFile": "Hard Rock Stadium for Super Bowl LIV (49606707583).jpg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Hard_Rock_Stadium_for_Super_Bowl_LIV_(49606707583).jpg",
+          "bytes": 531434
+        },
+        "night": {
+          "path": "assets/venues/hard-rock-stadium/night.jpg",
+          "commonsFile": "This is the Super Bowl, baby! (4406589358).jpg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:This_is_the_Super_Bowl,_baby!_(4406589358).jpg",
+          "bytes": 416617,
+          "variant": "event-night"
+        }
+      }
+    },
+    {
+      "slug": "gillette-stadium",
+      "name": "Gillette Stadium",
+      "nameZh": "?????",
+      "city": "Boston",
+      "images": {
+        "day": {
+          "path": "assets/venues/gillette-stadium/day.jpg",
+          "commonsFile": "Gillette Stadium02.jpg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Gillette_Stadium02.jpg",
+          "bytes": 1092588
+        },
+        "night": {
+          "path": "assets/venues/gillette-stadium/night.jpg",
+          "commonsFile": "Gillette Stadium at night in the rain November 2025.jpg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Gillette_Stadium_at_night_in_the_rain_November_2025.jpg",
+          "bytes": 404171,
+          "variant": "night-exterior"
+        }
+      }
+    },
+    {
+      "slug": "nrg-stadium",
+      "name": "NRG Stadium",
+      "nameZh": "NRG ???",
+      "city": "Houston",
+      "images": {
+        "day": {
+          "path": "assets/venues/nrg-stadium/day.jpg",
+          "commonsFile": "Nrg stadium.jpg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Nrg_stadium.jpg",
+          "bytes": 820934
+        },
+        "night": {
+          "path": "assets/venues/nrg-stadium/night.jpg",
+          "commonsFile": "Nrgstadium.jpg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Nrgstadium.jpg",
+          "bytes": 453780,
+          "variant": "night/interior"
+        }
+      }
+    },
+    {
+      "slug": "levis-stadium",
+      "name": "Levi's Stadium",
+      "nameZh": "??????",
+      "city": "San Francisco Bay Area",
+      "images": {
+        "day": {
+          "path": "assets/venues/levis-stadium/day.jpg",
+          "commonsFile": "Aerial view of California's Great Adventure and Levi's Stadium (4020).jpg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Aerial_view_of_California's_Great_Adventure_and_Levi's_Stadium_(4020).jpg",
+          "bytes": 935923
+        },
+        "night": {
+          "path": "assets/venues/levis-stadium/night.jpg",
+          "commonsFile": "Levisstadium.jpg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Levisstadium.jpg",
+          "bytes": 858776,
+          "variant": "night-interior"
+        }
+      }
+    },
+    {
+      "slug": "lumen-field",
+      "name": "Lumen Field",
+      "nameZh": "????",
+      "city": "Seattle",
+      "images": {
+        "day": {
+          "path": "assets/venues/lumen-field/day.jpg",
+          "commonsFile": "CenturyLink Field from Space Needle.jpg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:CenturyLink_Field_from_Space_Needle.jpg",
+          "bytes": 651605
+        },
+        "night": {
+          "path": "assets/venues/lumen-field/night.jpg",
+          "commonsFile": "Lumen Field north side at dusk.jpg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Lumen_Field_north_side_at_dusk.jpg",
+          "bytes": 424382,
+          "variant": "dusk-exterior"
+        }
+      }
+    },
+    {
+      "slug": "lincoln-financial-field",
+      "name": "Lincoln Financial Field",
+      "nameZh": "??????",
+      "city": "Philadelphia",
+      "images": {
+        "day": {
+          "path": "assets/venues/lincoln-financial-field/day.jpg",
+          "commonsFile": "Lincoln Financial Field (Aerial view).jpg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Lincoln_Financial_Field_(Aerial_view).jpg",
+          "bytes": 880328
+        },
+        "night": {
+          "path": "assets/venues/lincoln-financial-field/night.jpg",
+          "commonsFile": "Lincoln Financial Field, Philadelphia, 2024.jpg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Lincoln_Financial_Field,_Philadelphia,_2024.jpg",
+          "bytes": 750138,
+          "variant": "night-interior"
+        }
+      }
+    },
+    {
+      "slug": "arrowhead-stadium",
+      "name": "Arrowhead Stadium",
+      "nameZh": "?????",
+      "city": "Kansas City",
+      "images": {
+        "day": {
+          "path": "assets/venues/arrowhead-stadium/day.jpg",
+          "commonsFile": "Aerial view of Arrowhead Stadium 08-31-2013.jpg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Aerial_view_of_Arrowhead_Stadium_08-31-2013.jpg",
+          "bytes": 328575
+        },
+        "night": {
+          "path": "assets/venues/arrowhead-stadium/night.jpg",
+          "commonsFile": "Chargers at Chiefs - September 15, 2022 - Thursday Night Football on Prime Video.jpg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Chargers_at_Chiefs_-_September_15,_2022_-_Thursday_Night_Football_on_Prime_Video.jpg",
+          "bytes": 951721,
+          "variant": "night-interior"
+        }
+      }
+    },
+    {
+      "slug": "bc-place",
+      "name": "BC Place",
+      "nameZh": "?????",
+      "city": "Vancouver",
+      "images": {
+        "day": {
+          "path": "assets/venues/bc-place/day.jpg",
+          "commonsFile": "BC Place, Vancouver, south view 20240901 1.jpg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:BC_Place,_Vancouver,_south_view_20240901_1.jpg",
+          "bytes": 863772
+        },
+        "night": {
+          "path": "assets/venues/bc-place/night.jpg",
+          "commonsFile": "B.C. Place by night.jpg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:B.C._Place_by_night.jpg",
+          "bytes": 369778,
+          "variant": "night-exterior"
+        }
+      }
+    },
+    {
+      "slug": "bmo-field",
+      "name": "BMO Field",
+      "nameZh": "BMO ??",
+      "city": "Toronto",
+      "images": {
+        "day": {
+          "path": "assets/venues/bmo-field/day.jpg",
+          "commonsFile": "BMO Field exterior, Toronto.JPG",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:BMO_Field_exterior,_Toronto.JPG",
+          "bytes": 317530
+        },
+        "night": {
+          "path": "assets/venues/bmo-field/night.jpg",
+          "commonsFile": "BMO Field Toronto, December 17 2025 (05).jpg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:BMO_Field_Toronto,_December_17_2025_(05).jpg",
+          "bytes": 562998,
+          "variant": "winter/night"
+        }
+      }
+    },
+    {
+      "slug": "estadio-azteca",
+      "name": "Estadio Azteca",
+      "nameZh": "???????",
+      "city": "Mexico City",
+      "images": {
+        "day": {
+          "path": "assets/venues/estadio-azteca/day.jpg",
+          "commonsFile": "Vista aérea del Estadio Azteca - 2026 - 02.jpg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Vista_a%C3%A9rea_del_Estadio_Azteca_-_2026_-_02.jpg",
+          "bytes": 910077
+        },
+        "night": {
+          "path": "assets/venues/estadio-azteca/night.jpg",
+          "commonsFile": "Vista aérea nocturna del Estadio Azteca.jpg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Vista_a%C3%A9rea_nocturna_del_Estadio_Azteca.jpg",
+          "bytes": 754311,
+          "variant": "night-aerial"
+        }
+      }
+    },
+    {
+      "slug": "estadio-akron",
+      "name": "Estadio Akron",
+      "nameZh": "??????",
+      "city": "Guadalajara",
+      "images": {
+        "day": {
+          "path": "assets/venues/estadio-akron/day.jpg",
+          "commonsFile": "Estadio Omnilife Chivas.jpg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Estadio_Omnilife_Chivas.jpg",
+          "bytes": 245232
+        },
+        "night": {
+          "path": "assets/venues/estadio-akron/night.jpg",
+          "commonsFile": "Estadio Akron interior 0319.jpg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Estadio_Akron_interior_0319.jpg",
+          "bytes": 342077,
+          "variant": "interior-lit"
+        }
+      }
+    },
+    {
+      "slug": "estadio-bbva",
+      "name": "Estadio BBVA",
+      "nameZh": "BBVA ???",
+      "city": "Monterrey",
+      "images": {
+        "day": {
+          "path": "assets/venues/estadio-bbva/day.jpg",
+          "commonsFile": "Mexico Guadalupe Monterrey Estadio BBVA Bancomer fifa world cup 2026 1.JPG",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Mexico_Guadalupe_Monterrey_Estadio_BBVA_Bancomer_fifa_world_cup_2026_1.JPG",
+          "bytes": 709811
+        },
+        "night": {
+          "path": "assets/venues/estadio-bbva/night.jpg",
+          "commonsFile": "Apertura 2017 Gran Final - Monterrey v Tigres 1.jpg",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:Apertura_2017_Gran_Final_-_Monterrey_v_Tigres_1.jpg",
+          "bytes": 544452,
+          "variant": "event-night"
+        }
+      }
+    }
+  ]
+}

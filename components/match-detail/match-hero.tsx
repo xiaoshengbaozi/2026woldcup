@@ -2,60 +2,61 @@
 
 import { motion } from "framer-motion";
 import { CalendarDays, Clock, MapPin, Trophy } from "lucide-react";
-import carrasquillaImage from "@/assets/players/PAN-panama/headshots/adalberto-carrasquilla.png";
-import afifImage from "@/assets/players/QAT-qatar/headshots/akram-afif.png";
-import messiImage from "@/assets/players/ARG-argentina/headshots/lionel-messi.png";
-import husseinImage from "@/assets/players/IRQ-iraq/headshots/aymen-hussein.png";
-import deBruyneImage from "@/assets/players/BEL-belgium/headshots/kevin-de-bruyne.png";
-import viniciusImage from "@/assets/players/BRA-brazil/headshots/vinicius-junior.png";
-import daviesImage from "@/assets/players/CAN-canada/headshots/alphonso-davies.png";
-import woodImage from "@/assets/players/NZL-new-zealand/headshots/chris-wood.png";
-import alabaImage from "@/assets/players/AUT-austria/headshots/david-alaba.png";
-import nazonImage from "@/assets/players/HAI-haiti/headshots/duckens-nazon.png";
-import dzekoImage from "@/assets/players/BIH-bosnia-and-herzegovina/headshots/edin-dzeko.png";
-import shomurodovImage from "@/assets/players/UZB-uzbekistan/headshots/eldor-shomurodov.png";
-import skhiriImage from "@/assets/players/TUN-tunisia/headshots/ellyes-skhiri.png";
-import kessieImage from "@/assets/players/CIV-ivory-coast/headshots/franck-kessie.png";
-import bacunaImage from "@/assets/players/CUW-curacao/headshots/juninho-bacuna.png";
-import ryanImage from "@/assets/players/AUS-australia/headshots/mathew-ryan.png";
-import diazImage from "@/assets/players/COL-colombia/headshots/luis-diaz.png";
-import modricImage from "@/assets/players/CRO-croatia/headshots/luka-modric.png";
-import hojlundImage from "@/assets/players/DEN-denmark/headshots/rasmus-hojlund.png";
-import caicedoImage from "@/assets/players/ECU-ecuador/headshots/moises-caicedo.png";
-import salahImage from "@/assets/players/EGY-egypt/headshots/mohamed-salah.png";
-import bellinghamImage from "@/assets/players/ENG-england/headshots/jude-bellingham.png";
-import yamalImage from "@/assets/players/ESP-spain/headshots/lamine-yamal.png";
-import mbappeImage from "@/assets/players/FRA-france/headshots/kylian-mbappe.png";
-import musialaImage from "@/assets/players/GER-germany/headshots/jamal-musiala.png";
-import mitomaImage from "@/assets/players/JPN-japan/headshots/kaoru-mitoma.png";
-import sonImage from "@/assets/players/KOR-south-korea/headshots/son-heung-min.png";
-import hakimiImage from "@/assets/players/MAR-morocco/headshots/achraf-hakimi.png";
-import gimenezImage from "@/assets/players/MEX-mexico/headshots/santiago-gimenez.png";
-import taremiImage from "@/assets/players/IRN-iran/headshots/mehdi-taremi.png";
-import almironImage from "@/assets/players/PAR-paraguay/headshots/miguel-almiron.png";
-import kudusImage from "@/assets/players/GHA-ghana/headshots/mohammed-kudus.png";
-import taamariImage from "@/assets/players/JOR-jordan/headshots/musa-al-taamari.png";
-import vanDijkImage from "@/assets/players/NED-netherlands/headshots/virgil-van-dijk.png";
-import haalandImage from "@/assets/players/NOR-norway/headshots/erling-haaland.png";
-import lewandowskiImage from "@/assets/players/POL-poland/headshots/robert-lewandowski.png";
-import ronaldoImage from "@/assets/players/POR-portugal/headshots/cristiano-ronaldo.png";
-import schickImage from "@/assets/players/CZE-czech-republic/headshots/patrik-schick.png";
-import tauImage from "@/assets/players/RSA-south-africa/headshots/percy-tau.png";
-import mahrezImage from "@/assets/players/DZA-algeria/headshots/riyad-mahrez.png";
-import mendesImage from "@/assets/players/CPV-cape-verde/headshots/ryan-mendes.png";
-import alDawsariImage from "@/assets/players/SAU-saudi-arabia/headshots/salem-al-dawsari.png";
-import mctominayImage from "@/assets/players/SCO-scotland/headshots/scott-mctominay.png";
-import maneImage from "@/assets/players/SEN-senegal/headshots/sadio-mane.png";
-import vlahovicImage from "@/assets/players/SRB-serbia/headshots/dusan-vlahovic.png";
-import xhakaImage from "@/assets/players/SUI-switzerland/headshots/granit-xhaka.png";
-import isakImage from "@/assets/players/SWE-sweden/headshots/alexander-isak.png";
-import gulerImage from "@/assets/players/TUR-turkey/headshots/arda-guler.png";
-import valverdeImage from "@/assets/players/URU-uruguay/headshots/federico-valverde.png";
-import pulisicImage from "@/assets/players/USA-united-states/headshots/christian-pulisic.png";
-import wissaImage from "@/assets/players/COD-dr-congo/headshots/yoane-wissa.png";
+import carrasquillaImage from "@/assets/players/PAN-panama/headshots/adalberto-carrasquilla.webp";
+import afifImage from "@/assets/players/QAT-qatar/headshots/akram-afif.webp";
+import messiImage from "@/assets/players/ARG-argentina/headshots/lionel-messi.webp";
+import husseinImage from "@/assets/players/IRQ-iraq/headshots/aymen-hussein.webp";
+import deBruyneImage from "@/assets/players/BEL-belgium/headshots/kevin-de-bruyne.webp";
+import viniciusImage from "@/assets/players/BRA-brazil/headshots/vinicius-junior.webp";
+import daviesImage from "@/assets/players/CAN-canada/headshots/alphonso-davies.webp";
+import woodImage from "@/assets/players/NZL-new-zealand/headshots/chris-wood.webp";
+import alabaImage from "@/assets/players/AUT-austria/headshots/david-alaba.webp";
+import nazonImage from "@/assets/players/HAI-haiti/headshots/duckens-nazon.webp";
+import dzekoImage from "@/assets/players/BIH-bosnia-and-herzegovina/headshots/edin-dzeko.webp";
+import shomurodovImage from "@/assets/players/UZB-uzbekistan/headshots/eldor-shomurodov.webp";
+import skhiriImage from "@/assets/players/TUN-tunisia/headshots/ellyes-skhiri.webp";
+import kessieImage from "@/assets/players/CIV-ivory-coast/headshots/franck-kessie.webp";
+import bacunaImage from "@/assets/players/CUW-curacao/headshots/juninho-bacuna.webp";
+import ryanImage from "@/assets/players/AUS-australia/headshots/mathew-ryan.webp";
+import diazImage from "@/assets/players/COL-colombia/headshots/luis-diaz.webp";
+import modricImage from "@/assets/players/CRO-croatia/headshots/luka-modric.webp";
+import hojlundImage from "@/assets/players/DEN-denmark/headshots/rasmus-hojlund.webp";
+import caicedoImage from "@/assets/players/ECU-ecuador/headshots/moises-caicedo.webp";
+import salahImage from "@/assets/players/EGY-egypt/headshots/mohamed-salah.webp";
+import bellinghamImage from "@/assets/players/ENG-england/headshots/jude-bellingham.webp";
+import yamalImage from "@/assets/players/ESP-spain/headshots/lamine-yamal.webp";
+import mbappeImage from "@/assets/players/FRA-france/headshots/kylian-mbappe.webp";
+import musialaImage from "@/assets/players/GER-germany/headshots/jamal-musiala.webp";
+import mitomaImage from "@/assets/players/JPN-japan/headshots/kaoru-mitoma.webp";
+import sonImage from "@/assets/players/KOR-south-korea/headshots/son-heung-min.webp";
+import hakimiImage from "@/assets/players/MAR-morocco/headshots/achraf-hakimi.webp";
+import gimenezImage from "@/assets/players/MEX-mexico/headshots/santiago-gimenez.webp";
+import taremiImage from "@/assets/players/IRN-iran/headshots/mehdi-taremi.webp";
+import almironImage from "@/assets/players/PAR-paraguay/headshots/miguel-almiron.webp";
+import kudusImage from "@/assets/players/GHA-ghana/headshots/mohammed-kudus.webp";
+import taamariImage from "@/assets/players/JOR-jordan/headshots/musa-al-taamari.webp";
+import vanDijkImage from "@/assets/players/NED-netherlands/headshots/virgil-van-dijk.webp";
+import haalandImage from "@/assets/players/NOR-norway/headshots/erling-haaland.webp";
+import lewandowskiImage from "@/assets/players/POL-poland/headshots/robert-lewandowski.webp";
+import ronaldoImage from "@/assets/players/POR-portugal/headshots/cristiano-ronaldo.webp";
+import schickImage from "@/assets/players/CZE-czech-republic/headshots/patrik-schick.webp";
+import tauImage from "@/assets/players/RSA-south-africa/headshots/percy-tau.webp";
+import mahrezImage from "@/assets/players/DZA-algeria/headshots/riyad-mahrez.webp";
+import mendesImage from "@/assets/players/CPV-cape-verde/headshots/ryan-mendes.webp";
+import alDawsariImage from "@/assets/players/SAU-saudi-arabia/headshots/salem-al-dawsari.webp";
+import mctominayImage from "@/assets/players/SCO-scotland/headshots/scott-mctominay.webp";
+import maneImage from "@/assets/players/SEN-senegal/headshots/sadio-mane.webp";
+import vlahovicImage from "@/assets/players/SRB-serbia/headshots/dusan-vlahovic.webp";
+import xhakaImage from "@/assets/players/SUI-switzerland/headshots/granit-xhaka.webp";
+import isakImage from "@/assets/players/SWE-sweden/headshots/alexander-isak.webp";
+import gulerImage from "@/assets/players/TUR-turkey/headshots/arda-guler.webp";
+import valverdeImage from "@/assets/players/URU-uruguay/headshots/federico-valverde.webp";
+import pulisicImage from "@/assets/players/USA-united-states/headshots/christian-pulisic.webp";
+import wissaImage from "@/assets/players/COD-dr-congo/headshots/yoane-wissa.webp";
 import { formatTime } from "@/lib/format";
 import { formatStageLabel } from "@/lib/stage";
 import { parseTeams } from "@/lib/teams";
+import { getVenueBannerImage } from "@/lib/venue-assets";
 import type { MatchDetail } from "@/types/match";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -223,6 +224,7 @@ export function MatchHero({ detail }: { detail: MatchDetail }) {
   const awayAccent = getAccent(detail.awayTeamCode);
   const homePlayer = PLAYER_ASSETS[detail.homeTeamCode];
   const awayPlayer = PLAYER_ASSETS[detail.awayTeamCode];
+  const venueBannerImage = getVenueBannerImage(detail.match);
 
   return (
     <motion.div
@@ -232,6 +234,16 @@ export function MatchHero({ detail }: { detail: MatchDetail }) {
       className="hero-card relative mt-0 min-h-[280px] overflow-visible rounded-[2rem] shadow-none sm:mt-14 sm:min-h-[380px] lg:min-h-[360px]"
     >
       <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">
+        {venueBannerImage && (
+          <img
+            src={venueBannerImage}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 h-full w-full object-cover opacity-55 saturate-[1.08]"
+            loading="eager"
+          />
+        )}
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,3,3,0.20),rgba(2,3,3,0.70)),radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.08),transparent_52%)]" />
         <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.07),rgba(255,255,255,0.015)_34%,rgba(0,0,0,0.24))]" />
         <div className="absolute inset-0 opacity-[0.18] [background-image:linear-gradient(rgba(255,255,255,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.09)_1px,transparent_1px)] [background-size:42px_42px]" />
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-volt/35 to-transparent" />

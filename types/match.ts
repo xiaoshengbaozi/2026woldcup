@@ -7,6 +7,7 @@ export type Team = {
 
 export type Match = {
   uid: string;
+  apiFixtureId?: number;
   summary: string;
   description: string;
   location: string;
@@ -19,6 +20,16 @@ export type Match = {
   } | null;
   stage: string;
   weather: string;
+  homeTeam?: MatchTeamMeta;
+  awayTeam?: MatchTeamMeta;
+};
+
+export type MatchTeamMeta = {
+  id: number | null;
+  name: string;
+  englishName: string;
+  code: string;
+  logo: string;
 };
 
 export type DetailRow = {
@@ -49,13 +60,18 @@ export type PlayerPosition =
   | "GK" | "CB" | "LB" | "RB"
   | "CDM" | "CM" | "CAM" | "LM" | "RM"
   | "LW" | "RW" | "LF" | "RF"
+  | "LWB" | "RWB"
   | "ST" | "CF";
 
 export type LineupPlayer = {
   id: string;
   name: string;
-  number: number;
+  nameEn?: string;
+  nameCn?: string;
+  number: number | null;
   position: PlayerPosition;
+  positionCn?: string;
+  photo?: string;
   isStarter: boolean;
   country: string;
   club: string;
@@ -69,6 +85,8 @@ export type LineupPlayer = {
 export type MatchLineup = {
   formation: string;
   players: LineupPlayer[];
+  listType?: "confirmed_lineup" | "squad_pool";
+  officialWorldCupSquad?: boolean;
 };
 
 export type MatchEventType =

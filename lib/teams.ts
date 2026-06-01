@@ -20,7 +20,12 @@ const teamFlagCodes = new Map<string, string>([
   ["德国", "de"],
   ["库拉索", "cw"],
   ["澳大利亚", "au"],
+  ["伊拉克", "iq"],
+  ["约旦", "jo"],
   ["埃及", "eg"],
+  ["西班牙", "es"],
+  ["比利时", "be"],
+  ["沙特阿拉伯", "sa"],
   ["法国", "fr"],
   ["哥伦比亚", "co"],
   ["意大利", "it"],
@@ -44,11 +49,16 @@ const teamFlagCodes = new Map<string, string>([
   ["科特迪瓦", "ci"],
   ["加纳", "gh"],
   ["巴拿马", "pa"],
-  ["佛得角", "cv"]
+  ["佛得角", "cv"],
+  ["刚果民主共和国", "cd"],
+  ["瑞典", "se"],
+  ["乌兹别克斯坦", "uz"]
 ]);
 
 export function parseTeams(summary: string) {
-  const clean = summary.replace(/^⚽\s*/, "").replace(/\s*\([^)]+\)\s*$/, "");
+  const clean = summary
+    .replace(/^⚽\s*/, "")
+    .replace(/\s*(?:\([^)]+\)|（[^）]+）)\s*$/, "");
   const parts = clean.split(/\s+vs\s+/i);
 
   return {
