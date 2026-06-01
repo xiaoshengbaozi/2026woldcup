@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import {
   Bell,
@@ -17,29 +18,10 @@ import {
   Users,
 } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { getPlayerAvatar, preferenceMatches, preferencePlayers, preferenceTeams } from "@/lib/user-preferences";
 import { userApi, type PublicUser, type UserHomePayload } from "@/lib/user-system";
 
-const featuredTeams = [
-  { id: "ARG", name: "阿根廷", region: "CONMEBOL" },
-  { id: "BRA", name: "巴西", region: "CONMEBOL" },
-  { id: "FRA", name: "法国", region: "UEFA" },
-  { id: "ENG", name: "英格兰", region: "UEFA" },
-];
-
-const featuredPlayers = [
-  { id: "lionel-messi", name: "Lionel Messi", team: "阿根廷", position: "Forward" },
-  { id: "kylian-mbappe", name: "Kylian Mbappe", team: "法国", position: "Forward" },
-  { id: "jude-bellingham", name: "Jude Bellingham", team: "英格兰", position: "Midfielder" },
-  { id: "vinicius-junior", name: "Vinicius Junior", team: "巴西", position: "Forward" },
-];
-
-const sampleMatch = {
-  id: "opening-match",
-  matchId: "opening-match",
-  title: "揭幕战 · 2026 世界杯",
-  stage: "小组赛",
-  startsAt: "2026-06-11T19:00:00-05:00",
-};
+const sampleMatch = preferenceMatches[0];
 
 export default function MePage() {
   const [home, setHome] = useState<UserHomePayload | null>(null);
@@ -48,6 +30,10 @@ export default function MePage() {
   const [email, setEmail] = useState("demo@worldcup.local");
   const [password, setPassword] = useState("worldcup2026");
   const [displayName, setDisplayName] = useState("World Cup Pilot");
+  const [avatarPlayerId, setAvatarPlayerId] = useState(preferencePlayers[0].id);
+  const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>(["ARG"]);
+  const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>(["lionel-messi"]);
+  const [selectedMatchIds, setSelectedMatchIds] = useState<string[]>(["opening-match"]);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
 
@@ -72,10 +58,24 @@ export default function MePage() {
     setBusy(mode);
     setError("");
 
+    const followedTeams = preferenceTeams.filter((team) => selectedTeamIds.includes(team.id));
+    const followedPlayers = preferencePlayers
+      .filter((player) => selectedPlayerIds.includes(player.id))
+      .map(({ avatar, ...player }) => player);
+    const favoriteMatches = preferenceMatches.filter((match) => selectedMatchIds.includes(match.id));
+
     try {
       await userApi<{ user: PublicUser }>(mode === "register" ? "/api/auth/register" : "/api/auth/login", {
         method: "POST",
-        body: JSON.stringify({ email, password, displayName }),
+        body: JSON.stringify({
+          email,
+          password,
+          displayName,
+          avatarPlayerId,
+          followedTeams,
+          followedPlayers,
+          favoriteMatches,
+        }),
       });
       await loadHome();
     } catch (err) {
@@ -119,19 +119,28 @@ export default function MePage() {
         >
           <div className="relative z-10 flex flex-col gap-7">
             <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <div className="glass-chip inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold uppercase text-volt">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  MY WORLD CUP
+              <div className="flex items-start gap-4">
+                <div className="relative mt-1 h-16 w-16 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-volt/35">
+                  {home ? (
+                    <Image src={getPlayerAvatar(home.user.profile.avatarPlayerId)} alt={home.user.profile.displayName} fill sizes="64px" className="object-cover" />
+                  ) : (
+                    <Image src={getPlayerAvatar(avatarPlayerId)} alt="头像预览" fill sizes="64px" className="object-cover" />
+                  )}
                 </div>
-                <h1 className="mt-5 max-w-3xl text-4xl font-semibold leading-tight text-white sm:text-5xl">
-                  我的世界杯主页
-                </h1>
-                <p className="mt-4 max-w-2xl text-base leading-7 text-white/58">
-                  {home
-                    ? `${home.user.profile.displayName} 的关注、提醒、预测和观看记录。`
-                    : "登录后同步关注、提醒、预测和订阅。"}
-                </p>
+                <div>
+                  <div className="glass-chip inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold uppercase text-volt">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    MY WORLD CUP
+                  </div>
+                  <h1 className="mt-5 max-w-3xl text-4xl font-semibold leading-tight text-white sm:text-5xl">
+                    我的世界杯主页
+                  </h1>
+                  <p className="mt-4 max-w-2xl text-base leading-7 text-white/58">
+                    {home
+                      ? `${home.user.profile.displayName} 的关注、提醒、预测和观看记录。`
+                      : "登录后同步关注、提醒、预测和订阅。"}
+                  </p>
+                </div>
               </div>
 
               {home && (
@@ -155,6 +164,10 @@ export default function MePage() {
                 email={email}
                 password={password}
                 displayName={displayName}
+                avatarPlayerId={avatarPlayerId}
+                selectedTeamIds={selectedTeamIds}
+                selectedPlayerIds={selectedPlayerIds}
+                selectedMatchIds={selectedMatchIds}
                 busy={busy}
                 error={error}
                 loading={loading}
@@ -162,6 +175,10 @@ export default function MePage() {
                 onEmailChange={setEmail}
                 onPasswordChange={setPassword}
                 onDisplayNameChange={setDisplayName}
+                onAvatarChange={setAvatarPlayerId}
+                onTeamToggle={(id) => setSelectedTeamIds((value) => toggleValue(value, id))}
+                onPlayerToggle={(id) => setSelectedPlayerIds((value) => toggleValue(value, id))}
+                onMatchToggle={(id) => setSelectedMatchIds((value) => toggleValue(value, id))}
                 onSubmit={submitAuth}
               />
             )}
@@ -198,6 +215,10 @@ function AuthPanel(props: {
   email: string;
   password: string;
   displayName: string;
+  avatarPlayerId: string;
+  selectedTeamIds: string[];
+  selectedPlayerIds: string[];
+  selectedMatchIds: string[];
   busy: string;
   error: string;
   loading: boolean;
@@ -205,6 +226,10 @@ function AuthPanel(props: {
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
   onDisplayNameChange: (value: string) => void;
+  onAvatarChange: (value: string) => void;
+  onTeamToggle: (id: string) => void;
+  onPlayerToggle: (id: string) => void;
+  onMatchToggle: (id: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
   return (
@@ -227,14 +252,46 @@ function AuthPanel(props: {
       </div>
 
       {props.mode === "register" && (
-        <label className="sm:col-span-2 grid gap-2 text-sm text-white/52">
-          昵称
-          <input
-            value={props.displayName}
-            onChange={(event) => props.onDisplayNameChange(event.target.value)}
-            className="h-12 rounded-2xl bg-black/24 px-4 text-white outline-none ring-1 ring-white/10 transition focus:ring-volt/45"
-          />
-        </label>
+        <div className="sm:col-span-2 grid gap-4">
+          <label className="grid gap-2 text-sm text-white/52">
+            昵称
+            <input
+              value={props.displayName}
+              onChange={(event) => props.onDisplayNameChange(event.target.value)}
+              className="h-12 rounded-2xl bg-black/24 px-4 text-white outline-none ring-1 ring-white/10 transition focus:ring-volt/45"
+            />
+          </label>
+
+          <PreferenceSection title="头像">
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">
+              {preferencePlayers.map((player) => (
+                <button
+                  key={player.id}
+                  type="button"
+                  onClick={() => props.onAvatarChange(player.id)}
+                  className={`relative aspect-square overflow-hidden rounded-full bg-white/[0.04] ring-2 transition ${
+                    props.avatarPlayerId === player.id ? "ring-volt shadow-[0_0_24px_rgba(216,255,62,.22)]" : "ring-white/10 hover:ring-white/28"
+                  }`}
+                  title={player.name}
+                >
+                  <Image src={player.avatar} alt={player.name} fill sizes="96px" className="object-cover" />
+                </button>
+              ))}
+            </div>
+          </PreferenceSection>
+
+          <PreferenceSection title="关注球队">
+            <CheckboxGrid items={preferenceTeams} selected={props.selectedTeamIds} onToggle={props.onTeamToggle} />
+          </PreferenceSection>
+
+          <PreferenceSection title="关注球员">
+            <CheckboxGrid items={preferencePlayers} selected={props.selectedPlayerIds} onToggle={props.onPlayerToggle} />
+          </PreferenceSection>
+
+          <PreferenceSection title="收藏比赛">
+            <CheckboxGrid items={preferenceMatches} selected={props.selectedMatchIds} onToggle={props.onMatchToggle} />
+          </PreferenceSection>
+        </div>
       )}
 
       <label className="grid gap-2 text-sm text-white/52">
@@ -272,6 +329,52 @@ function AuthPanel(props: {
   );
 }
 
+function PreferenceSection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <fieldset className="grid gap-3 rounded-[1.35rem] bg-black/18 p-3 ring-1 ring-white/10">
+      <legend className="px-1 text-xs font-semibold uppercase text-white/46">{title}</legend>
+      {children}
+    </fieldset>
+  );
+}
+
+function CheckboxGrid({
+  items,
+  selected,
+  onToggle,
+}: {
+  items: Array<{ id: string; name?: string; title?: string; team?: string; stage?: string }>;
+  selected: string[];
+  onToggle: (id: string) => void;
+}) {
+  return (
+    <div className="grid gap-2 sm:grid-cols-2">
+      {items.map((item) => {
+        const checked = selected.includes(item.id);
+        return (
+          <label
+            key={item.id}
+            className={`flex min-h-11 items-center justify-between gap-3 rounded-2xl px-3 text-sm transition ${
+              checked ? "bg-volt/12 text-white ring-1 ring-volt/30" : "bg-white/[0.035] text-white/62 ring-1 ring-white/8"
+            }`}
+          >
+            <span>
+              <span className="block font-semibold">{item.name || item.title}</span>
+              {(item.team || item.stage) && <span className="mt-0.5 block text-xs text-white/36">{item.team || item.stage}</span>}
+            </span>
+            <input
+              type="checkbox"
+              checked={checked}
+              onChange={() => onToggle(item.id)}
+              className="h-4 w-4 accent-[#d8ff3e]"
+            />
+          </label>
+        );
+      })}
+    </div>
+  );
+}
+
 function UserCommandCenter({
   home,
   busy,
@@ -282,11 +385,11 @@ function UserCommandCenter({
   onMutate: (path: string, body: unknown, label: string) => Promise<void>;
 }) {
   const nextTeam = useMemo(
-    () => featuredTeams.find((team) => !home.user.followedTeams.some((item) => item.id === team.id)) ?? featuredTeams[0],
+    () => preferenceTeams.find((team) => !home.user.followedTeams.some((item) => item.id === team.id)) ?? preferenceTeams[0],
     [home.user.followedTeams]
   );
   const nextPlayer = useMemo(
-    () => featuredPlayers.find((player) => !home.user.followedPlayers.some((item) => item.id === player.id)) ?? featuredPlayers[0],
+    () => preferencePlayers.find((player) => !home.user.followedPlayers.some((item) => item.id === player.id)) ?? preferencePlayers[0],
     [home.user.followedPlayers]
   );
 
@@ -301,7 +404,10 @@ function UserCommandCenter({
       label: `关注 ${nextPlayer.name}`,
       icon: Star,
       busyKey: "player",
-      onClick: () => onMutate("/api/me/follow/player", nextPlayer, "player"),
+      onClick: () => {
+        const { avatar, ...player } = nextPlayer;
+        return onMutate("/api/me/follow/player", player, "player");
+      },
     },
     {
       label: "收藏揭幕战",
@@ -407,4 +513,8 @@ function SignalRail({ home, loading }: { home: UserHomePayload | null; loading: 
       </div>
     </div>
   );
+}
+
+function toggleValue(values: string[], id: string) {
+  return values.includes(id) ? values.filter((value) => value !== id) : [...values, id];
 }

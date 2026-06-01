@@ -24,9 +24,11 @@ export class UserSystem {
           email: String(body.email ?? ""),
           password: String(body.password ?? ""),
           displayName: typeof body.displayName === "string" ? body.displayName : undefined,
+          avatarPlayerId: typeof body.avatarPlayerId === "string" ? body.avatarPlayerId : undefined,
         });
+        applyRegistrationPreferences(this.store, user.id, body);
         this.issueSession(res, user);
-        sendJson(res, { user: toPublicUser(user) }, 201);
+        sendJson(res, { user: toPublicUser(this.store.getUserById(user.id) ?? user) }, 201);
         return true;
       }
 
@@ -354,6 +356,30 @@ function normalizeNamedEntity(body: Record<string, unknown>) {
   const name = String(body.name || body.id || "").trim();
   if (!id || !name) throw Object.assign(new Error("missing_entity"), { statusCode: 400 });
   return { ...body, id, name } as { id: string; name: string };
+}
+
+function applyRegistrationPreferences(store: UserStore, userId: string, body: Record<string, unknown>) {
+  const teams = Array.isArray(body.followedTeams) ? body.followedTeams : [];
+  const players = Array.isArray(body.followedPlayers) ? body.followedPlayers : [];
+  const matches = Array.isArray(body.favoriteMatches) ? body.favoriteMatches : [];
+
+  for (const item of teams) {
+    if (item && typeof item === "object") {
+      store.upsertTeam(userId, normalizeNamedEntity(item as Record<string, unknown>));
+    }
+  }
+
+  for (const item of players) {
+    if (item && typeof item === "object") {
+      store.upsertPlayer(userId, normalizeNamedEntity(item as Record<string, unknown>));
+    }
+  }
+
+  for (const item of matches) {
+    if (item && typeof item === "object") {
+      store.upsertFavoriteMatch(userId, normalizeMatch(item as Record<string, unknown>));
+    }
+  }
 }
 
 function normalizeMatch(body: Record<string, unknown>) {

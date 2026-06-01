@@ -1,19 +1,46 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BarChart3, Calendar, Home, Newspaper, UserRound } from "lucide-react";
+import { getPlayerAvatar } from "@/lib/user-preferences";
+import { userApi, type UserHomePayload } from "@/lib/user-system";
 
 const navItems = [
   { label: "首页", href: "/", icon: Home },
   { label: "新闻", href: "/news", icon: Newspaper },
   { label: "赛程", href: "/matches", icon: Calendar },
   { label: "数据", href: "/data", icon: BarChart3 },
-  { label: "我的", href: "/me", icon: UserRound },
 ];
 
 export function NavBar() {
   const pathname = usePathname();
+  const [avatarPlayerId, setAvatarPlayerId] = useState<string | null>(null);
+  const [isSignedIn, setIsSignedIn] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    userApi<UserHomePayload>("/api/me/home", { cache: "no-store" })
+      .then((payload) => {
+        if (!active) return;
+        setAvatarPlayerId(payload.user.profile.avatarPlayerId ?? null);
+        setIsSignedIn(true);
+      })
+      .catch(() => {
+        if (!active) return;
+        setAvatarPlayerId(null);
+        setIsSignedIn(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const avatar = getPlayerAvatar(avatarPlayerId);
+  const meActive = pathname.startsWith("/me");
 
   return (
     <nav className="hero-shell hidden min-h-20 items-center justify-between gap-4 px-5 py-4 sm:px-7 lg:flex" style={{ borderRadius: "1.2rem" }}>
@@ -58,12 +85,19 @@ export function NavBar() {
         })}
       </div>
 
-      <div className="flex items-center gap-2">
-        <div className="flex h-11 items-center gap-2 rounded-full bg-volt/10 px-5 text-sm font-semibold uppercase tracking-[0.12em] text-volt shadow-[0_0_28px_rgba(216,255,62,.22)] ring-1 ring-volt/35">
-          <span className="h-2 w-2 rounded-full bg-volt shadow-[0_0_14px_rgba(216,255,62,.9)]" />
-          赛程同步
-        </div>
-      </div>
+      <Link
+        href="/me"
+        aria-label="我的世界杯"
+        className={`relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-white/[0.06] shadow-[0_0_28px_rgba(216,255,62,.14)] ring-1 transition ${
+          meActive ? "ring-volt/70" : "ring-white/12 hover:ring-volt/45"
+        }`}
+      >
+        {isSignedIn ? (
+          <Image src={avatar} alt="我的世界杯" fill sizes="48px" className="object-cover" />
+        ) : (
+          <UserRound className="h-5 w-5 text-volt" />
+        )}
+      </Link>
     </nav>
   );
 }

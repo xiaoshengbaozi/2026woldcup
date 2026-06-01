@@ -6,6 +6,7 @@ import type { Pool } from "pg";
 export interface UserProfile {
   displayName: string;
   homeTeamId: string | null;
+  avatarPlayerId?: string | null;
   timezone: string;
   language: "zh-CN" | "en-US";
 }
@@ -135,7 +136,7 @@ export class UserStore {
     return [...this.data.users];
   }
 
-  createUser(input: { email: string; password: string; displayName?: string }) {
+  createUser(input: { email: string; password: string; displayName?: string; avatarPlayerId?: string }) {
     const email = normalizeEmail(input.email);
     if (!email || !input.password || input.password.length < 8) {
       throw createUserStoreError("invalid_credentials", 400);
@@ -158,6 +159,7 @@ export class UserStore {
       profile: {
         displayName: input.displayName?.trim() || email.split("@")[0],
         homeTeamId: null,
+        avatarPlayerId: input.avatarPlayerId || "lionel-messi",
         timezone: "Asia/Shanghai",
         language: "zh-CN",
       },
@@ -194,6 +196,7 @@ export class UserStore {
       ...user.profile,
       ...profile,
       displayName: profile.displayName?.trim() || user.profile.displayName,
+      avatarPlayerId: profile.avatarPlayerId ?? user.profile.avatarPlayerId ?? "lionel-messi",
       language: profile.language === "en-US" ? "en-US" : "zh-CN",
     };
     this.touch(user);
@@ -460,6 +463,10 @@ function normalizeStoredUser(user: WorldCupUser) {
   return {
     ...user,
     disabledAt: user.disabledAt ?? null,
+    profile: {
+      ...user.profile,
+      avatarPlayerId: user.profile?.avatarPlayerId ?? "lionel-messi",
+    },
     followedTeams: user.followedTeams ?? [],
     followedPlayers: user.followedPlayers ?? [],
     favoriteMatches: user.favoriteMatches ?? [],

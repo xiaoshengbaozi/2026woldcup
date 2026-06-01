@@ -11,6 +11,7 @@ export interface PublicUser {
   profile: {
     displayName: string;
     homeTeamId: string | null;
+    avatarPlayerId?: string | null;
     timezone: string;
     language: "zh-CN" | "en-US";
   };
