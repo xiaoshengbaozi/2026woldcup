@@ -1,5 +1,5 @@
 export function renderAdminPageHtml() {
-  return String.raw`<!doctype html>
+  return `<!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
