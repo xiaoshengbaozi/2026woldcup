@@ -37,8 +37,17 @@ export class UserSystem {
           sendJson(res, { error: "invalid_email_or_password" }, 401);
           return true;
         }
+        if (user.disabledAt) {
+          sendJson(res, { error: "user_disabled" }, 403);
+          return true;
+        }
         this.issueSession(res, user);
         sendJson(res, { user: toPublicUser(user) });
+        return true;
+      }
+
+      if (url.pathname.startsWith("/api/admin/users")) {
+        await this.handleAdminRequest(req, res, url);
         return true;
       }
 
@@ -189,10 +198,132 @@ export class UserSystem {
       path: "/",
     }));
   }
+
+  private async handleAdminRequest(req: http.IncomingMessage, res: http.ServerResponse, url: URL) {
+    if (req.method === "GET" && url.pathname === "/api/admin/users") {
+      sendJson(res, buildAdminUsersPayload(this.store.listUsers()));
+      return;
+    }
+
+    const parts = url.pathname.split("/").filter(Boolean);
+    const userId = parts[3];
+    const action = parts[4];
+    const user = userId ? this.store.getUserById(userId) : null;
+    if (!user) {
+      sendJson(res, { error: "user_not_found" }, 404);
+      return;
+    }
+
+    if (req.method === "GET" && parts.length === 4) {
+      sendJson(res, buildAdminUserDetail(user));
+      return;
+    }
+
+    if (req.method === "POST" && action === "disable") {
+      sendJson(res, buildAdminUserDetail(this.store.setUserDisabled(user.id, true)));
+      return;
+    }
+
+    if (req.method === "POST" && action === "enable") {
+      sendJson(res, buildAdminUserDetail(this.store.setUserDisabled(user.id, false)));
+      return;
+    }
+
+    if (req.method === "POST" && action === "reset-reminders") {
+      sendJson(res, buildAdminUserDetail(this.store.resetReminderQueue(user.id)));
+      return;
+    }
+
+    if (req.method === "POST" && action === "clean-anomalies") {
+      const result = this.store.cleanUserAnomalies(user.id);
+      sendJson(res, { ...buildAdminUserDetail(result.user), removed: result.removed });
+      return;
+    }
+
+    sendJson(res, { error: "admin_action_not_found" }, 404);
+  }
 }
 
 export function createUserSystem() {
   return new UserSystem();
+}
+
+function buildAdminUsersPayload(users: WorldCupUser[]) {
+  const activeUsers = users.filter((user) => !user.disabledAt);
+  const reminders = users.flatMap((user) => user.reminders);
+  const notifications = users.flatMap((user) => user.notifications);
+  const predictions = users.flatMap((user) => user.predictions);
+  const subscriptions = users.flatMap((user) => user.newsSubscriptions);
+  const now = Date.now();
+
+  return {
+    timestamp: now,
+    summary: {
+      totalUsers: users.length,
+      activeUsers: activeUsers.length,
+      disabledUsers: users.length - activeUsers.length,
+      followedTeams: users.reduce((total, user) => total + user.followedTeams.length, 0),
+      favoriteMatches: users.reduce((total, user) => total + user.favoriteMatches.length, 0),
+      predictions: predictions.length,
+      enabledReminders: reminders.filter((item) => item.enabled).length,
+      queuedReminders: reminders.filter((item) => item.lastQueuedAt).length,
+      unreadNotifications: notifications.filter((item) => !item.read).length,
+      activeNewsSubscriptions: subscriptions.filter((item) => item.enabled).length,
+      active24h: users.filter((user) => now - user.updatedAt < 24 * 60 * 60 * 1000).length,
+    },
+    users: users
+      .map((user) => buildAdminUserListItem(user))
+      .sort((a, b) => b.updatedAt - a.updatedAt),
+  };
+}
+
+function buildAdminUserDetail(user: WorldCupUser) {
+  return {
+    user: toPublicUser(user),
+    summary: buildAdminUserListItem(user),
+    reminderStatus: {
+      enabled: user.reminders.filter((item) => item.enabled).length,
+      queued: user.reminders.filter((item) => item.lastQueuedAt).length,
+      missingStartTime: user.reminders.filter((item) => item.enabled && !item.startsAt).length,
+    },
+    newsStats: {
+      total: user.newsSubscriptions.length,
+      enabled: user.newsSubscriptions.filter((item) => item.enabled).length,
+      disabled: user.newsSubscriptions.filter((item) => !item.enabled).length,
+    },
+    activity: {
+      lastUpdatedAt: user.updatedAt,
+      createdAt: user.createdAt,
+      records:
+        user.followedTeams.length +
+        user.followedPlayers.length +
+        user.favoriteMatches.length +
+        user.reminders.length +
+        user.predictions.length +
+        user.watchHistory.length +
+        user.newsSubscriptions.length,
+    },
+  };
+}
+
+function buildAdminUserListItem(user: WorldCupUser) {
+  return {
+    id: user.id,
+    email: user.email,
+    displayName: user.profile.displayName,
+    disabledAt: user.disabledAt ?? null,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+    followedTeams: user.followedTeams.length,
+    followedPlayers: user.followedPlayers.length,
+    favoriteMatches: user.favoriteMatches.length,
+    reminders: user.reminders.length,
+    queuedReminders: user.reminders.filter((item) => item.lastQueuedAt).length,
+    predictions: user.predictions.length,
+    watchRecords: user.watchHistory.length,
+    newsSubscriptions: user.newsSubscriptions.filter((item) => item.enabled).length,
+    unreadNotifications: user.notifications.filter((item) => !item.read).length,
+  };
 }
 
 function buildHomePayload(user: WorldCupUser) {

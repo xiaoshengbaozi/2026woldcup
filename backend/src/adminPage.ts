@@ -95,6 +95,19 @@ export function renderAdminPageHtml() {
     .prob { color: var(--volt); font-weight: 720; }
     .muted { color: var(--muted); }
     .endpoints { display: grid; gap: 10px; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; }
+    .action-btn {
+      min-height: 34px; border: 1px solid rgba(255,255,255,.1); border-radius: 999px;
+      background: rgba(255,255,255,.06); color: rgba(255,255,255,.78); padding: 0 12px;
+      font: inherit; font-size: 12px; cursor: pointer; transition: .2s ease;
+    }
+    .action-btn:hover { border-color: rgba(216,255,62,.36); color: white; background: rgba(216,255,62,.1); }
+    .action-btn.danger:hover { border-color: rgba(255,91,110,.42); background: rgba(255,91,110,.12); }
+    .split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, .8fr); gap: 14px; }
+    .record-list { max-height: 560px; overflow: auto; padding-right: 4px; }
+    .detail-block { border-radius: 22px; background: rgba(0,0,0,.2); border: 1px solid rgba(255,255,255,.075); padding: 14px; }
+    .detail-block h3 { margin-bottom: 8px; }
+    .detail-block ul { margin: 0; padding-left: 18px; color: var(--muted); }
     code {
       display: block; padding: 12px 14px; border-radius: 16px; background: rgba(0,0,0,.32);
       border: 1px solid rgba(255,255,255,.08); color: rgba(255,255,255,.78); overflow: auto;
@@ -104,6 +117,7 @@ export function renderAdminPageHtml() {
       .grid { grid-template-columns: 1fr; }
       .wide { grid-column: span 1; }
       .mini-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .split { grid-template-columns: 1fr; }
       .match-row { grid-template-columns: 1fr auto; }
       .match-row .score { order: 3; text-align: left; }
     }
@@ -124,6 +138,7 @@ export function renderAdminPageHtml() {
       <button class="tab active" data-tab="overview" type="button">总览</button>
       <button class="tab" data-tab="live" type="button">比赛实况</button>
       <button class="tab" data-tab="news" type="button">新闻</button>
+      <button class="tab" data-tab="users" type="button">用户系统</button>
       <button class="tab" data-tab="endpoints" type="button">接口清单</button>
     </nav>
 
@@ -220,6 +235,45 @@ export function renderAdminPageHtml() {
           <h2>最新新闻</h2>
           <div class="stack" id="newsItems">
             <div class="status-row"><i class="dot warn"></i><div><h3>正在加载</h3><p>读取新闻 API 数据</p></div><span class="badge">NEWS</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="users" class="view">
+      <div class="grid">
+        <div class="card metric"><span>用户总数</span><strong id="adminUserCount">--</strong></div>
+        <div class="card metric"><span>活跃用户</span><strong id="adminActiveUsers">--</strong></div>
+        <div class="card metric"><span>启用提醒</span><strong id="adminEnabledReminders">--</strong></div>
+        <div class="card metric"><span>未读通知</span><strong id="adminUnreadNotifications">--</strong></div>
+
+        <div class="card full">
+          <h2>用户系统</h2>
+          <div class="mini-grid">
+            <div class="mini"><span>关注球队</span><strong id="adminFollowedTeams">--</strong></div>
+            <div class="mini"><span>收藏比赛</span><strong id="adminFavoriteMatches">--</strong></div>
+            <div class="mini"><span>预测记录</span><strong id="adminPredictionCount">--</strong></div>
+            <div class="mini"><span>新闻订阅</span><strong id="adminNewsSubscriptions">--</strong></div>
+          </div>
+        </div>
+
+        <div class="card full">
+          <div class="split">
+            <div>
+              <h2>用户列表</h2>
+              <div class="record-list">
+                <table>
+                  <thead><tr><th>用户</th><th>关注</th><th>收藏</th><th>预测</th><th>提醒</th><th>状态</th></tr></thead>
+                  <tbody id="adminUserRows"><tr><td colspan="6" class="muted">正在加载...</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+            <div>
+              <h2>用户详情</h2>
+              <div class="stack" id="adminUserDetail">
+                <div class="status-row"><i class="dot warn"></i><div><h3>未选择用户</h3><p>点击用户行查看关注、收藏、预测、提醒和订阅详情。</p></div><span class="badge">DETAIL</span></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -476,8 +530,140 @@ export function renderAdminPageHtml() {
       }
     }
 
+    let selectedAdminUserId = null;
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll("\\"", "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function adminTime(value) {
+      if (!value) return "--";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "--";
+      return new Intl.DateTimeFormat("zh-CN", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }).format(date);
+    }
+
+    async function refreshUsers() {
+      try {
+        const res = await fetch("/api/admin/users", { cache: "no-store" });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "admin_users_failed");
+
+        const summary = data.summary || {};
+        byId("adminUserCount").textContent = summary.totalUsers ?? 0;
+        byId("adminActiveUsers").textContent = summary.active24h ?? 0;
+        byId("adminEnabledReminders").textContent = summary.enabledReminders ?? 0;
+        byId("adminUnreadNotifications").textContent = summary.unreadNotifications ?? 0;
+        byId("adminFollowedTeams").textContent = summary.followedTeams ?? 0;
+        byId("adminFavoriteMatches").textContent = summary.favoriteMatches ?? 0;
+        byId("adminPredictionCount").textContent = summary.predictions ?? 0;
+        byId("adminNewsSubscriptions").textContent = summary.activeNewsSubscriptions ?? 0;
+
+        const users = Array.isArray(data.users) ? data.users : [];
+        byId("adminUserRows").innerHTML = users.length ? users.map(function (user) {
+          const status = user.disabledAt ? "已禁用" : "正常";
+          const badge = user.unreadNotifications ? user.unreadNotifications + " 通知" : status;
+          return "<tr data-user-id=\\"" + escapeHtml(user.id) + "\\" style=\\"cursor:pointer\\"><td><strong>" + escapeHtml(user.displayName) + "</strong><br><span class=\\"muted\\">" + escapeHtml(user.email) + "</span></td><td>" + (user.followedTeams + user.followedPlayers) + "</td><td>" + user.favoriteMatches + "</td><td>" + user.predictions + "</td><td>" + user.reminders + "/" + user.queuedReminders + "</td><td><span class=\\"badge\\">" + badge + "</span></td></tr>";
+        }).join("") : "<tr><td colspan=\\"6\\" class=\\"muted\\">暂无用户数据</td></tr>";
+
+        document.querySelectorAll("[data-user-id]").forEach(function (row) {
+          row.addEventListener("click", function () { loadAdminUser(row.dataset.userId); });
+        });
+
+        if (selectedAdminUserId) {
+          await loadAdminUser(selectedAdminUserId, true);
+        } else if (users[0]) {
+          await loadAdminUser(users[0].id, true);
+        }
+      } catch (error) {
+        byId("adminUserRows").innerHTML = "<tr><td colspan=\\"6\\" class=\\"muted\\">用户系统读取失败：" + escapeHtml(error.message || error) + "</td></tr>";
+      }
+    }
+
+    async function loadAdminUser(userId, silent) {
+      if (!userId) return;
+      selectedAdminUserId = userId;
+      try {
+        const res = await fetch("/api/admin/users/" + encodeURIComponent(userId), { cache: "no-store" });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "admin_user_detail_failed");
+        renderAdminUserDetail(data);
+      } catch (error) {
+        if (!silent) {
+          byId("adminUserDetail").innerHTML = "<div class=\\"status-row\\"><i class=\\"dot bad\\"></i><div><h3>用户详情读取失败</h3><p>" + escapeHtml(error.message || error) + "</p></div><span class=\\"badge\\">ERROR</span></div>";
+        }
+      }
+    }
+
+    function renderAdminUserDetail(data) {
+      const user = data.user;
+      const summary = data.summary || {};
+      const reminder = data.reminderStatus || {};
+      const news = data.newsStats || {};
+      const activity = data.activity || {};
+      const disabled = Boolean(user.disabledAt);
+
+      byId("adminUserDetail").innerHTML =
+        "<div class=\\"detail-block\\"><h3>" + escapeHtml(user.profile.displayName) + "</h3><p>" + escapeHtml(user.email) + "</p><div class=\\"toolbar\\" style=\\"margin-top:12px\\">" +
+        "<button class=\\"action-btn danger\\" data-admin-action=\\"" + (disabled ? "enable" : "disable") + "\\">" + (disabled ? "恢复用户" : "禁用用户") + "</button>" +
+        "<button class=\\"action-btn\\" data-admin-action=\\"reset-reminders\\">重置提醒</button>" +
+        "<button class=\\"action-btn danger\\" data-admin-action=\\"clean-anomalies\\">删除异常记录</button>" +
+        "</div></div>" +
+        "<div class=\\"mini-grid\\">" +
+        "<div class=\\"mini\\"><span>关注/收藏</span><strong>" + (summary.followedTeams + summary.followedPlayers + summary.favoriteMatches) + "</strong></div>" +
+        "<div class=\\"mini\\"><span>预测</span><strong>" + summary.predictions + "</strong></div>" +
+        "<div class=\\"mini\\"><span>提醒状态</span><strong>" + (reminder.enabled || 0) + "/" + (summary.reminders || 0) + "</strong></div>" +
+        "<div class=\\"mini\\"><span>新闻订阅</span><strong>" + (news.enabled || 0) + "/" + (news.total || 0) + "</strong></div>" +
+        "</div>" +
+        "<div class=\\"detail-block\\"><h3>提醒任务状态</h3><p>已入队 " + (reminder.queued || 0) + "，缺少开赛时间 " + (reminder.missingStartTime || 0) + "。</p></div>" +
+        "<div class=\\"detail-block\\"><h3>用户活跃度概览</h3><p>记录数 " + (activity.records || 0) + "，创建于 " + adminTime(activity.createdAt) + "，最后更新 " + adminTime(activity.lastUpdatedAt) + "。</p></div>" +
+        "<div class=\\"detail-block\\"><h3>关注 / 收藏 / 预测 / 提醒记录</h3>" +
+        renderRecordList("关注球队", user.followedTeams, "name") +
+        renderRecordList("关注球员", user.followedPlayers, "name") +
+        renderRecordList("收藏比赛", user.favoriteMatches, "title") +
+        renderRecordList("预测记录", user.predictions, "title") +
+        renderRecordList("提醒记录", user.reminders, "title") +
+        "</div>";
+
+      document.querySelectorAll("[data-admin-action]").forEach(function (button) {
+        button.addEventListener("click", function () {
+          runAdminUserAction(user.id, button.dataset.adminAction);
+        });
+      });
+    }
+
+    function renderRecordList(label, items, field) {
+      const values = Array.isArray(items) ? items.slice(0, 5) : [];
+      if (!values.length) return "<p>" + label + "：暂无</p>";
+      return "<p>" + label + "</p><ul>" + values.map(function (item) {
+        const meta = item.matchId || item.team || item.stage || item.channel || item.position || "";
+        return "<li>" + escapeHtml(item[field] || item.id) + (meta ? " · " + escapeHtml(meta) : "") + "</li>";
+      }).join("") + "</ul>";
+    }
+
+    async function runAdminUserAction(userId, action) {
+      if (!userId || !action) return;
+      const res = await fetch("/api/admin/users/" + encodeURIComponent(userId) + "/" + action, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}"
+      });
+      const data = await res.json().catch(function () { return null; });
+      if (!res.ok) {
+        byId("adminUserDetail").insertAdjacentHTML("afterbegin", "<div class=\\"status-row\\"><i class=\\"dot bad\\"></i><div><h3>管理动作失败</h3><p>" + escapeHtml((data && data.error) || res.status) + "</p></div><span class=\\"badge\\">ERROR</span></div>");
+        return;
+      }
+      renderAdminUserDetail(data);
+      await refreshUsers();
+    }
+
     async function refreshAll() {
-      await Promise.allSettled([refreshStatus(), refreshLive(), refreshFootballDetails(), refreshNews()]);
+      await Promise.allSettled([refreshStatus(), refreshLive(), refreshFootballDetails(), refreshNews(), refreshUsers()]);
     }
 
     refreshAll();

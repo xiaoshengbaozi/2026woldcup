@@ -86,6 +86,7 @@ export interface WorldCupUser {
   email: string;
   passwordHash: string;
   passwordSalt: string;
+  disabledAt?: number | null;
   createdAt: number;
   updatedAt: number;
   profile: UserProfile;
@@ -142,6 +143,7 @@ export class UserStore {
       email,
       passwordHash: hashPassword(input.password, salt),
       passwordSalt: salt,
+      disabledAt: null,
       createdAt: now,
       updatedAt: now,
       profile: {
@@ -320,6 +322,42 @@ export class UserStore {
     return user;
   }
 
+  setUserDisabled(userId: string, disabled: boolean) {
+    const user = this.requireUser(userId);
+    user.disabledAt = disabled ? Date.now() : null;
+    this.touch(user);
+    return user;
+  }
+
+  resetReminderQueue(userId: string) {
+    const user = this.requireUser(userId);
+    user.reminders = user.reminders.map((reminder) => ({ ...reminder, lastQueuedAt: undefined }));
+    user.notifications = user.notifications.filter((notification) => notification.type !== "match_reminder");
+    this.touch(user);
+    return user;
+  }
+
+  cleanUserAnomalies(userId: string) {
+    const user = this.requireUser(userId);
+    const before = getUserRecordCounts(user);
+    user.followedTeams = uniqueValidById(user.followedTeams);
+    user.followedPlayers = uniqueValidById(user.followedPlayers);
+    user.favoriteMatches = uniqueValidById(user.favoriteMatches);
+    user.reminders = uniqueValidById(user.reminders).filter((item) => Boolean(item.matchId && item.title));
+    user.predictions = uniqueValidById(user.predictions).filter((item) => Boolean(item.matchId && item.title));
+    user.watchHistory = uniqueValidById(user.watchHistory).filter((item) => Boolean(item.matchId && item.title));
+    user.newsSubscriptions = uniqueValidById(user.newsSubscriptions);
+    user.notifications = uniqueValidById(user.notifications).filter((item) => Boolean(item.title && item.body));
+    const after = getUserRecordCounts(user);
+    this.touch(user);
+    return {
+      user,
+      removed: Object.fromEntries(
+        Object.entries(before).map(([key, value]) => [key, value - after[key as keyof typeof after]])
+      ),
+    };
+  }
+
   private requireUser(userId: string) {
     const user = this.getUserById(userId);
     if (!user) throw createUserStoreError("user_not_found", 404);
@@ -375,6 +413,7 @@ function upsertById<T extends { id: string }>(items: T[], item: T) {
 function normalizeStoredUser(user: WorldCupUser) {
   return {
     ...user,
+    disabledAt: user.disabledAt ?? null,
     followedTeams: user.followedTeams ?? [],
     followedPlayers: user.followedPlayers ?? [],
     favoriteMatches: user.favoriteMatches ?? [],
@@ -384,6 +423,30 @@ function normalizeStoredUser(user: WorldCupUser) {
     newsSubscriptions: user.newsSubscriptions ?? [],
     notifications: user.notifications ?? [],
   };
+}
+
+function getUserRecordCounts(user: WorldCupUser) {
+  return {
+    followedTeams: user.followedTeams?.length ?? 0,
+    followedPlayers: user.followedPlayers?.length ?? 0,
+    favoriteMatches: user.favoriteMatches?.length ?? 0,
+    reminders: user.reminders?.length ?? 0,
+    predictions: user.predictions?.length ?? 0,
+    watchHistory: user.watchHistory?.length ?? 0,
+    newsSubscriptions: user.newsSubscriptions?.length ?? 0,
+    notifications: user.notifications?.length ?? 0,
+  };
+}
+
+function uniqueValidById<T extends { id: string }>(items: T[] = []) {
+  const seen = new Set<string>();
+  const result: T[] = [];
+  for (const item of items) {
+    if (!item?.id || seen.has(item.id)) continue;
+    seen.add(item.id);
+    result.push(item);
+  }
+  return result;
 }
 
 function slugify(value: string) {

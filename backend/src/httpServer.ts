@@ -45,7 +45,12 @@ export function createHttpServer(options: HttpServerOptions) {
 
     const url = new URL(req.url ?? "/", "http://localhost");
 
-    if (options.userSystem && (url.pathname.startsWith("/api/auth/") || url.pathname.startsWith("/api/me/"))) {
+    if (
+      options.userSystem &&
+      (url.pathname.startsWith("/api/auth/") ||
+        url.pathname.startsWith("/api/me/") ||
+        url.pathname.startsWith("/api/admin/users"))
+    ) {
       options.userSystem.handleRequest(req, res, url);
       return;
     }
