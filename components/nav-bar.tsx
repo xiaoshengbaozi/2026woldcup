@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Calendar, Home, Newspaper, UserRound } from "lucide-react";
+import { BarChart3, Calendar, Flag, Home, Newspaper, UserRound } from "lucide-react";
 import { getPlayerAvatar } from "@/lib/user-preferences";
 import { userApi, type UserHomePayload } from "@/lib/user-system";
 
@@ -12,12 +12,13 @@ const navItems = [
   { label: "首页", href: "/", icon: Home },
   { label: "新闻", href: "/news", icon: Newspaper },
   { label: "赛程", href: "/matches", icon: Calendar },
+  { label: "球队", href: "/teams", icon: Flag },
   { label: "数据", href: "/data", icon: BarChart3 },
 ];
 
 export function NavBar() {
   const pathname = usePathname();
-  const [avatarPlayerId, setAvatarPlayerId] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isSignedIn, setIsSignedIn] = useState(false);
 
   useEffect(() => {
@@ -25,12 +26,14 @@ export function NavBar() {
     userApi<UserHomePayload>("/api/me/home", { cache: "no-store" })
       .then((payload) => {
         if (!active) return;
-        setAvatarPlayerId(payload.user.profile.avatarPlayerId ?? null);
+        const playerId = payload.user.profile.avatarPlayerId ?? null;
+        const followedPlayer = payload.user.followedPlayers.find((player) => player.id === playerId);
+        setAvatarUrl(followedPlayer?.photo || getPlayerAvatar(playerId, payload.catalog?.players));
         setIsSignedIn(true);
       })
       .catch(() => {
         if (!active) return;
-        setAvatarPlayerId(null);
+        setAvatarUrl(null);
         setIsSignedIn(false);
       });
 
@@ -39,7 +42,6 @@ export function NavBar() {
     };
   }, []);
 
-  const avatar = getPlayerAvatar(avatarPlayerId);
   const meActive = pathname.startsWith("/me");
 
   return (
@@ -93,7 +95,7 @@ export function NavBar() {
         }`}
       >
         {isSignedIn ? (
-          <Image src={avatar} alt="我的世界杯" fill sizes="48px" className="object-cover" />
+          <Image src={avatarUrl || getPlayerAvatar(null)} alt="我的世界杯" fill sizes="48px" className="object-cover" />
         ) : (
           <UserRound className="h-5 w-5 text-volt" />
         )}

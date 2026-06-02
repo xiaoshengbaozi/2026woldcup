@@ -52,6 +52,27 @@ type Props = {
   row: PlayerRow | null;
 };
 
+const FIFA_CODE_TO_FLAG: Record<string, string> = {
+  MEX:"mx",USA:"us",CAN:"ca",ARG:"ar",BRA:"br",COL:"co",ECU:"ec",PAR:"py",URU:"uy",
+  JPN:"jp",IRN:"ir",UZB:"uz",KOR:"kr",JOR:"jo",AUS:"au",QAT:"qa",SAU:"sa",IRQ:"iq",
+  MAR:"ma",TUN:"tn",EGY:"eg",DZA:"dz",GHA:"gh",CPV:"cv",RSA:"za",SEN:"sn",CIV:"ci",
+  COD:"cd",NZL:"nz",CUW:"cw",HAI:"ht",PAN:"pa",ENG:"gb-eng",FRA:"fr",GER:"de",ESP:"es",
+  POR:"pt",NED:"nl",BEL:"be",CRO:"hr",SUI:"ch",AUT:"at",NOR:"no",SCO:"gb-sct",SWE:"se",
+  TUR:"tr",CZE:"cz",BIH:"ba",SRB:"rs",POL:"pl",UKR:"ua",DEN:"dk",ITA:"it",MLI:"ml",
+  BFA:"bf",CMR:"cm",CGO:"cd",ZAM:"zm",NIG:"ng",GUI:"gn",BEN:"bn",RWA:"rw",CDF:"cd",
+  SUR:"sr",JAM:"jm",GUY:"gy",HON:"hn",SLV:"sv",GUA:"gt",NIC:"ni",BAR:"bb",TRI:"tt",
+  DMA:"dm",GRN:"gd",LCA:"lc",VIN:"vc",SKN:"kn",MAG:"mg",COM:"km",LBR:"lr",LES:"ls",
+  BOT:"bw",SWZ:"sz",NAM:"na",MOZ:"mz",ANG:"ao",ETH:"et",ERI:"er",SUD:"sd",SSD:"ss",
+  SOM:"so",KEN:"ke",UGA:"ug",TAN:"tz",BDI:"bi",CHA:"td",CAF:"cf",GAB:"ga",GNQ:"gq",
+  STP:"st",PRK:"kp",CHN:"cn",TWN:"tw",HKG:"hk",MAS:"my",SIN:"sg",PHI:"ph",THA:"th",
+  VIE:"vn",MYA:"mm",LAO:"la",CAM:"kh",BRN:"bn",TLS:"tl",IND:"in",PAK:"pk",BAN:"bd",
+  SRI:"lk",NEP:"np",AFG:"af",SYR:"sy",YEM:"ye",LBN:"lb",PSE:"ps",
+  KUW:"kw",BHR:"bh",OMA:"om",UAE:"ae",ALB:"al",ARM:"am",AZE:"az",BLR:"by",
+  GEO:"ge",KAZ:"kz",KGZ:"kg",TJK:"tj",TKM:"tm",MDA:"md",ISL:"is",LUX:"lu",MLT:"mt",
+  CYP:"cy",AND:"ad",LIE:"li",SMR:"sr",MCO:"mc",VAT:"va",GIB:"gi",FRO:"fo",EST:"ee",
+  LAT:"lv",LTU:"lt",
+};
+
 /* ────────────────────────────────────────────
    Main Component
    ──────────────────────────────────────────── */
@@ -123,96 +144,94 @@ export function PlayerProfileClient({ playerId, nameHint, row }: Props) {
 
       <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-5 px-3 py-4 pb-28 sm:px-6 sm:py-5 sm:pb-28 lg:px-8 lg:pb-5">
         {/* ── Site Navigation ── */}
-        <NavBar />
-
-        {/* ── Player Sub-Navigation ── */}
-        <div className="flex items-center justify-between">
-          <Link
-            href="/matches/"
-            className="group inline-flex items-center gap-2.5 rounded-xl bg-volt/[0.08] px-4 py-2.5 text-sm font-semibold text-volt/80 ring-1 ring-volt/20 transition-all hover:bg-volt/[0.14] hover:text-volt hover:shadow-[0_0_24px_rgba(216,255,62,0.15)]"
-          >
-            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-            返回赛程
-          </Link>
-
-          <div className="hidden items-center gap-2 text-xs font-medium uppercase tracking-[0.22em] text-volt/40 sm:flex">
-            <Sparkles className="h-4 w-4" />
-            Player Intelligence
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="flex h-9 items-center gap-2 rounded-full bg-volt/10 px-4 text-xs font-bold uppercase tracking-wider text-volt shadow-[0_0_20px_rgba(216,255,62,0.15)] ring-1 ring-volt/25">
-              <span className="h-1.5 w-1.5 rounded-full bg-volt shadow-[0_0_10px_rgba(216,255,62,0.9)]" />
-              LIVE
-            </span>
-          </div>
-        </div>
+        <div className="relative z-10"><NavBar /></div>
 
         {/* ── Profile Hero Card ── */}
-        <section className="relative overflow-hidden rounded-[1.75rem] bg-white/[0.04] p-6 ring-1 ring-white/[0.08] backdrop-blur-3xl sm:p-8">
+        <section className="hero-card relative z-0 mt-16 overflow-visible pt-20 pb-6 px-6 sm:px-8 sm:pb-8">
           {/* Top glow line */}
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-volt/40 to-transparent" />
 
-          <div className="flex flex-col items-center gap-8 lg:flex-row lg:items-end">
-            {/* Avatar Section */}
-            <div className="relative flex-shrink-0">
-              {/* Glow ring behind avatar */}
+          {/* Top-left: Back button */}
+          <Link
+            href="/matches/"
+            className="group absolute left-4 top-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1.5 text-xs font-semibold text-white/60 ring-1 ring-white/[0.08] backdrop-blur-md transition-all hover:bg-volt/[0.1] hover:text-volt hover:ring-volt/20 sm:left-6 sm:top-5"
+          >
+            <ArrowLeft className="h-3 w-3 transition-transform group-hover:-translate-x-0.5" />
+            返回赛程
+          </Link>
+
+          {/* Top-right: Follow button */}
+          <button className="group absolute right-4 top-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1.5 text-xs font-semibold text-white/60 ring-1 ring-white/[0.08] backdrop-blur-md transition-all hover:bg-volt/[0.1] hover:text-volt hover:ring-volt/20 sm:right-6 sm:top-5">
+            <Star className="h-3 w-3" />
+            关注
+          </button>
+
+          {/* Avatar — overlapping top edge */}
+          <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2">
+            <div className="relative">
               <div className="absolute -inset-3 rounded-full bg-gradient-to-br from-volt/25 via-volt/10 to-transparent blur-xl" />
-              <div className="relative h-36 w-36 overflow-hidden rounded-full ring-[3px] ring-volt/30 ring-offset-4 ring-offset-ink-950 sm:h-44 sm:w-44 sm:ring-[4px]">
+              <div className="relative h-28 w-28 overflow-hidden rounded-full ring-[3px] ring-volt/30 ring-offset-4 ring-offset-ink-950 sm:h-32 sm:w-32 sm:ring-[4px]">
                 {photo ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={photo} alt={englishName} className="h-full w-full object-cover" />
                 ) : (
                   <div className="grid h-full w-full place-items-center bg-white/[0.06]">
-                    <UserRound className="h-16 w-16 text-white/20" />
+                    <UserRound className="h-12 w-12 text-white/20" />
                   </div>
                 )}
-                {/* Online indicator */}
-                <span className="absolute bottom-1 right-1 h-4 w-4 rounded-full border-[3px] border-ink-950 bg-volt shadow-[0_0_12px_rgba(216,255,62,0.8)]" />
               </div>
             </div>
+          </div>
 
-            {/* Player Info */}
-            <div className="flex-1 text-center lg:text-left">
-              <div className="mb-3 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
-                <span className="rounded-full bg-volt/10 px-3 py-1 text-xs font-bold text-volt ring-1 ring-volt/20">
-                  {row?.countryCn || player?.nationality || "国家队"}
-                </span>
-                <span className="rounded-full bg-white/[0.07] px-3 py-1 text-xs font-semibold text-white/50 ring-1 ring-white/[0.08]">
-                  {row?.positionCn || player?.position || "位置待更新"}
-                </span>
-                {row?.number && (
-                  <span className="rounded-full bg-flare/10 px-3 py-1 text-xs font-bold text-flare ring-1 ring-flare/20">
-                    #{row.number}
+          {/* Names — centered */}
+          <div className="text-center">
+            <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
+              {displayName}
+            </h1>
+            <p className="mt-1.5 text-sm text-white/40 sm:text-base">{fullName || englishName}</p>
+          </div>
+
+          {/* Info Row */}
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-white/50">
+            <span className="inline-flex items-center gap-1.5">
+              {row?.teamCode && FIFA_CODE_TO_FLAG[row.teamCode] && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={`https://flagcdn.com/${FIFA_CODE_TO_FLAG[row.teamCode]}.svg`}
+                  alt=""
+                  className="h-3.5 w-5 rounded-sm object-cover"
+                />
+              )}
+              {row?.countryCn || player?.nationality || "国家队"}
+            </span>
+            <span className="text-white/20">|</span>
+            <span>{row?.positionCn || player?.position || "位置待更新"}</span>
+            <span className="text-white/20">|</span>
+            {row?.number && <span>{row.number}号</span>}
+            <span className="text-white/20">|</span>
+            <span className="text-white/65">{currentTeam}</span>
+            {total.rating && (
+              <>
+                <span className="text-white/20">|</span>
+                <span className="inline-flex items-center gap-1">
+                  <span className="flex gap-0.5">
+                    {[1,2,3,4,5].map((i) => {
+                      const filled = Number(total.rating) / 2 >= i;
+                      const half = !filled && Number(total.rating) / 2 >= i - 0.5;
+                      return (
+                        <svg key={i} className="h-3 w-3" viewBox="0 0 20 20" fill="none">
+                          <path d="M10 1.5l2.47 5.01 5.53.8-4 3.9.94 5.5L10 14.26l-4.94 2.45.94-5.5-4-3.9 5.53-.8L10 1.5z"
+                            fill={filled ? "rgb(216,255,62)" : half ? "url(#half-star)" : "rgba(255,255,255,0.1)"}
+                            stroke={filled || half ? "rgb(216,255,62)" : "rgba(255,255,255,0.15)"}
+                            strokeWidth="1" />
+                        </svg>
+                      );
+                    })}
                   </span>
-                )}
-              </div>
-
-              <h1 className="text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
-                {displayName}
-              </h1>
-              <p className="mt-2 text-base text-white/45 sm:text-lg">{fullName || englishName}</p>
-            </div>
-
-            {/* Key Metrics */}
-            <div className="grid w-full grid-cols-3 gap-3 sm:w-auto sm:grid-cols-1">
-              <MetricCard
-                icon={Shield}
-                label="俱乐部"
-                value={currentTeam}
-              />
-              <MetricCard
-                icon={UserRound}
-                label="年龄"
-                value={player?.age ? `${player.age}岁` : "暂无"}
-              />
-              <MetricCard
-                icon={TrendingUp}
-                label="综合评分"
-                value={total.rating || "暂无"}
-                accent
-              />
-            </div>
+                  <span className="font-mono text-xs font-bold text-volt/80">{total.rating}</span>
+                </span>
+              </>
+            )}
           </div>
         </section>
 
@@ -242,7 +261,7 @@ export function PlayerProfileClient({ playerId, nameHint, row }: Props) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="rounded-[1.75rem] bg-white/[0.035] p-12 text-center ring-1 ring-white/[0.08]"
+              className="hero-card p-12 text-center"
             >
               <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-volt/30 border-t-volt" />
               <p className="text-sm text-white/50">正在同步球员数据...</p>
@@ -316,7 +335,7 @@ export function PlayerProfileClient({ playerId, nameHint, row }: Props) {
                     <div className="flex justify-center py-4">
                       <PlayerRadar stats={radarStats} />
                     </div>
-                    <div className="mt-2 grid grid-cols-3 gap-2">
+                    <div className="mt-2 flex flex-wrap justify-center gap-2">
                       {radarStats.map((stat) => (
                         <div
                           key={stat.label}
@@ -427,7 +446,7 @@ export function PlayerProfileClient({ playerId, nameHint, row }: Props) {
               </div>
 
               {/* ── Bottom Info Row ── */}
-              <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-white/[0.03] px-6 py-4 ring-1 ring-white/[0.06]">
+              <div className="flex flex-wrap items-center justify-between gap-4 hero-card px-6 py-4">
                 <div className="flex items-center gap-6 text-xs text-white/35">
                   <span>
                     API ID: <span className="font-mono text-white/55">{playerId}</span>
@@ -661,11 +680,7 @@ function DashPanel({
 }) {
   return (
     <section
-      className={`overflow-hidden rounded-[1.5rem] p-5 ring-1 backdrop-blur-2xl ${
-        accent
-          ? "bg-volt/[0.04] ring-volt/12"
-          : "bg-white/[0.035] ring-white/[0.07]"
-      }`}
+      className="hero-card overflow-hidden p-5"
     >
       <div
         className={`mb-4 flex items-center gap-2.5 ${

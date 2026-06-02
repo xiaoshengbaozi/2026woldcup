@@ -13,6 +13,25 @@ export function formatStageLabel(stage: string): string {
   return stage;
 }
 
+/**
+ * Extract round number from stage/summary and format as "小组赛第X轮"
+ * Handles formats like: "Group A Round 3", "A组 第3轮", "Matchday 3", "第3轮"
+ */
+export function formatRoundLabel(stage: string, summary?: string): string {
+  const source = summary || stage;
+
+  const roundMatch =
+    source.match(/Round\s+(\d+)/i) ??
+    source.match(/第(\d+)\s*轮/) ??
+    source.match(/Matchday\s+(\d+)/i);
+
+  if (roundMatch) return `小组赛第${roundMatch[1]}轮`;
+
+  const groupId = getStageGroupId(stage);
+  if (groupId) return `小组赛 ${groupId}组`;
+  return stage;
+}
+
 export function rankStage(stage: string): number {
   const groupId = getStageGroupId(stage);
   if (groupId) return groupId.charCodeAt(0) - 64;

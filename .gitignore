@@ -12,4 +12,5 @@ backend/.codex-*.log
 backend/dist/
 backend/.env
 /data/user-system.json
+/data/api-football-cache.json
 /backend/data/user-system.json

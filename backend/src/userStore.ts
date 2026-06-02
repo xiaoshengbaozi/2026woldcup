@@ -15,6 +15,7 @@ export interface FollowedTeam {
   id: string;
   name: string;
   region?: string;
+  logo?: string;
   followedAt: number;
 }
 
@@ -23,6 +24,7 @@ export interface FollowedPlayer {
   name: string;
   team?: string;
   position?: string;
+  photo?: string;
   followedAt: number;
 }
 

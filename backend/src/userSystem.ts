@@ -1,5 +1,7 @@
 import http from "http";
 import { randomBytes } from "crypto";
+import type { ApiFootballService } from "./apiFootball";
+import { getWorldCupFixtures, getWorldCupSquads } from "./worldCupData";
 import { UserStore, toPublicUser } from "./userStore";
 import type { WorldCupUser } from "./userStore";
 
@@ -11,13 +13,27 @@ interface SessionRecord {
   expiresAt: number;
 }
 
+interface UserPreferenceCatalog {
+  source: "api-football" | "fallback";
+  timestamp: number;
+  teams: Array<{ id: string; name: string; region?: string; logo?: string }>;
+  players: Array<{ id: string; name: string; team?: string; position?: string; photo?: string }>;
+  matches: Array<{ id: string; matchId: string; title: string; stage?: string; startsAt?: string }>;
+}
+
 export class UserSystem {
   private readonly sessions = new Map<string, SessionRecord>();
+  private catalogCache: { expiresAt: number; payload: UserPreferenceCatalog } | null = null;
 
-  constructor(private readonly store = new UserStore()) {}
+  constructor(private readonly store = new UserStore(), private readonly apiFootball?: ApiFootballService) {}
 
   async handleRequest(req: http.IncomingMessage, res: http.ServerResponse, url: URL) {
     try {
+      if (req.method === "GET" && url.pathname === "/api/user-preferences") {
+        sendJson(res, await this.getPreferenceCatalog());
+        return true;
+      }
+
       if (req.method === "POST" && url.pathname === "/api/auth/register") {
         const body = await readJsonBody(req);
         const user = this.store.createUser({
@@ -64,7 +80,7 @@ export class UserSystem {
       if (url.pathname === "/api/me/home") {
         const user = this.requireSessionUser(req, res);
         if (!user) return true;
-        sendJson(res, buildHomePayload(user));
+        sendJson(res, buildHomePayload(user, await this.getPreferenceCatalog()));
         return true;
       }
 
@@ -244,10 +260,21 @@ export class UserSystem {
 
     sendJson(res, { error: "admin_action_not_found" }, 404);
   }
+
+  private async getPreferenceCatalog() {
+    if (this.catalogCache && this.catalogCache.expiresAt > Date.now()) return this.catalogCache.payload;
+
+    const payload = await buildPreferenceCatalog(this.apiFootball);
+    this.catalogCache = {
+      expiresAt: Date.now() + 6 * 60 * 60_000,
+      payload,
+    };
+    return payload;
+  }
 }
 
-export function createUserSystem(store = new UserStore()) {
-  return new UserSystem(store);
+export function createUserSystem(store = new UserStore(), apiFootball?: ApiFootballService) {
+  return new UserSystem(store, apiFootball);
 }
 
 function buildAdminUsersPayload(users: WorldCupUser[]) {
@@ -328,9 +355,10 @@ function buildAdminUserListItem(user: WorldCupUser) {
   };
 }
 
-function buildHomePayload(user: WorldCupUser) {
+function buildHomePayload(user: WorldCupUser, catalog: UserPreferenceCatalog) {
   return {
     user: toPublicUser(user),
+    catalog,
     summary: {
       followedTeamCount: user.followedTeams.length,
       followedPlayerCount: user.followedPlayers.length,
@@ -341,6 +369,132 @@ function buildHomePayload(user: WorldCupUser) {
       activeNewsTopicCount: user.newsSubscriptions.filter((item) => item.enabled).length,
       unreadNotificationCount: user.notifications.filter((item) => !item.read).length,
     },
+  };
+}
+
+async function buildPreferenceCatalog(apiFootball?: ApiFootballService): Promise<UserPreferenceCatalog> {
+  if (!apiFootball?.isConfigured()) return buildFallbackPreferenceCatalog();
+
+  try {
+    const fixturesUrl = new URL("http://localhost/api/worldcup/fixtures?league=1&season=2026");
+    const fixturesPayload = await getWorldCupFixtures(apiFootball, fixturesUrl);
+    const fixtures = fixturesPayload.fixtures ?? [];
+    const teamMap = new Map<string, { id: string; name: string; region?: string; logo?: string }>();
+
+    for (const fixture of fixtures) {
+      for (const team of [fixture.homeTeam, fixture.awayTeam]) {
+        if (!team?.id) continue;
+        teamMap.set(String(team.id), {
+          id: String(team.id),
+          name: team.name,
+          region: team.code,
+          logo: team.logo,
+        });
+      }
+    }
+
+    const teams = [...teamMap.values()].sort((a, b) => (a.region || a.name).localeCompare(b.region || b.name));
+    const players = await buildApiPreferencePlayers(apiFootball, teams);
+
+    const matches = fixtures.slice(0, 18).map((fixture) => ({
+      id: String(fixture.apiFixtureId || fixture.uid),
+      matchId: String(fixture.apiFixtureId || fixture.uid),
+      title: fixture.summary,
+      stage: fixture.stage,
+      startsAt: fixture.startIso,
+    }));
+
+    const fallback = buildFallbackPreferenceCatalog();
+    return {
+      source: "api-football",
+      timestamp: Date.now(),
+      teams: teams.length ? teams : fallback.teams,
+      players: players.length ? players : fallback.players,
+      matches: matches.length ? matches : fallback.matches,
+    };
+  } catch {
+    return buildFallbackPreferenceCatalog();
+  }
+}
+
+async function buildApiPreferencePlayers(apiFootball: ApiFootballService, teams: Array<{ id: string; name: string; region?: string; logo?: string }>) {
+  if (!teams.length) return [];
+
+  try {
+    const squadUrl = new URL("http://localhost/api/worldcup/squads");
+    teams.slice(0, getPreferenceSquadTeamLimit()).forEach((team) => squadUrl.searchParams.append("team", team.id));
+    const squadsPayload = await getWorldCupSquads(apiFootball, squadUrl);
+    return buildPreferencePlayers(squadsPayload.squads ?? []);
+  } catch {
+    return [];
+  }
+}
+
+function buildPreferencePlayers(squads: Array<{ team: { id: number | null; name: string }; players: Array<{ id: number | null; nameEn: string; nameCn: string; position: string; positionCn: string; photo: string }> }>) {
+  const playersPerTeam = getPreferencePlayersPerTeam();
+  return squads.flatMap((squad) =>
+    squad.players
+      .filter((player) => player.id || player.nameEn || player.nameCn)
+      .slice(0, playersPerTeam)
+      .map((player) => ({
+        id: String(player.id ?? `${squad.team.id}-${player.nameEn}`),
+        name: player.nameCn || player.nameEn,
+        team: squad.team.name,
+        position: player.positionCn || player.position,
+        photo: player.photo,
+      }))
+  );
+}
+
+function getPreferenceSquadTeamLimit() {
+  return clampNumber(process.env.USER_PREFERENCE_SQUAD_TEAM_LIMIT, 1, 48, 12);
+}
+
+function getPreferencePlayersPerTeam() {
+  return clampNumber(process.env.USER_PREFERENCE_PLAYERS_PER_TEAM, 1, 12, 6);
+}
+
+function buildFallbackPreferenceCatalog(): UserPreferenceCatalog {
+  return {
+    source: "fallback",
+    timestamp: Date.now(),
+    teams: [
+      { id: "26", name: "阿根廷", region: "ARG", logo: "https://media.api-sports.io/football/teams/26.png" },
+      { id: "6", name: "巴西", region: "BRA", logo: "https://media.api-sports.io/football/teams/6.png" },
+      { id: "2", name: "法国", region: "FRA", logo: "https://media.api-sports.io/football/teams/2.png" },
+      { id: "10", name: "英格兰", region: "ENG", logo: "https://media.api-sports.io/football/teams/10.png" },
+      { id: "12", name: "日本", region: "JPN", logo: "https://media.api-sports.io/football/teams/12.png" },
+    ],
+    players: [
+      { id: "154", name: "Lionel Messi", team: "阿根廷", position: "Forward", photo: "https://media.api-sports.io/football/players/154.png" },
+      { id: "278", name: "Kylian Mbappe", team: "法国", position: "Forward", photo: "https://media.api-sports.io/football/players/278.png" },
+      { id: "762", name: "Vinicius Junior", team: "巴西", position: "Forward", photo: "https://media.api-sports.io/football/players/762.png" },
+      { id: "386828", name: "Lamine Yamal", team: "西班牙", position: "Forward", photo: "https://media.api-sports.io/football/players/386828.png" },
+      { id: "1100", name: "Erling Haaland", team: "挪威", position: "Forward", photo: "https://media.api-sports.io/football/players/1100.png" },
+    ],
+    matches: [
+      {
+        id: "opening-match",
+        matchId: "opening-match",
+        title: "揭幕战 · 2026 世界杯",
+        stage: "小组赛",
+        startsAt: "2026-06-11T19:00:00-05:00",
+      },
+      {
+        id: "usa-group-opener",
+        matchId: "usa-group-opener",
+        title: "美国小组赛首战",
+        stage: "小组赛",
+        startsAt: "2026-06-12T18:00:00-05:00",
+      },
+      {
+        id: "final-match",
+        matchId: "final-match",
+        title: "决赛 · 世界冠军之夜",
+        stage: "决赛",
+        startsAt: "2026-07-19T15:00:00-04:00",
+      },
+    ],
   };
 }
 

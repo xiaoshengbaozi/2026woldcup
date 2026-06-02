@@ -1,7 +1,10 @@
 "use client";
 
+import type { UserPreferenceCatalog } from "@/lib/user-preferences";
+
 const LOCAL_API_URL = "http://localhost:3001";
 const PRODUCTION_API_URL = "https://api-2026.20250114.xyz";
+const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
 
 export interface PublicUser {
   id: string;
@@ -15,8 +18,8 @@ export interface PublicUser {
     timezone: string;
     language: "zh-CN" | "en-US";
   };
-  followedTeams: Array<{ id: string; name: string; region?: string; followedAt: number }>;
-  followedPlayers: Array<{ id: string; name: string; team?: string; position?: string; followedAt: number }>;
+  followedTeams: Array<{ id: string; name: string; region?: string; logo?: string; followedAt: number }>;
+  followedPlayers: Array<{ id: string; name: string; team?: string; position?: string; photo?: string; followedAt: number }>;
   favoriteMatches: Array<{ id: string; title: string; stage?: string; startsAt?: string; addedAt: number }>;
   reminders: Array<{
     id: string;
@@ -61,6 +64,7 @@ export interface PublicUser {
 
 export interface UserHomePayload {
   user: PublicUser;
+  catalog?: UserPreferenceCatalog;
   summary: {
     followedTeamCount: number;
     followedPlayerCount: number;
@@ -74,12 +78,19 @@ export interface UserHomePayload {
 }
 
 export function getUserApiUrl() {
-  const fallbackUrl =
-    typeof window !== "undefined" && window.location.hostname === "localhost"
-      ? LOCAL_API_URL
-      : PRODUCTION_API_URL;
+  const fallbackUrl = getFallbackApiUrl();
 
-  return (process.env.NEXT_PUBLIC_MARKET_API_URL || fallbackUrl).replace(/\/$/, "");
+  return (process.env.NEXT_PUBLIC_USER_API_URL || process.env.NEXT_PUBLIC_MARKET_API_URL || fallbackUrl).replace(/\/$/, "");
+}
+
+function getFallbackApiUrl() {
+  if (typeof window === "undefined") return PRODUCTION_API_URL;
+
+  const { hostname, protocol } = window.location;
+  if (LOCAL_HOSTS.has(hostname)) return LOCAL_API_URL;
+  if (protocol === "http:") return `http://${hostname}:3001`;
+
+  return PRODUCTION_API_URL;
 }
 
 export async function userApi<T>(path: string, init?: RequestInit) {

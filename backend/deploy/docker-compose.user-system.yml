@@ -31,6 +31,8 @@ services:
     build:
       context: ..
       dockerfile: Dockerfile
+    env_file:
+      - ../.env
     depends_on:
       postgres:
         condition: service_healthy
@@ -44,6 +46,8 @@ services:
       dockerfile: Dockerfile
     container_name: worldcup-backend
     restart: unless-stopped
+    env_file:
+      - ../.env
     depends_on:
       postgres:
         condition: service_healthy
@@ -55,9 +59,12 @@ services:
       PORT: "3001"
       DATABASE_URL: postgres://worldcup:worldcup_dev_password@postgres:5432/worldcup
       REDIS_URL: redis://redis:6379
-      CORS_ORIGIN: http://localhost:3000
+      CORS_ORIGIN: "*"
+      API_FOOTBALL_CACHE_FILE: /app/data/api-football-cache.json
     ports:
       - "3001:3001"
+    volumes:
+      - ../../data:/app/data
 
   reminder-worker:
     build:
@@ -65,6 +72,8 @@ services:
       dockerfile: Dockerfile
     container_name: worldcup-reminder-worker
     restart: unless-stopped
+    env_file:
+      - ../.env
     depends_on:
       postgres:
         condition: service_healthy
@@ -76,6 +85,8 @@ services:
       DATABASE_URL: postgres://worldcup:worldcup_dev_password@postgres:5432/worldcup
       REDIS_URL: redis://redis:6379
       REMINDER_WORKER_INTERVAL_MS: "30000"
+    volumes:
+      - ../../data:/app/data
     command: ["bun", "src/reminderWorker.ts"]
 
 volumes:

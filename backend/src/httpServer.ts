@@ -48,6 +48,7 @@ export function createHttpServer(options: HttpServerOptions) {
     if (
       options.userSystem &&
       (url.pathname.startsWith("/api/auth/") ||
+        url.pathname === "/api/user-preferences" ||
         url.pathname.startsWith("/api/me/") ||
         url.pathname.startsWith("/api/admin/users"))
     ) {

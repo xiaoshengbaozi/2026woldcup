@@ -206,12 +206,17 @@ export async function getWorldCupSquads(apiFootball: ApiFootballService, url: UR
     throw createHttpError(400, "missing_team");
   }
 
+  const teamLimit = clampNumber(process.env.API_FOOTBALL_SQUAD_TEAM_LIMIT, 1, 48, 48);
   const squads = await Promise.all(
-    [...new Set(teamIds)].slice(0, 8).map(async (teamId) => {
-      const payload = await apiFootball.request("players/squads", new URLSearchParams({ team: String(teamId) }));
-      const upstream = payload.upstream as ApiFootballSquadsResponse;
-      assertNoApiFootballErrors(upstream);
-      return normalizeSquad(upstream.response?.[0]);
+    [...new Set(teamIds)].slice(0, teamLimit).map(async (teamId) => {
+      try {
+        const payload = await apiFootball.request("players/squads", new URLSearchParams({ team: String(teamId) }));
+        const upstream = payload.upstream as ApiFootballSquadsResponse;
+        assertNoApiFootballErrors(upstream);
+        return normalizeSquad(upstream.response?.[0]);
+      } catch {
+        return null;
+      }
     })
   );
 
@@ -374,6 +379,12 @@ function normalizeSquad(raw: ApiFootballSquad | undefined): NormalizedSquad | nu
       };
     }),
   };
+}
+
+function clampNumber(value: unknown, min: number, max: number, fallback: number) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  return Math.max(min, Math.min(max, Math.round(number)));
 }
 
 function normalizeTeam(team: ApiFootballTeam | undefined): NormalizedTeam {

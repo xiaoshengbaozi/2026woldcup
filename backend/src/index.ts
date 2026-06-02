@@ -52,7 +52,7 @@ async function main() {
   const apiFootball = createApiFootballService();
   const userStore = new UserStore();
   await userStore.ready();
-  const userSystem = createUserSystem(userStore);
+  const userSystem = createUserSystem(userStore, apiFootball);
   matchLines.start();
 
   // 2. Connect to Polymarket

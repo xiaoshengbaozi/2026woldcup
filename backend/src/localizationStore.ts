@@ -65,6 +65,7 @@ export function recordMissingLocalization(category: LocalizationCategory, key: s
   if (!normalized) return;
 
   const store = getLocalizationStore();
+  refreshCategoryFromDisk(category);
   if (store[category][normalized]) return;
 
   const missingPath = path.join(getLocalizationDir(), "missing.json");
@@ -83,6 +84,15 @@ export function recordMissingLocalization(category: LocalizationCategory, key: s
       // Ignore write failures in read-only deployments.
     }
   }, 100);
+}
+
+function refreshCategoryFromDisk(category: LocalizationCategory) {
+  const file = CATEGORY_FILES[category];
+  if (!file) return;
+
+  const latest = readJson<Record<string, string>>(path.join(getLocalizationDir(), file), {});
+  const store = getLocalizationStore();
+  store[category] = latest;
 }
 
 function readJson<T>(filePath: string, fallback: T): T {
