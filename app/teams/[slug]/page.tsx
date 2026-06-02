@@ -4,6 +4,7 @@ import { DashboardShell } from "@/components/dashboard-shell";
 import { TeamProfile } from "@/components/team-profile";
 import { qualifiedTeams } from "@/data/teams";
 import { teamProfiles } from "@/data/team-profiles";
+import { getTeamLandscapePath } from "@/lib/team-landscapes";
 
 interface TeamPageProps {
   params: {
@@ -41,7 +42,7 @@ export default function TeamPage({ params }: TeamPageProps) {
 
   return (
     <DashboardShell>
-      <TeamProfile data={profile} />
+      <TeamProfile data={{ ...profile, heroBanner: getTeamLandscapePath(params.slug) }} />
     </DashboardShell>
   );
 }

@@ -1,12 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getTeamCodeFromName } from "@/lib/team-localization";
 import { parseTeams } from "@/lib/teams";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
 import Link from "next/link";
 import { formatRoundLabel } from "@/lib/stage";
 import { formatDate, formatTime } from "@/lib/format";
+import { fetchWorldCupSquadDetails, type WorldCupSquadDetail } from "@/lib/world-cup-squads";
+import { TeamSquadCard } from "@/components/team-profile/team-squad-card";
 import type { TeamProfile } from "@/types/team-profile";
 import "./team-profile.css";
 
@@ -25,6 +27,11 @@ export function TeamProfile({ data }: TeamProfileProps) {
   const prevRef = useRef<HTMLButtonElement>(null);
   const nextRef = useRef<HTMLButtonElement>(null);
   const { matches } = useWorldCupData();
+  const [activeContentTab, setActiveContentTab] = useState<"profile" | "squad">("profile");
+  const [squad, setSquad] = useState<WorldCupSquadDetail | null>(null);
+  const [squadLoading, setSquadLoading] = useState(false);
+  const [squadError, setSquadError] = useState<string | null>(null);
+  const targetCode = PROFILE_CODE_ALIASES[data.fifaCode] ?? data.fifaCode;
 
   const syncNav = useCallback(() => {
     const el = vpRef.current;
@@ -54,7 +61,6 @@ export function TeamProfile({ data }: TeamProfileProps) {
   }, [syncNav]);
 
   const groupMatches = useMemo(() => {
-    const targetCode = PROFILE_CODE_ALIASES[data.fifaCode] ?? data.fifaCode;
     const nameNeedles = [data.nameCn, data.nameEn]
       .map((name) => name.replace(/[^\p{L}\p{N}]/gu, "").toLowerCase())
       .filter(Boolean);
@@ -72,12 +78,60 @@ export function TeamProfile({ data }: TeamProfileProps) {
         return nameNeedles.some((needle) => normalizedSummary.includes(needle));
       })
       .slice(0, 3);
-  }, [data.fifaCode, data.nameCn, data.nameEn, matches]);
+  }, [data.nameCn, data.nameEn, matches, targetCode]);
 
-  const { timeline, infoCards, stories, quote, gallery, keyPlayers } = data;
+  const teamMeta = useMemo(() => {
+    for (const match of groupMatches) {
+      const teams = parseTeams(match.summary);
+      const homeCode = match.homeTeam?.code || getTeamCodeFromName(teams.home.name);
+      const awayCode = match.awayTeam?.code || getTeamCodeFromName(teams.away.name);
+      if (homeCode === targetCode && match.homeTeam?.id) return match.homeTeam;
+      if (awayCode === targetCode && match.awayTeam?.id) return match.awayTeam;
+    }
+
+    for (const match of matches) {
+      if (match.homeTeam?.code === targetCode && match.homeTeam.id) return match.homeTeam;
+      if (match.awayTeam?.code === targetCode && match.awayTeam.id) return match.awayTeam;
+    }
+
+    return null;
+  }, [groupMatches, matches, targetCode]);
+
+  useEffect(() => {
+    let active = true;
+    setSquad(null);
+    setSquadError(null);
+
+    if (!teamMeta?.id) return;
+
+    const teamId = teamMeta.id;
+    setSquadLoading(true);
+    fetchWorldCupSquadDetails([teamId])
+      .then((squads) => {
+        if (!active) return;
+        setSquad(squads.get(teamId) ?? null);
+      })
+      .catch((err) => {
+        if (!active) return;
+        setSquadError(err instanceof Error ? err.message : "squad_request_failed");
+      })
+      .finally(() => {
+        if (active) setSquadLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [teamMeta?.id]);
+
+  const { timeline, stories, quote, gallery } = data;
   const yearSpan = timeline.length ? `${timeline[0].year} - ${timeline[timeline.length - 1].year}` : "";
   const count = timeline.length;
   const flagImageCode = getFlagImageCode(data);
+  const fixturesGroupLabel = groupMatches[0]
+    ? formatRoundLabel(groupMatches[0].stage, groupMatches[0].summary)
+    : "";
+  const coachName = getCoachName(data);
 
   return (
     <div className="tp-wrap">
@@ -120,117 +174,152 @@ export function TeamProfile({ data }: TeamProfileProps) {
         </div>
       </div>
 
-      {groupMatches.length > 0 && (
-        <section className="tp-fixtures">
-          <div className="tp-fixtures-grid">
-            {groupMatches.map((match) => {
-              const teams = parseTeams(match.summary);
-              const roundLabel = formatRoundLabel(match.stage, match.summary);
-              const matchDate = formatDate(match.start);
-              const matchTime = formatTime(match.start);
-              return (
-                <div key={match.uid} className="tp-fixture-card">
-                  <div className="tp-fixture-round">{roundLabel}</div>
-                  <div className="tp-fixture-date">{matchDate} {matchTime}</div>
-                  <div className="tp-fixture-teams">
-                    <div className="tp-fixture-team">
-                      <div className="tp-fixture-flag">
-                        {teams.home.image ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={teams.home.image} alt="" />
-                        ) : (
-                          <span>{teams.home.badge}</span>
-                        )}
+      <div className="tp-sketch-grid">
+        <aside className="tp-sidebar">
+          <section className="tp-fixtures tp-side-card">
+            <div className="tp-side-card-heading">
+              <div className="tp-side-card-title">比赛对阵</div>
+              {fixturesGroupLabel && <div className="tp-fixtures-group">{fixturesGroupLabel}</div>}
+            </div>
+            {groupMatches.length > 0 ? (
+              <div className="tp-fixtures-grid">
+                {groupMatches.map((match) => {
+                  const teams = parseTeams(match.summary);
+                  const matchDate = formatDate(match.start);
+                  const matchTime = formatTime(match.start);
+                  return (
+                    <div key={match.uid} className="tp-fixture-card">
+                      <div className="tp-fixture-teams">
+                        <div className="tp-fixture-team">
+                          <div className="tp-fixture-flag">
+                            {teams.home.image ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={teams.home.image} alt="" />
+                            ) : (
+                              <span>{teams.home.badge}</span>
+                            )}
+                          </div>
+                          <span className="tp-fixture-team-name">{teams.home.name}</span>
+                        </div>
+                        <div className="tp-fixture-kickoff">
+                          <span>{matchDate}</span>
+                          <span>{matchTime}</span>
+                        </div>
+                        <div className="tp-fixture-team tp-fixture-team--right">
+                          <div className="tp-fixture-flag">
+                            {teams.away.image ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={teams.away.image} alt="" />
+                            ) : (
+                              <span>{teams.away.badge}</span>
+                            )}
+                          </div>
+                          <span className="tp-fixture-team-name">{teams.away.name}</span>
+                        </div>
                       </div>
-                      <span className="tp-fixture-team-name">{teams.home.name}</span>
+                      {match.location && (
+                        <div className="tp-fixture-venue">{match.location}</div>
+                      )}
                     </div>
-                    <span className="tp-fixture-vs">VS</span>
-                    <div className="tp-fixture-team tp-fixture-team--right">
-                      <div className="tp-fixture-flag">
-                        {teams.away.image ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={teams.away.image} alt="" />
-                        ) : (
-                          <span>{teams.away.badge}</span>
-                        )}
-                      </div>
-                      <span className="tp-fixture-team-name">{teams.away.name}</span>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="tp-empty-state">赛程确认后自动同步</div>
+            )}
+          </section>
+        </aside>
+
+        <main className="tp-main">
+          <div className="tp-tl-section tp-glass">
+            <div className="tp-section-hd">
+              <div className="tp-section-hd-left">
+                <div className="tp-section-icon">{"\u{1F3C6}"}</div>
+                <span className="tp-section-title">世界杯征程</span>
+                <span className="tp-section-badge">{count} 届</span>
+              </div>
+              <span className="tp-section-badge volt">{yearSpan}</span>
+            </div>
+            <div className="tp-tl-vp" ref={vpRef}>
+              <button ref={prevRef} className="tp-tl-nav prev off" onClick={() => scroll(-1)} aria-label="向左滚动">{"‹"}</button>
+              <button ref={nextRef} className="tp-tl-nav next" onClick={() => scroll(1)} aria-label="向右滚动">{"›"}</button>
+              <div className="tp-tl-track">
+                <div className="tp-tl-line" />
+                {timeline.map((t) => {
+                  const isHl = !!t.highlight;
+                  const isNow = t.year === 2026;
+                  return (
+                    <div key={t.year} className={`tp-tl-node${isHl ? " hl" : ""}${isNow ? " now" : ""}`}>
+                      <div className="tp-tl-yr">{t.year}</div>
+                      <div className="tp-tl-dot" />
+                      <div className="tp-tl-result">{t.result}</div>
                     </div>
-                  </div>
-                  {match.location && (
-                    <div className="tp-fixture-venue">{match.location}</div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      <div className="tp-info-grid">
-        {infoCards.map((card, i) => (
-          <div key={i} className="tp-info-cell">
-            <div className="tp-info-label">{card.label}</div>
-            <div className={`tp-info-value${card.highlight ? " volt" : ""}`}>{card.value}</div>
-            <div className="tp-info-desc">{card.desc}</div>
-          </div>
-        ))}
-      </div>
-
-      <div className="tp-tl-section tp-glass">
-        <div className="tp-section-hd">
-          <div className="tp-section-hd-left">
-            <div className="tp-section-icon">{"\u{1F3C6}"}</div>
-            <span className="tp-section-title">世界杯征程</span>
-            <span className="tp-section-badge">{count} 届</span>
-          </div>
-          <span className="tp-section-badge volt">{yearSpan}</span>
-        </div>
-        <div className="tp-tl-vp" ref={vpRef}>
-          <button ref={prevRef} className="tp-tl-nav prev off" onClick={() => scroll(-1)} aria-label="向左滚动">{"‹"}</button>
-          <button ref={nextRef} className="tp-tl-nav next" onClick={() => scroll(1)} aria-label="向右滚动">{"›"}</button>
-          <div className="tp-tl-track">
-            <div className="tp-tl-line" />
-            {timeline.map((t) => {
-              const isHl = !!t.highlight;
-              const isNow = t.year === 2026;
-              return (
-                <div key={t.year} className={`tp-tl-node${isHl ? " hl" : ""}${isNow ? " now" : ""}`}>
-                  <div className="tp-tl-yr">{t.year}</div>
-                  <div className="tp-tl-dot" />
-                  <div className="tp-tl-result">{t.result}</div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      <div className="tp-stories">
-        <div className="tp-section-hd">
-          <div className="tp-section-hd-left">
-            <div className="tp-section-icon">{"\u{1F4D6}"}</div>
-            <span className="tp-section-title">球队档案</span>
-          </div>
-        </div>
-        <div className="tp-story-grid">
-          {stories.map((s, i) => (
-            <div key={i} className={`tp-story-card${s.coverImg ? " has-img" : ""}`}>
-              {s.coverImg && (
-                <div className="tp-story-cover">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={s.coverImg} alt={s.title} className="tp-story-cover-img" loading="lazy" />
-                  <div className="tp-story-cover-overlay" />
-                </div>
-              )}
-              <div className="tp-story-body">
-                <div className="tp-story-icon">{s.icon}</div>
-                <h3>{s.title}</h3>
-                <p>{s.body}</p>
+                  );
+                })}
               </div>
             </div>
-          ))}
-        </div>
+          </div>
+
+          <div className="tp-content-tabs" aria-label="球队内容">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeContentTab === "profile"}
+              className={`tp-content-tab${activeContentTab === "profile" ? " active" : ""}`}
+              onClick={() => setActiveContentTab("profile")}
+            >
+              球队档案
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeContentTab === "squad"}
+              className={`tp-content-tab${activeContentTab === "squad" ? " active" : ""}`}
+              onClick={() => setActiveContentTab("squad")}
+            >
+              本届阵容
+            </button>
+          </div>
+
+          <div className="tp-content-panel">
+            {activeContentTab === "profile" ? (
+              <div className="tp-stories">
+                <div className="tp-section-hd">
+                  <div className="tp-section-hd-left">
+                    <div className="tp-section-icon">{"\u{1F4D6}"}</div>
+                    <span className="tp-section-title">球队档案</span>
+                  </div>
+                </div>
+                <div className="tp-story-grid">
+                  {stories.map((s, i) => (
+                    <div key={i} className={`tp-story-card${s.coverImg ? " has-img" : ""}`}>
+                      {s.coverImg && (
+                        <div className="tp-story-cover">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={s.coverImg} alt={s.title} className="tp-story-cover-img" loading="lazy" />
+                          <div className="tp-story-cover-overlay" />
+                        </div>
+                      )}
+                      <div className="tp-story-body">
+                        <div className="tp-story-icon">{s.icon}</div>
+                        <h3>{s.title}</h3>
+                        <p>{s.body}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <TeamSquadCard
+                teamName={teamMeta?.name || data.nameCn}
+                coach={coachName}
+                squad={squad}
+                loading={squadLoading}
+                error={squadError}
+              />
+            )}
+          </div>
+        </main>
       </div>
 
       {quote && (
@@ -266,33 +355,6 @@ export function TeamProfile({ data }: TeamProfileProps) {
         </div>
       )}
 
-      <div className="tp-players">
-        <div className="tp-section-hd">
-          <div className="tp-section-hd-left">
-            <div className="tp-section-icon">{"\u{1F465}"}</div>
-            <span className="tp-section-title">关键球员</span>
-          </div>
-          <span className="tp-section-badge volt">TOP {keyPlayers.length}</span>
-        </div>
-        <div className="tp-players-grid">
-          {keyPlayers.map((p) => (
-            <div key={`${p.name}-${p.number}`} className="tp-player-cell">
-              {p.photo ? (
-                <div className="tp-player-photo-wrap">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={p.photo} alt={p.name} className="tp-player-photo" loading="lazy" />
-                </div>
-              ) : (
-                <div className="tp-player-avatar">{p.number}</div>
-              )}
-              <div className="tp-player-name">{p.name}</div>
-              <div className="tp-player-pos">{p.position}</div>
-              <div className="tp-player-club">{p.club}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
       <div className="tp-cta">
         <a className="tp-btn tp-btn-primary" href="/matches">查看赛程安排</a>
         <a className="tp-btn tp-btn-ghost" href="/data">进入预测市场</a>
@@ -309,4 +371,8 @@ function getFlagImageCode(data: TeamProfile) {
   if (data.fifaCode === "ENG") return "gb-eng";
   if (data.fifaCode === "SCO") return "gb-sct";
   return data.countryCode.toLowerCase();
+}
+
+function getCoachName(data: TeamProfile) {
+  return data.infoCards.find((card) => /主教练|Coach/i.test(card.label))?.value ?? null;
 }

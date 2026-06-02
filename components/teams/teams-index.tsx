@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -12,38 +13,81 @@ import {
 } from "@/data/teams";
 
 export function TeamsIndex() {
+  const [activeContinent, setActiveContinent] = useState(continentOrder[0]);
+  const tabItems = useMemo(
+    () =>
+      continentOrder.map((continent) => {
+        const teams = qualifiedTeams.filter((team) => team.continent === continent);
+        return {
+          continent,
+          label: teamContinentLabels[continent],
+          teams,
+        };
+      }),
+    []
+  );
+  const activeTab = tabItems.find((item) => item.continent === activeContinent) ?? tabItems[0];
+
   return (
     <main className="relative min-h-screen overflow-hidden py-8 text-white">
       <div className="relative">
-        <div className="space-y-10">
-          {continentOrder.map((continent) => {
-            const teams = qualifiedTeams.filter((team) => team.continent === continent);
-            const label = teamContinentLabels[continent];
+        <section className="scroll-mt-24">
+          <div className="mb-5 flex flex-col gap-4 px-1">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-volt/85">
+              <Globe2 className="h-4 w-4" />
+              Qualified Teams
+            </div>
 
-            return (
-              <section key={continent} className="scroll-mt-24">
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-3 px-1">
-                  <div>
-                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-volt/85">
-                      <Globe2 className="h-4 w-4" />
-                      {label.eyebrow}
-                    </div>
-                    <h2 className="mt-1 text-2xl font-black tracking-normal text-white sm:text-3xl">{label.title}</h2>
-                  </div>
-                  <div className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-sm font-semibold text-white/62 backdrop-blur-xl">
-                    {teams.length} 支球队
-                  </div>
-                </div>
+            <div
+              className="flex flex-wrap gap-1.5"
+              role="tablist"
+              aria-label="地区分类"
+            >
+              {tabItems.map((item) => {
+                const isActive = item.continent === activeContinent;
 
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {teams.map((team, index) => (
-                    <TeamCard key={team.slug} team={team} index={index} />
-                  ))}
-                </div>
-              </section>
-            );
-          })}
-        </div>
+                return (
+                  <button
+                    key={item.continent}
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    onClick={() => setActiveContinent(item.continent)}
+                    className={`group relative flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-left text-xs font-bold transition duration-300 sm:px-3.5 sm:py-2 sm:text-sm ${
+                      isActive
+                        ? "bg-volt text-black shadow-[0_0_24px_rgba(216,255,62,.2)]"
+                        : "bg-white/[0.055] text-white/62 ring-1 ring-white/[0.08] hover:bg-white/[0.09] hover:text-white"
+                    }`}
+                  >
+                    <span>{item.label.title}</span>
+                    <span
+                      className={`rounded-full px-1.5 py-0.5 text-[10px] font-black tabular-nums sm:px-2 sm:text-[11px] ${
+                        isActive
+                          ? "bg-black/15 text-black"
+                          : "bg-black/25 text-volt/80 group-hover:bg-volt/[0.12]"
+                      }`}
+                    >
+                      {item.teams.length}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <motion.div
+            key={activeTab.continent}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.28, ease: "easeOut" }}
+          >
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {activeTab.teams.map((team, index) => (
+                <TeamCard key={team.slug} team={team} index={index} />
+              ))}
+            </div>
+          </motion.div>
+        </section>
       </div>
     </main>
   );
@@ -61,7 +105,6 @@ function TeamCard({ team, index }: { team: QualifiedTeamCard; index: number }) {
         href={team.detailHref}
         className="group relative block aspect-square overflow-hidden rounded-[2rem] border border-white/10 shadow-[0_24px_80px_rgba(0,0,0,.34)] outline-none transition duration-500 hover:-translate-y-1 hover:border-volt/35 hover:shadow-[0_28px_100px_rgba(216,255,62,.10)] focus-visible:border-volt/60"
       >
-        {/* Cover image */}
         <div className="absolute inset-0 overflow-hidden rounded-[2rem]">
           <Image
             src={team.cover}
@@ -72,7 +115,6 @@ function TeamCard({ team, index }: { team: QualifiedTeamCard; index: number }) {
           />
         </div>
 
-        {/* Bottom overlay: semi-transparent backdrop for info */}
         <div className="absolute inset-x-0 bottom-0 rounded-b-[2rem] bg-gradient-to-t from-black/75 via-black/45 to-transparent px-5 pt-12 pb-5">
           <h3 className="text-2xl font-black tracking-normal text-white drop-shadow-lg">{team.nameCn}</h3>
           <div className="mt-3 flex items-center justify-between">

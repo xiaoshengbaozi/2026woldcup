@@ -404,7 +404,16 @@ export default function MePage() {
         {authMode && (
           <AuthModal mode={authMode} registerStep={registerStep} onClose={closeAuth}>
             {authMode === "login" ? (
-              <LoginForm email={email} password={password} busy={busy} error={error} onEmailChange={setEmail} onPasswordChange={setPassword} onSubmit={submitLogin} />
+              <LoginForm
+                email={email}
+                password={password}
+                busy={busy}
+                error={error}
+                onEmailChange={setEmail}
+                onPasswordChange={setPassword}
+                onSwitchToRegister={() => openAuth("register")}
+                onSubmit={submitLogin}
+              />
             ) : registerStep === "account" ? (
               <RegisterAccountForm
                 displayName={displayName}
@@ -416,6 +425,7 @@ export default function MePage() {
                 onEmailChange={setEmail}
                 onPasswordChange={setPassword}
                 onRepeatPasswordChange={setRepeatPassword}
+                onSwitchToLogin={() => openAuth("login")}
                 onSubmit={continueToPreferences}
               />
             ) : (
@@ -706,6 +716,7 @@ function LoginForm({
   error,
   onEmailChange,
   onPasswordChange,
+  onSwitchToRegister,
   onSubmit,
 }: {
   email: string;
@@ -714,6 +725,7 @@ function LoginForm({
   error: string;
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
+  onSwitchToRegister: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
   return (
@@ -721,10 +733,16 @@ function LoginForm({
       <AuthInput label="邮箱" type="email" value={email} required onChange={onEmailChange} />
       <AuthInput label="密码" type="password" value={password} required onChange={onPasswordChange} />
       <ModalFooter error={error}>
-        <PrimaryButton type="submit" disabled={Boolean(busy)}>
-          <UserRound className="h-4 w-4" />
-          {busy === "login" ? "登录中" : "进入主页"}
-        </PrimaryButton>
+        <div className="flex flex-wrap items-center gap-3">
+          <SecondaryButton type="button" disabled={Boolean(busy)} onClick={onSwitchToRegister}>
+            <UserPlus className="h-4 w-4" />
+            注册
+          </SecondaryButton>
+          <PrimaryButton type="submit" disabled={Boolean(busy)}>
+            <UserRound className="h-4 w-4" />
+            {busy === "login" ? "登录中" : "进入主页"}
+          </PrimaryButton>
+        </div>
       </ModalFooter>
     </form>
   );
@@ -740,6 +758,7 @@ function RegisterAccountForm({
   onEmailChange,
   onPasswordChange,
   onRepeatPasswordChange,
+  onSwitchToLogin,
   onSubmit,
 }: {
   displayName: string;
@@ -751,6 +770,7 @@ function RegisterAccountForm({
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
   onRepeatPasswordChange: (value: string) => void;
+  onSwitchToLogin: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
   return (
@@ -760,10 +780,16 @@ function RegisterAccountForm({
       <AuthInput label="密码" type="password" value={password} required onChange={onPasswordChange} />
       <AuthInput label="重复密码" type="password" value={repeatPassword} required onChange={onRepeatPasswordChange} />
       <ModalFooter error={error}>
-        <PrimaryButton type="submit">
-          下一步
-          <ChevronRight className="h-4 w-4" />
-        </PrimaryButton>
+        <div className="flex flex-wrap items-center gap-3">
+          <SecondaryButton type="button" onClick={onSwitchToLogin}>
+            <LogIn className="h-4 w-4" />
+            登录
+          </SecondaryButton>
+          <PrimaryButton type="submit">
+            下一步
+            <ChevronRight className="h-4 w-4" />
+          </PrimaryButton>
+        </div>
       </ModalFooter>
     </form>
   );
@@ -998,6 +1024,17 @@ function PrimaryButton({ children, ...props }: React.ButtonHTMLAttributes<HTMLBu
     <button
       {...props}
       className="inline-flex h-12 min-w-32 items-center justify-center gap-2 rounded-full bg-volt px-5 text-sm font-bold text-black shadow-[0_0_30px_rgba(216,255,62,.2)] transition hover:scale-[1.02] disabled:opacity-60"
+    >
+      {children}
+    </button>
+  );
+}
+
+function SecondaryButton({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  return (
+    <button
+      {...props}
+      className="inline-flex h-12 min-w-28 items-center justify-center gap-2 rounded-full bg-white/[0.06] px-5 text-sm font-semibold text-white/78 ring-1 ring-white/12 transition hover:bg-white/[0.1] hover:text-white disabled:opacity-60"
     >
       {children}
     </button>

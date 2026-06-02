@@ -15,6 +15,7 @@ type SquadPlayerResponse = {
 type SquadResponse = {
   team: MatchTeamMeta;
   players: SquadPlayerResponse[];
+  coach?: string | null;
   listType?: "squad_pool";
   officialWorldCupSquad?: boolean;
 };
@@ -23,9 +24,26 @@ type SquadsPayload = {
   squads?: SquadResponse[];
 };
 
+export type WorldCupSquadDetail = {
+  team: MatchTeamMeta;
+  coach: string | null;
+  players: LineupPlayer[];
+  listType: "squad_pool";
+  officialWorldCupSquad: boolean;
+};
+
 export async function fetchWorldCupSquads(teamIds: number[]) {
+  const details = await fetchWorldCupSquadDetails(teamIds);
+  const squads = new Map<number, LineupPlayer[]>();
+  for (const [teamId, squad] of details) {
+    squads.set(teamId, squad.players);
+  }
+  return squads;
+}
+
+export async function fetchWorldCupSquadDetails(teamIds: number[]) {
   const ids = [...new Set(teamIds.filter((id) => Number.isFinite(id) && id > 0))];
-  if (!ids.length) return new Map<number, LineupPlayer[]>();
+  if (!ids.length) return new Map<number, WorldCupSquadDetail>();
 
   const params = new URLSearchParams();
   ids.forEach((id) => params.append("team", String(id)));
@@ -37,10 +55,16 @@ export async function fetchWorldCupSquads(teamIds: number[]) {
     throw new Error(payload.error || `World Cup squads returned ${response.status}`);
   }
 
-  const squads = new Map<number, LineupPlayer[]>();
+  const squads = new Map<number, WorldCupSquadDetail>();
   for (const squad of payload.squads ?? []) {
     if (!squad.team.id) continue;
-    squads.set(squad.team.id, squad.players.map(toLineupPlayer));
+    squads.set(squad.team.id, {
+      team: squad.team,
+      coach: squad.coach || null,
+      players: squad.players.map(toLineupPlayer),
+      listType: "squad_pool",
+      officialWorldCupSquad: Boolean(squad.officialWorldCupSquad),
+    });
   }
 
   return squads;

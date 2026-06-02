@@ -1,8 +1,12 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Table } from "lucide-react";
-import { useMemo } from "react";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { getStageGroupId } from "@/lib/stage";
+import { getTeamDetailHrefByCode, getTeamDetailHrefByName } from "@/lib/team-links";
 import { parseTeams } from "@/lib/teams";
+import { fetchWorldCupStandings, type NormalizedWorldCupStandingRow } from "@/lib/world-cup-api";
+import { getFlagUrl } from "@/lib/world-cup-2026";
 import type { Match, Team } from "@/types/match";
 
 type GroupStandingsProps = {
@@ -26,7 +30,27 @@ type GroupStanding = {
 const preferredGroups = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
 
 export function GroupStandings({ matches }: GroupStandingsProps) {
-  const groups = useMemo(() => buildGroupStandings(matches), [matches]);
+  const [remoteStandings, setRemoteStandings] = useState<NormalizedWorldCupStandingRow[]>([]);
+
+  useEffect(() => {
+    let active = true;
+
+    fetchWorldCupStandings()
+      .then((standings) => {
+        if (active) setRemoteStandings(standings);
+      })
+      .catch((error) => {
+        console.warn("[GroupStandings] standings unavailable, falling back to fixtures:", error);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const fallbackGroups = useMemo(() => buildGroupStandings(matches), [matches]);
+  const apiGroups = useMemo(() => buildApiGroupStandings(remoteStandings), [remoteStandings]);
+  const groups = apiGroups.length ? apiGroups : fallbackGroups;
   const visibleGroups = preferredGroups
     .map((id) => groups.find((group) => group.id === id))
     .filter((group): group is GroupStanding => Boolean(group));
@@ -83,38 +107,101 @@ function GroupTable({ group }: { group: GroupStanding }) {
 
       <div className="divide-y divide-white/[0.025]">
         {group.teams.map((team, index) => (
-          <div
+          <StandingRow
             key={`${group.id}-${team.name}`}
-            className="grid grid-cols-[minmax(120px,1fr)_28px_28px_28px_28px_36px] items-center px-4 py-2 text-sm transition odd:bg-volt/[0.035] hover:bg-white/[0.045]"
-          >
-            <div className="flex min-w-0 items-center justify-start gap-2.5 text-left">
-              <span className={`tabular w-4 shrink-0 text-xs font-semibold ${index < 2 ? "text-volt" : "text-white/45"}`}>
-                {index + 1}
-              </span>
-              <span className="grid h-4 w-6 shrink-0 place-items-center overflow-hidden rounded-[3px] bg-white/10 ring-1 ring-white/10">
-                {team.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={team.image} alt="" className="h-full w-full object-cover object-center" loading="lazy" />
-                ) : (
-                  <span className="text-[8px] font-semibold text-volt">{team.badge}</span>
-                )}
-              </span>
-              <span className="truncate text-xs font-semibold uppercase text-white">
-                {team.name}
-              </span>
-            </div>
-            <span className="tabular text-center text-xs text-white/78">{team.played}</span>
-            <span className="tabular text-center text-xs text-white/78">{team.won}</span>
-            <span className="tabular text-center text-xs text-white/78">{team.drawn}</span>
-            <span className="tabular text-center text-xs text-white/78">{team.lost}</span>
-            <span className={`tabular text-right text-xs font-semibold ${team.points > 0 ? "text-flare" : "text-volt"}`}>
-              {team.points}
-            </span>
-          </div>
+            team={team}
+            index={index}
+          />
         ))}
       </div>
     </article>
   );
+}
+
+function StandingRow({ team, index }: { team: StandingTeam; index: number }) {
+  const href = getTeamDetailHrefByCode(teamCode(team)) || getTeamDetailHrefByName(team.name);
+  const teamContent = (
+    <>
+      <span className={`tabular w-4 shrink-0 text-xs font-semibold ${index < 2 ? "text-volt" : "text-white/45"}`}>
+        {index + 1}
+      </span>
+      <span className="grid h-4 w-6 shrink-0 place-items-center overflow-hidden rounded-[3px] bg-white/10 ring-1 ring-white/10">
+        {team.image ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={team.image} alt="" className="h-full w-full object-cover object-center" loading="lazy" />
+        ) : (
+          <span className="text-[8px] font-semibold text-volt">{team.badge}</span>
+        )}
+      </span>
+      <span className="truncate text-xs font-semibold uppercase text-white transition-colors group-hover/team:text-volt">
+        {team.name}
+      </span>
+    </>
+  );
+
+  return (
+    <div className="grid grid-cols-[minmax(120px,1fr)_28px_28px_28px_28px_36px] items-center px-4 py-2 text-sm transition odd:bg-volt/[0.035] hover:bg-white/[0.045]">
+      {href ? (
+        <Link href={href} className="group/team flex min-w-0 items-center justify-start gap-2.5 text-left">
+          {teamContent}
+        </Link>
+      ) : (
+        <div className="flex min-w-0 items-center justify-start gap-2.5 text-left">
+          {teamContent}
+        </div>
+      )}
+      <span className="tabular text-center text-xs text-white/78">{team.played}</span>
+      <span className="tabular text-center text-xs text-white/78">{team.won}</span>
+      <span className="tabular text-center text-xs text-white/78">{team.drawn}</span>
+      <span className="tabular text-center text-xs text-white/78">{team.lost}</span>
+      <span className={`tabular text-right text-xs font-semibold ${team.points > 0 ? "text-flare" : "text-volt"}`}>
+        {team.points}
+      </span>
+    </div>
+  );
+}
+
+function buildApiGroupStandings(rows: NormalizedWorldCupStandingRow[]): GroupStanding[] {
+  const grouped = rows.reduce<Map<string, NormalizedWorldCupStandingRow[]>>((acc, row) => {
+    const id = getApiGroupId(row.group);
+    if (!id) return acc;
+    if (!acc.has(id)) acc.set(id, []);
+    acc.get(id)?.push(row);
+    return acc;
+  }, new Map());
+
+  return [...grouped.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([id, items]) => ({
+      id,
+      label: `${id} 组`,
+      teams: items
+        .sort((a, b) => a.rank - b.rank)
+        .slice(0, 4)
+        .map((row) => ({
+          badge: row.team.code || String(row.rank),
+          badgeType: row.team.code ? "image" : "code",
+          image: row.team.code ? getFlagUrl(normalizeFlagCode(row.team.code), 40) : "",
+          name: row.team.name,
+          played: row.played,
+          won: row.win,
+          drawn: row.draw,
+          lost: row.lose,
+          points: row.points,
+        })),
+    }));
+}
+
+function normalizeFlagCode(code: string) {
+  const upper = code.toUpperCase();
+  if (upper === "ALG") return "DZA";
+  if (upper === "KSA") return "SAU";
+  return upper;
+}
+
+function getApiGroupId(group: string) {
+  const match = group.match(/^([A-L])\s*组$/i);
+  return match?.[1]?.toUpperCase() ?? null;
 }
 
 function buildGroupStandings(matches: Match[]): GroupStanding[] {

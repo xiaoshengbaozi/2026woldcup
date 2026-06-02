@@ -23,6 +23,33 @@ type FixturesResponse = {
   fixtures?: NormalizedWorldCupFixture[];
 };
 
+export type NormalizedWorldCupStandingRow = {
+  group: string;
+  rank: number;
+  team: {
+    id: number | null;
+    name: string;
+    englishName: string;
+    code: string;
+    logo: string;
+  };
+  points: number;
+  played: number;
+  win: number;
+  draw: number;
+  lose: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalsDiff: number;
+  form: string;
+  description: string;
+  updatedAt: string | null;
+};
+
+type StandingsResponse = {
+  standings?: NormalizedWorldCupStandingRow[];
+};
+
 export function getBackendApiUrl() {
   const fallbackUrl =
     typeof window !== "undefined" && window.location.hostname === "localhost"
@@ -47,6 +74,23 @@ export async function fetchWorldCupFixtures(options: { season?: number; league?:
   }
 
   return (payload.fixtures ?? []).map(toMatch);
+}
+
+export async function fetchWorldCupStandings(options: { season?: number; league?: number } = {}) {
+  const apiUrl = getBackendApiUrl();
+  const params = new URLSearchParams({
+    league: String(options.league ?? 1),
+    season: String(options.season ?? 2026),
+  });
+
+  const response = await fetch(`${apiUrl}/api/worldcup/standings?${params}`, { cache: "no-store" });
+  const payload = (await response.json()) as StandingsResponse & { error?: string };
+
+  if (!response.ok) {
+    throw new Error(payload.error || `World Cup standings returned ${response.status}`);
+  }
+
+  return payload.standings ?? [];
 }
 
 function toMatch(fixture: NormalizedWorldCupFixture): Match {

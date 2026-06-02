@@ -25,6 +25,7 @@ import { useEffect, useMemo, useState } from "react";
 import { BackToTopButton } from "@/components/back-to-top-button";
 import { MobileNavBar } from "@/components/mobile-nav-bar";
 import { NavBar } from "@/components/nav-bar";
+import { getTeamLandscapePathByCode } from "@/lib/team-landscapes";
 import {
   fetchApiFootballPlayerProfileData,
   fetchOneVsOnePlayerSummary,
@@ -130,6 +131,7 @@ export function PlayerProfileClient({ playerId, nameHint, row }: Props) {
   const latestTransfers = (data?.transfers ?? []).slice(0, 5);
   const trophies = (data?.trophies ?? []).slice(0, 8);
   const sidelined = (data?.sidelined ?? []).slice(0, 4);
+  const heroLandscape = getTeamLandscapePathByCode(row?.teamCode);
 
   const radarStats = useMemo(() => buildRadarStats(data), [data]);
 
@@ -148,8 +150,21 @@ export function PlayerProfileClient({ playerId, nameHint, row }: Props) {
 
         {/* ── Profile Hero Card ── */}
         <section className="hero-card relative z-0 mt-16 overflow-visible pt-20 pb-6 px-6 sm:px-8 sm:pb-8">
+          {heroLandscape && (
+            <div className="absolute inset-0 z-0 overflow-hidden rounded-[inherit]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={heroLandscape}
+                alt=""
+                className="h-full w-full object-cover object-center opacity-65 saturate-100"
+              />
+              <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(5,8,8,0.78)_0%,rgba(5,8,8,0.34)_48%,rgba(5,8,8,0.72)_100%),linear-gradient(to_bottom,rgba(5,8,8,0.1)_0%,rgba(5,8,8,0.74)_100%)]" />
+              <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-ink-950/70 to-transparent" />
+            </div>
+          )}
+
           {/* Top glow line */}
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-volt/40 to-transparent" />
+          <div className="absolute inset-x-0 top-0 z-10 h-px bg-gradient-to-r from-transparent via-volt/40 to-transparent" />
 
           {/* Top-left: Back button */}
           <Link
@@ -167,7 +182,7 @@ export function PlayerProfileClient({ playerId, nameHint, row }: Props) {
           </button>
 
           {/* Avatar — overlapping top edge */}
-          <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2">
+          <div className="absolute left-1/2 top-0 z-10 -translate-x-1/2 -translate-y-1/2">
             <div className="relative">
               <div className="absolute -inset-3 rounded-full bg-gradient-to-br from-volt/25 via-volt/10 to-transparent blur-xl" />
               <div className="relative h-28 w-28 overflow-hidden rounded-full ring-[3px] ring-volt/30 ring-offset-4 ring-offset-ink-950 sm:h-32 sm:w-32 sm:ring-[4px]">
@@ -184,7 +199,7 @@ export function PlayerProfileClient({ playerId, nameHint, row }: Props) {
           </div>
 
           {/* Names — centered */}
-          <div className="text-center">
+          <div className="relative z-10 text-center">
             <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
               {displayName}
             </h1>
@@ -192,7 +207,7 @@ export function PlayerProfileClient({ playerId, nameHint, row }: Props) {
           </div>
 
           {/* Info Row */}
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-white/50">
+          <div className="relative z-10 mt-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-white/55">
             <span className="inline-flex items-center gap-1.5">
               {row?.teamCode && FIFA_CODE_TO_FLAG[row.teamCode] && (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -275,7 +290,7 @@ export function PlayerProfileClient({ playerId, nameHint, row }: Props) {
               className="space-y-5"
             >
               {/* ── Three Column Layout ── */}
-              <div className="grid gap-5 lg:grid-cols-[1fr_1.2fr_0.8fr]">
+              <div className="grid gap-5 lg:grid-cols-[.78fr_1.45fr_.78fr]">
                 {/* Left Column: Team & Matches */}
                 <div className="space-y-5">
                   <DashPanel title="当前效力" icon={Shield} accent>
@@ -808,10 +823,10 @@ function buildRadarStats(data: PlayerProfileData | null): RadarStat[] {
   const staminaRaw = (minutes / Math.max(appearances, 1) / 90) * 100;
 
   return [
-    { label: "进攻", value: clamp(attackRaw / 300 * 100) || 25 },
-    { label: "传球", value: clamp(passingRaw / 100 * 100) || 25 },
-    { label: "防守", value: clamp(defenseRaw / 200 * 100) || 25 },
-    { label: "盘带", value: clamp(dribbleRaw / 120 * 100) || 25 },
+    { label: "进攻", value: clamp((attackRaw / 300) * 100) || 25 },
+    { label: "传球", value: clamp((passingRaw / 100) * 100) || 25 },
+    { label: "防守", value: clamp((defenseRaw / 200) * 100) || 25 },
+    { label: "盘带", value: clamp((dribbleRaw / 120) * 100) || 25 },
     { label: "体能", value: clamp(staminaRaw) || 40 },
   ];
 }

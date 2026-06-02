@@ -45,11 +45,23 @@ function PopularTeamsCard({ popularTeams, className = "" }: { popularTeams: Popu
       <div className="divide-y divide-white/[0.04]">
         {popularTeams.map((team, index) => {
           const opacities = ["/1", "/0.8", "/0.6", "/0.4", "/0.3"];
-          return (<div key={team.code} className="flex items-center gap-2 py-2 transition hover:opacity-80">
-            <img src={team.flag} alt={team.name} className="h-4 w-6 shrink-0 rounded object-cover ring-1 ring-white/10" loading="lazy" />
-            <span className="min-w-0 flex-1 truncate text-sm text-white/82">{team.name}</span>
-            <span className="tabular shrink-0 font-semibold" style={{ fontSize: "1rem", color: `rgb(255 154 31 ${opacities[index]})` }}>{team.pct}%</span>
-          </div>);
+          const content = (
+            <>
+              <img src={team.flag} alt={team.name} className="h-4 w-6 shrink-0 rounded object-cover ring-1 ring-white/10" loading="lazy" />
+              <span className="min-w-0 flex-1 truncate text-sm text-white/82 transition-colors group-hover:text-volt">{team.name}</span>
+              <span className="tabular shrink-0 font-semibold" style={{ fontSize: "1rem", color: `rgb(255 154 31 ${opacities[index]})` }}>{team.pct}%</span>
+            </>
+          );
+
+          return team.href ? (
+            <Link key={team.code} href={team.href} className="group flex items-center gap-2 py-2 transition hover:opacity-90">
+              {content}
+            </Link>
+          ) : (
+            <div key={team.code} className="group flex items-center gap-2 py-2 transition hover:opacity-90">
+              {content}
+            </div>
+          );
         })}
       </div>
     </div>
