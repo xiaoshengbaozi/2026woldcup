@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { MapPin } from "lucide-react";
 import Link from "next/link";
-import { detailRows } from "@/lib/calendar";
+import { detailRows, localizeLocationText } from "@/lib/calendar";
 import { formatTime } from "@/lib/format";
 import { parseTeams } from "@/lib/teams";
 import { generateMatchSlug } from "@/lib/match-detail";
@@ -11,7 +11,7 @@ import type { Match, Team } from "@/types/match";
 export function MatchCard({ match, timezoneOffset = 0 }: { match: Match; timezoneOffset?: number }) {
   const teams = parseTeams(match.summary);
   const details = detailRows(match);
-  const venue = details.find((detail) => detail.type === "venue")?.text || match.location;
+  const venue = details.find((detail) => detail.type === "venue")?.text || localizeLocationText(match.location);
   const adjustedStart = new Date(match.start.getTime() + timezoneOffset * 3600000);
   const slug = generateMatchSlug(match.summary);
 

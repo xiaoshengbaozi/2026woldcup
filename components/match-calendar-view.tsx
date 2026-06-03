@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, MapPin, CalendarDays } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { detailRows } from "@/lib/calendar";
+import { detailRows, localizeLocationText } from "@/lib/calendar";
 import { formatTime } from "@/lib/format";
 import { generateMatchSlug } from "@/lib/match-detail";
 import { formatStageLabel } from "@/lib/stage";
@@ -553,7 +553,7 @@ function TimedMatchCard({
 function SelectedDayMatchRow({ match, displayStart }: { match: Match; displayStart: Date }) {
   const teams = parseTeams(match.summary);
   const details = detailRows(match);
-  const venue = details.find((detail) => detail.type === "venue")?.text || match.location;
+  const venue = details.find((detail) => detail.type === "venue")?.text || localizeLocationText(match.location);
   const slug = generateMatchSlug(match.summary);
 
   return (

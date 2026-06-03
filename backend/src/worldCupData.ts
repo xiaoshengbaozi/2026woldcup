@@ -505,12 +505,12 @@ function filterOfficialSquadPlayers(
         : undefined;
     const byName = getOfficialPlayerKeys(officialPlayer)
       .map((key) => apiByName.get(key))
-      .find(Boolean);
+      .find(isUnusedApiPlayer(matchedApiIds));
     const matched = byId ?? byName;
     if (matched) {
       apiMatchedPlayers += 1;
       if (typeof matched.id === "number") matchedApiIds.add(matched.id);
-      return matched;
+      return mergeOfficialPlayerWithApi(officialPlayer, matched);
     }
     return officialPlayerToNormalized(officialPlayer);
   });
@@ -525,6 +525,24 @@ function filterOfficialSquadPlayers(
     unmatchedOfficialPlayers: Math.max(0, officialPlayers.length - apiMatchedPlayers),
     filteredApiFootballPlayers: Math.max(0, apiPlayers.length - matchedApiIds.size),
     players,
+  };
+}
+
+function isUnusedApiPlayer(matchedApiIds: Set<number>) {
+  return (player: NormalizedSquadPlayer | undefined): player is NormalizedSquadPlayer =>
+    Boolean(player) && (typeof player?.id !== "number" || !matchedApiIds.has(player.id));
+}
+
+function mergeOfficialPlayerWithApi(
+  officialPlayer: FifaOfficialSquadPlayer,
+  apiPlayer: NormalizedSquadPlayer
+): NormalizedSquadPlayer {
+  const position = officialPositionToApiPosition(officialPlayer.position);
+  return {
+    ...apiPlayer,
+    number: typeof officialPlayer.number === "number" ? officialPlayer.number : apiPlayer.number,
+    position,
+    positionCn: localizeFootballPosition(position),
   };
 }
 

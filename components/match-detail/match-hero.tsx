@@ -54,6 +54,7 @@ import valverdeImage from "@/assets/players/URU-uruguay/headshots/federico-valve
 import pulisicImage from "@/assets/players/USA-united-states/headshots/christian-pulisic.webp";
 import wissaImage from "@/assets/players/COD-dr-congo/headshots/yoane-wissa.webp";
 import { formatTime } from "@/lib/format";
+import { localizeLocationText } from "@/lib/calendar";
 import { formatStageLabel } from "@/lib/stage";
 import { parseTeams } from "@/lib/teams";
 import { getVenueBannerImage } from "@/lib/venue-assets";
@@ -328,7 +329,7 @@ export function MatchHero({ detail }: { detail: MatchDetail }) {
               {detail.match.location && (
                 <span className="inline-flex min-w-0 items-center gap-1.5">
                   <MapPin className="h-3.5 w-3.5 shrink-0 text-flare/70" />
-                  <span className="max-w-[230px] truncate">{detail.match.location}</span>
+                  <span className="max-w-[230px] truncate">{localizeLocationText(detail.match.location)}</span>
                 </span>
               )}
               {detail.match.stage.includes("决赛") && (

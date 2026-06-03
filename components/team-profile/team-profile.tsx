@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getTeamCodeFromName } from "@/lib/team-localization";
+import { localizeLocationText } from "@/lib/calendar";
 import { parseTeams } from "@/lib/teams";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
 import Link from "next/link";
@@ -218,7 +219,7 @@ export function TeamProfile({ data }: TeamProfileProps) {
                         </div>
                       </div>
                       {match.location && (
-                        <div className="tp-fixture-venue">{match.location}</div>
+                        <div className="tp-fixture-venue">{localizeLocationText(match.location)}</div>
                       )}
                     </div>
                   );
