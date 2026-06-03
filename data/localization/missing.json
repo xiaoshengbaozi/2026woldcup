@@ -28,7 +28,13 @@
     "Mamelodi Sundowns": "Mamelodi Sundowns",
     "Talleres Cordoba": "Talleres Cordoba",
     "Central Norte": "Central Norte",
-    "Racing Cordoba": "Racing Cordoba"
+    "Racing Cordoba": "Racing Cordoba",
+    "Rennes": "Rennes",
+    "Hamburger SV": "Hamburger SV",
+    "Tottenham": "Tottenham",
+    "Nottingham Forest": "Nottingham Forest",
+    "Penarol": "Penarol",
+    "Norway": "Norway"
   },
   "leagues": {
     "MLS All-Star": "MLS All-Star",
@@ -78,7 +84,27 @@
     "CONMEBOL Recopa": "CONMEBOL Recopa",
     "CONMEBOL Libertadores": "CONMEBOL Libertadores",
     "División de Honor Juvenil": "División de Honor Juvenil",
-    "Copa del Rey Juvenil": "Copa del Rey Juvenil"
+    "Copa del Rey Juvenil": "Copa del Rey Juvenil",
+    "UEFA U17 Championship": "UEFA U17 Championship",
+    "Liga MX": "Liga MX",
+    "Premier League Asia Trophy": "Premier League Asia Trophy",
+    "Tournoi Maurice Revello": "Tournoi Maurice Revello",
+    "Copa MX": "Copa MX",
+    "Mobile Mini Sun Cup": "Mobile Mini Sun Cup",
+    "Supercopa MX": "Supercopa MX",
+    "Copa por México": "Copa por México",
+    "8 Cup": "8 Cup",
+    "Copa Argentina": "Copa Argentina",
+    "2. Liga": "2. Liga",
+    "UEFA Europa League": "UEFA Europa League",
+    "Serie A": "Serie A",
+    "Liga AUF": "Liga AUF",
+    "Liga Profesional Argentina": "Liga Profesional Argentina",
+    "Super Copa": "Super Copa",
+    "Trofeo de Campeones": "Trofeo de Campeones",
+    "AFC Champions League Elite": "AFC Champions League Elite",
+    "EAFF E-1 Football Championship": "EAFF E-1 Football Championship",
+    "CONMEBOL U20": "CONMEBOL U20"
   },
   "positions": {},
   "countries": {
@@ -87,7 +113,9 @@
     "Asia": "Asia",
     "South Africa": "South Africa",
     "Sweden": "Sweden",
-    "Italy": "Italy"
+    "Italy": "Italy",
+    "Africa": "Africa",
+    "South-America": "South-America"
   },
   "transferTypes": {
     "€ 180M": "€ 180M",
@@ -122,11 +150,13 @@
     "Red Card": "Red Card",
     "Facial Injury": "Facial Injury",
     "Hand Injury": "Hand Injury",
-    "Thumb / Wrist Injury": "Thumb / Wrist Injury"
+    "Thumb / Wrist Injury": "Thumb / Wrist Injury",
+    "MCL Knee Injury": "MCL Knee Injury"
   },
   "birthPlaces": {
     "Mataró": "Mataró",
     "Chlef": "Chlef",
-    "Leeds": "Leeds"
+    "Leeds": "Leeds",
+    "Torreón": "Torreón"
   }
 }

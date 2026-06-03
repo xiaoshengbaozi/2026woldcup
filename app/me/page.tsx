@@ -271,6 +271,8 @@ export default function MePage() {
     setRegisterStep("account");
     setError("");
     if (mode === "register") {
+      setEmail("");
+      setDisplayName("");
       setPassword("");
       setRepeatPassword("");
     }
@@ -308,7 +310,9 @@ export default function MePage() {
 
     if (!displayName.trim()) return setError("请填写昵称");
     if (!email.trim()) return setError("请填写邮箱");
+    if (!isValidEmail(email)) return setError("请输入有效的邮箱地址");
     if (!password) return setError("请填写密码");
+    if (password.length < 8) return setError("密码至少需要 8 位");
     if (password !== repeatPassword) return setError("两次输入的密码不一致");
 
     setRegisterStep("preferences");
@@ -332,7 +336,7 @@ export default function MePage() {
         body: JSON.stringify({
           email,
           password,
-          displayName,
+          displayName: displayName.trim(),
           avatarPlayerId,
           followedTeams,
           followedPlayers,
@@ -1290,12 +1294,17 @@ function continentLabel(continent: ContinentKey) {
 function readableError(err: unknown, fallback: string) {
   const message = err instanceof Error ? err.message : fallback;
   const messages: Record<string, string> = {
+    invalid_credentials: "邮箱或密码不符合要求，密码至少 8 位",
     invalid_email_or_password: "邮箱或密码不正确",
     email_already_registered: "这个邮箱已经注册过了",
     user_disabled: "这个账号已被停用",
     authentication_required: "请先登录",
   };
   return messages[message] ?? fallback;
+}
+
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }
 
 function formatMatchTime(startsAt: string | undefined) {

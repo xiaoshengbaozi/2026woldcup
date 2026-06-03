@@ -717,7 +717,8 @@
       "idSource": "local-squad-cache",
       "coverImage": "/player-stories/wonderkids/Kenan_Yildiz_main.jpg",
       "storyImages": [
-        "/player-stories/wonderkids/Kenan_Yildiz_2.jpg"
+        "/player-stories/wonderkids/Kenan_Yildiz_2.jpg",
+        "/player-stories/wonderkids/Kenan_Yildiz_3.jpg"
       ]
     },
     {
@@ -1210,7 +1211,10 @@
       },
       "idSource": "local-squad-cache",
       "coverImage": "/player-stories/26_superstars/Vinicius_Junior_main.jpg",
-      "storyImages": []
+      "storyImages": [
+        "/player-stories/26_superstars/Vinicius_Junior_2.jpg",
+        "/player-stories/26_superstars/Vinicius_Junior_3.jpg"
+      ]
     },
     {
       "id": "184",
@@ -1686,6 +1690,7 @@
       "idSource": "api-football-profile-search",
       "coverImage": "/player-stories/26_superstars/Bruno_Fernandes_main.jpg",
       "storyImages": [
+        "/player-stories/26_superstars/Bruno_Fernandes_2.jpg",
         "/player-stories/26_superstars/Bruno_Fernandes_3.jpg"
       ]
     },
@@ -2921,7 +2926,7 @@
     },
     {
       "id": "58929",
-      "apiPlayerId": 58929,
+      "apiPlayerId": 6009,
       "slug": "julian-alvarez",
       "category": "superstars",
       "nameEn": "Julian Alvarez",

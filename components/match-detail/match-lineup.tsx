@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import playerArticles from "@/data/player-articles.json";
 import { parseTeams } from "@/lib/teams";
 import type { MatchDetail, LineupPlayer } from "@/types/match";
 
@@ -109,8 +110,10 @@ export function MatchLineup({ detail }: { detail: MatchDetail }) {
           className="relative grid grid-cols-1 gap-4 p-4 sm:p-5 md:grid-cols-[2fr_3fr]"
         >
           {isSquadList ? (
-            <SquadPoolSummary
+            <FeaturedSquadSummary
               teamName={currentTeamName}
+              teamCode={isHome ? detail.homeTeamCode : detail.awayTeamCode}
+              coach={currentLineup.coach}
               players={currentLineup.players}
               officialWorldCupSquad={Boolean(currentLineup.officialWorldCupSquad)}
               accentHex={accentHex}
@@ -268,6 +271,201 @@ function FormationPitch({
         </div>
       </div>
     </div>
+  );
+}
+
+function FeaturedSquadSummary({
+  teamName, teamCode, coach, players, officialWorldCupSquad, accentHex, accentFrom,
+}: {
+  teamName: string;
+  teamCode: string;
+  coach?: string | null;
+  players: LineupPlayer[];
+  officialWorldCupSquad: boolean;
+  accentHex: string;
+  accentFrom: string;
+}) {
+  const grouped = groupPlayersByPosition(players);
+  const availableGroups = POSITION_GROUPS
+    .map((group) => ({ ...group, count: grouped[group.key]?.length ?? 0 }))
+    .filter((group) => group.count > 0);
+  const featuredPlayers = getFeaturedPlayers(players, teamCode).slice(0, 6);
+
+  return (
+    <div className="flex min-h-[320px] flex-col justify-between rounded-3xl bg-white/[0.025] p-5 ring-1 ring-white/[0.055]">
+      <div>
+        <div className="mb-4 flex items-center gap-2">
+          <div className="h-5 w-1 rounded-full" style={{ backgroundColor: accentHex }} />
+          <span className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: accentHex }}>
+            {officialWorldCupSquad ? "FIFA 官方最终名单" : "FIFA 官方名单待录入"}
+          </span>
+        </div>
+
+        <h3 className="text-xl font-black text-white sm:text-2xl">{teamName}</h3>
+        <div
+          className="mt-4 rounded-2xl px-4 py-3 ring-1 ring-white/[0.055]"
+          style={{ background: `linear-gradient(135deg, ${accentFrom}0.14), rgba(255,255,255,0.025))` }}
+        >
+          <p className="text-[10px] font-bold tracking-[0.16em] text-white/35">主教练</p>
+          <p className="mt-1 truncate text-lg font-black text-white">{coach || "待更新"}</p>
+        </div>
+      </div>
+
+      <div className="mt-5">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/35">明星球员</p>
+          <span className="text-[10px] font-bold tabular-nums" style={{ color: `${accentHex}cc` }}>
+            {featuredPlayers.length}
+          </span>
+        </div>
+        {featuredPlayers.length ? (
+          <div className="space-y-2">
+            {featuredPlayers.map((item, index) => (
+              <FeaturedPlayerRow
+                key={`${item.player.id}-${item.category}`}
+                item={item}
+                accentHex={accentHex}
+                accentFrom={accentFrom}
+                index={index}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl bg-white/[0.025] px-4 py-5 text-center ring-1 ring-white/[0.055]">
+            <p className="text-sm font-semibold text-white/42">暂无明星球员数据</p>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-5 flex flex-wrap gap-2">
+        <span
+          className="rounded-full px-3 py-1 text-[11px] font-bold text-white/65 ring-1 ring-white/[0.06]"
+          style={{ background: `${accentFrom}0.08)` }}
+        >
+          名单 {players.length || 0}
+        </span>
+        {availableGroups.length ? availableGroups.map((group) => (
+          <span
+            key={group.key}
+            className="rounded-full px-3 py-1 text-[11px] font-bold text-white/65 ring-1 ring-white/[0.06]"
+            style={{ background: `${accentFrom}0.08)` }}
+          >
+            {group.label} {group.count}
+          </span>
+        )) : (
+          <span className="text-sm font-semibold text-white/42">暂无官方名单数据</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+type FeaturedCategory = "superstar" | "wonderkid" | "rating";
+
+type FeaturedPlayer = {
+  player: LineupPlayer;
+  category: FeaturedCategory;
+};
+
+type PlayerArticle = (typeof playerArticles.players)[number];
+
+const PLAYER_ARTICLES_BY_ID = new Map(
+  playerArticles.players.map((player) => [String(player.apiPlayerId), player])
+);
+
+function getFeaturedPlayers(players: LineupPlayer[], teamCode: string): FeaturedPlayer[] {
+  const byPlayer = new Map<string, FeaturedPlayer>();
+  const normalizedTeamCode = teamCode.toUpperCase();
+
+  for (const player of players) {
+    const article = PLAYER_ARTICLES_BY_ID.get(player.id);
+    const articleCategory = getArticleCategory(article, normalizedTeamCode);
+    const category = articleCategory ?? (player.rating && player.rating >= 7 ? "rating" : null);
+    if (!category) continue;
+
+    byPlayer.set(player.id, {
+      player: { ...player, featuredCategory: category },
+      category,
+    });
+  }
+
+  return [...byPlayer.values()].sort((a, b) => {
+    const priorityDiff = getFeaturedPriority(a.category) - getFeaturedPriority(b.category);
+    if (priorityDiff) return priorityDiff;
+    return (b.player.rating ?? 0) - (a.player.rating ?? 0);
+  });
+}
+
+function getArticleCategory(article: PlayerArticle | undefined, teamCode: string): FeaturedCategory | null {
+  if (!article || article.teamCode?.toUpperCase() !== teamCode) return null;
+  if (article.category === "superstars") return "superstar";
+  if (article.category === "wonderkids") return "wonderkid";
+  return null;
+}
+
+function getFeaturedPriority(category: FeaturedCategory) {
+  if (category === "superstar") return 0;
+  if (category === "wonderkid") return 1;
+  return 2;
+}
+
+function getFeaturedLabel(category: FeaturedCategory) {
+  if (category === "superstar") return "超级巨星";
+  if (category === "wonderkid") return "世界杯新星";
+  return "评分 7+";
+}
+
+function FeaturedPlayerRow({
+  item, accentHex, accentFrom, index,
+}: {
+  item: FeaturedPlayer;
+  accentHex: string;
+  accentFrom: string;
+  index: number;
+}) {
+  const { player, category } = item;
+  const href = /^\d+$/.test(player.id) ? `/players/${player.id}/` : null;
+  const content = (
+    <>
+      <div
+        className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full ring-1"
+        style={{
+          background: `linear-gradient(135deg, ${accentFrom}0.18), rgba(255,255,255,0.04))`,
+          borderColor: `${accentFrom}0.22)`,
+        }}
+      >
+        {player.photo ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={player.photo} alt={player.nameEn || player.name} className="h-full w-full object-cover" loading="lazy" />
+        ) : (
+          <span className="text-[11px] font-black tabular-nums text-white">{player.number ?? "·"}</span>
+        )}
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex min-w-0 items-center gap-2">
+          <p className="truncate text-sm font-black leading-tight text-white">{player.nameCn || player.name}</p>
+          {player.rating ? (
+            <span className="shrink-0 text-[10px] font-black tabular-nums" style={{ color: accentHex }}>
+              {player.rating}
+            </span>
+          ) : null}
+        </div>
+        <p className="mt-1 truncate text-[10px] font-bold text-white/42">
+          {getFeaturedLabel(category)} · {player.positionCn || player.position}{player.number ? ` · ${player.number}号` : ""}
+        </p>
+      </div>
+    </>
+  );
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.12 + index * 0.03, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+      className="group flex items-center gap-3 overflow-hidden rounded-2xl bg-white/[0.025] px-3 py-2.5 ring-1 ring-white/[0.055] transition-all duration-200 hover:bg-white/[0.045]"
+    >
+      {href ? <Link href={href} className="flex min-w-0 flex-1 items-center gap-3">{content}</Link> : content}
+    </motion.div>
   );
 }
 

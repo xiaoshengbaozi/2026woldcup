@@ -231,35 +231,6 @@ export function TeamProfile({ data }: TeamProfileProps) {
         </aside>
 
         <main className="tp-main">
-          <div className="tp-tl-section tp-glass">
-            <div className="tp-section-hd">
-              <div className="tp-section-hd-left">
-                <div className="tp-section-icon">{"\u{1F3C6}"}</div>
-                <span className="tp-section-title">世界杯征程</span>
-                <span className="tp-section-badge">{count} 届</span>
-              </div>
-              <span className="tp-section-badge volt">{yearSpan}</span>
-            </div>
-            <div className="tp-tl-vp" ref={vpRef}>
-              <button ref={prevRef} className="tp-tl-nav prev off" onClick={() => scroll(-1)} aria-label="向左滚动">{"‹"}</button>
-              <button ref={nextRef} className="tp-tl-nav next" onClick={() => scroll(1)} aria-label="向右滚动">{"›"}</button>
-              <div className="tp-tl-track">
-                <div className="tp-tl-line" />
-                {timeline.map((t) => {
-                  const isHl = !!t.highlight;
-                  const isNow = t.year === 2026;
-                  return (
-                    <div key={t.year} className={`tp-tl-node${isHl ? " hl" : ""}${isNow ? " now" : ""}`}>
-                      <div className="tp-tl-yr">{t.year}</div>
-                      <div className="tp-tl-dot" />
-                      <div className="tp-tl-result">{t.result}</div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
           <div className="tp-content-tabs" aria-label="球队内容">
             <button
               type="button"
@@ -284,10 +255,28 @@ export function TeamProfile({ data }: TeamProfileProps) {
           <div className="tp-content-panel">
             {activeContentTab === "profile" ? (
               <div className="tp-stories">
-                <div className="tp-section-hd">
-                  <div className="tp-section-hd-left">
-                    <div className="tp-section-icon">{"\u{1F4D6}"}</div>
-                    <span className="tp-section-title">球队档案</span>
+                <div className="tp-tl-section tp-glass">
+                  <div className="tp-tl-meta">
+                    <span className="tp-section-badge">{count} 届</span>
+                    <span className="tp-section-badge volt">{yearSpan}</span>
+                  </div>
+                  <div className="tp-tl-vp" ref={vpRef}>
+                    <button ref={prevRef} className="tp-tl-nav prev off" onClick={() => scroll(-1)} aria-label="向左滚动">{"‹"}</button>
+                    <button ref={nextRef} className="tp-tl-nav next" onClick={() => scroll(1)} aria-label="向右滚动">{"›"}</button>
+                    <div className="tp-tl-track">
+                      <div className="tp-tl-line" />
+                      {timeline.map((t) => {
+                        const isHl = !!t.highlight;
+                        const isNow = t.year === 2026;
+                        return (
+                          <div key={t.year} className={`tp-tl-node${isHl ? " hl" : ""}${isNow ? " now" : ""}`}>
+                            <div className="tp-tl-yr">{t.year}</div>
+                            <div className="tp-tl-dot" />
+                            <div className="tp-tl-result">{t.result}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
                 <div className="tp-story-grid">

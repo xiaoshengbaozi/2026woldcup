@@ -10,6 +10,7 @@ type SquadPlayerResponse = {
   position: string;
   positionCn: string;
   photo: string;
+  rating?: number | string | null;
 };
 
 type SquadResponse = {
@@ -98,7 +99,14 @@ function toLineupPlayer(player: SquadPlayerResponse, index: number): LineupPlaye
     country: "",
     club: "国家队",
     age: player.age ?? 0,
+    rating: parseRating(player.rating),
   };
+}
+
+function parseRating(value: number | string | null | undefined) {
+  if (value == null) return undefined;
+  const rating = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(rating) ? Math.round(rating * 10) / 10 : undefined;
 }
 
 function toPlayerPosition(position: string): PlayerPosition {

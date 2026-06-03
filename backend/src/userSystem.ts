@@ -43,7 +43,7 @@ export class UserSystem {
           avatarPlayerId: typeof body.avatarPlayerId === "string" ? body.avatarPlayerId : undefined,
         });
         applyRegistrationPreferences(this.store, user.id, body);
-        this.issueSession(res, user);
+        this.issueSession(req, res, user);
         sendJson(res, { user: toPublicUser(this.store.getUserById(user.id) ?? user) }, 201);
         return true;
       }
@@ -59,7 +59,7 @@ export class UserSystem {
           sendJson(res, { error: "user_disabled" }, 403);
           return true;
         }
-        this.issueSession(res, user);
+        this.issueSession(req, res, user);
         sendJson(res, { user: toPublicUser(user) });
         return true;
       }
@@ -203,16 +203,18 @@ export class UserSystem {
     return user;
   }
 
-  private issueSession(res: http.ServerResponse, user: WorldCupUser) {
+  private issueSession(req: http.IncomingMessage, res: http.ServerResponse, user: WorldCupUser) {
     const sessionId = randomBytes(32).toString("hex");
     this.sessions.set(sessionId, {
       userId: user.id,
       expiresAt: Date.now() + SESSION_MAX_AGE_SECONDS * 1000,
     });
+    const cookieOptions = getSessionCookieOptions(req);
     res.setHeader("Set-Cookie", serializeCookie(SESSION_COOKIE, sessionId, {
       httpOnly: true,
       maxAge: SESSION_MAX_AGE_SECONDS,
-      sameSite: "Lax",
+      sameSite: cookieOptions.sameSite,
+      secure: cookieOptions.secure,
       path: "/",
     }));
   }
@@ -608,15 +610,36 @@ function clearSessionCookie(res: http.ServerResponse) {
   }));
 }
 
+function getSessionCookieOptions(req: http.IncomingMessage): { sameSite: "Lax" | "None"; secure: boolean } {
+  const origin = req.headers.origin;
+  if (!origin) return { sameSite: "Lax", secure: false };
+
+  try {
+    const originUrl = new URL(origin);
+    const requestHost = req.headers.host?.split(":")[0];
+    const isLocalOrigin = originUrl.hostname === "localhost" || originUrl.hostname === "127.0.0.1" || originUrl.hostname === "::1";
+    const isSameHost = Boolean(requestHost && originUrl.hostname === requestHost);
+
+    if (originUrl.protocol === "https:" && !isLocalOrigin && !isSameHost) {
+      return { sameSite: "None", secure: true };
+    }
+  } catch {
+    return { sameSite: "Lax", secure: false };
+  }
+
+  return { sameSite: "Lax", secure: false };
+}
+
 function serializeCookie(
   name: string,
   value: string,
-  options: { httpOnly?: boolean; maxAge?: number; sameSite?: "Lax" | "Strict" | "None"; path?: string }
+  options: { httpOnly?: boolean; maxAge?: number; sameSite?: "Lax" | "Strict" | "None"; secure?: boolean; path?: string }
 ) {
   const parts = [`${name}=${encodeURIComponent(value)}`];
   if (options.maxAge !== undefined) parts.push(`Max-Age=${options.maxAge}`);
   if (options.path) parts.push(`Path=${options.path}`);
   if (options.sameSite) parts.push(`SameSite=${options.sameSite}`);
+  if (options.secure) parts.push("Secure");
   if (options.httpOnly) parts.push("HttpOnly");
   return parts.join("; ");
 }

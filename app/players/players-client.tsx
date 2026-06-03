@@ -172,7 +172,7 @@ function PlayerRail({ players }: { players: PlayerArticle[] }) {
           {players.map((player) => (
             <Link
               key={player.id}
-              href={"/players/" + player.id + "/"}
+              href={playerProfileHref(player)}
               className="group flex w-20 shrink-0 flex-col items-center text-center sm:w-24"
             >
               <div className="relative h-17 w-17 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/[0.1] transition duration-300 group-hover:scale-105 group-hover:ring-volt/45 sm:h-20 sm:w-20">
@@ -215,7 +215,7 @@ function PlayerRail({ players }: { players: PlayerArticle[] }) {
 
 function FeaturedStrip({ player }: { player: PlayerArticle }) {
   return (
-    <Link href={"/players/" + player.id + "/"} className="hero-card group grid overflow-hidden p-4 transition lg:grid-cols-[92px_minmax(0,1fr)_auto] lg:items-center">
+    <Link href={playerProfileHref(player)} className="hero-card group grid overflow-hidden p-4 transition lg:grid-cols-[92px_minmax(0,1fr)_auto] lg:items-center">
       <div className="flex items-center gap-3">
         <div className="h-14 w-14 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/[0.08]">
           <img src={player.photo} alt={player.nameCn} className="h-full w-full object-cover" />
@@ -251,11 +251,11 @@ function TimelinePost({ player, index }: { player: PlayerArticle; index: number 
       className="group rounded-2xl border border-white/[0.06] bg-white/[0.02] transition-colors duration-300 hover:border-white/[0.1] hover:bg-white/[0.03]"
     >
       <div className="flex items-center gap-3 px-4 py-3 sm:px-5">
-        <Link href={"/players/" + player.id + "/"} className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/[0.08] transition hover:ring-volt/45">
+        <Link href={playerProfileHref(player)} className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/[0.08] transition hover:ring-volt/45">
           <img src={player.photo} alt={player.nameCn} className="h-full w-full object-cover" />
         </Link>
         <div className="min-w-0 flex-1">
-          <Link href={"/players/" + player.id + "/"} className="text-sm font-bold text-white hover:text-volt transition">
+          <Link href={playerProfileHref(player)} className="text-sm font-bold text-white hover:text-volt transition">
             {player.nameCn}
           </Link>
           <p className="truncate text-xs text-white/36">{countryLabel(player)} {"· "} {player.published || "FIFA"}</p>
@@ -265,7 +265,7 @@ function TimelinePost({ player, index }: { player: PlayerArticle; index: number 
         </span>
       </div>
 
-      <Link href={"/players/" + player.id + "/"} className="block">
+      <Link href={playerProfileHref(player)} className="block">
         <div className="relative aspect-[16/10] overflow-hidden bg-white/[0.02]">
           <img
             src={player.coverImage || player.photo}
@@ -282,7 +282,7 @@ function TimelinePost({ player, index }: { player: PlayerArticle; index: number 
 
       <div className="flex items-center gap-4 border-t border-white/[0.04] px-4 py-2.5 sm:px-5">
         <Link
-          href={"/players/" + player.id + "/"}
+          href={playerProfileHref(player)}
           className="flex items-center gap-1.5 text-xs font-medium text-white/40 transition hover:text-volt"
         >
           <span>{"阅读全文"}</span>
@@ -295,6 +295,10 @@ function TimelinePost({ player, index }: { player: PlayerArticle; index: number 
 
 function countryLabel(player: PlayerArticle) {
   return countryNameCn[player.countryCn] || countryNameCn[player.countryEn] || player.countryCn;
+}
+
+function playerProfileHref(player: Pick<PlayerArticle, "apiPlayerId" | "id">) {
+  return `/players/${player.apiPlayerId || player.id}/`;
 }
 
 function ScorerBoard() {

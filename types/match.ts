@@ -77,6 +77,7 @@ export type LineupPlayer = {
   club: string;
   age: number;
   rating?: number;
+  featuredCategory?: "superstar" | "wonderkid" | "rating";
   isCaptain?: boolean;
   injury?: boolean;
   yellowCards?: number;
@@ -87,6 +88,7 @@ export type MatchLineup = {
   players: LineupPlayer[];
   listType?: "confirmed_lineup" | "final_squad" | "squad_pool";
   officialWorldCupSquad?: boolean;
+  coach?: string | null;
 };
 
 export type MatchEventType =

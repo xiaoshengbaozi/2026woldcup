@@ -164,6 +164,7 @@ export function PlayerProfileClient({ playerId, nameHint, row, article }: Props)
   const fullName = [player?.firstname, player?.lastname].filter(Boolean).join(" ");
   const photo = player?.photo || row?.photo || data?.oneVsOne?.player?.image || "";
   const currentTeam = data?.currentTeam?.name || data?.oneVsOne?.player?.teamName || "暂无俱乐部数据";
+  const currentTeamLogo = data?.currentTeam?.logo || "";
   const total = useMemo(() => summarizeStats(data?.seasonStats ?? []), [data?.seasonStats]);
   const latestTransfers = (data?.transfers ?? []).slice(0, 5);
   const trophies = (data?.trophies ?? []).slice(0, 8);
@@ -267,7 +268,17 @@ export function PlayerProfileClient({ playerId, nameHint, row, article }: Props)
                 </>
               )}
               <span className="text-white/20">|</span>
-              <span className="text-white/65">{currentTeam}</span>
+              <span className="inline-flex items-center gap-1.5 text-white/65">
+                {currentTeamLogo && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={currentTeamLogo}
+                    alt=""
+                    className="h-4 w-4 rounded-full bg-white/[0.08] object-contain ring-1 ring-white/[0.08]"
+                  />
+                )}
+                {currentTeam}
+              </span>
               {player?.height && (
                 <>
                   <span className="text-white/20">|</span>
@@ -374,8 +385,13 @@ export function PlayerProfileClient({ playerId, nameHint, row, article }: Props)
                   <DashPanel title="当前效力" icon={Shield} accent>
                     <div className="rounded-2xl bg-white/[0.03] p-4 ring-1 ring-white/[0.05]">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-volt/10">
-                          <Shield className="h-6 w-6 text-volt/70" />
+                        <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-volt/10 ring-1 ring-white/[0.06]">
+                          {currentTeamLogo ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={currentTeamLogo} alt="" className="h-8 w-8 object-contain" />
+                          ) : (
+                            <Shield className="h-6 w-6 text-volt/70" />
+                          )}
                         </div>
                         <div>
                           <p className="text-sm font-bold text-white/88">{currentTeam}</p>

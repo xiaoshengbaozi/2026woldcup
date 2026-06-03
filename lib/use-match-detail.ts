@@ -83,6 +83,7 @@ export function useMatchDetail(slug: string): {
         players: homeSquad?.players ?? [],
         listType: homeSquad?.listType ?? "squad_pool",
         officialWorldCupSquad: Boolean(homeSquad?.officialWorldCupSquad),
+        coach: homeSquad?.coach ?? null,
       };
     }
     if (match.awayTeam?.id) {
@@ -91,6 +92,7 @@ export function useMatchDetail(slug: string): {
         players: awaySquad?.players ?? [],
         listType: awaySquad?.listType ?? "squad_pool",
         officialWorldCupSquad: Boolean(awaySquad?.officialWorldCupSquad),
+        coach: awaySquad?.coach ?? null,
       };
     }
     if (match.homeTeam?.id && match.awayTeam?.id) {
