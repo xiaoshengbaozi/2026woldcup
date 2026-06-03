@@ -75,7 +75,12 @@
           }
         ]
       },
-      "idSource": "local-squad-cache"
+      "idSource": "local-squad-cache",
+      "coverImage": "/player-stories/wonderkids/Lennart_Karl_main.jpg",
+      "storyImages": [
+        "/player-stories/wonderkids/Lennart_Karl_2.jpg",
+        "/player-stories/wonderkids/Lennart_Karl_3.jpg"
+      ]
     },
     {
       "id": "350037",
@@ -148,7 +153,12 @@
           }
         ]
       },
-      "idSource": "local-squad-cache"
+      "idSource": "local-squad-cache",
+      "coverImage": "/player-stories/wonderkids/Nico_Paz_main.jpg",
+      "storyImages": [
+        "/player-stories/wonderkids/Nico_Paz_2.jpg",
+        "/player-stories/wonderkids/Nico_Paz_3.jpg"
+      ]
     },
     {
       "id": "19937",
@@ -225,7 +235,12 @@
           }
         ]
       },
-      "idSource": "api-football-profile-search"
+      "idSource": "api-football-profile-search",
+      "coverImage": "/player-stories/wonderkids/Nico_OReilly_main.jpg",
+      "storyImages": [
+        "/player-stories/wonderkids/Nico_OReilly_2.jpg",
+        "/player-stories/wonderkids/Nico_OReilly_3.jpg"
+      ]
     },
     {
       "id": "343027",
@@ -303,7 +318,12 @@
           }
         ]
       },
-      "idSource": "local-squad-cache"
+      "idSource": "local-squad-cache",
+      "coverImage": "/player-stories/wonderkids/Desire_Doue_main.jpg",
+      "storyImages": [
+        "/player-stories/wonderkids/Desire_Doue_2.jpg",
+        "/player-stories/wonderkids/Desire_Doue_3.jpg"
+      ]
     },
     {
       "id": "396623",
@@ -377,7 +397,12 @@
           }
         ]
       },
-      "idSource": "api-football-profile-search"
+      "idSource": "api-football-profile-search",
+      "coverImage": "/player-stories/wonderkids/Pau_Cubarsi_main.jpg",
+      "storyImages": [
+        "/player-stories/wonderkids/Pau_Cubarsi_2.jpg",
+        "/player-stories/wonderkids/Pau_Cubarsi_3.jpg"
+      ]
     },
     {
       "id": "513776",
@@ -449,7 +474,12 @@
           }
         ]
       },
-      "idSource": "local-squad-cache"
+      "idSource": "local-squad-cache",
+      "coverImage": "/player-stories/wonderkids/Yan_Diomande_main.jpg",
+      "storyImages": [
+        "/player-stories/wonderkids/Yan_Diomande_2.jpg",
+        "/player-stories/wonderkids/Yan_Diomande_3.jpg"
+      ]
     },
     {
       "id": "291964",
@@ -527,7 +557,12 @@
           }
         ]
       },
-      "idSource": "local-squad-cache"
+      "idSource": "local-squad-cache",
+      "coverImage": "/player-stories/wonderkids/Arda_Guler_main.jpg",
+      "storyImages": [
+        "/player-stories/wonderkids/Arda_Guler_2.jpg",
+        "/player-stories/wonderkids/Arda_Guler_3.jpg"
+      ]
     },
     {
       "id": "336657",
@@ -600,7 +635,12 @@
           }
         ]
       },
-      "idSource": "local-squad-cache"
+      "idSource": "local-squad-cache",
+      "coverImage": "/player-stories/wonderkids/Warren_ZaireEmery_main.jpg",
+      "storyImages": [
+        "/player-stories/wonderkids/Warren_ZaireEmery_2.jpg",
+        "/player-stories/wonderkids/Warren_ZaireEmery_3.jpg"
+      ]
     },
     {
       "id": "339883",
@@ -674,7 +714,11 @@
           }
         ]
       },
-      "idSource": "local-squad-cache"
+      "idSource": "local-squad-cache",
+      "coverImage": "/player-stories/wonderkids/Kenan_Yildiz_main.jpg",
+      "storyImages": [
+        "/player-stories/wonderkids/Kenan_Yildiz_2.jpg"
+      ]
     },
     {
       "id": "154",
@@ -777,7 +821,12 @@
           }
         ]
       },
-      "idSource": "local-squad-cache"
+      "idSource": "local-squad-cache",
+      "coverImage": "/player-stories/26_superstars/Lionel_Messi_main.jpg",
+      "storyImages": [
+        "/player-stories/26_superstars/Lionel_Messi_2.jpg",
+        "/player-stories/26_superstars/Lionel_Messi_3.jpg"
+      ]
     },
     {
       "id": "1100",
@@ -863,7 +912,12 @@
           }
         ]
       },
-      "idSource": "local-squad-cache"
+      "idSource": "local-squad-cache",
+      "coverImage": "/player-stories/26_superstars/Erling_Haaland_main.jpg",
+      "storyImages": [
+        "/player-stories/26_superstars/Erling_Haaland_2.jpg",
+        "/player-stories/26_superstars/Erling_Haaland_3.jpg"
+      ]
     },
     {
       "id": "278",
@@ -966,7 +1020,12 @@
           }
         ]
       },
-      "idSource": "local-squad-cache"
+      "idSource": "local-squad-cache",
+      "coverImage": "/player-stories/26_superstars/Kylian_Mbappe_main.jpg",
+      "storyImages": [
+        "/player-stories/26_superstars/Kylian_Mbappe_2.jpg",
+        "/player-stories/26_superstars/Kylian_Mbappe_3.jpg"
+      ]
     },
     {
       "id": "306",
@@ -1059,7 +1118,12 @@
           }
         ]
       },
-      "idSource": "api-football-profile-search"
+      "idSource": "api-football-profile-search",
+      "coverImage": "/player-stories/26_superstars/Mohamed_Salah_main.jpg",
+      "storyImages": [
+        "/player-stories/26_superstars/Mohamed_Salah_2.jpg",
+        "/player-stories/26_superstars/Mohamed_Salah_3.jpg"
+      ]
     },
     {
       "id": "762",
@@ -1144,7 +1208,9 @@
           }
         ]
       },
-      "idSource": "local-squad-cache"
+      "idSource": "local-squad-cache",
+      "coverImage": "/player-stories/26_superstars/Vinicius_Junior_main.jpg",
+      "storyImages": []
     },
     {
       "id": "184",
@@ -1228,7 +1294,12 @@
           }
         ]
       },
-      "idSource": "api-football-profile-search"
+      "idSource": "api-football-profile-search",
+      "coverImage": "/player-stories/26_superstars/Harry_Kane_main.jpg",
+      "storyImages": [
+        "/player-stories/26_superstars/Harry_Kane_2.jpg",
+        "/player-stories/26_superstars/Harry_Kane_3.jpg"
+      ]
     },
     {
       "id": "386828",
@@ -1325,7 +1396,12 @@
           }
         ]
       },
-      "idSource": "api-football-profile-search"
+      "idSource": "api-football-profile-search",
+      "coverImage": "/player-stories/26_superstars/Lamine_Yamal_main.jpg",
+      "storyImages": [
+        "/player-stories/26_superstars/Lamine_Yamal_2.jpg",
+        "/player-stories/26_superstars/Lamine_Yamal_3.jpg"
+      ]
     },
     {
       "id": "756",
@@ -1410,7 +1486,12 @@
           }
         ]
       },
-      "idSource": "local-squad-cache"
+      "idSource": "local-squad-cache",
+      "coverImage": "/player-stories/26_superstars/Federico_Valverde_main.jpg",
+      "storyImages": [
+        "/player-stories/26_superstars/Federico_Valverde_2.jpg",
+        "/player-stories/26_superstars/Federico_Valverde_3.jpg"
+      ]
     },
     {
       "id": "874",
@@ -1511,7 +1592,12 @@
           }
         ]
       },
-      "idSource": "api-football-profile-search"
+      "idSource": "api-football-profile-search",
+      "coverImage": "/player-stories/26_superstars/Cristiano_Ronaldo_main.jpg",
+      "storyImages": [
+        "/player-stories/26_superstars/Cristiano_Ronaldo_2.jpg",
+        "/player-stories/26_superstars/Cristiano_Ronaldo_3.jpg"
+      ]
     },
     {
       "id": "1485",
@@ -1597,7 +1683,11 @@
           }
         ]
       },
-      "idSource": "api-football-profile-search"
+      "idSource": "api-football-profile-search",
+      "coverImage": "/player-stories/26_superstars/Bruno_Fernandes_main.jpg",
+      "storyImages": [
+        "/player-stories/26_superstars/Bruno_Fernandes_3.jpg"
+      ]
     },
     {
       "id": "153",
@@ -1678,7 +1768,12 @@
           }
         ]
       },
-      "idSource": "local-squad-cache"
+      "idSource": "local-squad-cache",
+      "coverImage": "/player-stories/26_superstars/Ousmane_Dembele_main.jpg",
+      "storyImages": [
+        "/player-stories/26_superstars/Ousmane_Dembele_2.jpg",
+        "/player-stories/26_superstars/Ousmane_Dembele_3.jpg"
+      ]
     },
     {
       "id": "629",
@@ -1763,7 +1858,12 @@
           }
         ]
       },
-      "idSource": "local-squad-cache"
+      "idSource": "local-squad-cache",
+      "coverImage": "/player-stories/26_superstars/Kevin_De_Bruyne_main.jpg",
+      "storyImages": [
+        "/player-stories/26_superstars/Kevin_De_Bruyne_2.jpg",
+        "/player-stories/26_superstars/Kevin_De_Bruyne_3.jpg"
+      ]
     },
     {
       "id": "2489",
@@ -1819,7 +1919,12 @@
           }
         ]
       },
-      "idSource": "local-squad-cache"
+      "idSource": "local-squad-cache",
+      "coverImage": "/player-stories/26_superstars/Luis_Diaz_main.jpg",
+      "storyImages": [
+        "/player-stories/26_superstars/Luis_Diaz_2.jpg",
+        "/player-stories/26_superstars/Luis_Diaz_3.jpg"
+      ]
     },
     {
       "id": "186",
@@ -1910,7 +2015,12 @@
           }
         ]
       },
-      "idSource": "local-squad-cache"
+      "idSource": "local-squad-cache",
+      "coverImage": "/player-stories/26_superstars/Son_Heungmin_main.jpg",
+      "storyImages": [
+        "/player-stories/26_superstars/Son_Heungmin_2.jpg",
+        "/player-stories/26_superstars/Son_Heungmin_3.jpg"
+      ]
     },
     {
       "id": "203224",
@@ -1998,7 +2108,12 @@
           }
         ]
       },
-      "idSource": "local-squad-cache"
+      "idSource": "local-squad-cache",
+      "coverImage": "/player-stories/26_superstars/Florian_Wirtz_main.jpg",
+      "storyImages": [
+        "/player-stories/26_superstars/Florian_Wirtz_2.jpg",
+        "/player-stories/26_superstars/Florian_Wirtz_3.jpg"
+      ]
     },
     {
       "id": "754",
@@ -2085,7 +2200,12 @@
           }
         ]
       },
-      "idSource": "local-squad-cache"
+      "idSource": "local-squad-cache",
+      "coverImage": "/player-stories/26_superstars/Luka_Modric_main.jpg",
+      "storyImages": [
+        "/player-stories/26_superstars/Luka_Modric_2.jpg",
+        "/player-stories/26_superstars/Luka_Modric_3.jpg"
+      ]
     },
     {
       "id": "17",
@@ -2108,7 +2228,12 @@
       "skills": "",
       "excerpt": "With highlights, quotes, stats, trivia, and 2026 hopes, FIFA spotlights World Cup host nation hero Christian Pulisic.",
       "articleCn": null,
-      "idSource": "local-squad-cache"
+      "idSource": "local-squad-cache",
+      "coverImage": "/player-stories/26_superstars/Christian_Pulisic_main.jpg",
+      "storyImages": [
+        "/player-stories/26_superstars/Christian_Pulisic_2.jpg",
+        "/player-stories/26_superstars/Christian_Pulisic_3.jpg"
+      ]
     },
     {
       "id": "635",
@@ -2195,7 +2320,12 @@
           }
         ]
       },
-      "idSource": "local-squad-cache"
+      "idSource": "local-squad-cache",
+      "coverImage": "/player-stories/26_superstars/Riyad_Mahrez_main.jpg",
+      "storyImages": [
+        "/player-stories/26_superstars/Riyad_Mahrez_2.jpg",
+        "/player-stories/26_superstars/Riyad_Mahrez_3.jpg"
+      ]
     },
     {
       "id": "1496",
@@ -2282,7 +2412,12 @@
           }
         ]
       },
-      "idSource": "local-squad-cache"
+      "idSource": "local-squad-cache",
+      "coverImage": "/player-stories/26_superstars/Raphinha_main.jpg",
+      "storyImages": [
+        "/player-stories/26_superstars/Raphinha_2.jpg",
+        "/player-stories/26_superstars/Raphinha_3.jpg"
+      ]
     },
     {
       "id": "129718",
@@ -2369,7 +2504,12 @@
           }
         ]
       },
-      "idSource": "api-football-profile-search"
+      "idSource": "api-football-profile-search",
+      "coverImage": "/player-stories/26_superstars/Jude_Bellingham_main.jpg",
+      "storyImages": [
+        "/player-stories/26_superstars/Jude_Bellingham_2.jpg",
+        "/player-stories/26_superstars/Jude_Bellingham_3.jpg"
+      ]
     },
     {
       "id": "591209",
@@ -2454,7 +2594,12 @@
           }
         ]
       },
-      "idSource": "local-squad-cache"
+      "idSource": "local-squad-cache",
+      "coverImage": "/player-stories/26_superstars/Enzo_Fernandez_main.jpg",
+      "storyImages": [
+        "/player-stories/26_superstars/Enzo_Fernandez_2.jpg",
+        "/player-stories/26_superstars/Enzo_Fernandez_3.jpg"
+      ]
     },
     {
       "id": "304",
@@ -2539,7 +2684,12 @@
           }
         ]
       },
-      "idSource": "local-squad-cache"
+      "idSource": "local-squad-cache",
+      "coverImage": "/player-stories/26_superstars/Sadio_Mane_main.jpg",
+      "storyImages": [
+        "/player-stories/26_superstars/Sadio_Mane_2.jpg",
+        "/player-stories/26_superstars/Sadio_Mane_3.jpg"
+      ]
     },
     {
       "id": "116117",
@@ -2624,7 +2774,12 @@
           }
         ]
       },
-      "idSource": "api-football-profile-search"
+      "idSource": "api-football-profile-search",
+      "coverImage": "/player-stories/26_superstars/Moises_Caicedo_main.jpg",
+      "storyImages": [
+        "/player-stories/26_superstars/Moises_Caicedo_2.jpg",
+        "/player-stories/26_superstars/Moises_Caicedo_3.jpg"
+      ]
     },
     {
       "id": "133609",
@@ -2716,7 +2871,12 @@
           }
         ]
       },
-      "idSource": "api-football-profile-search"
+      "idSource": "api-football-profile-search",
+      "coverImage": "/player-stories/26_superstars/Pedri_main.jpg",
+      "storyImages": [
+        "/player-stories/26_superstars/Pedri_2.jpg",
+        "/player-stories/26_superstars/Pedri_3.jpg"
+      ]
     },
     {
       "id": "19617",
@@ -2752,7 +2912,12 @@
           }
         ]
       },
-      "idSource": "local-squad-cache"
+      "idSource": "local-squad-cache",
+      "coverImage": "/player-stories/26_superstars/Michael_Olise_main.jpg",
+      "storyImages": [
+        "/player-stories/26_superstars/Michael_Olise_2.jpg",
+        "/player-stories/26_superstars/Michael_Olise_3.jpg"
+      ]
     },
     {
       "id": "58929",
@@ -2845,7 +3010,12 @@
           }
         ]
       },
-      "idSource": "local-squad-cache"
+      "idSource": "local-squad-cache",
+      "coverImage": "/player-stories/26_superstars/Julian_Alvarez_main.jpg",
+      "storyImages": [
+        "/player-stories/26_superstars/Julian_Alvarez_2.jpg",
+        "/player-stories/26_superstars/Julian_Alvarez_3.jpg"
+      ]
     }
   ]
 }

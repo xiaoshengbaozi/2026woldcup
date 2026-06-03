@@ -38,6 +38,8 @@ export async function fetchWorldCupTopScorers() {
   return (payload.scorers ?? [])
     .map((item): WorldCupTopScorer | null => {
       if (!item.id || !item.name) return null;
+      const goals = item.goals ?? 0;
+      if (goals <= 0) return null;
 
       return {
         id: item.id,
@@ -45,7 +47,7 @@ export async function fetchWorldCupTopScorers() {
         photo: item.photo ?? "",
         teamName: item.team?.name ?? "国家队",
         teamLogo: item.team?.logo ?? "",
-        goals: item.goals ?? 0,
+        goals,
       };
     })
     .filter((item): item is WorldCupTopScorer => Boolean(item));

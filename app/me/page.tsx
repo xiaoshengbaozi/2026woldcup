@@ -17,6 +17,7 @@ import {
   Trophy,
   UserPlus,
   UserRound,
+  UsersRound,
   X,
 } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
@@ -508,23 +509,41 @@ function ProfileBoard({
 
   return (
     <div className="grid gap-8">
-      <BoardSection title="关注球员" count={home ? home.user.followedPlayers.length : players.length}>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
+      <BoardSection
+        title="关注球员"
+        count={home ? home.user.followedPlayers.length : players.length}
+        icon={<UsersRound className="h-4 w-4 text-volt" />}
+        href="/players"
+        linkLabel="更多"
+      >
+        <div className="flex gap-3 overflow-x-auto py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {players.slice(0, 6).map((player) => (
             <PlayerBubble key={player.id} player={player} catalogPlayers={catalog.players} dimmed={!home} />
           ))}
         </div>
       </BoardSection>
 
-      <BoardSection title="关注球队" count={home ? home.user.followedTeams.length : teams.length}>
-        <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-6">
-          {teams.slice(0, 6).map((team) => (
+      <BoardSection
+        title="关注球队"
+        count={home ? home.user.followedTeams.length : teams.length}
+        icon={<Globe2 className="h-4 w-4 text-volt" />}
+        href="/teams"
+        linkLabel="更多"
+      >
+        <div className="grid grid-cols-4 gap-[18px] sm:grid-cols-6 lg:grid-cols-8">
+          {teams.slice(0, 8).map((team) => (
             <TeamBadge key={team.id} team={team} dimmed={!home} />
           ))}
         </div>
       </BoardSection>
 
-      <BoardSection title="收藏比赛" count={home ? home.user.favoriteMatches.length : matches.length}>
+      <BoardSection
+        title="收藏比赛"
+        count={home ? home.user.favoriteMatches.length : matches.length}
+        icon={<Bookmark className="h-4 w-4 text-volt" />}
+        href="/matches"
+        linkLabel="更多"
+      >
         <div className="grid gap-4 xl:grid-cols-2">
           {matches.slice(0, 4).map((match) => (
             <MatchStrip key={match.id} match={match} dimmed={!home} />
@@ -535,12 +554,21 @@ function ProfileBoard({
   );
 }
 
-function BoardSection({ title, count, children }: { title: string; count: number; children: ReactNode }) {
+function BoardSection({ title, count, icon, href, linkLabel, children }: { title: string; count: number; icon?: ReactNode; href?: string; linkLabel?: string; children: ReactNode }) {
   return (
     <section className="grid gap-4">
-      <div className="flex items-end justify-between gap-4 border-b border-white/14 pb-3">
-        <h2 className="text-xl font-semibold text-white">{title}</h2>
-        <span className="font-mono text-2xl text-white/82 tabular-nums">{count}</span>
+      <div className="flex items-center justify-between gap-4 border-b border-white/14 pb-3">
+        <div className="flex items-center gap-2">
+          {icon}
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-white">{title}</h2>
+          <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] font-bold text-white/40">{count}</span>
+        </div>
+        {href && (
+          <a href={href} className="group inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40 transition hover:text-volt">
+            {linkLabel || "更多"}
+            <ChevronRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
+          </a>
+        )}
       </div>
       {children}
     </section>
@@ -549,21 +577,20 @@ function BoardSection({ title, count, children }: { title: string; count: number
 
 function PlayerBubble({ player, catalogPlayers, dimmed }: { player: PlayerCardItem; catalogPlayers: UserPreferencePlayer[]; dimmed: boolean }) {
   const content = (
-    <div className={`grid justify-items-center gap-2 text-center transition ${dimmed ? "opacity-60" : ""}`}>
-      <div className="relative h-20 w-20 overflow-hidden rounded-full bg-white/[0.06] shadow-[0_0_32px_rgba(216,255,62,.1)] ring-1 ring-white/12 sm:h-24 sm:w-24">
-        <Image src={player.photo || getPlayerAvatar(player.id, catalogPlayers)} alt={player.name} fill sizes="96px" className="object-cover" />
+    <div className={`group flex w-[68px] shrink-0 flex-col items-center text-center sm:w-20 ${dimmed ? "opacity-60" : ""}`}>
+      <div className="relative h-14 w-14 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/[0.1] transition duration-300 group-hover:scale-105 group-hover:ring-volt/45 sm:h-16 sm:w-16">
+        <Image src={player.photo || getPlayerAvatar(player.id, catalogPlayers)} alt={player.name} fill sizes="64px" className="object-cover" />
       </div>
-      <div className="min-w-0">
-        <p className="max-w-28 truncate text-sm font-semibold text-white">{player.name}</p>
-        <p className="mt-0.5 max-w-28 truncate text-xs text-white/42">{player.team || "国家待定"}</p>
-        {player.goals !== undefined && <p className="mt-1 font-mono text-xs text-volt">{player.goals === null ? "射手榜" : `射手榜 · ${player.goals} 球`}</p>}
-      </div>
+      <span className="mt-2 w-full truncate text-[10px] font-medium text-white/60 group-hover:text-volt sm:mt-2.5 sm:text-[11px]">
+        {player.name}
+      </span>
+      <span className="mt-0.5 w-full truncate text-[9px] text-white/28 sm:text-[10px]">{player.team || "国家待定"}</span>
     </div>
   );
 
   if (!player.href) return content;
   return (
-    <Link href={player.href} className="rounded-[1.25rem] outline-none transition hover:-translate-y-1 focus-visible:ring-2 focus-visible:ring-volt/60">
+    <Link href={player.href} className="shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-volt/60 rounded-full">
       {content}
     </Link>
   );
@@ -571,15 +598,15 @@ function PlayerBubble({ player, catalogPlayers, dimmed }: { player: PlayerCardIt
 
 function TeamBadge({ team, dimmed }: { team: TeamCardItem; dimmed: boolean }) {
   return (
-    <div className={`grid justify-items-center gap-2 transition ${dimmed ? "opacity-60" : ""}`}>
-      <div className="relative aspect-[3/2] w-full overflow-hidden rounded-[1rem] bg-white/[0.045] shadow-glass ring-1 ring-white/10">
-        {team.flag ? <Image src={team.flag} alt={team.name} fill sizes="160px" className="object-cover opacity-92" /> : null}
+    <div className={`grid justify-items-center gap-[9px] transition ${dimmed ? "opacity-60" : ""}`}>
+      <div className="relative aspect-[3/2] w-full overflow-hidden rounded-xl bg-white/[0.045] p-1.5 ring-1 ring-white/10">
+        {team.flag ? <Image src={team.flag} alt={team.name} fill sizes="120px" className="object-contain opacity-92" /> : null}
         <div className="absolute inset-0 bg-gradient-to-t from-black/72 via-black/18 to-transparent" />
-        {team.logo && !team.flag ? <Image src={team.logo} alt={team.name} fill sizes="80px" className="object-contain p-4" /> : null}
-        {!team.logo && !team.flag ? <Trophy className="absolute left-1/2 top-1/2 h-10 w-10 -translate-x-1/2 -translate-y-1/2 text-volt" /> : null}
-        {team.pct !== undefined && <span className="absolute right-2 top-2 rounded-full bg-black/45 px-2 py-0.5 text-[10px] font-bold text-volt ring-1 ring-white/10">{team.pct}%</span>}
+        {team.logo && !team.flag ? <Image src={team.logo} alt={team.name} fill sizes="48px" className="object-contain p-2" /> : null}
+        {!team.logo && !team.flag ? <Trophy className="absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 text-volt" /> : null}
+        {team.pct !== undefined && <span className="absolute right-1 top-1 rounded-full bg-black/45 px-1.5 py-0.5 text-[8px] font-bold text-volt ring-1 ring-white/10">{team.pct}%</span>}
       </div>
-      <p className="max-w-full truncate text-xs font-semibold text-white/82">{team.name}</p>
+      <p className="max-w-full truncate text-[10px] font-medium text-white/60 sm:text-[11px]">{team.name}</p>
     </div>
   );
 }

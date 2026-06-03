@@ -1,10 +1,11 @@
 ﻿"use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { LiveMatchesStrip } from "@/components/live-matches-strip";
 import { getCityFilterGroup, getStageFilterGroup, MatchFilters, readFilterGroupValue } from "@/components/match-filters";
 import { MatchStats } from "@/components/match-stats";
+import { MobileMatchDayStrip, type MatchDayOption } from "@/components/mobile-match-day-strip";
 import { ScheduleList } from "@/components/schedule-list";
 import { extractCity, groupMatchesByDay } from "@/lib/calendar";
 import { getStageGroupId } from "@/lib/stage";
@@ -18,6 +19,7 @@ export default function MatchesPage() {
   const [stage, setStage] = useState("");
   const [timezoneOffset, setTimezoneOffset] = useState(0);
   const [layout, setLayout] = useState<ScheduleLayout>("default");
+  const [selectedDay, setSelectedDay] = useState("");
 
   const stages = useMemo(
     () => [...new Set(matches.map((match) => match.stage))],
@@ -38,12 +40,21 @@ export default function MatchesPage() {
       return (
         (!normalizedQuery || haystack.includes(normalizedQuery)) &&
         (!stage || (stageGroup ? getStageFilterGroup(match.stage) === stageGroup : match.stage === stage)) &&
-        (activeCity === "全部城市" || (cityGroup ? getCityFilterGroup(city) === cityGroup : city === activeCity))
+        (activeCity === "全部城市" || (cityGroup ? getCityFilterGroup(city) === cityGroup : city === activeCity)) &&
+        (!selectedDay || getMatchDayKey(match.start, timezoneOffset) === selectedDay)
       );
     });
-  }, [activeCity, matches, query, stage]);
+  }, [activeCity, matches, query, selectedDay, stage, timezoneOffset]);
 
   const grouped = useMemo(() => groupMatchesByDay(filteredMatches), [filteredMatches]);
+  const matchDays = useMemo(
+    () => buildMatchDayOptions(matches, timezoneOffset),
+    [matches, timezoneOffset]
+  );
+
+  useEffect(() => {
+    if (selectedDay && !matchDays.some((day) => day.key === selectedDay)) setSelectedDay("");
+  }, [matchDays, selectedDay]);
 
   const totalMatchDays = new Set(matches.map((match) => match.start.toDateString())).size;
 
@@ -109,6 +120,12 @@ export default function MatchesPage() {
         onLayoutChange={setLayout}
       />
 
+      <MobileMatchDayStrip
+        days={matchDays}
+        selectedDay={selectedDay}
+        onSelectDay={setSelectedDay}
+      />
+
       <ScheduleList
         grouped={grouped}
         loading={loading}
@@ -121,3 +138,42 @@ export default function MatchesPage() {
   );
 }
 
+function buildMatchDayOptions(matches: { start: Date }[], timezoneOffset: number): MatchDayOption[] {
+  const byDay = new Map<string, { date: Date; count: number }>();
+
+  for (const match of matches) {
+    const adjusted = getAdjustedDate(match.start, timezoneOffset);
+    const key = formatDayKey(adjusted);
+    const current = byDay.get(key);
+    byDay.set(key, {
+      date: current?.date ?? adjusted,
+      count: (current?.count ?? 0) + 1
+    });
+  }
+
+  return [...byDay.entries()]
+    .sort(([, a], [, b]) => a.date.getTime() - b.date.getTime())
+    .map(([key, item]) => ({
+      key,
+      weekday: item.date.toLocaleDateString("en-US", { weekday: "short" }),
+      day: String(item.date.getDate()).padStart(2, "0"),
+      month: item.date.toLocaleDateString("en-US", { month: "short" }),
+      count: item.count
+    }));
+}
+
+function getMatchDayKey(date: Date, timezoneOffset: number) {
+  return formatDayKey(getAdjustedDate(date, timezoneOffset));
+}
+
+function getAdjustedDate(date: Date, timezoneOffset: number) {
+  return new Date(date.getTime() + timezoneOffset * 3600000);
+}
+
+function formatDayKey(date: Date) {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0")
+  ].join("-");
+}

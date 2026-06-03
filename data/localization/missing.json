@@ -10,6 +10,7 @@
     "19366": "O. Watkins",
     "22236": "Rafael Leão",
     "57910": "T. Rodríguez",
+    "58929": "Favio Ramiro Álvarez",
     "183799": "Nico Williams",
     "423737": "Tahsin Jamshid"
   },
@@ -21,7 +22,13 @@
     "Bryne": "Bryne",
     "Molde": "Molde",
     "Red Bull Salzburg": "Red Bull Salzburg",
-    "Argentina": "Argentina"
+    "Argentina": "Argentina",
+    "South Africa": "South Africa",
+    "TS Galaxy": "TS Galaxy",
+    "Mamelodi Sundowns": "Mamelodi Sundowns",
+    "Talleres Cordoba": "Talleres Cordoba",
+    "Central Norte": "Central Norte",
+    "Racing Cordoba": "Racing Cordoba"
   },
   "leagues": {
     "MLS All-Star": "MLS All-Star",
@@ -61,7 +68,17 @@
     "Copa Catalunya": "Copa Catalunya",
     "Friendlies": "Friendlies",
     "Arab Club Champions Cup": "Arab Club Champions Cup",
-    "League Cup": "League Cup"
+    "League Cup": "League Cup",
+    "World Cup": "World Cup",
+    "AFC Asian Cup": "AFC Asian Cup",
+    "Premier League Summer Series": "Premier League Summer Series",
+    "Coppa Italia": "Coppa Italia",
+    "Florida Cup": "Florida Cup",
+    "U19 Bundesliga": "U19 Bundesliga",
+    "CONMEBOL Recopa": "CONMEBOL Recopa",
+    "CONMEBOL Libertadores": "CONMEBOL Libertadores",
+    "División de Honor Juvenil": "División de Honor Juvenil",
+    "Copa del Rey Juvenil": "Copa del Rey Juvenil"
   },
   "positions": {},
   "countries": {
@@ -69,12 +86,16 @@
     "Austria": "Austria",
     "Asia": "Asia",
     "South Africa": "South Africa",
-    "Sweden": "Sweden"
+    "Sweden": "Sweden",
+    "Italy": "Italy"
   },
   "transferTypes": {
     "€ 180M": "€ 180M",
     "Return from loan": "Return from loan",
-    "Back from Loan": "Back from Loan"
+    "Back from Loan": "Back from Loan",
+    "€ 5M": "€ 5M",
+    "€ 20M": "€ 20M",
+    "€ 75M": "€ 75M"
   },
   "trophyPlaces": {},
   "injuryTypes": {
@@ -98,10 +119,14 @@
     "Leg Injury": "Leg Injury",
     "ACL Knee Injury": "ACL Knee Injury",
     "Yellow Cards": "Yellow Cards",
-    "Red Card": "Red Card"
+    "Red Card": "Red Card",
+    "Facial Injury": "Facial Injury",
+    "Hand Injury": "Hand Injury",
+    "Thumb / Wrist Injury": "Thumb / Wrist Injury"
   },
   "birthPlaces": {
     "Mataró": "Mataró",
-    "Chlef": "Chlef"
+    "Chlef": "Chlef",
+    "Leeds": "Leeds"
   }
 }
