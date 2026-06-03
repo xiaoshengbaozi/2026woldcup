@@ -1,0 +1,162 @@
+[data-theme="light"] .text-volt {
+  color: #4f8a10 !important;
+}
+
+[data-theme="light"] .mobile-nav-bar {
+  gap: 0.1rem;
+}
+
+[data-theme="light"] .mobile-nav-bar .text-white\/35,
+[data-theme="light"] .mobile-nav-bar .text-white\/40 {
+  color: var(--lm-text-muted) !important;
+}
+
+/* Team profile light theme */
+[data-theme="light"] .tp-wrap {
+  color: var(--lm-text-primary);
+}
+
+[data-theme="light"] .tp-hero,
+[data-theme="light"] .tp-side-card,
+[data-theme="light"] .tp-content-panel,
+[data-theme="light"] .tp-glass,
+[data-theme="light"] .tp-fixture-card,
+[data-theme="light"] .tp-story-card,
+[data-theme="light"] .tp-quote,
+[data-theme="light"] .tp-gallery-card {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(245, 250, 245, 0.76)),
+    rgba(255, 255, 255, 0.94) !important;
+  border-color: var(--lm-border) !important;
+  box-shadow:
+    0 18px 48px rgba(22, 38, 22, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.035) !important;
+}
+
+[data-theme="light"] .tp-hero::after {
+  background:
+    linear-gradient(90deg, rgba(245, 250, 245, 0.88), rgba(245, 250, 245, 0.38), rgba(245, 250, 245, 0.74)),
+    radial-gradient(ellipse at 18% 8%, rgba(216, 255, 62, 0.12), transparent 48%) !important;
+}
+
+[data-theme="light"] .tp-hero-info h1,
+[data-theme="light"] .tp-section-title,
+[data-theme="light"] .tp-side-card-title,
+[data-theme="light"] .tp-fixture-team-name,
+[data-theme="light"] .tp-story-card h3 {
+  color: var(--lm-text-primary) !important;
+}
+
+[data-theme="light"] .tp-hero-sub,
+[data-theme="light"] .tp-chip,
+[data-theme="light"] .tp-fixture-date,
+[data-theme="light"] .tp-fixture-venue,
+[data-theme="light"] .tp-story-card p,
+[data-theme="light"] .tp-section-badge,
+[data-theme="light"] .tp-fixture-kickoff,
+[data-theme="light"] .tp-fixtures-empty {
+  color: var(--lm-text-secondary) !important;
+}
+
+[data-theme="light"] .tp-content-tab {
+  background: rgba(232, 242, 232, 0.82) !important;
+  color: var(--lm-text-secondary) !important;
+  box-shadow: inset 0 0 0 1px var(--lm-border) !important;
+}
+
+[data-theme="light"] .tp-content-tab:hover {
+  background: rgba(216, 255, 62, 0.14) !important;
+  color: #355f0a !important;
+}
+
+[data-theme="light"] .tp-content-tab.active {
+  background: #d8ff3e !important;
+  color: #213500 !important;
+  box-shadow: 0 10px 24px rgba(79, 138, 16, 0.14) !important;
+}
+
+[data-theme="light"] .tp-chip {
+  background: rgba(232, 242, 232, 0.82) !important;
+  border-color: var(--lm-border) !important;
+}
+
+[data-theme="light"] .tp-chip.volt,
+[data-theme="light"] .tp-fixtures-group {
+  background: rgba(216, 255, 62, 0.16) !important;
+  border-color: rgba(79, 138, 16, 0.22) !important;
+  color: #4f8a10 !important;
+}
+
+[data-theme="light"] .tp-hero-stat-val,
+[data-theme="light"] .tp-section-badge.volt {
+  color: #5d9300 !important;
+  text-shadow: 0 0 18px rgba(216, 255, 62, 0.16) !important;
+}
+
+[data-theme="light"] .tp-flag,
+[data-theme="light"] .tp-fixture-flag {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border-color: var(--lm-border) !important;
+  box-shadow: 0 10px 28px rgba(22, 38, 22, 0.12) !important;
+}
+
+[data-theme="light"] .tp-tl-vp::before {
+  background: linear-gradient(90deg, rgba(245, 250, 245, 0.95), transparent) !important;
+}
+
+[data-theme="light"] .tp-tl-vp::after {
+  background: linear-gradient(270deg, rgba(245, 250, 245, 0.95), transparent) !important;
+}
+
+/* Player profile light theme */
+[data-theme="light"] .player-profile-page {
+  background:
+    radial-gradient(circle at 18% 8%, rgba(216, 255, 62, 0.08), transparent 26%),
+    linear-gradient(135deg, #f2f7f2, #eef6ee 48%, #f7faf4) !important;
+  color: var(--lm-text-primary) !important;
+}
+
+[data-theme="light"] .player-profile-hero {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(245, 250, 245, 0.68)),
+    rgba(255, 255, 255, 0.94) !important;
+}
+
+[data-theme="light"] .player-profile-hero-shade {
+  background:
+    linear-gradient(135deg, rgba(245, 250, 245, 0.84), rgba(245, 250, 245, 0.54), rgba(245, 250, 245, 0.8)),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.08), rgba(245, 250, 245, 0.72)) !important;
+}
+
+[data-theme="light"] .player-profile-hero-fade {
+  background: linear-gradient(to top, rgba(245, 250, 245, 0.72), transparent) !important;
+}
+
+[data-theme="light"] .player-profile-page .ring-offset-ink-950 {
+  --tw-ring-offset-color: #f4f8f0 !important;
+}
+
+[data-theme="light"] .player-quick-card,
+[data-theme="light"] .player-profile-page .hero-card {
+  box-shadow:
+    0 16px 46px rgba(22, 38, 22, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92) !important;
+}
+
+[data-theme="light"] .player-profile-page .bg-white\/\[0\.03\],
+[data-theme="light"] .player-profile-page .bg-white\/\[0\.025\],
+[data-theme="light"] .player-profile-page .bg-white\/\[0\.035\],
+[data-theme="light"] .player-profile-page .bg-white\/\[0\.04\],
+[data-theme="light"] .player-profile-page .bg-white\/\[0\.05\] {
+  background-color: rgba(232, 242, 232, 0.72) !important;
+}
+
+[data-theme="light"] .player-profile-page .text-white\/30,
+[data-theme="light"] .player-profile-page .text-white\/35,
+[data-theme="light"] .player-profile-page .text-white\/38,
+[data-theme="light"] .player-profile-page .text-white\/40,
+[data-theme="light"] .player-profile-page .text-white\/50,
+[data-theme="light"] .player-profile-page .text-white\/55 {
+  color: var(--lm-text-muted) !important;
+}

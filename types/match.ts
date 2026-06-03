@@ -85,7 +85,7 @@ export type LineupPlayer = {
 export type MatchLineup = {
   formation: string;
   players: LineupPlayer[];
-  listType?: "confirmed_lineup" | "squad_pool";
+  listType?: "confirmed_lineup" | "final_squad" | "squad_pool";
   officialWorldCupSquad?: boolean;
 };
 

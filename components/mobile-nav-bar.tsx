@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Calendar, Home, Newspaper, UserRound } from "lucide-react";
+import { Calendar, Home, Newspaper, UserRound, UsersRound } from "lucide-react";
 
 const navItems = [
   { label: "首页", href: "/", icon: Home },
   { label: "新闻", href: "/news", icon: Newspaper },
   { label: "赛程", href: "/matches", icon: Calendar },
-  { label: "数据", href: "/data", icon: BarChart3 },
+  { label: "球员", href: "/players", icon: UsersRound },
   { label: "我的", href: "/me", icon: UserRound },
 ];
 
@@ -26,7 +26,7 @@ export function MobileNavBar() {
       style={{ paddingBottom: "env(safe-area-inset-bottom, 12px)" }}
     >
       <div
-        className="mx-3 mb-3 flex items-center justify-around rounded-2xl px-2 py-2"
+        className="mobile-nav-bar mx-3 mb-3 flex items-center justify-around rounded-2xl px-2 py-2"
         style={{
           background:
             "linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)), rgba(5,8,8,0.92)",
@@ -76,9 +76,7 @@ export function MobileNavBar() {
 
               <span
                 className={`text-[10px] font-semibold uppercase tracking-[0.1em] transition-colors ${
-                  active
-                    ? "text-volt"
-                    : "text-white/40"
+                  active ? "text-volt" : "text-white/40"
                 }`}
               >
                 {item.label}

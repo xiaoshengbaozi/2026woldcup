@@ -1,0 +1,555 @@
+/*
+ * Light Theme — Paytin-inspired palette
+ * Activated via [data-theme="light"] on <html>
+ * Existing dark styles are NOT modified.
+ */
+
+/* ── Light-mode CSS custom properties ── */
+[data-theme="light"] {
+  /* Backgrounds */
+  --lm-bg-body: #F2F7F2;
+  --lm-bg-page: #FFFFFF;
+  --lm-bg-card: #FFFFFF;
+  --lm-bg-card-alt: #F5FAF5;
+  --lm-bg-surface: #E8F2E8;
+  --lm-bg-elevated: #FFFFFF;
+  --lm-bg-input: #F0F5F0;
+  --lm-bg-hover: rgba(0, 0, 0, 0.04);
+  --lm-bg-ticker: #F5FAF5;
+
+  /* Text */
+  --lm-text-primary: #1A1D1A;
+  --lm-text-secondary: #4A5A4A;
+  --lm-text-muted: #7A8A7A;
+  --lm-text-faint: #A0AEA0;
+
+  /* Borders */
+  --lm-border: rgba(0, 0, 0, 0.08);
+  --lm-border-strong: rgba(0, 0, 0, 0.15);
+  --lm-border-accent: rgba(216, 255, 62, 0.35);
+
+  /* Shadows */
+  --lm-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --lm-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --lm-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.1);
+  --lm-shadow-card: 0 2px 12px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04);
+
+  /* Glow (volt accent, softer in light) */
+  --lm-glow: 0 0 20px rgba(216, 255, 62, 0.15);
+  --lm-glow-strong: 0 0 30px rgba(216, 255, 62, 0.25);
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   1. Body & Root Overrides
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+[data-theme="light"] body {
+  background:
+    radial-gradient(circle at 18% 12%, rgba(216, 255, 62, 0.08), transparent 26%),
+    radial-gradient(circle at 78% 8%, rgba(255, 154, 31, 0.05), transparent 28%),
+    radial-gradient(circle at 48% 72%, rgba(0, 0, 0, 0.02), transparent 31%),
+    linear-gradient(135deg, #F2F7F2 0%, #EAF4EA 46%, #F0F5F0 100%);
+  color: var(--lm-text-primary);
+}
+
+[data-theme="light"] body::before {
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.02) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: radial-gradient(circle at 50% 28%, black, transparent 72%);
+}
+
+[data-theme="light"] body::after {
+  opacity: 0.08;
+}
+
+[data-theme="light"] ::selection {
+  background: rgba(216, 255, 62, 0.35);
+  color: #1A1D1A;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   2. Glass & Card Component Overrides
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+[data-theme="light"] .glass-panel {
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.04);
+  backdrop-filter: blur(20px);
+}
+
+[data-theme="light"] .glass-chip {
+  background: rgba(255, 255, 255, 0.65);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(16px);
+}
+
+[data-theme="light"] .hero-shell,
+[data-theme="light"] .hero-card {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.6)),
+    rgba(255, 255, 255, 0.9);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.06),
+    0 0 40px -10px rgba(216, 255, 62, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.04);
+  backdrop-filter: blur(24px);
+}
+
+[data-theme="light"] .hero-shell::before,
+[data-theme="light"] .hero-card::before {
+  background: linear-gradient(135deg, rgba(216, 255, 62, 0.15), rgba(0, 0, 0, 0.04), rgba(216, 255, 62, 0.06));
+}
+
+[data-theme="light"] .hero-shell::after,
+[data-theme="light"] .hero-card::after {
+  background:
+    radial-gradient(ellipse at 20% 10%, rgba(216, 255, 62, 0.05) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 90%, rgba(216, 255, 62, 0.03) 0%, transparent 50%);
+}
+
+[data-theme="light"] .hero-card:hover {
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.08),
+    0 0 60px -10px rgba(216, 255, 62, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 0 rgba(216, 255, 62, 0.08);
+}
+
+[data-theme="light"] .hero-link {
+  background: rgba(0, 0, 0, 0.03);
+  color: var(--lm-text-secondary);
+}
+
+[data-theme="light"] .hero-link:hover {
+  background: rgba(216, 255, 62, 0.1);
+  color: #2A5A00;
+}
+
+[data-theme="light"] .dot-display {
+  text-shadow: 0 0 16px rgba(216, 255, 62, 0.12);
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   3. Tailwind Utility Overrides
+   Override the most common dark-mode utilities
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* — Primary backgrounds — */
+[data-theme="light"] .bg-black\/20,
+[data-theme="light"] .bg-black\/24,
+[data-theme="light"] .bg-black\/40,
+[data-theme="light"] .bg-black\/45 {
+  background-color: var(--lm-bg-card) !important;
+}
+
+[data-theme="light"] .bg-white\/\[0\.035\],
+[data-theme="light"] .bg-white\/\[0\.04\],
+[data-theme="light"] .bg-white\/\[0\.055\],
+[data-theme="light"] .bg-white\/\[0\.06\],
+[data-theme="light"] .bg-white\/\[0\.08\],
+[data-theme="light"] .bg-white\/10,
+[data-theme="light"] .bg-white\/40 {
+  background-color: var(--lm-bg-surface) !important;
+}
+
+/* — Text colors — */
+[data-theme="light"] .text-white {
+  color: var(--lm-text-primary) !important;
+}
+
+[data-theme="light"] .text-white\/90,
+[data-theme="light"] .text-white\/92,
+[data-theme="light"] .text-white\/80,
+[data-theme="light"] .text-white\/82 {
+  color: var(--lm-text-primary) !important;
+}
+
+[data-theme="light"] .text-white\/72,
+[data-theme="light"] .text-white\/78,
+[data-theme="light"] .text-white\/62,
+[data-theme="light"] .text-white\/64 {
+  color: var(--lm-text-secondary) !important;
+}
+
+[data-theme="light"] .text-white\/50,
+[data-theme="light"] .text-white\/52,
+[data-theme="light"] .text-white\/40,
+[data-theme="light"] .text-white\/42,
+[data-theme="light"] .text-white\/45 {
+  color: var(--lm-text-muted) !important;
+}
+
+[data-theme="light"] .text-white\/32,
+[data-theme="light"] .text-white\/36,
+[data-theme="light"] .text-white\/26,
+[data-theme="light"] .text-white\/22,
+[data-theme="light"] .text-white\/20 {
+  color: var(--lm-text-faint) !important;
+}
+
+/* — Borders — */
+[data-theme="light"] .ring-white\/\[0\.07\],
+[data-theme="light"] .ring-white\/10,
+[data-theme="light"] .ring-white\/15,
+[data-theme="light"] .ring-white\/8 {
+  --tw-ring-color: var(--lm-border) !important;
+}
+
+[data-theme="light"] .border-white\/\[0\.04\],
+[data-theme="light"] .border-white\/\[0\.06\],
+[data-theme="light"] .border-white\/\[0\.08\] {
+  border-color: var(--lm-border) !important;
+}
+
+/* — Volt text adjustments for light bg — */
+[data-theme="light"] .text-volt\/50,
+[data-theme="light"] .text-volt\/40,
+[data-theme="light"] .text-volt\/60,
+[data-theme="light"] .text-volt\/70,
+[data-theme="light"] .text-volt\/80 {
+  color: #3A7A00 !important;
+}
+
+/* — Hover states — */
+[data-theme="light"] .hover\:bg-white\/\[0\.04\],
+[data-theme="light"] .hover\:bg-white\/\[0\.06\],
+[data-theme="light"] .hover\:bg-white\/\[0\.1\],
+[data-theme="light"] .hover\:bg-white\/10 {
+  --tw-bg-opacity: 1;
+  background-color: var(--lm-bg-hover) !important;
+}
+
+[data-theme="light"] .hover\:text-white\/90,
+[data-theme="light"] .hover\:text-white {
+  color: var(--lm-text-primary) !important;
+}
+
+/* — Odd row striping — */
+[data-theme="light"] .odd\:bg-volt\/\[0\.035\] {
+  background-color: rgba(216, 255, 62, 0.06) !important;
+}
+
+/* — Scrollbar — */
+[data-theme="light"] .select-options {
+  scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+}
+
+[data-theme="light"] .select-options::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+/* — Back to top button — */
+[data-theme="light"] [class*="bg-white/\[0.08\]"][class*="text-volt"] {
+  background: rgba(255, 255, 255, 0.85) !important;
+  color: #2A5A00 !important;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    0 0 20px rgba(216, 255, 62, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+  ring-color: var(--lm-border) !important;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   4. Inline-Style Component Overrides
+   Target elements that use React inline styles
+   with hardcoded rgba(0,0,0,...) backgrounds
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* Live matches strip empty state */
+[data-theme="light"] .live-matches-empty {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.6)),
+    rgba(255, 255, 255, 0.9) !important;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(216, 255, 62, 0.06) !important;
+  border: 1px solid var(--lm-border) !important;
+}
+
+/* Status bar */
+[data-theme="light"] .market-status-bar {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.6)),
+    rgba(255, 255, 255, 0.9) !important;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(216, 255, 62, 0.04) !important;
+  border: 1px solid var(--lm-border) !important;
+}
+
+/* Map legend panel */
+[data-theme="light"] .map-legend-panel {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.6)),
+    rgba(255, 255, 255, 0.92) !important;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid var(--lm-border) !important;
+}
+
+/* Map tooltip */
+[data-theme="light"] .map-tooltip-panel {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.7)),
+    rgba(255, 255, 255, 0.96) !important;
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 0 30px rgba(216, 255, 62, 0.04) !important;
+  border: 1px solid var(--lm-border) !important;
+}
+
+/* Three-globe labels */
+[data-theme="light"] .globe-label {
+  background: rgba(255, 255, 255, 0.88) !important;
+  color: var(--lm-text-primary) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+  border-color: var(--lm-border) !important;
+}
+
+[data-theme="light"] .globe-info-card {
+  background:
+    linear-gradient(135deg, rgba(255, 154, 31, 0.08), rgba(255, 255, 255, 0.85) 42%, rgba(216, 255, 62, 0.04)) !important;
+  box-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.06),
+    0 0 14px rgba(255, 154, 31, 0.06) !important;
+  border-color: rgba(255, 154, 31, 0.15) !important;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   5. Dashboard Shell Orb Overrides
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+[data-theme="light"] [class*="bg-volt/10"][class*="blur-"][class*="fixed"] {
+  opacity: 0.5;
+}
+
+[data-theme="light"] [class*="bg-flare/10"][class*="blur-"][class*="fixed"] {
+  opacity: 0.4;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   6. Schedule Page (style.css) Overrides
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+[data-theme="light"] .day-board {
+  background:
+    linear-gradient(120deg, rgba(255, 255, 255, 0.92), rgba(245, 250, 245, 0.82)) padding-box,
+    linear-gradient(135deg, rgba(216, 255, 62, 0.3), rgba(216, 255, 62, 0.08) 32%, rgba(216, 255, 62, 0.2) 64%, rgba(255, 255, 255, 0.5)) border-box;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.06),
+    0 0 20px rgba(216, 255, 62, 0.06),
+    inset 0 0 6px 1px rgba(255, 255, 255, 0.6),
+    inset 0 0 20px rgba(216, 255, 62, 0.04);
+}
+
+[data-theme="light"] .day-board::before {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.5), transparent 18% 76%, rgba(216, 255, 62, 0.08)),
+    radial-gradient(circle at 8% 10%, rgba(216, 255, 62, 0.06), transparent 28%);
+}
+
+[data-theme="light"] .day-title {
+  color: #1A1D1A;
+}
+
+[data-theme="light"] .day-count,
+[data-theme="light"] .day-status {
+  color: var(--lm-text-secondary);
+}
+
+[data-theme="light"] .day-title small {
+  border-color: var(--lm-border);
+  background: rgba(216, 255, 62, 0.08);
+  color: var(--lm-text-secondary);
+}
+
+[data-theme="light"] .day-status {
+  border-color: var(--lm-border);
+  background: rgba(216, 255, 62, 0.06);
+}
+
+[data-theme="light"] .match {
+  border-top-color: var(--lm-border);
+  background: linear-gradient(90deg, transparent, rgba(216, 255, 62, 0.03) 18%, rgba(216, 255, 62, 0.03) 82%, transparent);
+}
+
+[data-theme="light"] .time {
+  border-color: var(--lm-border-strong);
+  color: #1A1D1A;
+  box-shadow:
+    inset 0 0 3px 1px rgba(0, 0, 0, 0.02),
+    inset 0 0 10px rgba(216, 255, 62, 0.04);
+}
+
+[data-theme="light"] .team {
+  color: #1A1D1A;
+}
+
+[data-theme="light"] .badge {
+  border-color: var(--lm-border-strong);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.06),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+}
+
+[data-theme="light"] .venue-link,
+[data-theme="light"] .weather-chip,
+[data-theme="light"] .stage-chip {
+  border-color: var(--lm-border);
+  background: rgba(216, 255, 62, 0.06);
+}
+
+[data-theme="light"] .venue-link {
+  color: #2A7A00;
+}
+
+[data-theme="light"] .meta {
+  color: var(--lm-text-secondary);
+}
+
+[data-theme="light"] .match-info {
+  color: var(--lm-text-secondary);
+}
+
+[data-theme="light"] .stat strong {
+  color: #1A1D1A;
+}
+
+[data-theme="light"] .stat span {
+  color: var(--lm-text-secondary);
+}
+
+[data-theme="light"] .empty,
+[data-theme="light"] .loading {
+  color: var(--lm-text-muted);
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   7. Market Dashboard & Ranking Overrides
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* Ranking list items */
+[data-theme="light"] [class*="odd:bg-volt"] {
+  background-color: rgba(216, 255, 62, 0.04) !important;
+}
+
+[data-theme="light"] [class*="hover:bg-white"] {
+  background-color: var(--lm-bg-hover) !important;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   8. News Page Overrides
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+[data-theme="light"] .news-card {
+  background: var(--lm-bg-card);
+  border: 1px solid var(--lm-border);
+}
+
+[data-theme="light"] .news-card h3 {
+  color: var(--lm-text-primary);
+}
+
+[data-theme="light"] .news-card:hover h3 {
+  color: #2A5A00;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   9. Form Elements
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+[data-theme="light"] input,
+[data-theme="light"] select {
+  background: var(--lm-bg-input) !important;
+  color: var(--lm-text-primary) !important;
+  border-color: var(--lm-border-strong) !important;
+}
+
+[data-theme="light"] input::placeholder {
+  color: var(--lm-text-muted) !important;
+}
+
+[data-theme="light"] input:focus,
+[data-theme="light"] select:focus {
+  border-color: rgba(216, 255, 62, 0.5) !important;
+  box-shadow: 0 0 0 2px rgba(216, 255, 62, 0.12) !important;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   10. Detail Overlay & Ranking
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+[data-theme="light"] .detail-overlay-panel {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(245, 250, 245, 0.85)),
+    rgba(255, 255, 255, 0.98) !important;
+}
+
+[data-theme="light"] .detail-overlay-panel .text-white {
+  color: var(--lm-text-primary) !important;
+}
+
+[data-theme="light"] .detail-overlay-panel .text-white\/45,
+[data-theme="light"] .detail-overlay-panel .text-white\/60 {
+  color: var(--lm-text-muted) !important;
+}
+
+[data-theme="light"] .detail-overlay-panel .bg-white\/\[0\.04\],
+[data-theme="light"] .detail-overlay-panel [style*="rgba(255,255,255,0.04)"] {
+  background-color: var(--lm-bg-surface) !important;
+  background-image: none !important;
+}
+
+[data-theme="light"] .detail-overlay-panel [style*="rgba(5,8,8,0.8)"],
+[data-theme="light"] .detail-overlay-panel [style*="rgba(5,8,8,0.95)"] {
+  background-color: var(--lm-bg-card) !important;
+  background-image: none !important;
+}
+
+[data-theme="light"] .detail-overlay-panel .ring-white\/10 {
+  --tw-ring-color: var(--lm-border) !important;
+}
+
+/* Ranking row inline backgrounds */
+[data-theme="light"] .ranking-row-selected {
+  background-color: rgba(216, 255, 62, 0.08) !important;
+}
+
+[data-theme="light"] .ranking-row-top3 {
+  background-color: var(--lm-bg-surface) !important;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   11. Mobile Nav Bar
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+[data-theme="light"] .mobile-nav-bar {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.6)),
+    rgba(255, 255, 255, 0.92) !important;
+  box-shadow:
+    0 -4px 20px rgba(0, 0, 0, 0.06),
+    0 0 40px -10px rgba(216, 255, 62, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(216, 255, 62, 0.03) !important;
+  backdrop-filter: blur(24px) !important;
+}
+
+[data-theme="light"] .mobile-nav-bar .text-white\/35,
+[data-theme="light"] .mobile-nav-bar .text-white\/40 {
+  color: var(--lm-text-muted) !important;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   11. Animations & Transitions (unchanged)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */

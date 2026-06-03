@@ -18,7 +18,7 @@ export function StatusBar() {
 
   return (
     <div
-      className="relative z-10 flex flex-col gap-3 rounded-3xl px-5 py-3 text-[10px] uppercase tracking-[0.12em] sm:flex-row sm:items-center sm:justify-between"
+      className="market-status-bar relative z-10 flex flex-col gap-3 rounded-3xl px-5 py-3 text-[10px] uppercase tracking-[0.12em] sm:flex-row sm:items-center sm:justify-between"
       style={{
         background: "linear-gradient(135deg, rgba(255,255,255,0.045), rgba(255,255,255,0.015)), rgba(5,8,8,0.88)",
         boxShadow: "0 30px 80px rgba(0,0,0,0.48), inset 0 1px 0 rgba(255,255,255,0.09), inset 0 -1px 0 rgba(216,255,62,0.06)",

@@ -16,20 +16,33 @@ type SquadResponse = {
   team: MatchTeamMeta;
   players: SquadPlayerResponse[];
   coach?: string | null;
-  listType?: "squad_pool";
+  listType?: "final_squad" | "squad_pool";
   officialWorldCupSquad?: boolean;
+  officialSquad?: OfficialSquadMeta;
 };
 
 type SquadsPayload = {
   squads?: SquadResponse[];
 };
 
+export type OfficialSquadMeta = {
+  source: "fifa_official";
+  status: "imported" | "missing_official_list";
+  sourceUrl: string;
+  publishedAt: string;
+  expectedPlayers: number;
+  matchedPlayers: number;
+  unmatchedOfficialPlayers: number;
+  filteredApiFootballPlayers: number;
+};
+
 export type WorldCupSquadDetail = {
   team: MatchTeamMeta;
   coach: string | null;
   players: LineupPlayer[];
-  listType: "squad_pool";
+  listType: "final_squad" | "squad_pool";
   officialWorldCupSquad: boolean;
+  officialSquad: OfficialSquadMeta | null;
 };
 
 export async function fetchWorldCupSquads(teamIds: number[]) {
@@ -62,8 +75,9 @@ export async function fetchWorldCupSquadDetails(teamIds: number[]) {
       team: squad.team,
       coach: squad.coach || null,
       players: squad.players.map(toLineupPlayer),
-      listType: "squad_pool",
+      listType: squad.listType ?? "squad_pool",
       officialWorldCupSquad: Boolean(squad.officialWorldCupSquad),
+      officialSquad: squad.officialSquad ?? null,
     });
   }
 

@@ -8,7 +8,7 @@ const GRADIENT_STOPS = [
 export function MapLegend() {
   return (
     <div
-      className="absolute bottom-3 left-3 rounded-2xl p-3 z-10"
+      className="map-legend-panel absolute bottom-3 left-3 rounded-2xl p-3 z-10"
       style={{
         background: "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)), rgba(5,8,8,0.9)",
         boxShadow: "0 10px 30px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08)",

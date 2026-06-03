@@ -10,6 +10,7 @@ import {
   Globe2,
   LogIn,
   LogOut,
+  Palette,
   ShieldCheck,
   Sparkles,
   Star,
@@ -19,6 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   fallbackUserPreferenceCatalog,
   getPlayerAvatar,
@@ -362,7 +364,7 @@ export default function MePage() {
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-          className="hero-shell min-h-[760px] overflow-hidden p-5 sm:p-7 lg:p-8"
+          className="hero-shell min-h-[760px] overflow-hidden p-5 sm:p-7 lg:p-8 order-last lg:order-none"
         >
           <div className="relative z-10 grid gap-9">
             <div className="flex flex-wrap items-center justify-between gap-4">
@@ -386,7 +388,7 @@ export default function MePage() {
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
-          className="hero-card h-fit p-5 sm:p-6"
+          className="hero-card grid h-fit gap-5 p-5 sm:p-6 order-first lg:order-none"
         >
           <AccountCard
             home={home}
@@ -397,6 +399,7 @@ export default function MePage() {
             onRegister={() => openAuth("register")}
             onLogout={logout}
           />
+          <ThemePreferenceCard />
         </motion.aside>
       </section>
 
@@ -514,8 +517,8 @@ function ProfileBoard({
       </BoardSection>
 
       <BoardSection title="关注球队" count={home ? home.user.followedTeams.length : teams.length}>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5">
-          {teams.slice(0, 5).map((team) => (
+        <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-6">
+          {teams.slice(0, 6).map((team) => (
             <TeamBadge key={team.id} team={team} dimmed={!home} />
           ))}
         </div>
@@ -569,14 +572,14 @@ function PlayerBubble({ player, catalogPlayers, dimmed }: { player: PlayerCardIt
 function TeamBadge({ team, dimmed }: { team: TeamCardItem; dimmed: boolean }) {
   return (
     <div className={`grid justify-items-center gap-2 transition ${dimmed ? "opacity-60" : ""}`}>
-      <div className="relative grid h-20 w-full place-items-center overflow-hidden rounded-[1.25rem] bg-white/[0.045] shadow-glass ring-1 ring-white/10">
+      <div className="relative aspect-[3/2] w-full overflow-hidden rounded-[1rem] bg-white/[0.045] shadow-glass ring-1 ring-white/10">
         {team.flag ? <Image src={team.flag} alt={team.name} fill sizes="160px" className="object-cover opacity-92" /> : null}
         <div className="absolute inset-0 bg-gradient-to-t from-black/72 via-black/18 to-transparent" />
         {team.logo && !team.flag ? <Image src={team.logo} alt={team.name} fill sizes="80px" className="object-contain p-4" /> : null}
-        {!team.logo && !team.flag ? <Trophy className="relative h-10 w-10 text-volt" /> : null}
+        {!team.logo && !team.flag ? <Trophy className="absolute left-1/2 top-1/2 h-10 w-10 -translate-x-1/2 -translate-y-1/2 text-volt" /> : null}
         {team.pct !== undefined && <span className="absolute right-2 top-2 rounded-full bg-black/45 px-2 py-0.5 text-[10px] font-bold text-volt ring-1 ring-white/10">{team.pct}%</span>}
       </div>
-      <p className="max-w-32 truncate text-sm font-semibold text-white/82">{team.name}</p>
+      <p className="max-w-full truncate text-xs font-semibold text-white/82">{team.name}</p>
     </div>
   );
 }
@@ -639,9 +642,11 @@ function AccountCard({
 
   return (
     <div className="relative z-10 grid justify-items-center gap-6 py-4">
-      <div className="relative h-28 w-28 overflow-hidden rounded-full bg-white/[0.06] shadow-[0_0_44px_rgba(216,255,62,.13)] ring-1 ring-volt/28 sm:h-32 sm:w-32">
-        <Image src={avatar} alt={home?.user.profile.displayName || "头像预览"} fill sizes="128px" className="object-cover" />
-      </div>
+      {home && (
+        <div className="relative h-28 w-28 overflow-hidden rounded-full bg-white/[0.06] shadow-[0_0_44px_rgba(216,255,62,.13)] ring-1 ring-volt/28 sm:h-32 sm:w-32">
+          <Image src={avatar} alt={home.user.profile.displayName} fill sizes="128px" className="object-cover" />
+        </div>
+      )}
 
       {home ? (
         <div className="grid w-full gap-5 text-center">
@@ -679,6 +684,23 @@ function AccountCard({
         </span>
         <span>{home ? "ACTIVE" : "GUEST"}</span>
       </div>
+    </div>
+  );
+}
+
+function ThemePreferenceCard() {
+  return (
+    <div className="relative z-10 flex items-center justify-between gap-4 rounded-[1.5rem] bg-white/[0.035] p-4 ring-1 ring-white/8">
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-volt/10 text-volt ring-1 ring-volt/20">
+          <Palette className="h-4 w-4" />
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-white">主题模式</p>
+          <p className="mt-1 text-xs text-white/42">Light / Dark</p>
+        </div>
+      </div>
+      <ThemeToggle />
     </div>
   );
 }

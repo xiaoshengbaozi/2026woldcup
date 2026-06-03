@@ -47,10 +47,37 @@ type PlayerRow = {
   photo: string;
 };
 
+type PlayerArticle = {
+  apiPlayerId: number;
+  nameEn: string;
+  nameCn: string;
+  countryCn: string;
+  teamCode: string;
+  photo: string;
+  sourceUrl: string;
+  title: string;
+  published: string;
+  deck: string;
+  birthDate: string;
+  teams: string;
+  position: string;
+  skills: string;
+  excerpt: string;
+  articleCn: {
+    title: string;
+    published: string;
+    sections: Array<{
+      heading: string;
+      paragraphs: string[];
+    }>;
+  } | null;
+};
+
 type Props = {
   playerId: string;
   nameHint: string;
   row: PlayerRow | null;
+  article?: PlayerArticle | null;
 };
 
 const FIFA_CODE_TO_FLAG: Record<string, string> = {
@@ -74,11 +101,33 @@ const FIFA_CODE_TO_FLAG: Record<string, string> = {
   LAT:"lv",LTU:"lt",
 };
 
+const COUNTRY_NAME_CN: Record<string, string> = {
+  Argentina: "阿根廷",
+  Norway: "挪威",
+  France: "法国",
+  Egypt: "埃及",
+  Brazil: "巴西",
+  England: "英格兰",
+  Spain: "西班牙",
+  Uruguay: "乌拉圭",
+  Portugal: "葡萄牙",
+  Belgium: "比利时",
+  Colombia: "哥伦比亚",
+  Germany: "德国",
+  Croatia: "克罗地亚",
+  USA: "美国",
+  Algeria: "阿尔及利亚",
+  Senegal: "塞内加尔",
+  Ecuador: "厄瓜多尔",
+  Turkey: "土耳其",
+  "Côte d'Ivoire": "科特迪瓦",
+};
+
 /* ────────────────────────────────────────────
    Main Component
    ──────────────────────────────────────────── */
 
-export function PlayerProfileClient({ playerId, nameHint, row }: Props) {
+export function PlayerProfileClient({ playerId, nameHint, row, article }: Props) {
   const [data, setData] = useState<PlayerProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [oneVsOneLoading, setOneVsOneLoading] = useState(false);
@@ -136,7 +185,7 @@ export function PlayerProfileClient({ playerId, nameHint, row }: Props) {
   const radarStats = useMemo(() => buildRadarStats(data), [data]);
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-ink-950 text-white">
+    <main className="player-profile-page relative min-h-screen overflow-hidden bg-ink-950 text-white">
       {/* ── Background Effects ── */}
       <div className="pointer-events-none fixed inset-0">
         <div className="absolute left-1/2 top-0 h-[420px] w-[min(800px,100vw)] -translate-x-1/2 rounded-full bg-volt/[0.07] blur-[140px]" />
@@ -149,7 +198,7 @@ export function PlayerProfileClient({ playerId, nameHint, row }: Props) {
         <div className="relative z-10"><NavBar /></div>
 
         {/* ── Profile Hero Card ── */}
-        <section className="hero-card relative z-0 mt-16 overflow-visible pt-20 pb-6 px-6 sm:px-8 sm:pb-8">
+        <section className="player-profile-hero hero-card relative z-0 mt-16 overflow-visible pt-20 pb-6 px-6 sm:px-8 sm:pb-8">
           {heroLandscape && (
             <div className="absolute inset-0 z-0 overflow-hidden rounded-[inherit]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -158,8 +207,8 @@ export function PlayerProfileClient({ playerId, nameHint, row }: Props) {
                 alt=""
                 className="h-full w-full object-cover object-center opacity-65 saturate-100"
               />
-              <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(5,8,8,0.78)_0%,rgba(5,8,8,0.34)_48%,rgba(5,8,8,0.72)_100%),linear-gradient(to_bottom,rgba(5,8,8,0.1)_0%,rgba(5,8,8,0.74)_100%)]" />
-              <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-ink-950/70 to-transparent" />
+              <div className="player-profile-hero-shade absolute inset-0 bg-[linear-gradient(135deg,rgba(5,8,8,0.78)_0%,rgba(5,8,8,0.34)_48%,rgba(5,8,8,0.72)_100%),linear-gradient(to_bottom,rgba(5,8,8,0.1)_0%,rgba(5,8,8,0.74)_100%)]" />
+              <div className="player-profile-hero-fade absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-ink-950/70 to-transparent" />
             </div>
           )}
 
@@ -168,11 +217,11 @@ export function PlayerProfileClient({ playerId, nameHint, row }: Props) {
 
           {/* Top-left: Back button */}
           <Link
-            href="/matches/"
+            href="/players/"
             className="group absolute left-4 top-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1.5 text-xs font-semibold text-white/60 ring-1 ring-white/[0.08] backdrop-blur-md transition-all hover:bg-volt/[0.1] hover:text-volt hover:ring-volt/20 sm:left-6 sm:top-5"
           >
             <ArrowLeft className="h-3 w-3 transition-transform group-hover:-translate-x-0.5" />
-            返回赛程
+            返回球员
           </Link>
 
           {/* Top-right: Follow button */}
@@ -256,7 +305,7 @@ export function PlayerProfileClient({ playerId, nameHint, row }: Props) {
             <motion.div
               key={item.label}
               whileHover={{ y: -2, scale: 1.04 }}
-              className="group flex flex-col items-center gap-2 rounded-2xl bg-white/[0.04] p-3 ring-1 ring-white/[0.06] transition-colors hover:bg-volt/[0.08] hover:ring-volt/20 cursor-pointer"
+                className="player-quick-card group flex flex-col items-center gap-2 rounded-2xl bg-white/[0.04] p-3 ring-1 ring-white/[0.06] transition-colors hover:bg-volt/[0.08] hover:ring-volt/20 cursor-pointer"
             >
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-volt/[0.1] text-volt/70 transition-colors group-hover:bg-volt/20 group-hover:text-volt">
                 <item.icon className="h-5 w-5" />
@@ -487,6 +536,8 @@ export function PlayerProfileClient({ playerId, nameHint, row }: Props) {
                   Powered by API-Football
                 </div>
               </div>
+
+              {article && <PlayerArticleTimeline article={article} />}
             </motion.div>
           )}
         </AnimatePresence>
@@ -494,6 +545,68 @@ export function PlayerProfileClient({ playerId, nameHint, row }: Props) {
       <MobileNavBar />
       <BackToTopButton />
     </main>
+  );
+}
+
+function PlayerArticleTimeline({ article }: { article: PlayerArticle }) {
+  const sections = article.articleCn?.sections ?? [];
+
+  return (
+    <section className="hero-card overflow-hidden p-5 sm:p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <div className="inline-flex items-center gap-2 rounded-full bg-volt/[0.08] px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-volt ring-1 ring-volt/15">
+            <Sparkles className="h-3.5 w-3.5" />
+            FIFA Story
+          </div>
+          <h2 className="mt-4 text-2xl font-black text-white sm:text-3xl">{article.title}</h2>
+          <p className="mt-2 text-sm text-white/40">{article.published}</p>
+        </div>
+        <a
+          href={article.sourceUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-2 rounded-full bg-white/[0.055] px-4 py-2 text-sm font-bold text-white/62 ring-1 ring-white/[0.08] transition hover:bg-volt/[0.1] hover:text-volt"
+        >
+          FIFA 原文
+          <ExternalLink className="h-4 w-4" />
+        </a>
+      </div>
+
+      <div className="mt-6 grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
+        <div className="overflow-hidden rounded-[1.5rem] bg-white/[0.035] ring-1 ring-white/[0.06]">
+          <div className="relative aspect-[4/5]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={article.photo} alt={article.nameCn} className="h-full w-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/72 via-black/12 to-transparent" />
+            <div className="absolute bottom-4 left-4 right-4">
+              <p className="text-xl font-black text-white">{article.nameCn}</p>
+              <p className="mt-1 text-sm text-white/55">{COUNTRY_NAME_CN[article.countryCn] || article.countryCn}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          {sections.slice(0, 6).map((section, index) => (
+            <article key={`${section.heading}-${index}`} className="rounded-[1.35rem] bg-white/[0.03] p-4 ring-1 ring-white/[0.055]">
+              <div className="flex items-center gap-3">
+                <span className="grid h-8 w-8 place-items-center rounded-full bg-volt/[0.1] text-xs font-black text-volt">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <h3 className="text-base font-black text-white/82">{section.heading}</h3>
+              </div>
+              <div className="mt-3 space-y-3">
+                {section.paragraphs.slice(0, 3).map((paragraph) => (
+                  <p key={paragraph} className="text-sm leading-7 text-white/55">
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 

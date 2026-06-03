@@ -54,7 +54,7 @@ export function MatchLineup({ detail }: { detail: MatchDetail }) {
 
   const currentLineup = activeSide === "home" ? detail.homeLineup : detail.awayLineup;
   const currentTeamName = activeSide === "home" ? teams.home.name : teams.away.name;
-  const isSquadPool = currentLineup.listType === "squad_pool";
+  const isSquadList = currentLineup.listType === "squad_pool" || currentLineup.listType === "final_squad";
   const isHome = activeSide === "home";
 
   const accentHex = isHome ? "#D8FF3E" : "#FF9A1F";
@@ -108,10 +108,11 @@ export function MatchLineup({ detail }: { detail: MatchDetail }) {
           transition={{ duration: 0.25 }}
           className="relative grid grid-cols-1 gap-4 p-4 sm:p-5 md:grid-cols-[2fr_3fr]"
         >
-          {isSquadPool ? (
+          {isSquadList ? (
             <SquadPoolSummary
               teamName={currentTeamName}
               players={currentLineup.players}
+              officialWorldCupSquad={Boolean(currentLineup.officialWorldCupSquad)}
               accentHex={accentHex}
               accentFrom={isHome ? "rgba(216,255,62," : "rgba(255,154,31,"}
             />
@@ -271,9 +272,9 @@ function FormationPitch({
 }
 
 function SquadPoolSummary({
-  teamName, players, accentHex, accentFrom,
+  teamName, players, officialWorldCupSquad, accentHex, accentFrom,
 }: {
-  teamName: string; players: LineupPlayer[]; accentHex: string; accentFrom: string;
+  teamName: string; players: LineupPlayer[]; officialWorldCupSquad: boolean; accentHex: string; accentFrom: string;
 }) {
   const grouped = groupPlayersByPosition(players);
   const availableGroups = POSITION_GROUPS
@@ -286,13 +287,15 @@ function SquadPoolSummary({
         <div className="mb-4 flex items-center gap-2">
           <div className="h-5 w-1 rounded-full" style={{ backgroundColor: accentHex }} />
           <span className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: accentHex }}>
-            候选大名单
+            {officialWorldCupSquad ? "FIFA 官方最终名单" : "FIFA 官方名单待录入"}
           </span>
         </div>
 
         <h3 className="text-xl font-black text-white sm:text-2xl">{teamName}</h3>
         <p className="mt-2 max-w-[26rem] text-sm leading-relaxed text-white/48">
-          当前展示的是国家队球员池，不代表世界杯最终名单或本场首发。
+          {officialWorldCupSquad
+            ? "名单以 FIFA 官方名单为筛选依据，球员资料由 API-Football 补充。"
+            : "暂未导入该队 FIFA 官方名单，当前不展示 API-Football 候选池。"}
         </p>
       </div>
 
@@ -301,12 +304,12 @@ function SquadPoolSummary({
           className="rounded-2xl px-4 py-3 ring-1 ring-white/[0.055]"
           style={{ background: `linear-gradient(135deg, ${accentFrom}0.14), rgba(255,255,255,0.025))` }}
         >
-          <p className="text-[10px] font-bold tracking-[0.16em] text-white/35">球员池</p>
+          <p className="text-[10px] font-bold tracking-[0.16em] text-white/35">最终名单</p>
           <p className="mt-1 text-2xl font-black tabular-nums text-white">{players.length || "—"}</p>
         </div>
         <div className="rounded-2xl bg-white/[0.025] px-4 py-3 ring-1 ring-white/[0.055]">
           <p className="text-[10px] font-bold tracking-[0.16em] text-white/35">名单状态</p>
-          <p className="mt-2 text-sm font-bold text-white/78">非最终名单</p>
+          <p className="mt-2 text-sm font-bold text-white/78">{officialWorldCupSquad ? "已筛选" : "待录入"}</p>
         </div>
       </div>
 
@@ -320,7 +323,7 @@ function SquadPoolSummary({
             {group.label} {group.count}
           </span>
         )) : (
-          <span className="text-sm font-semibold text-white/42">暂无大名单数据</span>
+          <span className="text-sm font-semibold text-white/42">暂无官方名单数据</span>
         )}
       </div>
     </div>
@@ -401,7 +404,7 @@ function PlayerGrid({
 
       {players.length === 0 && (
         <div className="rounded-xl bg-white/[0.035] px-4 py-8 text-center ring-1 ring-white/[0.055]">
-          <p className="text-sm font-semibold text-white/72">暂无大名单数据</p>
+          <p className="text-sm font-semibold text-white/72">暂无官方名单数据</p>
         </div>
       )}
     </div>

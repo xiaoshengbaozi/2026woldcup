@@ -8,6 +8,8 @@ node_modules/
 .worker-dev*.log
 .codex-*.log
 .codex-*.png
+.codex/
+outputs/
 backend/.codex-*.log
 backend/dist/
 backend/.env

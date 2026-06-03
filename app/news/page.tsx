@@ -28,7 +28,7 @@ type NewsResponse = {
 
 const NEWS_API = process.env.NEXT_PUBLIC_NEWS_API_URL || "https://news.20250114.xyz";
 
-const editorTabs = ["Sports", "Travel", "Culture", "Feature"];
+const editorTabs = ["体育", "旅游", "文化", "专题"];
 
 const dateFormatter = new Intl.DateTimeFormat("zh-CN", {
   month: "short",
@@ -45,7 +45,7 @@ const timeFormatter = new Intl.DateTimeFormat("zh-CN", {
 export default function NewsPage() {
   const [payload, setPayload] = useState<NewsResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeEditorTab, setActiveEditorTab] = useState("Sports");
+  const [activeEditorTab, setActiveEditorTab] = useState("体育");
 
   const endpoint = useMemo(() => {
     const params = new URLSearchParams({ limit: "72" });
@@ -89,7 +89,7 @@ export default function NewsPage() {
     <DashboardShell>
       {/* ── TOP NEWS: Hero + Side Stories ── */}
       <section className="mt-6">
-        <SectionHeader title="Top News" />
+        <SectionHeader title="头条新闻" />
 
         {loading ? (
           <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
@@ -182,7 +182,7 @@ export default function NewsPage() {
       {/* ── EDITOR'S CHOICE ── */}
       {editorItems.length > 0 && (
         <section className="mt-8">
-          <SectionHeader title="Editor's Choice" />
+          <SectionHeader title="编辑精选" />
 
           {/* Tabs */}
           <div className="mb-5 flex gap-1">
@@ -238,7 +238,7 @@ export default function NewsPage() {
       {/* ── LATEST NEWS Grid ── */}
       {latestItems.length > 0 && (
         <section className="mt-8">
-          <SectionHeader title="Latest News" actionLabel="View More" />
+          <SectionHeader title="最新资讯" actionLabel="查看更多" />
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {latestItems.map((item, index) => (
@@ -286,7 +286,7 @@ export default function NewsPage() {
       {/* ── Bottom Feature Grid ── */}
       {featureItems.length > 0 && (
         <section className="mt-8">
-          <SectionHeader title="Arts / Travel & Tourism" actionLabel="All News" />
+          <SectionHeader title="文艺 / 旅游" actionLabel="全部资讯" />
 
           <div className="grid gap-4 md:grid-cols-3">
             {featureItems.map((item) => (
@@ -330,8 +330,8 @@ export default function NewsPage() {
 
 function SectionHeader({ title, actionLabel }: { title: string; actionLabel?: string }) {
   return (
-    <div className="mb-5 flex items-baseline justify-between border-b border-white/[0.08] pb-3">
-      <h2 className="text-lg font-bold uppercase tracking-[0.08em] text-white sm:text-xl">
+    <div className="mb-5 flex items-baseline justify-between">
+      <h2 className="text-lg font-bold text-white sm:text-xl">
         {title}
       </h2>
       {actionLabel && (

@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Calendar, Flag, Home, Newspaper, UserRound } from "lucide-react";
+import { BarChart3, Calendar, Flag, Home, Newspaper, UserRound, UsersRound } from "lucide-react";
+import { ThemeToggle } from "./theme-toggle";
 import { getPlayerAvatar } from "@/lib/user-preferences";
 import { userApi, type UserHomePayload } from "@/lib/user-system";
 
@@ -13,6 +14,7 @@ const navItems = [
   { label: "新闻", href: "/news", icon: Newspaper },
   { label: "赛程", href: "/matches", icon: Calendar },
   { label: "球队", href: "/teams", icon: Flag },
+  { label: "球员", href: "/players", icon: UsersRound },
   { label: "数据", href: "/data", icon: BarChart3 },
 ];
 
@@ -87,7 +89,9 @@ export function NavBar() {
         })}
       </div>
 
-      <Link
+      <div className="flex items-center gap-3">
+        <ThemeToggle />
+        <Link
         href="/me"
         aria-label="我的世界杯"
         className={`relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-white/[0.06] shadow-[0_0_28px_rgba(216,255,62,.14)] ring-1 transition ${
@@ -100,6 +104,7 @@ export function NavBar() {
           <UserRound className="h-5 w-5 text-volt" />
         )}
       </Link>
+      </div>
     </nav>
   );
 }

@@ -1,9 +1,27 @@
 {
-  "players": {},
+  "players": {
+    "130": "Nélson Semedo",
+    "228": "A. Obispo",
+    "369": "Diogo Costa",
+    "567": "Rúben Dias",
+    "636": "Bernardo Silva",
+    "874": "Cristiano Ronaldo",
+    "2543": "Almoez Ali",
+    "19366": "O. Watkins",
+    "22236": "Rafael Leão",
+    "57910": "T. Rodríguez",
+    "183799": "Nico Williams",
+    "423737": "Tahsin Jamshid"
+  },
   "clubs": {
     "Monaco": "Monaco",
     "Charleroi": "Charleroi",
-    "Gyori ETO FC": "Gyori ETO FC"
+    "Gyori ETO FC": "Gyori ETO FC",
+    "Paradou AC": "Paradou AC",
+    "Bryne": "Bryne",
+    "Molde": "Molde",
+    "Red Bull Salzburg": "Red Bull Salzburg",
+    "Argentina": "Argentina"
   },
   "leagues": {
     "MLS All-Star": "MLS All-Star",
@@ -34,14 +52,24 @@
     "CONMEBOL Sudamericana": "CONMEBOL Sudamericana",
     "Community Shield": "Community Shield",
     "Paulista A1": "Paulista A1",
-    "Supercopa do Brasil": "Supercopa do Brasil"
+    "Supercopa do Brasil": "Supercopa do Brasil",
+    "Premier League": "Premier League",
+    "First Division A": "First Division A",
+    "Svenska Cupen": "Svenska Cupen",
+    "Concacaf Gold Cup": "Concacaf Gold Cup",
+    "Olympics Men": "Olympics Men",
+    "Copa Catalunya": "Copa Catalunya",
+    "Friendlies": "Friendlies",
+    "Arab Club Champions Cup": "Arab Club Champions Cup",
+    "League Cup": "League Cup"
   },
   "positions": {},
   "countries": {
     "South America": "South America",
     "Austria": "Austria",
     "Asia": "Asia",
-    "South Africa": "South Africa"
+    "South Africa": "South Africa",
+    "Sweden": "Sweden"
   },
   "transferTypes": {
     "€ 180M": "€ 180M",
@@ -65,9 +93,15 @@
     "Heel Injury": "Heel Injury",
     "Calf/Shin Injury": "Calf/Shin Injury",
     "Broken Toe": "Broken Toe",
-    "Broken Arm": "Broken Arm"
+    "Broken Arm": "Broken Arm",
+    "Achilles Strain": "Achilles Strain",
+    "Leg Injury": "Leg Injury",
+    "ACL Knee Injury": "ACL Knee Injury",
+    "Yellow Cards": "Yellow Cards",
+    "Red Card": "Red Card"
   },
   "birthPlaces": {
-    "Mataró": "Mataró"
+    "Mataró": "Mataró",
+    "Chlef": "Chlef"
   }
 }

@@ -254,8 +254,8 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
               </div>
             </div>
             <div className="divide-y divide-white/[0.04]">
-              {fifaNews.map((item) => (
-                <a key={item.id} href={item.href} target="_blank" rel="noreferrer" className="group grid min-h-[84px] grid-cols-[88px_minmax(0,1fr)] gap-3 py-3 transition hover:opacity-80">
+              {fifaNews.map((item, index) => (
+                <a key={`${item.id}-${item.href || index}`} href={item.href} target="_blank" rel="noreferrer" className="group grid min-h-[84px] grid-cols-[88px_minmax(0,1fr)] gap-3 py-3 transition hover:opacity-80">
                   {item.thumbnail ? (<img src={item.thumbnail} alt={item.tag} className="h-[58px] w-[88px] shrink-0 rounded-2xl object-cover ring-1 ring-white/10" loading="lazy" />) : (<span className="grid h-[58px] w-[88px] shrink-0 place-items-center rounded-2xl bg-volt/10 text-[10px] font-semibold uppercase tracking-[0.12em] text-volt ring-1 ring-volt/20">{item.tag.slice(0, 8)}</span>)}
                   <span className="flex min-w-0 flex-col justify-center">
                     <span className="line-clamp-2 min-h-10 text-sm font-medium leading-5 text-white/82 transition group-hover:text-volt">{item.title}</span>

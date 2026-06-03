@@ -41,6 +41,8 @@ export function TeamSquadCard({ teamName, coach, squad, loading, error }: TeamSq
         teamName={teamName}
         coach={displayCoach}
         players={players}
+        officialWorldCupSquad={Boolean(squad?.officialWorldCupSquad)}
+        officialStatus={squad?.officialSquad?.status ?? null}
         loading={loading}
         error={error}
       />
@@ -53,12 +55,16 @@ function SquadSummary({
   teamName,
   coach,
   players,
+  officialWorldCupSquad,
+  officialStatus,
   loading,
   error,
 }: {
   teamName: string;
   coach: string;
   players: LineupPlayer[];
+  officialWorldCupSquad: boolean;
+  officialStatus: "imported" | "missing_official_list" | null;
   loading: boolean;
   error: string | null;
 }) {
@@ -73,7 +79,7 @@ function SquadSummary({
         <div className="mb-4 flex items-center gap-2">
           <div className="h-5 w-1 rounded-full bg-volt" />
           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-volt">
-            候选大名单
+            {officialWorldCupSquad ? "FIFA 官方最终名单" : "FIFA 官方名单待录入"}
           </span>
         </div>
 
@@ -83,13 +89,15 @@ function SquadSummary({
           <p className="mt-1 text-base font-black text-white">{coach}</p>
         </div>
         <p className="mt-4 max-w-[26rem] text-sm leading-relaxed text-white/48">
-          当前展示国家队球员池，正式世界杯名单会在可靠数据更新后同步。
+          {officialWorldCupSquad
+            ? "名单以 FIFA 官方名单为筛选依据，球员资料由 API-Football 补充。"
+            : "暂未导入该队 FIFA 官方名单，当前不展示 API-Football 候选池。"}
         </p>
       </div>
 
       <div className="mt-8 grid grid-cols-2 gap-2">
         <div className="rounded-2xl bg-volt/[0.08] px-4 py-3 ring-1 ring-volt/15">
-          <p className="text-[10px] font-bold tracking-[0.16em] text-white/35">球员池</p>
+          <p className="text-[10px] font-bold tracking-[0.16em] text-white/35">最终名单</p>
           <p className="mt-1 text-2xl font-black tabular-nums text-white">
             {loading ? "..." : players.length || "—"}
           </p>
@@ -97,7 +105,7 @@ function SquadSummary({
         <div className="rounded-2xl bg-white/[0.025] px-4 py-3 ring-1 ring-white/[0.055]">
           <p className="text-[10px] font-bold tracking-[0.16em] text-white/35">名单状态</p>
           <p className="mt-2 text-sm font-bold text-white/78">
-            {error ? "同步失败" : "非最终名单"}
+            {error ? "同步失败" : officialStatus === "imported" ? "已筛选" : "待录入"}
           </p>
         </div>
       </div>
@@ -112,7 +120,7 @@ function SquadSummary({
           </span>
         )) : (
           <span className="text-sm font-semibold text-white/42">
-            {loading ? "正在同步阵容数据..." : "暂无大名单数据"}
+            {loading ? "正在同步阵容数据..." : "暂无官方名单数据"}
           </span>
         )}
       </div>
@@ -159,7 +167,7 @@ function PlayerGrid({ players, loading }: { players: LineupPlayer[]; loading: bo
 
       {players.length === 0 && (
         <div className="rounded-xl bg-white/[0.035] px-4 py-8 text-center ring-1 ring-white/[0.055]">
-          <p className="text-sm font-semibold text-white/72">暂无大名单数据</p>
+          <p className="text-sm font-semibold text-white/72">暂无官方名单数据</p>
         </div>
       )}
     </div>

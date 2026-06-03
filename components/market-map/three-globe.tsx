@@ -371,7 +371,7 @@ export function ThreeGlobe({
   return (
     <section className={`relative h-full min-h-0 overflow-hidden ${className ?? ""}`}>
       <div ref={wrapRef} className="relative h-full min-h-0" style={{ cursor: "grab" }}>
-        <div className="absolute left-3 top-3 z-10 flex items-center gap-2 rounded-full bg-[rgba(8,12,12,0.85)] px-3 py-2 text-sm font-semibold uppercase tracking-[0.08em] text-white/80 ring-1 ring-white/[0.08] backdrop-blur-xl">
+        <div className="globe-label absolute left-3 top-3 z-10 flex items-center gap-2 rounded-full bg-[rgba(8,12,12,0.85)] px-3 py-2 text-sm font-semibold uppercase tracking-[0.08em] text-white/80 ring-1 ring-white/[0.08] backdrop-blur-xl">
           <svg className="h-4 w-4 text-volt" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="12" cy="12" r="10" />
             <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
@@ -427,7 +427,7 @@ export function ThreeGlobe({
                 onFocus={() => onLabelHover(l.code)}
                 onBlur={() => onLabelHover(null)}
                 onClick={() => onLabelClick(l.code)}
-                className={`probability-map-label relative z-[110] flex h-[30px] w-max items-center gap-1.5 rounded-full border bg-[rgba(8,12,12,0.82)] px-2.5 py-1.5 text-xs font-bold text-white/90 shadow-[0_12px_30px_rgba(0,0,0,0.4)] backdrop-blur-2xl transition-[background-color,border-color,box-shadow] duration-150 hover:bg-white/[0.1] ${
+                className={`globe-label probability-map-label relative z-[110] flex h-[30px] w-max items-center gap-1.5 rounded-full border bg-[rgba(8,12,12,0.82)] px-2.5 py-1.5 text-xs font-bold text-white/90 shadow-[0_12px_30px_rgba(0,0,0,0.4)] backdrop-blur-2xl transition-[background-color,border-color,box-shadow] duration-150 hover:bg-white/[0.1] ${
                   l.vis ? "border-white/[0.08]" : "border-transparent"
                 }`}
                 style={{
@@ -499,7 +499,7 @@ export function ThreeGlobe({
                         initial={{ opacity: 0, scale: 0.72, x: tag.isHome ? 12 : -42, y: -16 }}
                         animate={{ opacity: 1, scale: 1, x: offset.x, y: offset.y }}
                         transition={{ type: "spring", stiffness: 360, damping: 28, delay: index * 0.035 }}
-                        className="absolute z-[105] w-[142px] overflow-hidden rounded-xl border border-flare/20 bg-[linear-gradient(135deg,rgba(255,154,31,0.12),rgba(8,12,12,0.82)_42%,rgba(216,255,62,0.07))] px-2.5 py-2 text-left shadow-[0_12px_34px_rgba(0,0,0,0.34),0_0_18px_rgba(255,154,31,0.10)] backdrop-blur-2xl"
+                        className="globe-info-card absolute z-[105] w-[142px] overflow-hidden rounded-xl border border-flare/20 bg-[linear-gradient(135deg,rgba(255,154,31,0.12),rgba(8,12,12,0.82)_42%,rgba(216,255,62,0.07))] px-2.5 py-2 text-left shadow-[0_12px_34px_rgba(0,0,0,0.34),0_0_18px_rgba(255,154,31,0.10)] backdrop-blur-2xl"
                       >
                         <div className="flex items-center justify-between gap-2 text-[9px] font-bold uppercase tracking-[0.08em] text-white/42">
                           <span className="truncate">{formatMatchDateTime(tag.startTime)}</span>

@@ -171,7 +171,7 @@ export function LiveMatchesStrip({ matches }: LiveMatchesStripProps) {
               </div>
             ) : (
               <div
-                className="rounded-3xl px-5 py-6 text-center"
+                className="live-matches-empty rounded-3xl px-5 py-6 text-center"
                 style={{
                   background: "linear-gradient(135deg, rgba(255,255,255,0.045), rgba(255,255,255,0.015)), rgba(5,8,8,0.88)",
                   boxShadow: "0 30px 80px rgba(0,0,0,0.48), inset 0 1px 0 rgba(255,255,255,0.09), inset 0 -1px 0 rgba(216,255,62,0.06)",

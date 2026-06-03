@@ -104,7 +104,7 @@ export function createApiFootballService(
       const cacheKey = `${endpoint}?${normalizedParams.toString()}`;
       const cached = cache.get(cacheKey);
 
-      if (cached && cached.expiresAt > Date.now()) {
+      if (cached && cached.expiresAt > Date.now() && !hasApiFootballErrors(cached.payload.upstream)) {
         return { ...cached.payload, cached: true };
       }
 
@@ -130,6 +130,13 @@ export function createApiFootballService(
           return { ...cached.payload, cached: true };
         }
         throw createHttpError(response.status, "api_football_upstream_error", upstream);
+      }
+
+      if (hasApiFootballErrors(upstream)) {
+        if (cached && cached.staleUntil > Date.now() && !hasApiFootballErrors(cached.payload.upstream)) {
+          return { ...cached.payload, cached: true };
+        }
+        throw createHttpError(502, "api_football_data_unavailable", upstream);
       }
 
       const payload: ApiFootballGatewayResponse = {
@@ -158,6 +165,14 @@ function getCacheTtl(endpoint: ApiFootballEndpoint, params: URLSearchParams, fal
   return CACHE_TTL_BY_ENDPOINT[endpoint] ?? fallbackTtl;
 }
 
+function hasApiFootballErrors(upstream: unknown) {
+  if (!upstream || typeof upstream !== "object") return false;
+  const errors = (upstream as { errors?: unknown }).errors;
+  if (Array.isArray(errors)) return errors.length > 0;
+  if (errors && typeof errors === "object") return Object.keys(errors).length > 0;
+  return Boolean(errors);
+}
+
 function loadCache(cacheFile: string) {
   const cache = new Map<string, CacheRecord>();
   if (!existsSync(cacheFile)) return cache;
@@ -166,6 +181,7 @@ function loadCache(cacheFile: string) {
     const persisted = JSON.parse(readFileSync(cacheFile, "utf8")) as PersistedCache;
     for (const [key, record] of Object.entries(persisted)) {
       if (!record?.payload || !record.staleUntil || record.staleUntil < Date.now()) continue;
+      if (hasApiFootballErrors(record.payload.upstream)) continue;
       cache.set(key, record);
     }
   } catch {

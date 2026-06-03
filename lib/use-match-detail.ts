@@ -5,8 +5,8 @@ import { useWorldCupData } from "@/lib/use-world-cup-data";
 import { generateMatchSlug, findMatchBySlug } from "@/lib/match-detail";
 import { generateMatchDetail } from "@/lib/match-detail-mock";
 import { fetchWorldCupHeadToHead } from "@/lib/world-cup-head-to-head";
-import { fetchWorldCupSquads } from "@/lib/world-cup-squads";
-import type { HeadToHeadMatch, LineupPlayer } from "@/types/match";
+import { fetchWorldCupSquadDetails, type WorldCupSquadDetail } from "@/lib/world-cup-squads";
+import type { HeadToHeadMatch } from "@/types/match";
 import type { MatchDetail } from "@/types/match";
 
 /**
@@ -19,7 +19,7 @@ export function useMatchDetail(slug: string): {
   error: string | null;
 } {
   const { matches, loading, error } = useWorldCupData();
-  const [remoteSquads, setRemoteSquads] = useState<Map<number, LineupPlayer[]> | null>(null);
+  const [remoteSquads, setRemoteSquads] = useState<Map<number, WorldCupSquadDetail> | null>(null);
   const [remoteHeadToHead, setRemoteHeadToHead] = useState<HeadToHeadMatch[] | null>(null);
 
   const match = useMemo(() => {
@@ -37,7 +37,7 @@ export function useMatchDetail(slug: string): {
 
     if (!teamIds.length) return;
 
-    fetchWorldCupSquads(teamIds)
+    fetchWorldCupSquadDetails(teamIds)
       .then((squads) => {
         if (active) setRemoteSquads(squads);
       })
@@ -79,18 +79,18 @@ export function useMatchDetail(slug: string): {
     const awaySquad = match.awayTeam?.id ? remoteSquads?.get(match.awayTeam.id) : null;
     if (match.homeTeam?.id) {
       enriched.homeLineup = {
-        formation: "候选大名单",
-        players: homeSquad ?? [],
-        listType: "squad_pool",
-        officialWorldCupSquad: false,
+        formation: homeSquad?.officialWorldCupSquad ? "FIFA 官方最终名单" : "FIFA 官方名单待录入",
+        players: homeSquad?.players ?? [],
+        listType: homeSquad?.listType ?? "squad_pool",
+        officialWorldCupSquad: Boolean(homeSquad?.officialWorldCupSquad),
       };
     }
     if (match.awayTeam?.id) {
       enriched.awayLineup = {
-        formation: "候选大名单",
-        players: awaySquad ?? [],
-        listType: "squad_pool",
-        officialWorldCupSquad: false,
+        formation: awaySquad?.officialWorldCupSquad ? "FIFA 官方最终名单" : "FIFA 官方名单待录入",
+        players: awaySquad?.players ?? [],
+        listType: awaySquad?.listType ?? "squad_pool",
+        officialWorldCupSquad: Boolean(awaySquad?.officialWorldCupSquad),
       };
     }
     if (match.homeTeam?.id && match.awayTeam?.id) {
