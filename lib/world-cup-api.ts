@@ -52,11 +52,22 @@ type StandingsResponse = {
 
 export function getBackendApiUrl() {
   const fallbackUrl =
-    typeof window !== "undefined" && window.location.hostname === "localhost"
-      ? LOCAL_API_URL
+    typeof window !== "undefined" && isLocalDevHost(window.location.hostname)
+      ? `${window.location.protocol}//${window.location.hostname}:3001`
       : PRODUCTION_API_URL;
 
   return (process.env.NEXT_PUBLIC_MARKET_API_URL || fallbackUrl).replace(/\/$/, "");
+}
+
+function isLocalDevHost(hostname: string) {
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "::1" ||
+    /^10\./.test(hostname) ||
+    /^192\.168\./.test(hostname) ||
+    /^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname)
+  );
 }
 
 export async function fetchWorldCupFixtures(options: { season?: number; league?: number } = {}) {

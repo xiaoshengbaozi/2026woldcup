@@ -1,19 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { getBackendApiUrl } from "@/lib/world-cup-api";
 import type { MatchLineEvent, MatchLinesResponse } from "@/types/messages";
 
-const LOCAL_API_URL = "http://localhost:3001";
-const PRODUCTION_API_URL = "https://api-2026.20250114.xyz";
 const REFRESH_INTERVAL_MS = 30_000;
 
 function getApiUrl() {
-  const fallbackUrl =
-    typeof window !== "undefined" && window.location.hostname === "localhost"
-      ? LOCAL_API_URL
-      : PRODUCTION_API_URL;
-
-  return (process.env.NEXT_PUBLIC_MARKET_API_URL || fallbackUrl).replace(/\/$/, "");
+  return getBackendApiUrl();
 }
 
 export function useMatchLines() {

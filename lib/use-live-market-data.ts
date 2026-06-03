@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useStore } from "@/lib/store";
+import { getBackendApiUrl } from "@/lib/world-cup-api";
 import type {
   DeltaMessage,
   HistoryResponseMessage,
@@ -9,19 +10,12 @@ import type {
   SnapshotMessage,
 } from "@/types/messages";
 
-const LOCAL_API_URL = "http://localhost:3001";
-const PRODUCTION_API_URL = "https://api-2026.20250114.xyz";
 const STALE_AFTER_MS = 15_000;
 const RECONNECT_BASE_MS = 1_000;
 const RECONNECT_MAX_MS = 30_000;
 
 function getApiUrl() {
-  const fallbackUrl =
-    typeof window !== "undefined" && window.location.hostname === "localhost"
-      ? LOCAL_API_URL
-      : PRODUCTION_API_URL;
-
-  return (process.env.NEXT_PUBLIC_MARKET_API_URL || fallbackUrl).replace(/\/$/, "");
+  return getBackendApiUrl();
 }
 
 function getWsUrl(apiUrl: string) {

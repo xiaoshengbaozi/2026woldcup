@@ -28,7 +28,13 @@
     "CONMEBOL U17": "CONMEBOL U17",
     "Campeones Cup": "Campeones Cup",
     "Concacaf Nations League": "Concacaf Nations League",
-    "Concacaf Champions Cup": "Concacaf Champions Cup"
+    "Concacaf Champions Cup": "Concacaf Champions Cup",
+    "Asian Games": "Asian Games",
+    "AFC U23 Asian Cup": "AFC U23 Asian Cup",
+    "CONMEBOL Sudamericana": "CONMEBOL Sudamericana",
+    "Community Shield": "Community Shield",
+    "Paulista A1": "Paulista A1",
+    "Supercopa do Brasil": "Supercopa do Brasil"
   },
   "positions": {},
   "countries": {
@@ -56,7 +62,10 @@
     "Mouth Injury": "Mouth Injury",
     "Rib Injury": "Rib Injury",
     "Injury": "Injury",
-    "Heel Injury": "Heel Injury"
+    "Heel Injury": "Heel Injury",
+    "Calf/Shin Injury": "Calf/Shin Injury",
+    "Broken Toe": "Broken Toe",
+    "Broken Arm": "Broken Arm"
   },
   "birthPlaces": {
     "Mataró": "Mataró"
