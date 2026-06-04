@@ -3,6 +3,7 @@ import path from "path";
 
 export type LocalizationCategory =
   | "players"
+  | "coaches"
   | "clubs"
   | "leagues"
   | "positions"
@@ -16,6 +17,7 @@ type LocalizationStore = Record<LocalizationCategory, Record<string, string>>;
 
 const CATEGORY_FILES: Record<LocalizationCategory, string> = {
   players: "players.json",
+  coaches: "coaches.json",
   clubs: "clubs.json",
   leagues: "leagues.json",
   positions: "positions.json",
@@ -28,6 +30,7 @@ const CATEGORY_FILES: Record<LocalizationCategory, string> = {
 
 const EMPTY_STORE: LocalizationStore = {
   players: {},
+  coaches: {},
   clubs: {},
   leagues: {},
   positions: {},
@@ -55,7 +58,12 @@ export function translate(category: LocalizationCategory, key: string | number |
   const normalized = String(key ?? "").trim();
   if (!normalized) return "";
 
-  const value = getLocalizationStore()[category][normalized];
+  const store = getLocalizationStore();
+  let value = store[category][normalized];
+  if (!value) {
+    refreshCategoryFromDisk(category);
+    value = store[category][normalized];
+  }
   if (!value) recordMissingLocalization(category, normalized, normalized);
   return value ?? normalized;
 }

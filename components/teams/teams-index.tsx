@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -14,6 +14,10 @@ import {
 
 export function TeamsIndex() {
   const [activeContinent, setActiveContinent] = useState(continentOrder[0]);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const [isPinned, setIsPinned] = useState(false);
+  const [tabsHeight, setTabsHeight] = useState(0);
   const tabItems = useMemo(
     () =>
       continentOrder.map((continent) => {
@@ -28,6 +32,55 @@ export function TeamsIndex() {
   );
   const activeTab = tabItems.find((item) => item.continent === activeContinent) ?? tabItems[0];
 
+  useEffect(() => {
+    const mobileQuery = window.matchMedia("(max-width: 639px)");
+
+    const syncPinnedState = () => {
+      if (!mobileQuery.matches) {
+        setIsPinned(false);
+        setTabsHeight(0);
+        return;
+      }
+
+      const sentinel = sentinelRef.current;
+      const tabs = tabsRef.current;
+      if (!sentinel || !tabs) return;
+
+      const nextHeight = tabs.offsetHeight;
+      setTabsHeight((current) => (current === nextHeight ? current : nextHeight));
+      setIsPinned(sentinel.getBoundingClientRect().top <= 0);
+    };
+
+    syncPinnedState();
+    window.addEventListener("scroll", syncPinnedState, { passive: true });
+    window.addEventListener("resize", syncPinnedState);
+    mobileQuery.addEventListener?.("change", syncPinnedState);
+
+    return () => {
+      window.removeEventListener("scroll", syncPinnedState);
+      window.removeEventListener("resize", syncPinnedState);
+      mobileQuery.removeEventListener?.("change", syncPinnedState);
+    };
+  }, []);
+
+  const scrollToTabHead = () => {
+    if (!window.matchMedia("(max-width: 639px)").matches) return;
+
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const target = sentinel.getBoundingClientRect().top + window.scrollY;
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: Math.max(target - 12, 0), behavior: "smooth" });
+    });
+  };
+
+  const handleContinentChange = (continent: typeof activeContinent) => {
+    if (continent === activeContinent) return;
+    setActiveContinent(continent);
+    scrollToTabHead();
+  };
+
   return (
     <main className="relative min-h-screen overflow-hidden py-8 text-white">
       <div className="relative">
@@ -38,6 +91,22 @@ export function TeamsIndex() {
               Qualified Teams
             </div>
 
+            <div
+              ref={sentinelRef}
+              className="sm:hidden"
+              style={{ height: isPinned ? tabsHeight : 0 }}
+            />
+            {isPinned ? (
+              <div className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-[calc(env(safe-area-inset-top)+6.25rem)] bg-black/72 backdrop-blur-2xl [mask-image:linear-gradient(to_bottom,black_0%,black_56%,rgba(0,0,0,0)_100%)] sm:hidden" />
+            ) : null}
+            <div
+              ref={tabsRef}
+              className={`${
+                isPinned
+                  ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+0.75rem)] z-[70] px-3 py-2"
+                  : "relative -mx-3 bg-black/58 px-3 py-2 backdrop-blur-2xl"
+              } sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none`}
+            >
             <div
               className="flex flex-wrap gap-1.5"
               role="tablist"
@@ -52,7 +121,7 @@ export function TeamsIndex() {
                     type="button"
                     role="tab"
                     aria-selected={isActive}
-                    onClick={() => setActiveContinent(item.continent)}
+                    onClick={() => handleContinentChange(item.continent)}
                     className={`group relative flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-left text-xs font-bold transition duration-300 sm:px-3.5 sm:py-2 sm:text-sm ${
                       isActive
                         ? "bg-volt text-black shadow-[0_0_24px_rgba(216,255,62,.2)]"
@@ -72,6 +141,7 @@ export function TeamsIndex() {
                   </button>
                 );
               })}
+            </div>
             </div>
           </div>
 

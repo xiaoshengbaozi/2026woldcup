@@ -50,8 +50,10 @@ const CODE_TO_CN: Record<string, string> = {
 };
 
 const CODE_ALIASES: Record<string, string> = {
+  ALG: "DZA",
   HR: "CRO",
   IR: "IRN",
+  KSA: "SAU",
 };
 
 const NAME_TO_CODE: Record<string, string> = {

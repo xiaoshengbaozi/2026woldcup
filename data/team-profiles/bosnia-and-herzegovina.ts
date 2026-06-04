@@ -51,11 +51,6 @@ const bosniaAndHerzegovina: TeamProfile = {
       "highlight": true
     },
     {
-      "label": "所属足联",
-      "value": "UEFA",
-      "desc": "欧足联"
-    },
-    {
       "label": "最佳成绩",
       "value": "小组赛",
       "desc": "波黑的世界杯最佳成绩为小组赛。"
@@ -104,6 +99,67 @@ const bosniaAndHerzegovina: TeamProfile = {
       "credit": "FIFA"
     }
   ],
+  "deepDive": {
+      "overviewStats": [
+          {
+              "label": "参赛次数",
+              "value": "1",
+              "note": "1次（2026）"
+          },
+          {
+              "label": "最佳战绩",
+              "value": "小组赛",
+              "note": "2014"
+          },
+          {
+              "label": "总进球",
+              "value": "4",
+              "note": "进失球 4 / 4"
+          },
+          {
+              "label": "总场次",
+              "value": "3",
+              "note": "胜平负 1-0-2"
+          },
+          {
+              "label": "首次参赛",
+              "value": "2014",
+              "note": "2014年巴西世界杯"
+          }
+      ],
+      "coach": {
+          "name": "Sergej Barbarez",
+          "title": "波黑主教练",
+          "bio": "Barbarez的球员生涯始于Mostar，但他在德甲联赛成名。作为一名富有创造力和不拘一格的10号球员，他在德国足球生涯中先后效力于Union Berlin、Borussia Dortmund、Hamburg和Bayer Leverkusen等俱乐部。在国际赛场上，他在1998年至2006年间出场47次打入17球。2024年被任命为国家队主教练，这是他首次担任重要教练职务。在球场之外同样是一位策略家，54岁的他还是一名职业扑克选手，这是他在挂靴后开始的事业。采用融合年轻才俊和经验老将的4-4-2阵型，Barbarez带领Bosnia and Herze",
+          "image": "/team-profiles/bosnia-and-herzegovina/bosnia_and_herzegovina_team_profile_history-coach.jpg",
+          "imageAlt": "Sergej Barbarez执教波黑的 FIFA 官方配图",
+          "highlights": [
+              "官方球队档案",
+              "2026 北美世界杯",
+              "分组赛程已确认"
+          ]
+      },
+      "historyFacts": [],
+      "featureStory": {
+          "kicker": "FIFA 官方故事",
+          "title": "波黑的 2026 世界杯之路",
+          "body": [
+              "在常青树Dzeko打入六球的带动下，Bosnia and Herzegovina在整个预选赛征程中表现出色，首场比赛客场击败Romania，随后主场战胜Cyprus和San Marino。他们落后Austria（在与Barbarez球队的两回合比赛中拿到四分）两分排名第二，Romania以13分位列其后。Barbarez的球队以边路进攻见长，年轻球员Esmir Bajraktarevic和Kerim Alajbegovic发挥了关键作用，既能进球又能持续制造威胁性的边路优势。",
+              "波黑将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。",
+              "波黑将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。"
+          ],
+          "image": "/team-profiles/bosnia-and-herzegovina/bosnia_and_herzegovina_team_profile_history-main.jpg",
+          "imageAlt": "波黑 FIFA 官方球队档案配图",
+          "source": "FIFA 官方球队档案"
+      },
+      "qualificationTimeline": [
+          "欧洲区晋级",
+          "获得席位",
+          "vs Canada / Bosnia and Herzegovina",
+          "vs Switzerland / Bosnia and Herzegovina",
+          "刷新队史最佳"
+      ]
+  },
   "keyPlayers": [
     {
       "number": 1,

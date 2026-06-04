@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { localizeCoachName } from "@/lib/coach-localization";
 import type { LineupPlayer } from "@/types/match";
 import type { WorldCupSquadDetail } from "@/lib/world-cup-squads";
 
@@ -28,7 +29,7 @@ interface TeamSquadCardProps {
 
 export function TeamSquadCard({ teamName, coach, squad, loading, error }: TeamSquadCardProps) {
   const players = squad?.players ?? [];
-  const displayCoach = squad?.coach || coach || "待更新";
+  const displayCoach = localizeCoachName(squad?.coach || coach) || "待更新";
 
   return (
     <motion.div

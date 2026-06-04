@@ -87,11 +87,6 @@ const iran: TeamProfile = {
       "highlight": true
     },
     {
-      "label": "所属足联",
-      "value": "AFC",
-      "desc": "亚洲足联"
-    },
-    {
       "label": "最佳成绩",
       "value": "小组赛",
       "desc": "伊朗的世界杯最佳成绩为小组赛。"
@@ -140,6 +135,67 @@ const iran: TeamProfile = {
       "credit": "FIFA"
     }
   ],
+  "deepDive": {
+      "overviewStats": [
+          {
+              "label": "参赛次数",
+              "value": "7",
+              "note": "首次参赛 1978"
+          },
+          {
+              "label": "最佳战绩",
+              "value": "小组赛",
+              "note": "1978、1998、2006、2014、2018、2022"
+          },
+          {
+              "label": "总进球",
+              "value": "13",
+              "note": "进失球 13 / 31"
+          },
+          {
+              "label": "总场次",
+              "value": "18",
+              "note": "胜平负 3-4-11"
+          },
+          {
+              "label": "首次参赛",
+              "value": "1978",
+              "note": "Argentina 1978"
+          }
+      ],
+      "coach": {
+          "name": "待确认",
+          "title": "伊朗主教练",
+          "bio": "IR Iran 将第七次踏上FIFA世界杯的征程",
+          "image": "/team-profiles/iran/ir_iran_team_profile_history-coach.jpg",
+          "imageAlt": "待确认执教伊朗的 FIFA 官方配图",
+          "highlights": [
+              "官方球队档案",
+              "2026 北美世界杯",
+              "分组赛程已确认"
+          ]
+      },
+      "historyFacts": [],
+      "featureStory": {
+          "kicker": "FIFA 官方故事",
+          "title": "伊朗的 2026 世界杯之路",
+          "body": [
+              "从亚足联预选赛第二轮开始参赛的 Iran 在主客场均与同样晋级2026世界杯的 Uzbekistan 战平，但面对 Turkmenistan 和 Hong Kong, China 时则大比分碾压过关。",
+              "上届世界杯: Qatar 2022 (小组赛)",
+              "伊朗将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。"
+          ],
+          "image": "/team-profiles/iran/ir_iran_team_profile_history-main.jpg",
+          "imageAlt": "伊朗 FIFA 官方球队档案配图",
+          "source": "FIFA 官方球队档案"
+      },
+      "qualificationTimeline": [
+          "亚洲区小组第1",
+          "获得席位",
+          "北美备战",
+          "北美备战",
+          "刷新队史最佳"
+      ]
+  },
   "keyPlayers": [
     {
       "number": 11,

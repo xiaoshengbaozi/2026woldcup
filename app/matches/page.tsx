@@ -21,6 +21,11 @@ export default function MatchesPage() {
   const [layout, setLayout] = useState<ScheduleLayout>("default");
   const [selectedDay, setSelectedDay] = useState("");
 
+  useEffect(() => {
+    const requestedLayout = new URLSearchParams(window.location.search).get("layout");
+    if (requestedLayout === "calendar") setLayout("calendar");
+  }, []);
+
   const stages = useMemo(
     () => [...new Set(matches.map((match) => match.stage))],
     [matches]
@@ -133,6 +138,7 @@ export default function MatchesPage() {
         isEmpty={!loading && !error && !filteredMatches.length}
         timezoneOffset={timezoneOffset}
         layout={layout}
+        matchesForRoundLabels={matches}
       />
     </DashboardShell>
   );

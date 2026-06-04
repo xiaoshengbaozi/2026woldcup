@@ -57,11 +57,6 @@ const panama: TeamProfile = {
       "highlight": true
     },
     {
-      "label": "所属足联",
-      "value": "CONCACAF",
-      "desc": "中北美及加勒比海足联"
-    },
-    {
       "label": "最佳成绩",
       "value": "小组赛",
       "desc": "巴拿马的世界杯最佳成绩为小组赛。"
@@ -110,6 +105,67 @@ const panama: TeamProfile = {
       "credit": "FIFA"
     }
   ],
+  "deepDive": {
+      "overviewStats": [
+          {
+              "label": "参赛次数",
+              "value": "2",
+              "note": "1"
+          },
+          {
+              "label": "最佳战绩",
+              "value": "小组赛",
+              "note": "2018"
+          },
+          {
+              "label": "总进球",
+              "value": "2",
+              "note": "进失球 2 / 11"
+          },
+          {
+              "label": "总场次",
+              "value": "3",
+              "note": "胜平负 0-0-3"
+          },
+          {
+              "label": "首次参赛",
+              "value": "2018",
+              "note": "2018年Russia"
+          }
+      ],
+      "coach": {
+          "name": "Thomas Christiansen",
+          "title": "巴拿马主教练",
+          "bio": "Panama对Christiansen的耐心和信任在这次出线中得到了丰厚回报。Christiansen于2020年7月被任命为主教练，此前曾执教Leeds United和Belgian球队Union。他在任期初期经历了一些波折，即未能从2021年Concacaf金杯赛小组赛出线，以及在倒数第二轮预选赛中以1-5负于USA，被淘汰出卡塔尔2022预选赛。但Panama足协坚持支持Christiansen，此后一切向好——在2023年和2024年国家联赛中两次进入半决赛，并闯入2023年金杯赛和2025年国家联赛决赛。在此期间，Carlos Harvey和A",
+          "image": "/team-profiles/panama/panama_team_profile_history-coach.jpg",
+          "imageAlt": "Thomas Christiansen执教巴拿马的 FIFA 官方配图",
+          "highlights": [
+              "官方球队档案",
+              "2026 北美世界杯",
+              "分组赛程已确认"
+          ]
+      },
+      "historyFacts": [],
+      "featureStory": {
+          "kicker": "FIFA 官方故事",
+          "title": "巴拿马的 2026 世界杯之路",
+          "body": [
+              "了解Canaleros、他们的教练、世界杯历史以及在全球赛事中的进球球员。这支中美洲球队由Thomas Christiansen执教Panama将作为Concacaf地区的自动出线队之一，参加48队全球盛会的第二届FIFA世界杯™。",
+              "Panama在Concacaf预选赛第三轮中以A组第一名的成绩确认获得扩军后的48队赛事参赛资格。2026年将是他们第二次参加世界杯，也是自2018年Russia以来的首次。",
+              "上届世界杯：2018年Russia（小组赛）"
+          ],
+          "image": "/team-profiles/panama/panama_team_profile_history-main.jpg",
+          "imageAlt": "巴拿马 FIFA 官方球队档案配图",
+          "source": "FIFA 官方球队档案"
+      },
+      "qualificationTimeline": [
+          "中北美区 A组第2",
+          "获得席位",
+          "北美备战",
+          "北美备战",
+          "刷新队史最佳"
+      ]
+  },
   "keyPlayers": [
     {
       "number": 2,

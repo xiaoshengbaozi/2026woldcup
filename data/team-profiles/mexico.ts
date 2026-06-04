@@ -153,11 +153,6 @@ const mexico: TeamProfile = {
       "highlight": true
     },
     {
-      "label": "所属足联",
-      "value": "CONCACAF",
-      "desc": "中北美及加勒比海足联"
-    },
-    {
       "label": "最佳成绩",
       "value": "八强",
       "desc": "墨西哥的世界杯最佳成绩为八强。"
@@ -206,6 +201,67 @@ const mexico: TeamProfile = {
       "credit": "FIFA"
     }
   ],
+  "deepDive": {
+      "overviewStats": [
+          {
+              "label": "参赛次数",
+              "value": "18",
+              "note": "9次 (自1994年起)"
+          },
+          {
+              "label": "最佳战绩",
+              "value": "八强",
+              "note": "1970、1986"
+          },
+          {
+              "label": "总进球",
+              "value": "62",
+              "note": "进失球 62 / 101"
+          },
+          {
+              "label": "总场次",
+              "value": "60",
+              "note": "胜平负 17-15-28"
+          },
+          {
+              "label": "首次参赛",
+              "value": "1930",
+              "note": "1930年乌拉圭世界杯 (小组赛)"
+          }
+      ],
+      "coach": {
+          "name": "Javier Aguirre",
+          "title": "墨西哥主教练",
+          "bio": "Aguirre于去年7月重返Mexico帅位，在Jaime Lozano短暂执教后接过了教鞭。这是Aguirre第三次执掌国家队，他曾于2002年FIFA世界杯 Korea/Japan™首次率队出征，但在十六强中以0-2负于USA。2010年FIFA世界杯 South Africa™期间他再次执掌帅印，球队在同一阶段以1-3败于Argentina而止步。\"我们的目标非常明确，那就是Mexico在世界杯上取得队史最佳成绩。\"这位经验丰富的战术大师在2025年3月如是说。El Vasco——这一绰号源于他父母的Basque血统——不仅着眼于在赛场上取得成功，",
+          "image": "/team-profiles/mexico/mexico_team_profile_history-coach.jpg",
+          "imageAlt": "Javier Aguirre执教墨西哥的 FIFA 官方配图",
+          "highlights": [
+              "官方球队档案",
+              "2026 北美世界杯",
+              "分组赛程已确认"
+          ]
+      },
+      "historyFacts": [],
+      "featureStory": {
+          "kicker": "FIFA 官方故事",
+          "title": "墨西哥的 2026 世界杯之路",
+          "body": [
+              "Mexico作为联合东道主与Canada和USA共同获得参赛资格。2026年世界杯将扩军至48队，是有史以来规模最大的一届。",
+              "上届世界杯: 2022年卡塔尔世界杯 (小组赛)",
+              "墨西哥将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。"
+          ],
+          "image": "/team-profiles/mexico/mexico_team_profile_history-main.jpg",
+          "imageAlt": "墨西哥 FIFA 官方球队档案配图",
+          "source": "FIFA 官方球队档案"
+      },
+      "qualificationTimeline": [
+          "东道主自动晋级",
+          "获得席位",
+          "vs Mexico / South Africa",
+          "vs Mexico / Korea Republic",
+          "刷新队史最佳"
+      ]
+  },
   "keyPlayers": [
     {
       "number": 2,

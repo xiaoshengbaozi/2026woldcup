@@ -99,11 +99,6 @@ const scotland: TeamProfile = {
       "highlight": true
     },
     {
-      "label": "所属足联",
-      "value": "UEFA",
-      "desc": "欧足联"
-    },
-    {
       "label": "最佳成绩",
       "value": "小组赛",
       "desc": "苏格兰的世界杯最佳成绩为小组赛。"
@@ -152,6 +147,67 @@ const scotland: TeamProfile = {
       "credit": "FIFA"
     }
   ],
+  "deepDive": {
+      "overviewStats": [
+          {
+              "label": "参赛次数",
+              "value": "9",
+              "note": "首次参赛 1954"
+          },
+          {
+              "label": "最佳战绩",
+              "value": "小组赛",
+              "note": "1954、1958、1974、1978、1982、1986、1990、1998"
+          },
+          {
+              "label": "总进球",
+              "value": "25",
+              "note": "进失球 25 / 41"
+          },
+          {
+              "label": "总场次",
+              "value": "23",
+              "note": "胜平负 4-7-12"
+          },
+          {
+              "label": "首次参赛",
+              "value": "1954",
+              "note": "瑞士1954"
+          }
+      ],
+      "coach": {
+          "name": "Steve Clarke",
+          "title": "苏格兰主教练",
+          "bio": "Notorious for - and self-deprecating about - his stony-faced demeanour, this undemonstrative coach has given the Scotland fans plenty to smile about since taking charge in 2019.这位以面无表情著称（他本人也常以此自嘲）的内敛教练，自2019年执教以来给苏格兰球迷带来了许多值得欢欣的时刻。The 2026 global finals are, after all, the third",
+          "image": "/team-profiles/scotland/scotland_team_profile_and_history-coach.jpg",
+          "imageAlt": "Steve Clarke执教苏格兰的 FIFA 官方配图",
+          "highlights": [
+              "官方球队档案",
+              "2026 北美世界杯",
+              "分组赛程已确认"
+          ]
+      },
+      "historyFacts": [],
+      "featureStory": {
+          "kicker": "FIFA 官方故事",
+          "title": "苏格兰的 2026 世界杯之路",
+          "body": [
+              "Explore Scotland's World Cup history, records and memorable moments. Follow their road to the tournament with the latest on their fixtures, group and coach.Steve Clarke's side qualified in dramatic style with two stoppage-time strikesLearn more about the Scots' World Cu",
+              "The road back to the World Cup began with a gritty goalless draw away to Denmark, the section's top seeds, and ended with a wondergoal-laden 4-2 victory over the same opponents.",
+              "苏格兰将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。"
+          ],
+          "image": "/team-profiles/scotland/scotland_team_profile_and_history-main.jpg",
+          "imageAlt": "苏格兰 FIFA 官方球队档案配图",
+          "source": "FIFA 官方球队档案"
+      },
+      "qualificationTimeline": [
+          "欧洲区晋级",
+          "获得席位",
+          "vs Haiti vs Scotland",
+          "vs Scotland vs Morocco",
+          "刷新队史最佳"
+      ]
+  },
   "keyPlayers": [
     {
       "number": 1,

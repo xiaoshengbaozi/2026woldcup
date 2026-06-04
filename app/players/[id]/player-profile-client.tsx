@@ -20,7 +20,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BackToTopButton } from "@/components/back-to-top-button";
 import { MobileNavBar } from "@/components/mobile-nav-bar";
 import { NavBar } from "@/components/nav-bar";
@@ -119,6 +119,10 @@ export function PlayerProfileClient({ playerId, nameHint, row, article }: Props)
   const [loading, setLoading] = useState(true);
   const [oneVsOneLoading, setOneVsOneLoading] = useState(false);
   const [activeMobilePanel, setActiveMobilePanel] = useState<ProfilePanelTab>("overview");
+  const panelTabsSentinelRef = useRef<HTMLDivElement>(null);
+  const panelTabsRef = useRef<HTMLDivElement>(null);
+  const [panelTabsPinned, setPanelTabsPinned] = useState(false);
+  const [panelTabsHeight, setPanelTabsHeight] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -157,6 +161,55 @@ export function PlayerProfileClient({ playerId, nameHint, row, article }: Props)
       active = false;
     };
   }, [playerId, nameHint]);
+
+  useEffect(() => {
+    const mobileQuery = window.matchMedia("(max-width: 1023px)");
+
+    const syncPinnedState = () => {
+      if (!mobileQuery.matches) {
+        setPanelTabsPinned(false);
+        setPanelTabsHeight(0);
+        return;
+      }
+
+      const sentinel = panelTabsSentinelRef.current;
+      const tabs = panelTabsRef.current;
+      if (!sentinel || !tabs) return;
+
+      const nextHeight = tabs.offsetHeight;
+      setPanelTabsHeight((current) => (current === nextHeight ? current : nextHeight));
+      setPanelTabsPinned(sentinel.getBoundingClientRect().top <= 0);
+    };
+
+    syncPinnedState();
+    window.addEventListener("scroll", syncPinnedState, { passive: true });
+    window.addEventListener("resize", syncPinnedState);
+    mobileQuery.addEventListener?.("change", syncPinnedState);
+
+    return () => {
+      window.removeEventListener("scroll", syncPinnedState);
+      window.removeEventListener("resize", syncPinnedState);
+      mobileQuery.removeEventListener?.("change", syncPinnedState);
+    };
+  }, []);
+
+  const scrollToPanelHead = () => {
+    if (!window.matchMedia("(max-width: 1023px)").matches) return;
+
+    const sentinel = panelTabsSentinelRef.current;
+    if (!sentinel) return;
+
+    const target = sentinel.getBoundingClientRect().top + window.scrollY;
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: Math.max(target - 12, 0), behavior: "smooth" });
+    });
+  };
+
+  const handleMobilePanelChange = (tab: ProfilePanelTab) => {
+    if (tab === activeMobilePanel) return;
+    setActiveMobilePanel(tab);
+    scrollToPanelHead();
+  };
 
   const player = data?.player;
   const displayName = row?.nameCn || player?.name || nameHint || `#${playerId}`;
@@ -360,6 +413,22 @@ export function PlayerProfileClient({ playerId, nameHint, row, article }: Props)
               className="space-y-5"
             >
               {/* ── Three Column Layout ── */}
+              <div
+                ref={panelTabsSentinelRef}
+                className="lg:hidden"
+                style={{ height: panelTabsPinned ? panelTabsHeight : 0 }}
+              />
+              {panelTabsPinned ? (
+                <div className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-[calc(env(safe-area-inset-top)+6.25rem)] bg-black/72 backdrop-blur-2xl [mask-image:linear-gradient(to_bottom,black_0%,black_56%,rgba(0,0,0,0)_100%)] lg:hidden" />
+              ) : null}
+              <div
+                ref={panelTabsRef}
+                className={`${
+                  panelTabsPinned
+                    ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+0.25rem)] z-[70] px-3 py-2"
+                    : "relative -mx-3 bg-black/58 px-3 py-2 backdrop-blur-2xl"
+                } lg:static lg:mx-0 lg:bg-transparent lg:px-0 lg:py-0 lg:backdrop-blur-none`}
+              >
               <div className="hero-card grid grid-cols-3 gap-1 p-1 lg:hidden">
                 {profilePanelTabs.map((tab) => {
                   const active = activeMobilePanel === tab.id;
@@ -367,7 +436,7 @@ export function PlayerProfileClient({ playerId, nameHint, row, article }: Props)
                     <button
                       key={tab.id}
                       type="button"
-                      onClick={() => setActiveMobilePanel(tab.id)}
+                      onClick={() => handleMobilePanelChange(tab.id)}
                       className={`rounded-2xl px-3 py-2 text-xs font-black transition ${
                         active
                           ? "bg-volt text-black shadow-[0_0_22px_rgba(216,255,62,.18)]"
@@ -379,9 +448,34 @@ export function PlayerProfileClient({ playerId, nameHint, row, article }: Props)
                   );
                 })}
               </div>
+              </div>
 
               <div className="grid gap-5 lg:grid-cols-[.78fr_1.45fr_.78fr]">
                 <div className={`${activeMobilePanel === "overview" ? "block" : "hidden"} space-y-5 lg:block`}>
+                  <DashPanel title="能力雷达" icon={BarChart3} center>
+                    <div className="flex justify-center py-4">
+                      <PlayerRadar stats={radarStats} />
+                    </div>
+                    <div className="mt-2 flex flex-wrap justify-center gap-2">
+                      {radarStats.map((stat) => (
+                        <div
+                          key={stat.label}
+                          className="rounded-xl bg-white/[0.03] px-3 py-2 text-center ring-1 ring-white/[0.04]"
+                        >
+                          <p
+                            className="text-lg font-bold text-volt tabular-nums"
+                            style={{ fontFamily: "ScreenMatrix, monospace" }}
+                          >
+                            {stat.value}
+                          </p>
+                          <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-white/35">
+                            {stat.label}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </DashPanel>
+
                   <DashPanel title="当前效力" icon={Shield} accent>
                     <div className="rounded-2xl bg-white/[0.03] p-4 ring-1 ring-white/[0.05]">
                       <div className="flex items-center gap-3">
@@ -481,35 +575,18 @@ export function PlayerProfileClient({ playerId, nameHint, row, article }: Props)
                 <div className={`${activeMobilePanel === "story" ? "block" : "hidden"} space-y-5 lg:block`}>
                   {article?.articleCn ? (
                     <PlayerArticleTimeline article={article} />
+                  ) : article ? (
+                    <PlayerArticlePreview article={article} />
                   ) : (
                     <FamePlaceholder
                       name={displayName}
-                      photo={photo || row?.photo || article?.photo}
-                      country={row?.countryCn || article?.countryCn || player?.nationality}
+                      photo={photo || row?.photo}
+                      country={row?.countryCn || player?.nationality}
                     />
                   )}
                 </div>
 
                 <div className={`${activeMobilePanel === "career" ? "block" : "hidden"} space-y-5 lg:block`}>
-                  <DashPanel title="能力雷达" icon={BarChart3} center>
-                    <div className="flex justify-center py-4">
-                      <PlayerRadar stats={radarStats} />
-                    </div>
-                    <div className="mt-2 flex flex-wrap justify-center gap-2">
-                      {radarStats.map((stat) => (
-                        <div
-                          key={stat.label}
-                          className="rounded-xl bg-white/[0.03] px-3 py-2 text-center ring-1 ring-white/[0.04]"
-                        >
-                          <p className="font-mono text-lg font-bold text-volt">{stat.value}</p>
-                          <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-white/35">
-                            {stat.label}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </DashPanel>
-
                   <DashPanel title="职业轨迹" icon={CalendarClock}>
                     <div className="space-y-2">
                       {careerTimeline.map((item, index) => (
@@ -619,6 +696,70 @@ function PlayerArticleTimeline({ article }: { article: PlayerArticle }) {
 /* ────────────────────────────────────────────
    Radar Chart Component (SVG Pentagon)
    ──────────────────────────────────────────── */
+
+function PlayerArticlePreview({ article }: { article: PlayerArticle }) {
+  const storyImages = [article.coverImage || article.photo, ...(article.storyImages ?? [])].filter(Boolean);
+
+  return (
+    <section className="hero-card overflow-hidden p-5 sm:p-6">
+      <div>
+        <div className="inline-flex items-center gap-2 rounded-full bg-volt/[0.08] px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-volt ring-1 ring-volt/15">
+          <Sparkles className="h-3.5 w-3.5" />
+          FIFA Story
+        </div>
+        <h2 className="mt-4 text-xl font-black leading-snug text-white sm:text-2xl">{article.title}</h2>
+        <p className="mt-2 text-xs text-white/38">{article.published}</p>
+      </div>
+
+      {storyImages[0] && (
+        <div className="mt-6 overflow-hidden rounded-[1.5rem] bg-white/[0.035] ring-1 ring-white/[0.06]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={storyImages[0]}
+            alt={article.title}
+            className="aspect-[16/10] h-full w-full object-cover transition duration-700 hover:scale-105"
+          />
+        </div>
+      )}
+
+      <div className="mt-5 rounded-[1.35rem] bg-white/[0.03] p-4 ring-1 ring-white/[0.055]">
+        <div className="flex items-center gap-3">
+          <span className="grid h-7 w-7 place-items-center rounded-full bg-volt/[0.1] text-[11px] font-black text-volt">
+            01
+          </span>
+          <h3 className="text-sm font-black text-white/82 sm:text-base">官方故事已接入</h3>
+        </div>
+        <p className="mt-3 text-sm leading-7 text-white/55">{article.deck || article.excerpt}</p>
+        {article.sourceUrl && (
+          <a
+            href={article.sourceUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="group mt-4 inline-flex items-center gap-2 rounded-full bg-white/[0.045] px-4 py-2 text-xs font-black text-white/70 ring-1 ring-white/[0.07] transition hover:bg-volt/[0.1] hover:text-volt hover:ring-volt/20"
+          >
+            查看 FIFA 原文
+            <ExternalLink className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+          </a>
+        )}
+      </div>
+
+      {storyImages.length > 1 && (
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {storyImages.slice(1, 3).map((image, index) => (
+            <div key={image} className="overflow-hidden rounded-2xl bg-white/[0.035] ring-1 ring-white/[0.06]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={image}
+                alt={`${article.title} ${index + 2}`}
+                className="aspect-[16/10] h-full w-full object-cover transition duration-700 hover:scale-105"
+              />
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
 
 type RadarStat = { label: string; value: number };
 
@@ -899,9 +1040,10 @@ function StatBlock({
       }`}
     >
       <p
-        className={`font-mono text-2xl font-black ${
+        className={`text-2xl font-black tabular-nums ${
           accent ? "text-volt" : "text-white"
         }`}
+        style={{ fontFamily: "ScreenMatrix, monospace" }}
       >
         {value}
       </p>

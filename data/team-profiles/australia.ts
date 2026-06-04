@@ -87,11 +87,6 @@ const australia: TeamProfile = {
       "highlight": true
     },
     {
-      "label": "所属足联",
-      "value": "AFC",
-      "desc": "亚洲足联"
-    },
-    {
       "label": "最佳成绩",
       "value": "16强",
       "desc": "澳大利亚的世界杯最佳成绩为16强。"
@@ -140,6 +135,67 @@ const australia: TeamProfile = {
       "credit": "FIFA"
     }
   ],
+  "deepDive": {
+      "overviewStats": [
+          {
+              "label": "参赛次数",
+              "value": "7",
+              "note": "6次"
+          },
+          {
+              "label": "最佳战绩",
+              "value": "十六强",
+              "note": "2006、2022"
+          },
+          {
+              "label": "总进球",
+              "value": "17",
+              "note": "进失球 17 / 37"
+          },
+          {
+              "label": "总场次",
+              "value": "20",
+              "note": "胜平负 4-4-12"
+          },
+          {
+              "label": "首次参赛",
+              "value": "1974",
+              "note": "1974年西德世界杯"
+          }
+      ],
+      "coach": {
+          "name": "Tony Popovic",
+          "title": "澳大利亚主教练",
+          "bio": "拥有超过50次Socceroos出场纪录的Popovic曾是国家队的中后卫核心，也是2006年德国世界杯闯入第二轮的关键成员。退役两年后，他立即转型为教练，并在多家国内俱乐部取得了成功。在Graham Arnold于2024年底离任后，这位悉尼人被任命为国家队主教练，成功带队通过了世界杯预选赛的最后阶段，并将成为少数既以球员又以教练身份征战过全球总决赛的人之一。",
+          "image": "/team-profiles/australia/australia_team_profile_history-coach.jpg",
+          "imageAlt": "Tony Popovic执教澳大利亚的 FIFA 官方配图",
+          "highlights": [
+              "官方球队档案",
+              "2026 北美世界杯",
+              "分组赛程已确认"
+          ]
+      },
+      "historyFacts": [],
+      "featureStory": {
+          "kicker": "FIFA 官方故事",
+          "title": "澳大利亚的 2026 世界杯之路",
+          "body": [
+              "Australia从亚足联预选赛第二轮开始参赛，以六连胜且一球未失的完美战绩轻松晋级。",
+              "上届世界杯: 2022年卡塔尔世界杯 (十六强)",
+              "澳大利亚将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。"
+          ],
+          "image": "/team-profiles/australia/australia_team_profile_history-main.jpg",
+          "imageAlt": "澳大利亚 FIFA 官方球队档案配图",
+          "source": "FIFA 官方球队档案"
+      },
+      "qualificationTimeline": [
+          "亚洲区小组第2",
+          "获得席位",
+          "vs Australia / Türkiye",
+          "vs USA / Australia",
+          "刷新队史最佳"
+      ]
+  },
   "keyPlayers": [
     {
       "number": 1,

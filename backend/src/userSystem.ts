@@ -1,9 +1,11 @@
 import http from "http";
 import { randomBytes } from "crypto";
+import { existsSync, readFileSync } from "fs";
+import { resolve } from "path";
 import type { ApiFootballService } from "./apiFootball";
 import { getWorldCupFixtures, getWorldCupSquads } from "./worldCupData";
 import { UserStore, toPublicUser } from "./userStore";
-import type { WorldCupUser } from "./userStore";
+import type { InvitationCode, WorldCupUser } from "./userStore";
 
 const SESSION_COOKIE = "wc_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
@@ -36,12 +38,15 @@ export class UserSystem {
 
       if (req.method === "POST" && url.pathname === "/api/auth/register") {
         const body = await readJsonBody(req);
+        const invitationCode = String(body.invitationCode ?? "");
+        this.store.validateInvitationCode(invitationCode);
         const user = this.store.createUser({
           email: String(body.email ?? ""),
           password: String(body.password ?? ""),
           displayName: typeof body.displayName === "string" ? body.displayName : undefined,
           avatarPlayerId: typeof body.avatarPlayerId === "string" ? body.avatarPlayerId : undefined,
         });
+        this.store.consumeInvitationCode(invitationCode, user);
         applyRegistrationPreferences(this.store, user.id, body);
         this.issueSession(req, res, user);
         sendJson(res, { user: toPublicUser(this.store.getUserById(user.id) ?? user) }, 201);
@@ -64,7 +69,7 @@ export class UserSystem {
         return true;
       }
 
-      if (url.pathname.startsWith("/api/admin/users")) {
+      if (url.pathname.startsWith("/api/admin/")) {
         await this.handleAdminRequest(req, res, url);
         return true;
       }
@@ -220,6 +225,11 @@ export class UserSystem {
   }
 
   private async handleAdminRequest(req: http.IncomingMessage, res: http.ServerResponse, url: URL) {
+    if (url.pathname.startsWith("/api/admin/invitations")) {
+      await this.handleAdminInvitationRequest(req, res, url);
+      return;
+    }
+
     if (req.method === "GET" && url.pathname === "/api/admin/users") {
       sendJson(res, buildAdminUsersPayload(this.store.listUsers()));
       return;
@@ -261,6 +271,43 @@ export class UserSystem {
     }
 
     sendJson(res, { error: "admin_action_not_found" }, 404);
+  }
+
+  private async handleAdminInvitationRequest(req: http.IncomingMessage, res: http.ServerResponse, url: URL) {
+    if (req.method === "GET" && url.pathname === "/api/admin/invitations") {
+      sendJson(res, buildAdminInvitationsPayload(this.store.listInvitationCodes()));
+      return;
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/admin/invitations") {
+      const body = await readJsonBody(req);
+      const invitation = this.store.createInvitationCode({
+        code: typeof body.code === "string" ? body.code : undefined,
+        note: typeof body.note === "string" ? body.note : undefined,
+        maxUses: Number(body.maxUses ?? 1),
+        expiresAt: typeof body.expiresAt === "string" || typeof body.expiresAt === "number" ? body.expiresAt : null,
+      });
+      sendJson(res, { invitation: toPublicInvitation(invitation), ...buildAdminInvitationsPayload(this.store.listInvitationCodes()) }, 201);
+      return;
+    }
+
+    const parts = url.pathname.split("/").filter(Boolean);
+    const invitationId = parts[3];
+    const action = parts[4];
+
+    if (req.method === "POST" && invitationId && action === "disable") {
+      const invitation = this.store.setInvitationDisabled(invitationId, true);
+      sendJson(res, { invitation: toPublicInvitation(invitation), ...buildAdminInvitationsPayload(this.store.listInvitationCodes()) });
+      return;
+    }
+
+    if (req.method === "POST" && invitationId && action === "enable") {
+      const invitation = this.store.setInvitationDisabled(invitationId, false);
+      sendJson(res, { invitation: toPublicInvitation(invitation), ...buildAdminInvitationsPayload(this.store.listInvitationCodes()) });
+      return;
+    }
+
+    sendJson(res, { error: "admin_invitation_action_not_found" }, 404);
   }
 
   private async getPreferenceCatalog() {
@@ -357,6 +404,35 @@ function buildAdminUserListItem(user: WorldCupUser) {
   };
 }
 
+function buildAdminInvitationsPayload(invitations: InvitationCode[]) {
+  const now = Date.now();
+  const active = invitations.filter((item) => !item.disabledAt && (!item.expiresAt || item.expiresAt > now) && item.usedCount < item.maxUses);
+  return {
+    timestamp: now,
+    summary: {
+      totalInvitationCodes: invitations.length,
+      activeInvitationCodes: active.length,
+      exhaustedInvitationCodes: invitations.filter((item) => item.usedCount >= item.maxUses).length,
+      expiredInvitationCodes: invitations.filter((item) => item.expiresAt && item.expiresAt <= now).length,
+      invitationUses: invitations.reduce((total, item) => total + item.usedCount, 0),
+    },
+    invitations: invitations
+      .map(toPublicInvitation)
+      .sort((a, b) => b.updatedAt - a.updatedAt),
+  };
+}
+
+function toPublicInvitation(invitation: InvitationCode) {
+  const now = Date.now();
+  const expired = Boolean(invitation.expiresAt && invitation.expiresAt <= now);
+  const exhausted = invitation.usedCount >= invitation.maxUses;
+  return {
+    ...invitation,
+    status: invitation.disabledAt ? "disabled" : expired ? "expired" : exhausted ? "exhausted" : "active",
+    remainingUses: Math.max(0, invitation.maxUses - invitation.usedCount),
+  };
+}
+
 function buildHomePayload(user: WorldCupUser, catalog: UserPreferenceCatalog) {
   return {
     user: toPublicUser(user),
@@ -410,8 +486,8 @@ async function buildPreferenceCatalog(apiFootball?: ApiFootballService): Promise
     return {
       source: "api-football",
       timestamp: Date.now(),
-      teams: teams.length ? teams : fallback.teams,
-      players: players.length ? players : fallback.players,
+      teams: mergePreferenceTeams(teams, fallback.teams),
+      players: mergePreferencePlayers(players, fallback.players),
       matches: matches.length ? matches : fallback.matches,
     };
   } catch {
@@ -457,17 +533,18 @@ function getPreferencePlayersPerTeam() {
 }
 
 function buildFallbackPreferenceCatalog(): UserPreferenceCatalog {
+  const officialCatalog = buildOfficialPreferenceCatalog();
   return {
     source: "fallback",
     timestamp: Date.now(),
-    teams: [
+    teams: officialCatalog.teams.length ? officialCatalog.teams : [
       { id: "26", name: "阿根廷", region: "ARG", logo: "https://media.api-sports.io/football/teams/26.png" },
       { id: "6", name: "巴西", region: "BRA", logo: "https://media.api-sports.io/football/teams/6.png" },
       { id: "2", name: "法国", region: "FRA", logo: "https://media.api-sports.io/football/teams/2.png" },
       { id: "10", name: "英格兰", region: "ENG", logo: "https://media.api-sports.io/football/teams/10.png" },
       { id: "12", name: "日本", region: "JPN", logo: "https://media.api-sports.io/football/teams/12.png" },
     ],
-    players: [
+    players: officialCatalog.players.length ? officialCatalog.players : [
       { id: "154", name: "Lionel Messi", team: "阿根廷", position: "Forward", photo: "https://media.api-sports.io/football/players/154.png" },
       { id: "278", name: "Kylian Mbappe", team: "法国", position: "Forward", photo: "https://media.api-sports.io/football/players/278.png" },
       { id: "762", name: "Vinicius Junior", team: "巴西", position: "Forward", photo: "https://media.api-sports.io/football/players/762.png" },
@@ -498,6 +575,109 @@ function buildFallbackPreferenceCatalog(): UserPreferenceCatalog {
       },
     ],
   };
+}
+
+type OfficialSquadsData = {
+  squads?: Record<string, {
+    teamName?: string;
+    players?: Array<{
+      number?: number;
+      position?: string;
+      name?: string;
+      officialName?: string;
+      apiFootballId?: number | null;
+    }>;
+  }>;
+};
+
+function buildOfficialPreferenceCatalog(): Pick<UserPreferenceCatalog, "teams" | "players"> {
+  const data = readOfficialSquadsData();
+  const squads = data.squads ?? {};
+  const teams: UserPreferenceCatalog["teams"] = [];
+  const players: UserPreferenceCatalog["players"] = [];
+
+  for (const [teamCode, squad] of Object.entries(squads)) {
+    const teamName = squad.teamName?.trim() || teamCode;
+    teams.push({
+      id: teamCode,
+      name: teamName,
+      region: teamCode,
+      logo: `/team-covers/fifa/${slugifyTeam(teamName)}.png`,
+    });
+
+    for (const player of squad.players ?? []) {
+      const apiFootballId = player.apiFootballId ? String(player.apiFootballId) : "";
+      const name = player.name?.trim() || player.officialName?.trim();
+      if (!name) continue;
+      players.push({
+        id: apiFootballId || `${teamCode}-${player.number || slugifyTeam(name)}`,
+        name,
+        team: teamName,
+        position: normalizePosition(player.position),
+        photo: apiFootballId ? `https://media.api-sports.io/football/players/${apiFootballId}.png` : undefined,
+      });
+    }
+  }
+
+  return {
+    teams: teams.sort((a, b) => (a.region || a.name).localeCompare(b.region || b.name)),
+    players: players.sort((a, b) => (a.team || "").localeCompare(b.team || "") || a.name.localeCompare(b.name)),
+  };
+}
+
+function readOfficialSquadsData(): OfficialSquadsData {
+  for (const candidate of [
+    resolve(process.cwd(), "data", "fifa-official-squads.json"),
+    resolve(process.cwd(), "..", "data", "fifa-official-squads.json"),
+  ]) {
+    if (!existsSync(candidate)) continue;
+    try {
+      return JSON.parse(readFileSync(candidate, "utf8")) as OfficialSquadsData;
+    } catch {
+      return {};
+    }
+  }
+  return {};
+}
+
+function mergePreferenceTeams(primary: UserPreferenceCatalog["teams"], fallback: UserPreferenceCatalog["teams"]) {
+  const byId = new Map<string, UserPreferenceCatalog["teams"][number]>();
+  for (const team of fallback) byId.set(preferenceTeamKey(team), team);
+  for (const team of primary) byId.set(preferenceTeamKey(team), { ...byId.get(preferenceTeamKey(team)), ...team });
+  return [...byId.values()].sort((a, b) => (a.region || a.name).localeCompare(b.region || b.name));
+}
+
+function preferenceTeamKey(team: UserPreferenceCatalog["teams"][number]) {
+  return (team.region || team.name || team.id).trim().toUpperCase();
+}
+
+function mergePreferencePlayers(primary: UserPreferenceCatalog["players"], fallback: UserPreferenceCatalog["players"]) {
+  const byId = new Map<string, UserPreferenceCatalog["players"][number]>();
+  for (const player of fallback) byId.set(player.id, player);
+  for (const player of primary) {
+    if (!byId.has(player.id)) continue;
+    byId.set(player.id, { ...byId.get(player.id), ...player });
+  }
+  return [...byId.values()].sort((a, b) => (a.team || "").localeCompare(b.team || "") || a.name.localeCompare(b.name));
+}
+
+function normalizePosition(position: string | undefined) {
+  return {
+    GK: "Goalkeeper",
+    DF: "Defender",
+    MF: "Midfielder",
+    FW: "Forward",
+  }[position || ""] || position || "Player";
+}
+
+function slugifyTeam(value: string) {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
 }
 
 async function readJsonBody(req: http.IncomingMessage) {

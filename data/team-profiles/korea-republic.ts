@@ -117,11 +117,6 @@ const koreaRepublic: TeamProfile = {
       "highlight": true
     },
     {
-      "label": "所属足联",
-      "value": "AFC",
-      "desc": "亚洲足联"
-    },
-    {
       "label": "最佳成绩",
       "value": "第四名",
       "desc": "韩国的世界杯最佳成绩为第四名。"
@@ -170,6 +165,67 @@ const koreaRepublic: TeamProfile = {
       "credit": "FIFA"
     }
   ],
+  "deepDive": {
+      "overviewStats": [
+          {
+              "label": "参赛次数",
+              "value": "12",
+              "note": "首次参赛 1954"
+          },
+          {
+              "label": "最佳战绩",
+              "value": "第四名",
+              "note": "2002"
+          },
+          {
+              "label": "总进球",
+              "value": "39",
+              "note": "进失球 39 / 78"
+          },
+          {
+              "label": "总场次",
+              "value": "38",
+              "note": "胜平负 7-10-21"
+          },
+          {
+              "label": "首次参赛",
+              "value": "1954",
+              "note": "Switzerland 1954"
+          }
+      ],
+      "coach": {
+          "name": "待确认",
+          "title": "韩国主教练",
+          "bio": "Korea Republic 连续第11次晋级FIFA世界杯在2022年卡塔尔世界杯上，他们12年来首次闯入淘汰赛",
+          "image": "/team-profiles/korea-republic/korea_republic_team_profile_history-coach.jpg",
+          "imageAlt": "待确认执教韩国的 FIFA 官方配图",
+          "highlights": [
+              "官方球队档案",
+              "2026 北美世界杯",
+              "分组赛程已确认"
+          ]
+      },
+      "historyFacts": [],
+      "featureStory": {
+          "kicker": "FIFA 官方故事",
+          "title": "韩国的 2026 世界杯之路",
+          "body": [
+              "尽管在2022年卡塔尔世界杯后经历了两次换帅，Korea Republic 在亚洲预选赛中一路顺风顺水，全程保持不败。第二轮与中国 PR、Thailand 和 Singapore 同组，除1-1战平 Thailand 外其余比赛全部获胜。最终轮中，Korea Republic 在B组面对 Jordan、Iraq、Oman、Palestine 和 Kuwait。六胜四平，他们以小组头名锁定决赛圈席位。Korea Republic 是亚洲唯一一支以不败战绩晋级的球队。",
+              "上届世界杯: Qatar 2022 (16强)",
+              "韩国将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。"
+          ],
+          "image": "/team-profiles/korea-republic/korea_republic_team_profile_history-main.jpg",
+          "imageAlt": "韩国 FIFA 官方球队档案配图",
+          "source": "FIFA 官方球队档案"
+      },
+      "qualificationTimeline": [
+          "亚洲区小组第1",
+          "获得席位",
+          "北美备战",
+          "北美备战",
+          "刷新队史最佳"
+      ]
+  },
   "keyPlayers": [
     {
       "number": 16,

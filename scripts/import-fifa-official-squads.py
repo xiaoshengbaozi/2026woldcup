@@ -168,12 +168,48 @@ TEAM_CODE_TO_API_NAME = {
     "CUW": "Curaçao",
     "CZE": "Czech Republic",
     "GER": "Germany",
+    "IRN": "Iran",
     "KOR": "South Korea",
     "KSA": "Saudi Arabia",
     "RSA": "South Africa",
     "SCO": "Scotland",
-    "TUR": "Turkey",
+    "TUR": "Türkiye",
     "USA": "USA",
+}
+
+MANUAL_API_ID_OVERRIDES = {
+    ("ALG", "Amine Ferid Ghouiri"): 85041,
+    ("BEL", "Amadou Ba Z Mv Om Onana"): 162714,
+    ("CPV", "Laros Michael D'Encarnação Duarte"): 37436,
+    ("CPV", "Dailon Rocha Livramento"): 343287,
+    ("CAN", "Stephen Antunes Eustáquio"): 35570,
+    ("COD", "Mayele Fiston Kalala"): 179699,
+    ("CRO", "Igor M Atanović"): 202696,
+    ("CUW", "Misjonne Juniffer Naigelino Hansen"): 161884,
+    ("EGY", "Hamza Mohamed Abdelkarim E Selim"): 550547,
+    ("ENG", "Valentino Francisco Livramento"): 158694,
+    ("ENG", "Chukwunonso Azuka Tristan Madueke"): 136723,
+    ("FRA", "Kouadio Emmanuel Boris Kone"): 22147,
+    ("FRA", "Marcus Lilian Thuram-Ulien"): 21509,
+    ("HAI", "Bellegarde Bellegarde"): 20665,
+    ("HAI", "Wilguens Raphael Polynice Paugain Paugin"): 275367,
+    ("IRN", "Ali Reza Safarbeiranvand"): 2682,
+    ("IRN", "Seyedpayam Niazmand"): 2681,
+    ("IRN", "Mohammadhossein Kanani Zadegan"): 2687,
+    ("IRN", "Seyed Saman Ghoddoos"): 2699,
+    ("IRN", "Amirhossein Hosseinzadehtazehgheshlagh"): 29937,
+    ("IRN", "Seyedhossein Hosseini"): 29755,
+    ("IRN", "Ramin Rezaeiansemeskandi"): 2691,
+    ("IRQ", "Ahmed Yahya Mhmood Al-Hajjaj"): 542849,
+    ("IRQ", "Ali Jasim Elaibi Al-Tameemi"): 542644,
+    ("IRQ", "Marko Jabbar Hussein Hussein"): 265448,
+    ("PAN", "Cristian Jesus M Artínez"): 554208,
+    ("QAT", "Yusuf Abdurisag Yusuf"): 542541,
+    ("SEN", "Sadio M Ané"): 304,
+    ("SEN", "Diouf Diouf"): 409303,
+    ("SWE", "Victor Jörgen Nilsson Lindelöf"): 889,
+    ("TUN", "Ali Elabdi"): 49583,
+    ("USA", "Weston James Earl Mc Kennie"): 415,
 }
 
 
@@ -189,16 +225,67 @@ def attach_api_ids(squads: dict, api_squads: dict) -> None:
             keys = {normalize(name), compact(name)}
             for key in keys:
                 if key:
-                    api_by_key[key] = api_player
+                    api_by_key.setdefault(key, []).append(api_player)
 
+        used_api_ids = set()
         for player in squad["players"]:
+            override_id = MANUAL_API_ID_OVERRIDES.get((code, player["name"]))
+            if isinstance(override_id, int) and override_id not in used_api_ids:
+                player["apiFootballId"] = override_id
+                used_api_ids.add(override_id)
+                continue
+
             matched = None
             for alias in player["aliases"]:
-                matched = api_by_key.get(normalize(alias)) or api_by_key.get(compact(alias))
+                candidates = [
+                    *(api_by_key.get(normalize(alias)) or []),
+                    *(api_by_key.get(compact(alias)) or []),
+                ]
+                matched = next(
+                    (
+                        candidate
+                        for candidate in candidates
+                        if isinstance(candidate.get("id"), int) and candidate["id"] not in used_api_ids
+                    ),
+                    None,
+                )
                 if matched:
                     break
             if matched and isinstance(matched.get("id"), int):
                 player["apiFootballId"] = matched["id"]
+                used_api_ids.add(matched["id"])
+
+
+def preserve_existing_api_ids(squads: dict) -> None:
+    if not OUTPUT_PATH.exists():
+        return
+
+    try:
+        existing_payload = json.loads(OUTPUT_PATH.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return
+
+    existing_squads = existing_payload.get("squads", {})
+    for code, squad in squads.items():
+        existing_players = existing_squads.get(code, {}).get("players", [])
+        existing_by_name = {
+            player.get("name"): player.get("apiFootballId")
+            for player in existing_players
+            if isinstance(player.get("apiFootballId"), int)
+        }
+        used_api_ids = {
+            player.get("apiFootballId")
+            for player in squad.get("players", [])
+            if isinstance(player.get("apiFootballId"), int)
+        }
+
+        for player in squad.get("players", []):
+            if isinstance(player.get("apiFootballId"), int):
+                continue
+            existing_id = existing_by_name.get(player.get("name"))
+            if isinstance(existing_id, int) and existing_id not in used_api_ids:
+                player["apiFootballId"] = existing_id
+                used_api_ids.add(existing_id)
 
 
 def main() -> None:
@@ -207,6 +294,7 @@ def main() -> None:
 
     squads = parse_pdf()
     attach_api_ids(squads, load_api_squads())
+    preserve_existing_api_ids(squads)
     payload = {
         "source": "fifa_official",
         "sourceUrl": SOURCE_URL,

@@ -6,7 +6,15 @@ import { formatStageLabel } from "@/lib/stage";
 import { parseTeams } from "@/lib/teams";
 import type { Match } from "@/types/match";
 
-export function LiveMatchCard({ match, isLive = true }: { match: Match; isLive?: boolean }) {
+export function LiveMatchCard({
+  match,
+  isLive = true,
+  stageLabel,
+}: {
+  match: Match;
+  isLive?: boolean;
+  stageLabel?: string;
+}) {
   const teams = parseTeams(match.summary);
   const slug = generateMatchSlug(match.summary);
   const elapsed = Math.max(0, Math.floor((Date.now() - match.start.getTime()) / 60000));
@@ -20,7 +28,7 @@ export function LiveMatchCard({ match, isLive = true }: { match: Match; isLive?:
       <div className="pointer-events-none absolute inset-0 rounded-2xl" style={{ padding: "1px", background: isHT ? "linear-gradient(135deg, rgba(251,191,36,0.3), rgba(255,255,255,0.08), rgba(251,191,36,0.1))" : "linear-gradient(135deg, rgba(216,255,62,0.3), rgba(255,255,255,0.08), rgba(216,255,62,0.1))", mask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)", maskComposite: "exclude" }} />
       <div className="relative z-10">
         <div className="flex items-center justify-between px-3.5 pt-3">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">{formatStageLabel(match.stage)}</span>
+          <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">{stageLabel ?? formatStageLabel(match.stage)}</span>
           <span className={`tabular text-xs font-bold ${isHT ? "text-amber-400" : "text-volt"}`}>{minute}</span>
         </div>
         <div className="flex items-center justify-between gap-2 px-3.5 py-4">

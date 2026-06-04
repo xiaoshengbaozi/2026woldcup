@@ -11,6 +11,19 @@ create table if not exists users (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists invitation_codes (
+  id uuid primary key,
+  code text not null unique,
+  note text,
+  max_uses integer not null default 1,
+  used_count integer not null default 0,
+  expires_at timestamptz,
+  disabled_at timestamptz,
+  used_by jsonb not null default '[]',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists user_followed_teams (
   user_id uuid not null references users(id) on delete cascade,
   team_id text not null,
@@ -103,3 +116,6 @@ create index if not exists idx_user_predictions_match
 
 create index if not exists idx_user_notifications_unread
   on user_notifications (user_id, read, created_at desc);
+
+create index if not exists idx_invitation_codes_status
+  on invitation_codes (disabled_at, expires_at, used_count);

@@ -69,11 +69,6 @@ const egypt: TeamProfile = {
       "highlight": true
     },
     {
-      "label": "所属足联",
-      "value": "CAF",
-      "desc": "非洲足联"
-    },
-    {
       "label": "最佳成绩",
       "value": "小组赛",
       "desc": "埃及的世界杯最佳成绩为小组赛。"
@@ -122,6 +117,67 @@ const egypt: TeamProfile = {
       "credit": "FIFA"
     }
   ],
+  "deepDive": {
+      "overviewStats": [
+          {
+              "label": "参赛次数",
+              "value": "4",
+              "note": "首次参赛 1934"
+          },
+          {
+              "label": "最佳战绩",
+              "value": "小组赛",
+              "note": "1934、1990、2018"
+          },
+          {
+              "label": "总进球",
+              "value": "5",
+              "note": "进失球 5 / 12"
+          },
+          {
+              "label": "总场次",
+              "value": "7",
+              "note": "胜平负 0-2-5"
+          },
+          {
+              "label": "首次参赛",
+              "value": "1934",
+              "note": "Italy 1934"
+          }
+      ],
+      "coach": {
+          "name": "Hossam Hassan",
+          "title": "埃及主教练",
+          "bio": "辉煌的球员生涯之后，Hossam Hassan不仅证明了自己是Egypt足球史上最伟大的射手之一，也是一位出色的本土教练。退役后，Hassan于2008年转型为教练，先后执教Al Masry，后来还执掌了Zamalek、Ismaily等多家大俱乐部，并重返Al Masry。他取得了不俗的成绩，带领球队争夺冠军并获得洲际赛事参赛资格，在球队中注入了强烈的战斗精神。Hassan于2024年2月接过国家队教鞭，接替葡萄牙籍教练Rui Vitoria，致力于重塑法老军团的铁血形象。他的努力得到了回报——Egypt在预选赛中以不败战绩拿到了2026世界杯的入场券，",
+          "image": "/team-profiles/egypt/egypt_team_profile_history-coach.jpg",
+          "imageAlt": "Hossam Hassan执教埃及的 FIFA 官方配图",
+          "highlights": [
+              "官方球队档案",
+              "2026 北美世界杯",
+              "分组赛程已确认"
+          ]
+      },
+      "historyFacts": [],
+      "featureStory": {
+          "kicker": "FIFA 官方故事",
+          "title": "埃及的 2026 世界杯之路",
+          "body": [
+              "了解Egypt的世界杯历史、纪录和难忘瞬间，关注他们通往本届赛事的征程，获取最新的赛程、分组和教练信息。",
+              "Egypt在非洲区预选赛中以A组头名身份锁定世界杯席位，力压Burkina Faso、Sierra Leone、Guinea-Bissau、Ethiopia和Djibouti。Egypt取得了8胜2平的成绩，以26分高居榜首（满分30分），在最后一轮比赛前就已确保出线。",
+              "上届世界杯：Russia 2018（小组赛）"
+          ],
+          "image": "/team-profiles/egypt/egypt_team_profile_history-main.jpg",
+          "imageAlt": "埃及 FIFA 官方球队档案配图",
+          "source": "FIFA 官方球队档案"
+      },
+      "qualificationTimeline": [
+          "非洲区 A组第1",
+          "获得席位",
+          "vs Belgium / Egypt",
+          "vs New Zealand / Egypt",
+          "刷新队史最佳"
+      ]
+  },
   "keyPlayers": [
     {
       "number": 4,

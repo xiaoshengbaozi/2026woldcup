@@ -57,11 +57,6 @@ const qatar: TeamProfile = {
       "highlight": true
     },
     {
-      "label": "所属足联",
-      "value": "AFC",
-      "desc": "亚洲足联"
-    },
-    {
       "label": "最佳成绩",
       "value": "待突破",
       "desc": "卡塔尔将在 2026 年冲击世界杯新突破。"
@@ -110,6 +105,67 @@ const qatar: TeamProfile = {
       "credit": "FIFA"
     }
   ],
+  "deepDive": {
+      "overviewStats": [
+          {
+              "label": "参赛次数",
+              "value": "2",
+              "note": "首次参赛 2022"
+          },
+          {
+              "label": "最佳战绩",
+              "value": "小组赛",
+              "note": "2022"
+          },
+          {
+              "label": "总进球",
+              "value": "1",
+              "note": "进失球 1 / 7"
+          },
+          {
+              "label": "总场次",
+              "value": "3",
+              "note": "胜平负 0-0-3"
+          },
+          {
+              "label": "首次参赛",
+              "value": "2022",
+              "note": "卡塔尔2022"
+          }
+      ],
+      "coach": {
+          "name": "Julen Lopetegui",
+          "title": "卡塔尔主教练",
+          "bio": "Julen Lopetegui took charge of the Maroons in May 2025, leading them just months later to a berth at the FIFA World Cup 26 – Qatar's first via the regular qualification process. His appointment continued the Qatar Football Association's development strategy, drawing on his extens",
+          "image": "/team-profiles/qatar/qatar_team_profile_history-coach.jpg",
+          "imageAlt": "Julen Lopetegui执教卡塔尔的 FIFA 官方配图",
+          "highlights": [
+              "官方球队档案",
+              "2026 北美世界杯",
+              "分组赛程已确认"
+          ]
+      },
+      "historyFacts": [],
+      "featureStory": {
+          "kicker": "FIFA 官方故事",
+          "title": "卡塔尔的 2026 世界杯之路",
+          "body": [
+              "Explore Qatar's previous World Cup appearance and follow their journey towards a second, with the latest updates on their fixtures, group, and coach.Qatar are eager to follow up on their FIFA World Cup debutThe Maroons are coming off their first successful qualifying ca",
+              "In the fourth round of Asian preliminaries, Qatar sealed direct qualification for the World Cup with a 2-1 home win over the United Arab Emirates on 14 October. Boualem Khoukhi and Pedro Miguel both scored second-half headers to ensure the Maroons finished top of their ",
+              "世界杯参赛次数：2（2022, 2026）"
+          ],
+          "image": "/team-profiles/qatar/qatar_team_profile_history-main.jpg",
+          "imageAlt": "卡塔尔 FIFA 官方球队档案配图",
+          "source": "FIFA 官方球队档案"
+      },
+      "qualificationTimeline": [
+          "亚洲区附加赛晋级",
+          "获得席位",
+          "vs Qatar vs Switzerland",
+          "vs Canada vs Qatar",
+          "刷新队史最佳"
+      ]
+  },
   "keyPlayers": [
     {
       "number": 1,

@@ -1,7 +1,11 @@
 import type { ApiFootballService } from "./apiFootball";
 import fs from "node:fs";
 import path from "node:path";
-import { localizePlayer as localizeFootballPlayer, localizePosition as localizeFootballPosition } from "./footballLocalization";
+import {
+  localizeCoachName,
+  localizePlayer as localizeFootballPlayer,
+  localizePosition as localizeFootballPosition,
+} from "./footballLocalization";
 import { localizePlayerName } from "./playerTranslations";
 
 export interface NormalizedWorldCupFixture {
@@ -67,6 +71,7 @@ export interface NormalizedSquadPlayer {
 
 export interface NormalizedSquad {
   team: NormalizedTeam;
+  coach: string | null;
   listType: "final_squad" | "squad_pool";
   officialWorldCupSquad: boolean;
   officialSquad: {
@@ -252,13 +257,14 @@ export async function getWorldCupSquads(apiFootball: ApiFootballService, url: UR
   const teamLimit = clampNumber(process.env.API_FOOTBALL_SQUAD_TEAM_LIMIT, 1, 48, 48);
   const squads = await Promise.all(
     [...new Set(teamIds)].slice(0, teamLimit).map(async (teamId) => {
+      const coach = await getCurrentCoachName(apiFootball, teamId);
       try {
         const payload = await apiFootball.request("players/squads", new URLSearchParams({ team: String(teamId) }));
         const upstream = payload.upstream as ApiFootballSquadsResponse;
         assertNoApiFootballErrors(upstream);
-        return normalizeSquad(upstream.response?.[0]);
+        return attachCoach(normalizeSquad(upstream.response?.[0]), coach);
       } catch {
-        return normalizeOfficialOnlySquad(teamId);
+        return attachCoach(normalizeOfficialOnlySquad(teamId), coach);
       }
     })
   );
@@ -401,6 +407,26 @@ function normalizePlayers(items: unknown[]) {
   }));
 }
 
+async function getCurrentCoachName(apiFootball: ApiFootballService, teamId: number): Promise<string | null> {
+  try {
+    const payload = await apiFootball.request("coachs", new URLSearchParams({ team: String(teamId) }));
+    const upstream = payload.upstream as ApiFootballCoachsResponse;
+    assertNoApiFootballErrors(upstream);
+    const coaches = upstream.response ?? [];
+    const current = coaches.find((coach) =>
+      (coach.career ?? []).some((entry) => entry.team?.id === teamId && !entry.end)
+    );
+    const name = current?.name ?? coaches[0]?.name ?? null;
+    return name ? localizeCoachName(name) : null;
+  } catch {
+    return null;
+  }
+}
+
+function attachCoach(squad: NormalizedSquad | null, coach: string | null): NormalizedSquad | null {
+  return squad ? { ...squad, coach } : null;
+}
+
 function normalizeSquad(raw: ApiFootballSquad | undefined): NormalizedSquad | null {
   if (!raw?.team) return null;
   const team = normalizeTeam(raw.team);
@@ -409,6 +435,7 @@ function normalizeSquad(raw: ApiFootballSquad | undefined): NormalizedSquad | nu
 
   return {
     team,
+    coach: null,
     listType: officialFilter.status === "imported" ? "final_squad" : "squad_pool",
     officialWorldCupSquad: officialFilter.status === "imported",
     officialSquad: toOfficialSquadMeta(officialFilter),
@@ -431,6 +458,7 @@ function normalizeOfficialOnlySquad(teamId: number): NormalizedSquad | null {
   if (officialFilter.status !== "imported") return null;
   return {
     team,
+    coach: null,
     listType: "final_squad",
     officialWorldCupSquad: true,
     officialSquad: toOfficialSquadMeta(officialFilter),
@@ -1069,6 +1097,11 @@ interface ApiFootballSquadsResponse {
   errors?: unknown;
 }
 
+interface ApiFootballCoachsResponse {
+  response?: ApiFootballCoach[];
+  errors?: unknown;
+}
+
 interface ApiFootballFixture {
   fixture?: {
     id?: number;
@@ -1117,6 +1150,16 @@ interface ApiFootballSquad {
     number?: number | null;
     position?: string;
     photo?: string;
+  }>;
+}
+
+interface ApiFootballCoach {
+  id?: number;
+  name?: string;
+  career?: Array<{
+    team?: ApiFootballTeam;
+    start?: string | null;
+    end?: string | null;
   }>;
 }
 

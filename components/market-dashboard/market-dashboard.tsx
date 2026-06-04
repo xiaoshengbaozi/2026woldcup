@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { Map as MapIcon } from "lucide-react";
 import { useLiveMarketData } from "@/lib/use-live-market-data";
 import { ModuleD_Ticker } from "@/components/market-ticker/module-d-ticker";
 import { MarketOddsCard } from "@/components/market-ranking/market-odds-card";
@@ -11,6 +12,7 @@ import { ModuleC_OddsTimeline } from "@/components/market-timeline/module-c-time
 import { ThreeGlobe } from "@/components/market-map/three-globe";
 import { StatusBar } from "./status-bar";
 import { NavBar } from "@/components/nav-bar";
+import { MobileMeEntry } from "@/components/mobile-me-entry";
 import { MobileNavBar } from "@/components/mobile-nav-bar";
 
 export function MarketDashboard() {
@@ -49,7 +51,7 @@ export function MarketDashboard() {
   }, [webFullscreen]);
 
   return (
-    <div className="relative min-h-screen px-4 py-5 pb-28 sm:px-6 lg:px-8 lg:pb-5">
+    <div className="relative min-h-screen px-4 pb-28 pt-[calc(env(safe-area-inset-top)+4.75rem)] sm:px-6 lg:px-8 lg:pb-5 lg:pt-5">
       {/* Ambient glow — same as homepage */}
       <div className="pointer-events-none fixed left-1/2 top-0 h-[520px] w-[720px] -translate-x-1/2 rounded-full bg-volt/10 blur-[120px]" />
       <div className="pointer-events-none fixed bottom-0 right-0 h-[420px] w-[420px] rounded-full bg-flare/10 blur-[110px]" />
@@ -87,7 +89,7 @@ export function MarketDashboard() {
         {/* Main grid — same max-w-7xl as homepage */}
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(620px,780px)_minmax(280px,1fr)]">
           {/* Map — left */}
-          <div className="hero-card relative min-h-[320px] overflow-hidden sm:min-h-[420px] xl:min-h-0">
+          <div className="hero-card relative hidden min-h-[320px] overflow-hidden sm:min-h-[420px] lg:block xl:min-h-0">
             {/* Subtle dot matrix background */}
             <div
               className="pointer-events-none absolute inset-0 opacity-[0.04]"
@@ -119,6 +121,14 @@ export function MarketDashboard() {
         <StatusBar />
       </div>
 
+      <MobileMeEntry
+        topRightAction={{
+          ariaLabel: "打开概率地图",
+          active: webFullscreen,
+          icon: <MapIcon className="h-4 w-4" />,
+          onClick: () => handleFullscreenChange(true, false),
+        }}
+      />
       <MobileNavBar />
 
       {/* Web fullscreen overlay — globe + rankings + overflow */}
@@ -144,12 +154,12 @@ export function MarketDashboard() {
                 />
               </div>
               {/* Ranking card */}
-              <div className="hero-card pointer-events-auto absolute right-5 top-1/2 z-20 max-h-[calc(100vh-2.5rem)] w-[340px] max-w-[calc(100vw-2.5rem)] -translate-y-1/2 overflow-y-auto p-5">
+              <div className="hero-card pointer-events-auto absolute right-5 top-1/2 z-20 hidden max-h-[calc(100vh-2.5rem)] w-[340px] max-w-[calc(100vw-2.5rem)] -translate-y-1/2 overflow-y-auto p-5 lg:block">
                 <MarketOddsCard />
               </div>
             </div>
             {/* Bottom overflow card */}
-            <div className="pointer-events-auto absolute bottom-5 left-1/2 z-20 max-h-[32vh] w-[calc(100vw-2.5rem)] max-w-5xl -translate-x-1/2 overflow-y-auto">
+            <div className="pointer-events-auto absolute bottom-5 left-1/2 z-20 hidden max-h-[32vh] w-[calc(100vw-2.5rem)] max-w-5xl -translate-x-1/2 overflow-y-auto lg:block">
               <RankingOverflowCard />
             </div>
           </div>

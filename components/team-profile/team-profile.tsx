@@ -9,6 +9,7 @@ import Link from "next/link";
 import { formatRoundLabel } from "@/lib/stage";
 import { formatDate, formatTime } from "@/lib/format";
 import { fetchWorldCupSquadDetails, type WorldCupSquadDetail } from "@/lib/world-cup-squads";
+import { localizeCoachName } from "@/lib/coach-localization";
 import { TeamSquadCard } from "@/components/team-profile/team-squad-card";
 import type { TeamProfile } from "@/types/team-profile";
 import "./team-profile.css";
@@ -125,7 +126,7 @@ export function TeamProfile({ data }: TeamProfileProps) {
     };
   }, [teamMeta?.id]);
 
-  const { timeline, stories, quote, gallery } = data;
+  const { timeline, stories, quote, gallery, deepDive } = data;
   const yearSpan = timeline.length ? `${timeline[0].year} - ${timeline[timeline.length - 1].year}` : "";
   const count = timeline.length;
   const flagImageCode = getFlagImageCode(data);
@@ -253,51 +254,129 @@ export function TeamProfile({ data }: TeamProfileProps) {
             </button>
           </div>
 
-          <div className="tp-content-panel">
+          <div className={`tp-content-panel${activeContentTab === "profile" ? " tp-content-panel--bare" : ""}`}>
             {activeContentTab === "profile" ? (
               <div className="tp-stories">
-                <div className="tp-tl-section tp-glass">
-                  <div className="tp-tl-meta">
-                    <span className="tp-section-badge">{count} 届</span>
-                    <span className="tp-section-badge volt">{yearSpan}</span>
-                  </div>
-                  <div className="tp-tl-vp" ref={vpRef}>
-                    <button ref={prevRef} className="tp-tl-nav prev off" onClick={() => scroll(-1)} aria-label="向左滚动">{"‹"}</button>
-                    <button ref={nextRef} className="tp-tl-nav next" onClick={() => scroll(1)} aria-label="向右滚动">{"›"}</button>
-                    <div className="tp-tl-track">
-                      <div className="tp-tl-line" />
-                      {timeline.map((t) => {
-                        const isHl = !!t.highlight;
-                        const isNow = t.year === 2026;
-                        return (
-                          <div key={t.year} className={`tp-tl-node${isHl ? " hl" : ""}${isNow ? " now" : ""}`}>
-                            <div className="tp-tl-yr">{t.year}</div>
-                            <div className="tp-tl-dot" />
-                            <div className="tp-tl-result">{t.result}</div>
-                          </div>
-                        );
-                      })}
+                {deepDive && (
+                  <div className="tp-deep-dive">
+                    <div className="tp-overview-strip">
+                      {deepDive.overviewStats.map((stat) => (
+                        <div key={stat.label} className="tp-overview-card">
+                          <div className={`tp-overview-value${isNumericStat(stat.value) ? " is-number" : ""}`}>{stat.value}</div>
+                          <div className="tp-overview-label">{stat.label}</div>
+                          {stat.note && <div className="tp-overview-note">{stat.note}</div>}
+                        </div>
+                      ))}
                     </div>
-                  </div>
-                </div>
-                <div className="tp-story-grid">
-                  {stories.map((s, i) => (
-                    <div key={i} className={`tp-story-card${s.coverImg ? " has-img" : ""}`}>
-                      {s.coverImg && (
-                        <div className="tp-story-cover">
+
+                    <section className={`tp-coach-card${deepDive.coach.image ? " has-image" : ""}`}>
+                      <div className="tp-coach-copy">
+                        <div className="tp-module-kicker">{deepDive.coach.title}</div>
+                        <h2>{deepDive.coach.name}</h2>
+                        <p>{deepDive.coach.bio}</p>
+                        {deepDive.coach.highlights && (
+                          <div className="tp-coach-highlights">
+                            {deepDive.coach.highlights.map((item) => (
+                              <span key={item}>{item}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      {deepDive.coach.image && (
+                        <div className="tp-coach-media">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={s.coverImg} alt={s.title} className="tp-story-cover-img" loading="lazy" />
-                          <div className="tp-story-cover-overlay" />
+                          <img src={deepDive.coach.image} alt={deepDive.coach.imageAlt ?? deepDive.coach.name} loading="lazy" />
                         </div>
                       )}
-                      <div className="tp-story-body">
-                        <div className="tp-story-icon">{s.icon}</div>
-                        <h3>{s.title}</h3>
-                        <p>{s.body}</p>
+                    </section>
+
+                    {deepDive.historyFacts.length > 0 && (
+                      <section className="tp-history-grid" aria-label={`${data.nameCn} 历史数据`}>
+                        {deepDive.historyFacts.map((fact) => (
+                          <div key={fact.label} className="tp-history-cell">
+                            <div className="tp-history-label">{fact.label}</div>
+                            <div className="tp-history-value">{fact.value}</div>
+                            {fact.note && <div className="tp-history-note">{fact.note}</div>}
+                          </div>
+                        ))}
+                      </section>
+                    )}
+
+                    <article className="tp-feature-story">
+                      <div className="tp-feature-media">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={deepDive.featureStory.image} alt={deepDive.featureStory.imageAlt} loading="lazy" />
+                      </div>
+                      <div className="tp-feature-copy">
+                        <div className="tp-module-kicker">{deepDive.featureStory.kicker}</div>
+                        <h2>{deepDive.featureStory.title}</h2>
+                        {deepDive.featureStory.body.map((paragraph, index) => (
+                          <p key={index}>{paragraph}</p>
+                        ))}
+                        {deepDive.featureStory.source && (
+                          <div className="tp-feature-source">{deepDive.featureStory.source}</div>
+                        )}
+                      </div>
+                    </article>
+
+                    <div className="tp-roadmap">
+                      {deepDive.qualificationTimeline.map((item, index) => (
+                        <div key={item} className="tp-roadmap-node">
+                          <div className="tp-roadmap-index">{String(index + 1).padStart(2, "0")}</div>
+                          <div className="tp-roadmap-dot" />
+                          <div className="tp-roadmap-label">{item}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {!deepDive && (
+                  <>
+                    <div className="tp-tl-section tp-glass">
+                      <div className="tp-tl-meta">
+                        <span className="tp-section-badge">{count} 届</span>
+                        <span className="tp-section-badge volt">{yearSpan}</span>
+                      </div>
+                      <div className="tp-tl-vp" ref={vpRef}>
+                        <button ref={prevRef} className="tp-tl-nav prev off" onClick={() => scroll(-1)} aria-label="向左滚动">{"‹"}</button>
+                        <button ref={nextRef} className="tp-tl-nav next" onClick={() => scroll(1)} aria-label="向右滚动">{"›"}</button>
+                        <div className="tp-tl-track">
+                          <div className="tp-tl-line" />
+                          {timeline.map((t) => {
+                            const isHl = !!t.highlight;
+                            const isNow = t.year === 2026;
+                            return (
+                              <div key={t.year} className={`tp-tl-node${isHl ? " hl" : ""}${isNow ? " now" : ""}`}>
+                                <div className="tp-tl-yr">{t.year}</div>
+                                <div className="tp-tl-dot" />
+                                <div className="tp-tl-result">{t.result}</div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
-                  ))}
-                </div>
+                    <div className="tp-story-grid">
+                      {stories.map((s, i) => (
+                        <div key={i} className={`tp-story-card${s.coverImg ? " has-img" : ""}`}>
+                          {s.coverImg && (
+                            <div className="tp-story-cover">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={s.coverImg} alt={s.title} className="tp-story-cover-img" loading="lazy" />
+                              <div className="tp-story-cover-overlay" />
+                            </div>
+                          )}
+                          <div className="tp-story-body">
+                            <div className="tp-story-icon">{s.icon}</div>
+                            <h3>{s.title}</h3>
+                            <p>{s.body}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             ) : (
               <TeamSquadCard
@@ -364,5 +443,6 @@ function getFlagImageCode(data: TeamProfile) {
 }
 
 function getCoachName(data: TeamProfile) {
-  return data.infoCards.find((card) => /主教练|Coach/i.test(card.label))?.value ?? null;
+  const name = data.infoCards.find((card) => /主教练|Coach/i.test(card.label))?.value ?? null;
+  return localizeCoachName(name) || null;
 }

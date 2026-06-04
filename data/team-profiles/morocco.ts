@@ -87,11 +87,6 @@ const morocco: TeamProfile = {
       "highlight": true
     },
     {
-      "label": "所属足联",
-      "value": "CAF",
-      "desc": "非洲足联"
-    },
-    {
       "label": "最佳成绩",
       "value": "半决赛",
       "desc": "摩洛哥的世界杯最佳成绩为半决赛。"
@@ -140,6 +135,67 @@ const morocco: TeamProfile = {
       "credit": "FIFA"
     }
   ],
+  "deepDive": {
+      "overviewStats": [
+          {
+              "label": "参赛次数",
+              "value": "7",
+              "note": "首次参赛 1970"
+          },
+          {
+              "label": "最佳战绩",
+              "value": "半决赛",
+              "note": "2022"
+          },
+          {
+              "label": "总进球",
+              "value": "20",
+              "note": "进失球 20 / 27"
+          },
+          {
+              "label": "总场次",
+              "value": "23",
+              "note": "胜平负 5-7-11"
+          },
+          {
+              "label": "首次参赛",
+              "value": "1970",
+              "note": "Mexico 1970 (小组赛)"
+          }
+      ],
+      "coach": {
+          "name": "待确认",
+          "title": "摩洛哥主教练",
+          "bio": "Morocco 将连续第三次亮相2026年FIFA世界杯Atlas Lions 在2022年卡塔尔世界杯上改写历史闯入半决赛万众期待的北美FIFA世界杯将是 Morocco 第七次亮相全球盛会，也是该国史无前例的连续第三次获得参赛资格。Atlas Lions 将在这届扩军至48支球队的赛事中瞄准一个目标：证明2022年卡塔尔世界杯上的历史性第四名绝非昙花一现。随着 Mohamed Ouahbi 于2026年3月接替创造历史的 Walid Regragui 出任主教练，他的弟子们将决心继续激励国内球迷，而该国也正期待着共同举办2030年世界杯。Morocc",
+          "image": "/team-profiles/morocco/morocco_team_profile_history-coach.jpg",
+          "imageAlt": "待确认执教摩洛哥的 FIFA 官方配图",
+          "highlights": [
+              "官方球队档案",
+              "2026 北美世界杯",
+              "分组赛程已确认"
+          ]
+      },
+      "historyFacts": [],
+      "featureStory": {
+          "kicker": "FIFA 官方故事",
+          "title": "摩洛哥的 2026 世界杯之路",
+          "body": [
+              "Atlas Lions 在非洲区预选赛E组中以小组第一的身份强势晋级，是首支锁定世界杯席位的非洲球队。球队于9月5日以5-0大胜 Niger 后确认晋级。",
+              "上届世界杯: Qatar 2022 (半决赛)",
+              "摩洛哥将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。"
+          ],
+          "image": "/team-profiles/morocco/morocco_team_profile_history-main.jpg",
+          "imageAlt": "摩洛哥 FIFA 官方球队档案配图",
+          "source": "FIFA 官方球队档案"
+      },
+      "qualificationTimeline": [
+          "非洲区 E组第1",
+          "获得席位",
+          "北美备战",
+          "北美备战",
+          "刷新队史最佳"
+      ]
+  },
   "keyPlayers": [
     {
       "number": 7,

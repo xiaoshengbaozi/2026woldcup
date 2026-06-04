@@ -51,11 +51,6 @@ const curacao: TeamProfile = {
       "highlight": true
     },
     {
-      "label": "所属足联",
-      "value": "CONCACAF",
-      "desc": "中北美及加勒比海足联"
-    },
-    {
       "label": "最佳成绩",
       "value": "待突破",
       "desc": "库拉索将在 2026 年冲击世界杯新突破。"
@@ -104,6 +99,67 @@ const curacao: TeamProfile = {
       "credit": "FIFA"
     }
   ],
+  "deepDive": {
+      "overviewStats": [
+          {
+              "label": "参赛次数",
+              "value": "1",
+              "note": "首次参赛"
+          },
+          {
+              "label": "最佳战绩",
+              "value": "首次参赛",
+              "note": "2026"
+          },
+          {
+              "label": "总进球",
+              "value": "待开启",
+              "note": "等待世界杯首球"
+          },
+          {
+              "label": "总场次",
+              "value": "待开启",
+              "note": "2026 正赛后更新"
+          },
+          {
+              "label": "首次参赛",
+              "value": "2026",
+              "note": "2026年"
+          }
+      ],
+      "coach": {
+          "name": "Dick Advocaat",
+          "title": "库拉索主教练",
+          "bio": "多年来，Curaçao一直由Remko Bicentini执教，他给予了现役大多数球员首次代表Curaçao出场的机会，并带领球队赢得了首场金杯赛和世界杯预选赛胜利。但2024年1月，机会降临——球队聘请了拥有世界杯经验的荷兰战术大师Dick Advocaat。这位曾帮助Netherlands在1994年美国世界杯闯入八强并在2006年德国世界杯执教Korea Republic的78岁老帅，在预选赛中展现了点石成金的能力——他的球队在十场预选赛中打入惊人的28球，位居中北美及加勒比海区所有球队之首，而在最后一轮仅丢3球。这位资深战术家于2026年2月因个",
+          "image": "/team-profiles/curacao/curacao_team_profile_history-coach.jpg",
+          "imageAlt": "Dick Advocaat执教库拉索的 FIFA 官方配图",
+          "highlights": [
+              "官方球队档案",
+              "2026 北美世界杯",
+              "分组赛程已确认"
+          ]
+      },
+      "historyFacts": [],
+      "featureStory": {
+          "kicker": "FIFA 官方故事",
+          "title": "库拉索的 2026 世界杯之路",
+          "body": [
+              "在几乎闯入2022年卡塔尔世界杯预选赛最后一轮后，Curaçao在2026年预选赛中迅速击败对手，轻松通过第二轮。Blue Wave首战以4-1击败Barbados，Rangelo Janga上演帽子戏法；随后在2024年6月的两场比赛中，客场2-0战胜Aruba。一年后，第二轮以更加摧枯拉朽的方式收官——Gervane Kastaneer在4-0大胜Saint Lucia的比赛中上演帽子戏法，随后又以5-1横扫Haiti。",
+              "库拉索将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。",
+              "库拉索将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。"
+          ],
+          "image": "/team-profiles/curacao/curacao_team_profile_history-main.jpg",
+          "imageAlt": "库拉索 FIFA 官方球队档案配图",
+          "source": "FIFA 官方球队档案"
+      },
+      "qualificationTimeline": [
+          "中北美区晋级",
+          "获得席位",
+          "vs Germany / Curaçao",
+          "vs Ecuador / Curaçao",
+          "刷新队史最佳"
+      ]
+  },
   "keyPlayers": [
     {
       "number": 1,

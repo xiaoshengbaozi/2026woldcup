@@ -2,14 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Calendar, Home, Newspaper, UserRound, UsersRound } from "lucide-react";
+import { BarChart3, Calendar, Home, Newspaper } from "lucide-react";
 
 const navItems = [
   { label: "首页", href: "/", icon: Home },
   { label: "新闻", href: "/news", icon: Newspaper },
   { label: "赛程", href: "/matches", icon: Calendar },
-  { label: "球员", href: "/players", icon: UsersRound },
-  { label: "我的", href: "/me", icon: UserRound },
+  { label: "数据", href: "/data", icon: BarChart3 },
 ];
 
 export function MobileNavBar() {
@@ -56,10 +55,10 @@ export function MobileNavBar() {
             >
               {active && (
                 <span
-                  className="absolute -top-1 left-1/2 h-1 w-8 -translate-x-1/2 rounded-full"
+                  className="absolute -bottom-1 left-1/2 h-1 w-8 -translate-x-1/2 rounded-full"
                   style={{
                     background:
-                      "linear-gradient(180deg, rgba(216,255,62,0.6), rgba(216,255,62,0))",
+                      "linear-gradient(0deg, rgba(216,255,62,0.6), rgba(216,255,62,0))",
                     filter: "blur(3px)",
                   }}
                 />

@@ -5,6 +5,7 @@ node_modules/
 *.tsbuildinfo
 .next-dev*.log
 .backend-dev*.log
+.backend-worker-dev*.log
 .worker-dev*.log
 .codex-*.log
 .codex-*.png
@@ -16,3 +17,5 @@ backend/.env
 /data/user-system.json
 /data/api-football-cache.json
 /backend/data/user-system.json
+/backend/data/api-football-cache.json
+scripts/__pycache__/

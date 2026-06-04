@@ -75,11 +75,6 @@ const ecuador: TeamProfile = {
       "highlight": true
     },
     {
-      "label": "所属足联",
-      "value": "CONMEBOL",
-      "desc": "南美足联"
-    },
-    {
       "label": "最佳成绩",
       "value": "16强",
       "desc": "厄瓜多尔的世界杯最佳成绩为16强。"
@@ -128,6 +123,67 @@ const ecuador: TeamProfile = {
       "credit": "FIFA"
     }
   ],
+  "deepDive": {
+      "overviewStats": [
+          {
+              "label": "参赛次数",
+              "value": "5",
+              "note": "2次"
+          },
+          {
+              "label": "最佳战绩",
+              "value": "十六强",
+              "note": "2006"
+          },
+          {
+              "label": "总进球",
+              "value": "14",
+              "note": "进失球 14 / 14"
+          },
+          {
+              "label": "总场次",
+              "value": "13",
+              "note": "胜平负 5-2-6"
+          },
+          {
+              "label": "首次参赛",
+              "value": "2002",
+              "note": "2002年韩日世界杯"
+          }
+      ],
+      "coach": {
+          "name": "Sebastian Beccacece",
+          "title": "厄瓜多尔主教练",
+          "bio": "这位阿根廷人从Felix Sanchez手中接过教鞭——Sanchez此前曾在卡塔尔世界杯上执教东道主卡塔尔，之后接替Gustavo Alfaro执掌Ecuador。La Tri在美洲杯上表现低迷后与Sanchez分道扬镳，刚刚执教完西班牙二级联赛球队Elche的Beccacece走马上任。Beccacece执教的首场比赛在Curitiba以0-1负于Brazil，但这是他在通往全球盛事之路上唯一的污点。在他的执教下，Ecuador以5胜6平完成了预选赛征程，其中包括在Barranquilla客场1-0击败Colombia和主场1-0战胜Argentin",
+          "image": "/team-profiles/ecuador/ecuador_profile-coach.jpg",
+          "imageAlt": "Sebastian Beccacece执教厄瓜多尔的 FIFA 官方配图",
+          "highlights": [
+              "官方球队档案",
+              "2026 北美世界杯",
+              "分组赛程已确认"
+          ]
+      },
+      "historyFacts": [],
+      "featureStory": {
+          "kicker": "FIFA 官方故事",
+          "title": "厄瓜多尔的 2026 世界杯之路",
+          "body": [
+              "Ecuador在南美区预选赛中以亚军身份自动获得了FIFA旗舰赛事的参赛资格。尽管在预选赛开始时被扣3分，La Tri仍拿到了29分，落后Argentina 9分。",
+              "厄瓜多尔将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。",
+              "厄瓜多尔将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。"
+          ],
+          "image": "/team-profiles/ecuador/ecuador_profile-main.jpg",
+          "imageAlt": "厄瓜多尔 FIFA 官方球队档案配图",
+          "source": "FIFA 官方球队档案"
+      },
+      "qualificationTimeline": [
+          "南美区第2",
+          "获得席位",
+          "vs Côte d'Ivoire / Ecuador",
+          "vs Ecuador / Curaçao",
+          "刷新队史最佳"
+      ]
+  },
   "keyPlayers": [
     {
       "number": 1,

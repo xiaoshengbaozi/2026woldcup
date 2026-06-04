@@ -87,11 +87,6 @@ const saudiArabia: TeamProfile = {
       "highlight": true
     },
     {
-      "label": "所属足联",
-      "value": "AFC",
-      "desc": "亚洲足联"
-    },
-    {
       "label": "最佳成绩",
       "value": "待突破",
       "desc": "沙特阿拉伯将在 2026 年冲击世界杯新突破。"
@@ -140,6 +135,67 @@ const saudiArabia: TeamProfile = {
       "credit": "FIFA"
     }
   ],
+  "deepDive": {
+      "overviewStats": [
+          {
+              "label": "参赛次数",
+              "value": "7",
+              "note": "首次参赛 1994"
+          },
+          {
+              "label": "最佳战绩",
+              "value": "十六强",
+              "note": "队史最佳"
+          },
+          {
+              "label": "总进球",
+              "value": "14",
+              "note": "进失球 14 / 44"
+          },
+          {
+              "label": "总场次",
+              "value": "19",
+              "note": "胜平负 4-2-13"
+          },
+          {
+              "label": "首次参赛",
+              "value": "1994",
+              "note": "美国1994（十六强）"
+          }
+      ],
+      "coach": {
+          "name": "Georgios Donis",
+          "title": "沙特阿拉伯主教练",
+          "bio": "Saudi Arabia's hopes rest on the shoulders of 56-year-old former Greece international Donis, who took over for Herve Renard on 23 April. Donis is a man with vast coaching experience in the country. Most recently in charge of Saudi Pro League side Al Khaleej, he has also helmed lo",
+          "image": "/team-profiles/saudi-arabia/saudi_arabia_team_profile_history-coach.jpg",
+          "imageAlt": "Georgios Donis执教沙特阿拉伯的 FIFA 官方配图",
+          "highlights": [
+              "官方球队档案",
+              "2026 北美世界杯",
+              "分组赛程已确认"
+          ]
+      },
+      "historyFacts": [],
+      "featureStory": {
+          "kicker": "FIFA 官方故事",
+          "title": "沙特阿拉伯的 2026 世界杯之路",
+          "body": [
+              "Read on for Saudi Arabia's World Cup history, records and enduring moments, and follow their journey to the tournament with the latest on their matches, group and coach.Saudi Arabia are set to appear in their seventh FIFA World CupAiming to advance past the group stage ",
+              "The Green Falcons endured a long road to secure their ticket to the USA, Canada and Mexico. After finishing as runners-up in their second round group in AFC qualifying, they found themselves in a challenging third-round section featuring heavyweights Japan and Australia",
+              "沙特阿拉伯将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。"
+          ],
+          "image": "/team-profiles/saudi-arabia/saudi_arabia_team_profile_history-main.jpg",
+          "imageAlt": "沙特阿拉伯 FIFA 官方球队档案配图",
+          "source": "FIFA 官方球队档案"
+      },
+      "qualificationTimeline": [
+          "亚洲区附加赛晋级",
+          "获得席位",
+          "vs Saudi Arabia vs Uruguay",
+          "vs Spain vs Saudi Arabia",
+          "刷新队史最佳"
+      ]
+  },
   "keyPlayers": [
     {
       "number": 7,

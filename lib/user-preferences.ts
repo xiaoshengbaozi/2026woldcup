@@ -1,3 +1,5 @@
+import officialSquadsData from "@/data/fifa-official-squads.json";
+
 export type UserPreferenceTeam = {
   id: string;
   name: string;
@@ -38,13 +40,19 @@ export const preferenceTeams: UserPreferenceTeam[] = [
   { id: "12", name: "日本", region: "JPN", logo: "https://media.api-sports.io/football/teams/12.png" },
 ];
 
-export const preferencePlayers: UserPreferencePlayer[] = [
+const staticPreferencePlayers: UserPreferencePlayer[] = [
   { id: "154", name: "Lionel Messi", team: "阿根廷", position: "Forward", photo: "https://media.api-sports.io/football/players/154.png" },
   { id: "278", name: "Kylian Mbappe", team: "法国", position: "Forward", photo: "https://media.api-sports.io/football/players/278.png" },
   { id: "762", name: "Vinicius Junior", team: "巴西", position: "Forward", photo: "https://media.api-sports.io/football/players/762.png" },
   { id: "386828", name: "Lamine Yamal", team: "西班牙", position: "Forward", photo: "https://media.api-sports.io/football/players/386828.png" },
   { id: "1100", name: "Erling Haaland", team: "挪威", position: "Forward", photo: "https://media.api-sports.io/football/players/1100.png" },
 ];
+
+const officialPreferenceCatalog = buildOfficialPreferenceCatalog();
+
+export const preferencePlayers: UserPreferencePlayer[] = officialPreferenceCatalog.players.length
+  ? officialPreferenceCatalog.players
+  : staticPreferencePlayers;
 
 export const preferenceMatches: UserPreferenceMatch[] = [
   {
@@ -73,7 +81,7 @@ export const preferenceMatches: UserPreferenceMatch[] = [
 export const fallbackUserPreferenceCatalog: UserPreferenceCatalog = {
   source: "fallback",
   timestamp: 0,
-  teams: preferenceTeams,
+  teams: officialPreferenceCatalog.teams.length ? officialPreferenceCatalog.teams : preferenceTeams,
   players: preferencePlayers,
   matches: preferenceMatches,
 };
@@ -90,4 +98,71 @@ export function getPlayerAvatar(playerId: string | null | undefined, players: Us
   if (!playerId) return preferencePlayers[0].photo!;
   const player = players.find((item) => item.id === playerId);
   return player?.photo || player?.avatar || LEGACY_PLAYER_PHOTOS[playerId] || preferencePlayers[0].photo!;
+}
+
+type OfficialSquadsData = {
+  squads?: Record<string, {
+    teamName?: string;
+    players?: Array<{
+      number?: number;
+      position?: string;
+      name?: string;
+      officialName?: string;
+      apiFootballId?: number | null;
+    }>;
+  }>;
+};
+
+function buildOfficialPreferenceCatalog() {
+  const data = officialSquadsData as OfficialSquadsData;
+  const squads = data.squads ?? {};
+  const teams: UserPreferenceTeam[] = [];
+  const players: UserPreferencePlayer[] = [];
+
+  for (const [teamCode, squad] of Object.entries(squads)) {
+    const teamName = squad.teamName?.trim() || teamCode;
+    teams.push({
+      id: teamCode,
+      name: teamName,
+      region: teamCode,
+      logo: `/team-covers/fifa/${slugifyTeam(teamName)}.png`,
+    });
+
+    for (const player of squad.players ?? []) {
+      const apiFootballId = player.apiFootballId ? String(player.apiFootballId) : "";
+      const name = player.name?.trim() || player.officialName?.trim();
+      if (!name) continue;
+      players.push({
+        id: apiFootballId || `${teamCode}-${player.number || slugifyTeam(name)}`,
+        name,
+        team: teamName,
+        position: normalizePosition(player.position),
+        photo: apiFootballId ? `https://media.api-sports.io/football/players/${apiFootballId}.png` : undefined,
+      });
+    }
+  }
+
+  return {
+    teams: teams.sort((a, b) => (a.region || a.name).localeCompare(b.region || b.name)),
+    players: players.sort((a, b) => (a.team || "").localeCompare(b.team || "") || a.name.localeCompare(b.name)),
+  };
+}
+
+function normalizePosition(position: string | undefined) {
+  return {
+    GK: "Goalkeeper",
+    DF: "Defender",
+    MF: "Midfielder",
+    FW: "Forward",
+  }[position || ""] || position || "Player";
+}
+
+function slugifyTeam(value: string) {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
 }

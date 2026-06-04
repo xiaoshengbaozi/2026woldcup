@@ -63,11 +63,6 @@ const turkiye: TeamProfile = {
       "highlight": true
     },
     {
-      "label": "所属足联",
-      "value": "UEFA",
-      "desc": "欧足联"
-    },
-    {
       "label": "最佳成绩",
       "value": "季军",
       "desc": "土耳其的世界杯最佳成绩为季军。"
@@ -116,6 +111,67 @@ const turkiye: TeamProfile = {
       "credit": "FIFA"
     }
   ],
+  "deepDive": {
+      "overviewStats": [
+          {
+              "label": "参赛次数",
+              "value": "3",
+              "note": "首次参赛 1954"
+          },
+          {
+              "label": "最佳战绩",
+              "value": "季军",
+              "note": "2002"
+          },
+          {
+              "label": "总进球",
+              "value": "20",
+              "note": "进失球 20 / 17"
+          },
+          {
+              "label": "总场次",
+              "value": "10",
+              "note": "胜平负 5-1-4"
+          },
+          {
+              "label": "首次参赛",
+              "value": "1954",
+              "note": "1954年"
+          }
+      ],
+      "coach": {
+          "name": "待确认",
+          "title": "土耳其主教练",
+          "bio": "Turkiye是最后一批获得世界杯参赛资格的欧洲球队之一",
+          "image": "/team-profiles/turkiye/turkiye_team_profile_history-coach.jpg",
+          "imageAlt": "待确认执教土耳其的 FIFA 官方配图",
+          "highlights": [
+              "官方球队档案",
+              "2026 北美世界杯",
+              "分组赛程已确认"
+          ]
+      },
+      "historyFacts": [],
+      "featureStory": {
+          "kicker": "FIFA 官方故事",
+          "title": "土耳其的 2026 世界杯之路",
+          "body": [
+              "Turkiye在预选赛小组中以四胜一平一负的成绩排名Spain之后获得第二名，唯一的一场失利是在主场0-6惨败于Spaniards。六场比赛打入17球展现了Turks的进攻实力，但丢12球也暴露了球队的弱点。",
+              "最近一届世界杯：2002年韩日世界杯（第三名）",
+              "土耳其将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。"
+          ],
+          "image": "/team-profiles/turkiye/turkiye_team_profile_history-main.jpg",
+          "imageAlt": "土耳其 FIFA 官方球队档案配图",
+          "source": "FIFA 官方球队档案"
+      },
+      "qualificationTimeline": [
+          "欧洲区附加赛晋级",
+          "获得席位",
+          "vs Australia / Turkiye",
+          "vs Turkiye / Paraguay",
+          "刷新队史最佳"
+      ]
+  },
   "keyPlayers": [
     {
       "number": 3,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { ExternalLink, Newspaper } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
@@ -354,14 +354,47 @@ function NewsImage({
   fallbackClassName: string;
   iconClassName: string;
 }) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(false);
+  const [shouldLoad, setShouldLoad] = useState(false);
+
+  useEffect(() => {
+    setFailed(false);
+    setShouldLoad(false);
+  }, [src]);
+
+  useEffect(() => {
+    if (!src.trim() || failed || shouldLoad) return;
+
+    const node = containerRef.current;
+    if (!node || typeof IntersectionObserver === "undefined") {
+      setShouldLoad(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return;
+        setShouldLoad(true);
+        observer.disconnect();
+      },
+      { rootMargin: "360px 0px" },
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [failed, shouldLoad, src]);
 
   if (!src.trim() || failed) {
     return (
-      <div className={fallbackClassName}>
+      <div ref={containerRef} className={fallbackClassName}>
         <Newspaper className={iconClassName} />
       </div>
     );
+  }
+
+  if (!shouldLoad) {
+    return <div ref={containerRef} className={`${fallbackClassName} animate-pulse`} />;
   }
 
   return (

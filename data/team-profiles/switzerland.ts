@@ -123,11 +123,6 @@ const switzerland: TeamProfile = {
       "highlight": true
     },
     {
-      "label": "所属足联",
-      "value": "UEFA",
-      "desc": "欧足联"
-    },
-    {
       "label": "最佳成绩",
       "value": "八强",
       "desc": "瑞士的世界杯最佳成绩为八强。"
@@ -176,6 +171,67 @@ const switzerland: TeamProfile = {
       "credit": "FIFA"
     }
   ],
+  "deepDive": {
+      "overviewStats": [
+          {
+              "label": "参赛次数",
+              "value": "13",
+              "note": "首次参赛 1934"
+          },
+          {
+              "label": "最佳战绩",
+              "value": "八强",
+              "note": "1934、1938、1954"
+          },
+          {
+              "label": "总进球",
+              "value": "55",
+              "note": "进失球 55 / 73"
+          },
+          {
+              "label": "总场次",
+              "value": "41",
+              "note": "胜平负 14-8-19"
+          },
+          {
+              "label": "首次参赛",
+              "value": "1934",
+              "note": "1934年意大利世界杯（四分之一决赛）"
+          }
+      ],
+      "coach": {
+          "name": "Murat Yakin",
+          "title": "瑞士主教练",
+          "bio": "球员时代，出生于Basel的教练Murat Yakin曾效力于Grasshoppers、Fenerbahce、Stuttgart和Basel，共获得49次国家队出场机会，主要司职防守型中场。退役后，他于2006年开始教练生涯，在执教了国内多家俱乐部后，于2021年接替Vladimir Petkovic出任Swiss主教练。在带领球队以令人印象深刻的表现通过2022年卡塔尔世界杯预选赛后，他率队打入十六强，但以1-6惨败于Portugal。在2024年欧洲杯上，Yakin的球队淘汰了卫冕冠军Italy，随后在四分之一决赛中点球大战负于England。",
+          "image": "/team-profiles/switzerland/switzerland_team_profile_history-coach.jpg",
+          "imageAlt": "Murat Yakin执教瑞士的 FIFA 官方配图",
+          "highlights": [
+              "官方球队档案",
+              "2026 北美世界杯",
+              "分组赛程已确认"
+          ]
+      },
+      "historyFacts": [],
+      "featureStory": {
+          "kicker": "FIFA 官方故事",
+          "title": "瑞士的 2026 世界杯之路",
+          "body": [
+              "Swiss以4-0大胜Kosovo开启了预选赛征程，Breel Embolo梅开二度功不可没。Yakin的球队在下一场比赛中以3-0击败Slovenia，展现了强大实力，随后又以2-0轻取Sweden。",
+              "最近一届世界杯：2022年卡塔尔世界杯（十六强）",
+              "瑞士将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。"
+          ],
+          "image": "/team-profiles/switzerland/switzerland_team_profile_history-main.jpg",
+          "imageAlt": "瑞士 FIFA 官方球队档案配图",
+          "source": "FIFA 官方球队档案"
+      },
+      "qualificationTimeline": [
+          "欧洲区晋级",
+          "获得席位",
+          "vs Qatar / Switzerland",
+          "vs Switzerland / Bosnia and Herzegovina",
+          "刷新队史最佳"
+      ]
+  },
   "keyPlayers": [
     {
       "number": 1,

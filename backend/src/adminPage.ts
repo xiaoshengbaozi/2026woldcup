@@ -108,6 +108,13 @@ export function renderAdminPageHtml() {
     .detail-block { border-radius: 22px; background: rgba(0,0,0,.2); border: 1px solid rgba(255,255,255,.075); padding: 14px; }
     .detail-block h3 { margin-bottom: 8px; }
     .detail-block ul { margin: 0; padding-left: 18px; color: var(--muted); }
+    .admin-form { display: grid; grid-template-columns: 1.2fr 1fr .7fr auto; gap: 10px; align-items: end; }
+    .admin-field { display: grid; gap: 6px; color: var(--faint); font-size: 12px; }
+    .admin-field input {
+      min-height: 40px; border: 1px solid rgba(255,255,255,.1); border-radius: 16px;
+      background: rgba(0,0,0,.28); color: white; padding: 0 12px; outline: none; font: inherit;
+    }
+    .admin-field input:focus { border-color: rgba(216,255,62,.42); box-shadow: 0 0 26px rgba(216,255,62,.08); }
     code {
       display: block; padding: 12px 14px; border-radius: 16px; background: rgba(0,0,0,.32);
       border: 1px solid rgba(255,255,255,.08); color: rgba(255,255,255,.78); overflow: auto;
@@ -118,6 +125,7 @@ export function renderAdminPageHtml() {
       .wide { grid-column: span 1; }
       .mini-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .split { grid-template-columns: 1fr; }
+      .admin-form { grid-template-columns: 1fr; }
       .match-row { grid-template-columns: 1fr auto; }
       .match-row .score { order: 3; text-align: left; }
     }
@@ -246,6 +254,8 @@ export function renderAdminPageHtml() {
         <div class="card metric"><span>活跃用户</span><strong id="adminActiveUsers">--</strong></div>
         <div class="card metric"><span>启用提醒</span><strong id="adminEnabledReminders">--</strong></div>
         <div class="card metric"><span>未读通知</span><strong id="adminUnreadNotifications">--</strong></div>
+        <div class="card metric"><span>有效邀请码</span><strong id="adminActiveInvitations">--</strong></div>
+        <div class="card metric"><span>邀请码使用</span><strong id="adminInvitationUses">--</strong></div>
 
         <div class="card full">
           <h2>用户系统</h2>
@@ -254,6 +264,22 @@ export function renderAdminPageHtml() {
             <div class="mini"><span>收藏比赛</span><strong id="adminFavoriteMatches">--</strong></div>
             <div class="mini"><span>预测记录</span><strong id="adminPredictionCount">--</strong></div>
             <div class="mini"><span>新闻订阅</span><strong id="adminNewsSubscriptions">--</strong></div>
+          </div>
+        </div>
+
+        <div class="card full">
+          <h2>邀请码管理</h2>
+          <form class="admin-form" id="invitationForm">
+            <label class="admin-field">邀请码（留空随机生成）<input id="inviteCodeInput" type="text" placeholder="WC26-VIP-001" /></label>
+            <label class="admin-field">过期时间<input id="inviteExpiresAtInput" type="datetime-local" /></label>
+            <label class="admin-field">可使用次数<input id="inviteMaxUsesInput" type="number" min="1" value="1" /></label>
+            <button class="action-btn" type="submit">生成邀请码</button>
+          </form>
+          <div class="record-list" style="margin-top:14px">
+            <table>
+              <thead><tr><th>邀请码</th><th>状态</th><th>次数</th><th>过期时间</th><th>最近使用</th><th>操作</th></tr></thead>
+              <tbody id="adminInvitationRows"><tr><td colspan="6" class="muted">正在加载...</td></tr></tbody>
+            </table>
           </div>
         </div>
 
@@ -548,6 +574,84 @@ export function renderAdminPageHtml() {
       return new Intl.DateTimeFormat("zh-CN", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }).format(date);
     }
 
+    function invitationStatusLabel(status) {
+      return {
+        active: "有效",
+        disabled: "已停用",
+        expired: "已过期",
+        exhausted: "已用完"
+      }[status] || status || "--";
+    }
+
+    function localDateTimeToIso(value) {
+      if (!value) return null;
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? null : date.toISOString();
+    }
+
+    async function refreshInvitations() {
+      try {
+        const res = await fetch("/api/admin/invitations", { cache: "no-store" });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "admin_invitations_failed");
+
+        const summary = data.summary || {};
+        byId("adminActiveInvitations").textContent = summary.activeInvitationCodes ?? 0;
+        byId("adminInvitationUses").textContent = summary.invitationUses ?? 0;
+
+        const invitations = Array.isArray(data.invitations) ? data.invitations : [];
+        byId("adminInvitationRows").innerHTML = invitations.length ? invitations.map(function (invite) {
+          const lastUse = Array.isArray(invite.usedBy) && invite.usedBy[0] ? invite.usedBy[0].email + " · " + adminTime(invite.usedBy[0].usedAt) : "--";
+          const action = invite.status === "disabled" ? "enable" : "disable";
+          const actionLabel = invite.status === "disabled" ? "启用" : "停用";
+          return "<tr><td><strong>" + escapeHtml(invite.code) + "</strong><br><span class=\\"muted\\">" + escapeHtml(invite.note || invite.id) + "</span></td><td><span class=\\"badge\\">" + invitationStatusLabel(invite.status) + "</span></td><td>" + invite.usedCount + "/" + invite.maxUses + "</td><td>" + adminTime(invite.expiresAt) + "</td><td>" + escapeHtml(lastUse) + "</td><td><button class=\\"action-btn\\" data-invite-action=\\"" + action + "\\" data-invite-id=\\"" + escapeHtml(invite.id) + "\\">" + actionLabel + "</button></td></tr>";
+        }).join("") : "<tr><td colspan=\\"6\\" class=\\"muted\\">暂无邀请码，创建一个后用户才能注册。</td></tr>";
+
+        document.querySelectorAll("[data-invite-action]").forEach(function (button) {
+          button.addEventListener("click", function () {
+            runInvitationAction(button.dataset.inviteId, button.dataset.inviteAction);
+          });
+        });
+      } catch (error) {
+        byId("adminInvitationRows").innerHTML = "<tr><td colspan=\\"6\\" class=\\"muted\\">邀请码读取失败：" + escapeHtml(error.message || error) + "</td></tr>";
+      }
+    }
+
+    async function createInvitation(event) {
+      event.preventDefault();
+      const res = await fetch("/api/admin/invitations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: byId("inviteCodeInput").value,
+          expiresAt: localDateTimeToIso(byId("inviteExpiresAtInput").value),
+          maxUses: byId("inviteMaxUsesInput").value || 1
+        })
+      });
+      const data = await res.json().catch(function () { return null; });
+      if (!res.ok) {
+        byId("adminInvitationRows").insertAdjacentHTML("afterbegin", "<tr><td colspan=\\"6\\" class=\\"muted\\">创建失败：" + escapeHtml((data && data.error) || res.status) + "</td></tr>");
+        return;
+      }
+      byId("inviteCodeInput").value = "";
+      await refreshInvitations();
+    }
+
+    async function runInvitationAction(invitationId, action) {
+      if (!invitationId || !action) return;
+      const res = await fetch("/api/admin/invitations/" + encodeURIComponent(invitationId) + "/" + action, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}"
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(function () { return null; });
+        byId("adminInvitationRows").insertAdjacentHTML("afterbegin", "<tr><td colspan=\\"6\\" class=\\"muted\\">操作失败：" + escapeHtml((data && data.error) || res.status) + "</td></tr>");
+        return;
+      }
+      await refreshInvitations();
+    }
+
     async function refreshUsers() {
       try {
         const res = await fetch("/api/admin/users", { cache: "no-store" });
@@ -663,9 +767,10 @@ export function renderAdminPageHtml() {
     }
 
     async function refreshAll() {
-      await Promise.allSettled([refreshStatus(), refreshLive(), refreshFootballDetails(), refreshNews(), refreshUsers()]);
+      await Promise.allSettled([refreshStatus(), refreshLive(), refreshFootballDetails(), refreshNews(), refreshUsers(), refreshInvitations()]);
     }
 
+    byId("invitationForm").addEventListener("submit", createInvitation);
     refreshAll();
     setInterval(refreshAll, 5000);
   </script>

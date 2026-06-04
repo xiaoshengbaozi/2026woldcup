@@ -77,7 +77,7 @@ export type LineupPlayer = {
   club: string;
   age: number;
   rating?: number;
-  featuredCategory?: "superstar" | "wonderkid" | "rating";
+  featuredCategory?: "superstar" | "wonderkid" | "star" | "rating";
   isCaptain?: boolean;
   injury?: boolean;
   yellowCards?: number;

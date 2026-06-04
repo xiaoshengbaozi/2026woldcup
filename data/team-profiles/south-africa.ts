@@ -69,11 +69,6 @@ const southAfrica: TeamProfile = {
       "highlight": true
     },
     {
-      "label": "所属足联",
-      "value": "CAF",
-      "desc": "非洲足联"
-    },
-    {
       "label": "最佳成绩",
       "value": "小组赛",
       "desc": "南非的世界杯最佳成绩为小组赛。"
@@ -122,6 +117,67 @@ const southAfrica: TeamProfile = {
       "credit": "FIFA"
     }
   ],
+  "deepDive": {
+      "overviewStats": [
+          {
+              "label": "参赛次数",
+              "value": "4",
+              "note": "首次参赛 1998"
+          },
+          {
+              "label": "最佳战绩",
+              "value": "小组赛",
+              "note": "1998、2002、2010"
+          },
+          {
+              "label": "总进球",
+              "value": "11",
+              "note": "进失球 11 / 16"
+          },
+          {
+              "label": "总场次",
+              "value": "9",
+              "note": "胜平负 2-4-3"
+          },
+          {
+              "label": "首次参赛",
+              "value": "1998",
+              "note": "1998年（小组赛）"
+          }
+      ],
+      "coach": {
+          "name": "Hugo Broos",
+          "title": "南非主教练",
+          "bio": "Broos自2021年5月起执掌南非队帅印，当时南非刚刚与2021年非洲国家杯失之交臂。这位比利时战术大师随即着手对球队进行年轻化改造，大胆启用了Thalente Mbatha、Oswin Appollis和Evidence Makgopa等潜力新秀，这些球员都在世界杯预选赛中发挥了关键作用。Broos推行的这一变革带来了2023年非洲国家杯第三名的成绩，球队还将角逐今年12月和明年1月在Morocco举行的下届赛事。但对于这位前Cameroon主教练来说，重中之重是世界杯26，目标是首次闯入淘汰赛。",
+          "image": "/team-profiles/south-africa/south_africa_team_profile_history-coach.jpg",
+          "imageAlt": "Hugo Broos执教南非的 FIFA 官方配图",
+          "highlights": [
+              "官方球队档案",
+              "2026 北美世界杯",
+              "分组赛程已确认"
+          ]
+      },
+      "historyFacts": [],
+      "featureStory": {
+          "kicker": "FIFA 官方故事",
+          "title": "南非的 2026 世界杯之路",
+          "body": [
+              "South Africa在FIFA世界杯上的征程：球队概况与历史",
+              "南非将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。",
+              "南非将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。"
+          ],
+          "image": "/team-profiles/south-africa/south_africa_team_profile_history-main.jpg",
+          "imageAlt": "南非 FIFA 官方球队档案配图",
+          "source": "FIFA 官方球队档案"
+      },
+      "qualificationTimeline": [
+          "非洲区 C组第2",
+          "获得席位",
+          "vs Mexico vs South Africa",
+          "vs Czechia vs South Africa",
+          "刷新队史最佳"
+      ]
+  },
   "keyPlayers": [
     {
       "number": 2,

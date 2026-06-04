@@ -69,11 +69,6 @@ const senegal: TeamProfile = {
       "highlight": true
     },
     {
-      "label": "所属足联",
-      "value": "CAF",
-      "desc": "非洲足联"
-    },
-    {
       "label": "最佳成绩",
       "value": "八强",
       "desc": "塞内加尔的世界杯最佳成绩为八强。"
@@ -122,6 +117,67 @@ const senegal: TeamProfile = {
       "credit": "FIFA"
     }
   ],
+  "deepDive": {
+      "overviewStats": [
+          {
+              "label": "参赛次数",
+              "value": "4",
+              "note": "首次参赛 2002"
+          },
+          {
+              "label": "最佳战绩",
+              "value": "八强",
+              "note": "2002"
+          },
+          {
+              "label": "总进球",
+              "value": "16",
+              "note": "进失球 16 / 17"
+          },
+          {
+              "label": "总场次",
+              "value": "12",
+              "note": "胜平负 5-3-4"
+          },
+          {
+              "label": "首次参赛",
+              "value": "2002",
+              "note": "2002年韩日世界杯"
+          }
+      ],
+      "coach": {
+          "name": "Pape Thiaw",
+          "title": "塞内加尔主教练",
+          "bio": "若要帮助Senegal重现2002年韩日世界杯四分之一决赛那支球队的精神，恐怕没有人比Thiaw更合适了。他本人就是那次传奇征程的一员，并且在16强战胜Sweden的比赛中助攻了Henri Camara的关键进球。这位中锋还随队打入了当年非洲国家杯决赛，为随后的世界杯壮举奠定了完美基础。这位达喀尔本地人于2009年退役，二十年后重返\"特兰加雄狮\"教练组。除了执教参加非洲国家锦标赛的二线队外，他还曾担任前队友Aliou Cisse在A队的助理教练。Cisse离任后，Thiaw升任主教练，最初以代理身份执教，后于2024年12月被正式任命。Thiaw无缝衔接",
+          "image": "/team-profiles/senegal/senegal_team_profile_history-coach.jpg",
+          "imageAlt": "Pape Thiaw执教塞内加尔的 FIFA 官方配图",
+          "highlights": [
+              "官方球队档案",
+              "2026 北美世界杯",
+              "分组赛程已确认"
+          ]
+      },
+      "historyFacts": [],
+      "featureStory": {
+          "kicker": "FIFA 官方故事",
+          "title": "塞内加尔的 2026 世界杯之路",
+          "body": [
+              "最近一次世界杯：2022年卡塔尔世界杯（16强）",
+              "塞内加尔将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。",
+              "塞内加尔将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。"
+          ],
+          "image": "/team-profiles/senegal/senegal_team_profile_history-main.jpg",
+          "imageAlt": "塞内加尔 FIFA 官方球队档案配图",
+          "source": "FIFA 官方球队档案"
+      },
+      "qualificationTimeline": [
+          "非洲区 B组第1",
+          "获得席位",
+          "vs France vs Senegal",
+          "vs Norway vs Senegal",
+          "刷新队史最佳"
+      ]
+  },
   "keyPlayers": [
     {
       "number": 4,

@@ -85,6 +85,23 @@ export interface UserNotification {
   metadata?: Record<string, string | number | boolean | null>;
 }
 
+export interface InvitationCode {
+  id: string;
+  code: string;
+  note?: string;
+  maxUses: number;
+  usedCount: number;
+  expiresAt: number | null;
+  disabledAt?: number | null;
+  createdAt: number;
+  updatedAt: number;
+  usedBy: Array<{
+    userId: string;
+    email: string;
+    usedAt: number;
+  }>;
+}
+
 export interface WorldCupUser {
   id: string;
   email: string;
@@ -106,12 +123,13 @@ export interface WorldCupUser {
 
 interface UserDatabase {
   users: WorldCupUser[];
+  invitationCodes: InvitationCode[];
 }
 
 const DEFAULT_TOPICS = ["球队动态", "伤停情报", "赔率波动", "赛前发布会"];
 
 export class UserStore {
-  private data: UserDatabase = { users: [] };
+  private data: UserDatabase = { users: [], invitationCodes: [] };
   private pool: Pool | null = null;
   private readonly readyPromise: Promise<void>;
 
@@ -136,6 +154,64 @@ export class UserStore {
 
   listUsers() {
     return [...this.data.users];
+  }
+
+  listInvitationCodes() {
+    return [...this.data.invitationCodes];
+  }
+
+  createInvitationCode(input: { code?: string; note?: string; maxUses?: number; expiresAt?: number | string | null }) {
+    const code = normalizeInvitationCode(input.code || generateInvitationCode());
+    if (!code || code.length < 4) {
+      throw createUserStoreError("invalid_invitation_code", 400);
+    }
+
+    if (this.data.invitationCodes.some((item) => item.code === code)) {
+      throw createUserStoreError("invitation_code_exists", 409);
+    }
+
+    const now = Date.now();
+    const invitation: InvitationCode = {
+      id: randomUUID(),
+      code,
+      note: input.note?.trim() || undefined,
+      maxUses: clampInteger(input.maxUses, 1, 100000, 1),
+      usedCount: 0,
+      expiresAt: normalizeTimestamp(input.expiresAt),
+      disabledAt: null,
+      createdAt: now,
+      updatedAt: now,
+      usedBy: [],
+    };
+
+    this.data.invitationCodes.push(invitation);
+    void this.save();
+    return invitation;
+  }
+
+  validateInvitationCode(code: string) {
+    return this.requireUsableInvitationCode(code);
+  }
+
+  consumeInvitationCode(code: string, user: Pick<WorldCupUser, "id" | "email">) {
+    const invitation = this.requireUsableInvitationCode(code);
+    invitation.usedCount += 1;
+    invitation.usedBy = [
+      { userId: user.id, email: user.email, usedAt: Date.now() },
+      ...(invitation.usedBy ?? []),
+    ];
+    invitation.updatedAt = Date.now();
+    void this.save();
+    return invitation;
+  }
+
+  setInvitationDisabled(id: string, disabled: boolean) {
+    const invitation = this.data.invitationCodes.find((item) => item.id === id);
+    if (!invitation) throw createUserStoreError("invitation_code_not_found", 404);
+    invitation.disabledAt = disabled ? Date.now() : null;
+    invitation.updatedAt = Date.now();
+    void this.save();
+    return invitation;
   }
 
   createUser(input: { email: string; password: string; displayName?: string; avatarPlayerId?: string }) {
@@ -388,8 +464,9 @@ export class UserStore {
     try {
       this.data = JSON.parse(readFileSync(this.filePath, "utf8")) as UserDatabase;
       this.data.users = this.data.users.map(normalizeStoredUser);
+      this.data.invitationCodes = (this.data.invitationCodes ?? []).map(normalizeStoredInvitationCode);
     } catch {
-      this.data = { users: [] };
+      this.data = { users: [], invitationCodes: [] };
     }
   }
 
@@ -412,6 +489,7 @@ export class UserStore {
     if (result.rows[0]?.data) {
       this.data = result.rows[0].data;
       this.data.users = this.data.users.map(normalizeStoredUser);
+      this.data.invitationCodes = (this.data.invitationCodes ?? []).map(normalizeStoredInvitationCode);
       return;
     }
 
@@ -433,6 +511,18 @@ export class UserStore {
       `,
       ["default", this.data]
     );
+  }
+
+  private requireUsableInvitationCode(code: string) {
+    const normalized = normalizeInvitationCode(code);
+    if (!normalized) throw createUserStoreError("invitation_code_required", 400);
+
+    const invitation = this.data.invitationCodes.find((item) => item.code === normalized);
+    if (!invitation) throw createUserStoreError("invalid_invitation_code", 403);
+    if (invitation.disabledAt) throw createUserStoreError("invitation_code_disabled", 403);
+    if (invitation.expiresAt && invitation.expiresAt <= Date.now()) throw createUserStoreError("invitation_code_expired", 403);
+    if (invitation.usedCount >= invitation.maxUses) throw createUserStoreError("invitation_code_exhausted", 403);
+    return invitation;
   }
 }
 
@@ -478,6 +568,39 @@ function normalizeStoredUser(user: WorldCupUser) {
     newsSubscriptions: user.newsSubscriptions ?? [],
     notifications: user.notifications ?? [],
   };
+}
+
+function normalizeStoredInvitationCode(invitation: InvitationCode) {
+  return {
+    ...invitation,
+    code: normalizeInvitationCode(invitation.code),
+    maxUses: clampInteger(invitation.maxUses, 1, 100000, 1),
+    usedCount: clampInteger(invitation.usedCount, 0, 100000, 0),
+    expiresAt: invitation.expiresAt ?? null,
+    disabledAt: invitation.disabledAt ?? null,
+    usedBy: invitation.usedBy ?? [],
+  };
+}
+
+function normalizeInvitationCode(code: string) {
+  return code.trim().toUpperCase().replace(/\s+/g, "-");
+}
+
+function generateInvitationCode() {
+  return `WC26-${randomBytes(3).toString("hex").toUpperCase()}-${randomBytes(2).toString("hex").toUpperCase()}`;
+}
+
+function normalizeTimestamp(value: number | string | null | undefined) {
+  if (value === null || value === undefined || value === "") return null;
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  const time = new Date(value).getTime();
+  return Number.isFinite(time) ? time : null;
+}
+
+function clampInteger(value: unknown, min: number, max: number, fallback: number) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  return Math.max(min, Math.min(max, Math.round(number)));
 }
 
 function getUserRecordCounts(user: WorldCupUser) {

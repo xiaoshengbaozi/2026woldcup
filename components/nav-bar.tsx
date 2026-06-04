@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BarChart3, Calendar, Flag, Home, Newspaper, UserRound, UsersRound } from "lucide-react";
+import { GlobalSearch } from "./global-search";
 import { ThemeToggle } from "./theme-toggle";
 import { getPlayerAvatar } from "@/lib/user-preferences";
 import { userApi, type UserHomePayload } from "@/lib/user-system";
@@ -47,7 +48,7 @@ export function NavBar() {
   const meActive = pathname.startsWith("/me");
 
   return (
-    <nav className="hero-shell hidden min-h-20 items-center justify-between gap-4 px-5 py-4 sm:px-7 lg:flex" style={{ borderRadius: "1.2rem" }}>
+    <nav className="hero-shell relative z-[300] hidden min-h-20 items-center justify-between gap-4 px-5 py-4 sm:px-7 lg:flex" style={{ borderRadius: "1.2rem" }}>
       <Link href="/" className="group flex items-center gap-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -90,18 +91,19 @@ export function NavBar() {
       </div>
 
       <div className="flex items-center gap-3">
+        <GlobalSearch />
         <ThemeToggle />
         <Link
         href="/me"
         aria-label="我的世界杯"
-        className={`relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-white/[0.06] shadow-[0_0_28px_rgba(216,255,62,.14)] ring-1 transition ${
-          meActive ? "ring-volt/70" : "ring-white/12 hover:ring-volt/45"
+        className={`relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-white/[0.06] text-white/60 ring-1 transition-all duration-200 hover:bg-white/[0.1] hover:text-white ${
+          meActive ? "ring-volt/55" : "ring-white/[0.08] hover:ring-volt/35"
         }`}
       >
         {isSignedIn ? (
-          <Image src={avatarUrl || getPlayerAvatar(null)} alt="我的世界杯" fill sizes="48px" className="object-cover" />
+          <Image src={avatarUrl || getPlayerAvatar(null)} alt="我的世界杯" fill sizes="40px" className="object-cover" />
         ) : (
-          <UserRound className="h-5 w-5 text-volt" />
+          <UserRound className="h-4 w-4 text-volt" />
         )}
       </Link>
       </div>

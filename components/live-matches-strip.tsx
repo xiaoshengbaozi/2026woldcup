@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LiveMatchCard } from "@/components/world-cup-hero/live-match-card";
 import { generateMatchSlug } from "@/lib/match-detail";
 import { formatStageLabel } from "@/lib/stage";
+import { buildMatchRoundLabels } from "@/lib/stage-rounds";
 import { parseTeams } from "@/lib/teams";
 import type { Match } from "@/types/match";
 
@@ -52,6 +53,7 @@ export function LiveMatchesStrip({ matches }: LiveMatchesStripProps) {
   const displayMatches = liveNow.length ? liveNow : upcomingMatches;
   const isLive = liveNow.length > 0;
   const tickerWidth = displayMatches.length * TICKER_ITEM_WIDTH;
+  const roundLabels = useMemo(() => buildMatchRoundLabels(matches), [matches]);
 
   const animateTicker = useCallback(
     (time: number) => {
@@ -124,10 +126,10 @@ export function LiveMatchesStrip({ matches }: LiveMatchesStripProps) {
                 style={{ width: tickerWidth * 2 }}
               >
                 {displayMatches.map((match) => (
-                  <MatchTickerItem key={match.uid} match={match} isLive={isLive} />
+                  <MatchTickerItem key={match.uid} match={match} isLive={isLive} stageLabel={roundLabels.get(match.uid)} />
                 ))}
                 {displayMatches.map((match) => (
-                  <MatchTickerItem key={`dup-${match.uid}`} match={match} isLive={isLive} />
+                  <MatchTickerItem key={`dup-${match.uid}`} match={match} isLive={isLive} stageLabel={roundLabels.get(match.uid)} />
                 ))}
               </div>
             </div>
@@ -166,7 +168,7 @@ export function LiveMatchesStrip({ matches }: LiveMatchesStripProps) {
             {displayMatches.length ? (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {displayMatches.map((match) => (
-                  <LiveMatchCard key={match.uid} match={match} isLive={isLive} />
+                  <LiveMatchCard key={match.uid} match={match} isLive={isLive} stageLabel={roundLabels.get(match.uid)} />
                 ))}
               </div>
             ) : (
@@ -191,7 +193,7 @@ export function LiveMatchesStrip({ matches }: LiveMatchesStripProps) {
   );
 }
 
-function MatchTickerItem({ match, isLive }: { match: Match; isLive: boolean }) {
+function MatchTickerItem({ match, isLive, stageLabel }: { match: Match; isLive: boolean; stageLabel?: string }) {
   const teams = parseTeams(match.summary);
   const slug = generateMatchSlug(match.summary);
   const time = match.start.toLocaleTimeString("zh-CN", {
@@ -210,7 +212,7 @@ function MatchTickerItem({ match, isLive }: { match: Match; isLive: boolean }) {
       <span className="text-white/26">vs</span>
       <span className="truncate font-semibold text-white/72">{teams.away.name}</span>
       <span className="text-white/22">/</span>
-      <span className="truncate text-white/36">{formatStageLabel(match.stage)}</span>
+      <span className="truncate text-white/36">{stageLabel ?? formatStageLabel(match.stage)}</span>
       <span className={`ml-auto font-semibold ${isLive ? "text-volt" : "text-white/40"}`}>
         {time}
       </span>

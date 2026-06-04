@@ -51,11 +51,6 @@ const czechia: TeamProfile = {
       "highlight": true
     },
     {
-      "label": "所属足联",
-      "value": "UEFA",
-      "desc": "欧足联"
-    },
-    {
       "label": "最佳成绩",
       "value": "亚军",
       "desc": "捷克的世界杯最佳成绩为亚军。"
@@ -104,6 +99,67 @@ const czechia: TeamProfile = {
       "credit": "FIFA"
     }
   ],
+  "deepDive": {
+      "overviewStats": [
+          {
+              "label": "参赛次数",
+              "value": "10",
+              "note": "首次参赛 1934"
+          },
+          {
+              "label": "最佳战绩",
+              "value": "亚军",
+              "note": "1934、1962"
+          },
+          {
+              "label": "总进球",
+              "value": "47",
+              "note": "进失球 47 / 49"
+          },
+          {
+              "label": "总场次",
+              "value": "33",
+              "note": "胜平负 12-5-16"
+          },
+          {
+              "label": "首次参赛",
+              "value": "1934",
+              "note": "1934年意大利世界杯（亚军）"
+          }
+      ],
+      "coach": {
+          "name": "Miroslav Koubek",
+          "title": "捷克主教练",
+          "bio": "Czechia激动人心的附加赛胜利是Koubek执教的前两场比赛，这位74岁的老帅直到2025年12月才接手教鞭。他接替了Ivan Hasek，后者因球队在世界杯预选赛中意外负于Faroe Islands而被解职。Koubek球员时代司职门将，曾效力于Sparta Prague，上世纪80年代初开始执教生涯。他的执教经历包括三次执教Viktoria Plzen以及执教国家队U-19梯队。",
+          "image": "/team-profiles/czechia/czechia_team_profile_history-coach.jpg",
+          "imageAlt": "Miroslav Koubek执教捷克的 FIFA 官方配图",
+          "highlights": [
+              "官方球队档案",
+              "2026 北美世界杯",
+              "分组赛程已确认"
+          ]
+      },
+      "historyFacts": [],
+      "featureStory": {
+          "kicker": "FIFA 官方故事",
+          "title": "捷克的 2026 世界杯之路",
+          "body": [
+              "Czechia在欧洲区预选赛小组中位居亚军，落后于小组头名Croatia。这意味着他们进入了附加赛，首场半决赛对阵Republic of Ireland。当Czechia在Prague以0-2落后时，前景看似黯淡，但他们令人印象深刻地发起了反击——Patrik Schick罚入点球，随后Ladislav Krejci在比赛末段扳平比分。他们最终在点球大战中胜出，获得了主场迎战Denmark的机会。一场跌宕起伏的比赛再次以2-2进入加时赛，Pavel Sulc和队长Krejci分别为Koubek的球队建功。由于丹麦人在点球大战中四罚仅一",
+              "捷克将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。",
+              "捷克将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。"
+          ],
+          "image": "/team-profiles/czechia/czechia_team_profile_history-main.jpg",
+          "imageAlt": "捷克 FIFA 官方球队档案配图",
+          "source": "FIFA 官方球队档案"
+      },
+      "qualificationTimeline": [
+          "欧洲区附加赛晋级",
+          "获得席位",
+          "vs Korea Republic / Czechia",
+          "vs Czechia / South Africa",
+          "刷新队史最佳"
+      ]
+  },
   "keyPlayers": [
     {
       "number": 1,

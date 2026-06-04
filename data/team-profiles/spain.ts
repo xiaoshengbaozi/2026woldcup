@@ -147,11 +147,6 @@ const spain: TeamProfile = {
       "highlight": true
     },
     {
-      "label": "所属足联",
-      "value": "UEFA",
-      "desc": "欧足联"
-    },
-    {
       "label": "最佳成绩",
       "value": "Champions",
       "desc": "西班牙的世界杯最佳成绩为Champions。"
@@ -200,6 +195,67 @@ const spain: TeamProfile = {
       "credit": "FIFA"
     }
   ],
+  "deepDive": {
+      "overviewStats": [
+          {
+              "label": "参赛次数",
+              "value": "17",
+              "note": "首次参赛 1934"
+          },
+          {
+              "label": "最佳战绩",
+              "value": "冠军",
+              "note": "2010"
+          },
+          {
+              "label": "总进球",
+              "value": "108",
+              "note": "进失球 108 / 75"
+          },
+          {
+              "label": "总场次",
+              "value": "67",
+              "note": "胜平负 31-17-19"
+          },
+          {
+              "label": "首次参赛",
+              "value": "1934",
+              "note": "1934年意大利世界杯（四分之一决赛）"
+          }
+      ],
+      "coach": {
+          "name": "Luis de la Fuente",
+          "title": "西班牙主教练",
+          "bio": "De la Fuente于2022年12月接掌帅印，此前他在U-19和U-21国家队执教期间取得了出色的成绩，因此获得内部提拔。他的任期始于卡塔尔2022结束之后——当时Luis Enrique的球队在16强赛中被Morocco淘汰。这位战术家始终坚持积极进攻的核心理念，同时通过将控球打法与快速反击和攻守转换能力相结合，为球队增添了更大的灵活性。这位前边后卫还发掘了一大批极具天赋的年轻球员，以Pau Cubarsi、Dean Huijsen、Nico Williams和Lamine Yamal为代表——其中许多人在青年队时期就曾受教于他——他们正推动Sp",
+          "image": "/team-profiles/spain/spain_team_profile_history-coach.jpg",
+          "imageAlt": "Luis de la Fuente执教西班牙的 FIFA 官方配图",
+          "highlights": [
+              "官方球队档案",
+              "2026 北美世界杯",
+              "分组赛程已确认"
+          ]
+      },
+      "historyFacts": [],
+      "featureStory": {
+          "kicker": "FIFA 官方故事",
+          "title": "西班牙的 2026 世界杯之路",
+          "body": [
+              "西班牙将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。",
+              "西班牙将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。",
+              "西班牙将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。"
+          ],
+          "image": "/team-profiles/spain/spain_team_profile_history-main.jpg",
+          "imageAlt": "西班牙 FIFA 官方球队档案配图",
+          "source": "FIFA 官方球队档案"
+      },
+      "qualificationTimeline": [
+          "欧洲区晋级",
+          "获得席位",
+          "vs Spain vs Cabo Verde",
+          "vs Spain vs Saudi Arabia",
+          "冲击冠军"
+      ]
+  },
   "keyPlayers": [
     {
       "number": 11,

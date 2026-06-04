@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import matchStarPlayers from "@/data/match-star-players.json";
 import playerArticles from "@/data/player-articles.json";
+import { localizeCoachName } from "@/lib/coach-localization";
 import { parseTeams } from "@/lib/teams";
 import type { MatchDetail, LineupPlayer } from "@/types/match";
 
@@ -290,6 +292,7 @@ function FeaturedSquadSummary({
     .map((group) => ({ ...group, count: grouped[group.key]?.length ?? 0 }))
     .filter((group) => group.count > 0);
   const featuredPlayers = getFeaturedPlayers(players, teamCode).slice(0, 6);
+  const displayCoach = localizeCoachName(coach) || "待更新";
 
   return (
     <div className="flex min-h-[320px] flex-col justify-between rounded-3xl bg-white/[0.025] p-5 ring-1 ring-white/[0.055]">
@@ -307,7 +310,7 @@ function FeaturedSquadSummary({
           style={{ background: `linear-gradient(135deg, ${accentFrom}0.14), rgba(255,255,255,0.025))` }}
         >
           <p className="text-[10px] font-bold tracking-[0.16em] text-white/35">主教练</p>
-          <p className="mt-1 truncate text-lg font-black text-white">{coach || "待更新"}</p>
+          <p className="mt-1 truncate text-lg font-black text-white">{displayCoach}</p>
         </div>
       </div>
 
@@ -360,7 +363,7 @@ function FeaturedSquadSummary({
   );
 }
 
-type FeaturedCategory = "superstar" | "wonderkid" | "rating";
+type FeaturedCategory = "superstar" | "wonderkid" | "star" | "rating";
 
 type FeaturedPlayer = {
   player: LineupPlayer;
@@ -368,10 +371,15 @@ type FeaturedPlayer = {
 };
 
 type PlayerArticle = (typeof playerArticles.players)[number];
+type MatchStarPlayer = {
+  id: string | null;
+  aliases: string[];
+};
 
 const PLAYER_ARTICLES_BY_ID = new Map(
   playerArticles.players.map((player) => [String(player.apiPlayerId), player])
 );
+const MATCH_STAR_PLAYERS_BY_TEAM = matchStarPlayers.teams as Record<string, MatchStarPlayer[] | undefined>;
 
 function getFeaturedPlayers(players: LineupPlayer[], teamCode: string): FeaturedPlayer[] {
   const byPlayer = new Map<string, FeaturedPlayer>();
@@ -380,7 +388,10 @@ function getFeaturedPlayers(players: LineupPlayer[], teamCode: string): Featured
   for (const player of players) {
     const article = PLAYER_ARTICLES_BY_ID.get(player.id);
     const articleCategory = getArticleCategory(article, normalizedTeamCode);
-    const category = articleCategory ?? (player.rating && player.rating >= 7 ? "rating" : null);
+    const category =
+      articleCategory ??
+      (isMatchStarPlayer(player, normalizedTeamCode) ? "star" : null) ??
+      (player.rating && player.rating >= 7 ? "rating" : null);
     if (!category) continue;
 
     byPlayer.set(player.id, {
@@ -406,13 +417,44 @@ function getArticleCategory(article: PlayerArticle | undefined, teamCode: string
 function getFeaturedPriority(category: FeaturedCategory) {
   if (category === "superstar") return 0;
   if (category === "wonderkid") return 1;
-  return 2;
+  if (category === "star") return 2;
+  return 3;
 }
 
 function getFeaturedLabel(category: FeaturedCategory) {
   if (category === "superstar") return "超级巨星";
   if (category === "wonderkid") return "世界杯新星";
+  if (category === "star") return "核心球星";
   return "评分 7+";
+}
+
+function isMatchStarPlayer(player: LineupPlayer, teamCode: string) {
+  const teamStars = MATCH_STAR_PLAYERS_BY_TEAM[teamCode] ?? [];
+  if (!teamStars.length) return false;
+
+  const playerId = /^\d+$/.test(player.id) ? player.id : null;
+  const playerKeys = [player.name, player.nameEn, player.nameCn].map(normalizePlayerKey).filter(Boolean);
+
+  return teamStars.some((star) => {
+    if (playerId && star.id === playerId) return true;
+    const starKeys = star.aliases.map(normalizePlayerKey).filter(Boolean);
+    return playerKeys.some((playerKey) =>
+      starKeys.some((starKey) =>
+        playerKey === starKey ||
+        (playerKey.length >= 8 && starKey.includes(playerKey)) ||
+        (starKey.length >= 8 && playerKey.includes(starKey))
+      )
+    );
+  });
+}
+
+function normalizePlayerKey(value: string | null | undefined) {
+  return String(value ?? "")
+    .normalize("NFKD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\u4e00-\u9fff]+/g, "")
+    .trim();
 }
 
 function FeaturedPlayerRow({
@@ -588,7 +630,7 @@ function PlayerGrid({
               </span>
               <span className="text-[9px] text-white/25">({groupPlayers.length})</span>
             </div>
-            <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
+            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 sm:gap-2">
               {groupPlayers.map((player) => {
                 const idx = globalIndex++;
                 return (

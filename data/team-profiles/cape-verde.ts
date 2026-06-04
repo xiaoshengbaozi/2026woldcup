@@ -51,11 +51,6 @@ const capeVerde: TeamProfile = {
       "highlight": true
     },
     {
-      "label": "所属足联",
-      "value": "CAF",
-      "desc": "非洲足联"
-    },
-    {
       "label": "最佳成绩",
       "value": "待突破",
       "desc": "佛得角将在 2026 年冲击世界杯新突破。"
@@ -104,6 +99,67 @@ const capeVerde: TeamProfile = {
       "credit": "FIFA"
     }
   ],
+  "deepDive": {
+      "overviewStats": [
+          {
+              "label": "参赛次数",
+              "value": "1",
+              "note": "首次参赛"
+          },
+          {
+              "label": "最佳战绩",
+              "value": "首次参赛",
+              "note": "2026"
+          },
+          {
+              "label": "总进球",
+              "value": "待开启",
+              "note": "等待世界杯首球"
+          },
+          {
+              "label": "总场次",
+              "value": "待开启",
+              "note": "2026 正赛后更新"
+          },
+          {
+              "label": "首次参赛",
+              "value": "2026",
+              "note": "2026年"
+          }
+      ],
+      "coach": {
+          "name": "Bubista",
+          "title": "佛得角主教练",
+          "bio": "Pedro Leitao Brito，更为人熟知的名字是Bubista，是Cabo Verde足球领导力的代名词。作为国家队前队长和后卫，Bubista的球员生涯辗转于Angola、Spain和Portugal的俱乐部。他一直展现出出色的战术素养，坚信团队精神的重要性，从球员到教练的转型对他来说水到渠成。2020年担任主教练时，他的使命是将Blue Sharks带到他作为球员时只能梦想的高度。在Bubista的领导下，Cabo Verde经历了飞速崛起，最终历史性地获得了2026年世界杯参赛资格。主教练为国家队注入了一种以难以被击败为核心的特质。在整个成",
+          "image": "/team-profiles/cape-verde/cabo_verde_team_profile_history-coach.jpg",
+          "imageAlt": "Bubista执教佛得角的 FIFA 官方配图",
+          "highlights": [
+              "官方球队档案",
+              "2026 北美世界杯",
+              "分组赛程已确认"
+          ]
+      },
+      "historyFacts": [],
+      "featureStory": {
+          "kicker": "FIFA 官方故事",
+          "title": "佛得角的 2026 世界杯之路",
+          "body": [
+              "Cabo Verde出色的主场战绩——五战五胜且一球未失——是他们锁定世界杯席位的关键。因此，他们在Praia——在第十场也是最后一场预选赛中以3比0战胜Eswatini——确保出线也就不足为奇了。",
+              "佛得角将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。",
+              "佛得角将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。"
+          ],
+          "image": "/team-profiles/cape-verde/cabo_verde_team_profile_history-main.jpg",
+          "imageAlt": "佛得角 FIFA 官方球队档案配图",
+          "source": "FIFA 官方球队档案"
+      },
+      "qualificationTimeline": [
+          "非洲区 i组第2",
+          "获得席位",
+          "vs Spain / Cabo Verde",
+          "vs Uruguay / Cabo Verde",
+          "刷新队史最佳"
+      ]
+  },
   "keyPlayers": [
     {
       "number": 1,

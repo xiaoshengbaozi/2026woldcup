@@ -123,11 +123,6 @@ const sweden: TeamProfile = {
       "highlight": true
     },
     {
-      "label": "所属足联",
-      "value": "UEFA",
-      "desc": "欧足联"
-    },
-    {
       "label": "最佳成绩",
       "value": "Final",
       "desc": "瑞典的世界杯最佳成绩为Final。"
@@ -176,6 +171,67 @@ const sweden: TeamProfile = {
       "credit": "FIFA"
     }
   ],
+  "deepDive": {
+      "overviewStats": [
+          {
+              "label": "参赛次数",
+              "value": "13",
+              "note": "首次参赛 1934"
+          },
+          {
+              "label": "最佳战绩",
+              "value": "亚军",
+              "note": "1958"
+          },
+          {
+              "label": "总进球",
+              "value": "80",
+              "note": "进失球 80 / 73"
+          },
+          {
+              "label": "总场次",
+              "value": "51",
+              "note": "胜平负 19-13-19"
+          },
+          {
+              "label": "首次参赛",
+              "value": "1934",
+              "note": "1934年意大利世界杯"
+          }
+      ],
+      "coach": {
+          "name": "Graham Potter",
+          "title": "瑞典主教练",
+          "bio": "2025年10月，Potter接替Jon Dahl Tomasson出任Sweden主教练，这对这位英格兰人来说可谓是某种意义上的回归。Potter的执教生涯正是在Ostersund起步的，他将这支球队从瑞典足球第四级别联赛一路带到顶级联赛Allsvenskan，并在2017年夺得瑞典杯冠军，还率队打入了欧联杯小组赛。在Ostersund取得历史性成功后，Potter回到英格兰继续发展执教生涯，先后执教Swansea City、Brighton and Hove Albion——他在那里表现尤为出色——Chelsea和West Ham。这位50岁的教练精",
+          "image": "/team-profiles/sweden/sweden_team_profile_and_history-coach.jpg",
+          "imageAlt": "Graham Potter执教瑞典的 FIFA 官方配图",
+          "highlights": [
+              "官方球队档案",
+              "2026 北美世界杯",
+              "分组赛程已确认"
+          ]
+      },
+      "historyFacts": [],
+      "featureStory": {
+          "kicker": "FIFA 官方故事",
+          "title": "瑞典的 2026 世界杯之路",
+          "body": [
+              "Sweden从欧洲区预选赛的低迷表现中强势反弹，成功拿到了通往全球顶级赛事的入场券。这支北欧球队在欧洲区预选赛B组中排名垫底，未能赢得任何一场预选赛。但凭借欧国联排名，他们获得了参加欧洲区附加赛的资格。",
+              "最近一届世界杯：2018年俄罗斯世界杯（四分之一决赛）",
+              "瑞典将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。"
+          ],
+          "image": "/team-profiles/sweden/sweden_team_profile_and_history-main.jpg",
+          "imageAlt": "瑞典 FIFA 官方球队档案配图",
+          "source": "FIFA 官方球队档案"
+      },
+      "qualificationTimeline": [
+          "欧洲区附加赛晋级",
+          "获得席位",
+          "vs Sweden / Tunisia",
+          "vs Netherlands / Sweden",
+          "刷新队史最佳"
+      ]
+  },
   "keyPlayers": [
     {
       "number": 13,

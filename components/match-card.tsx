@@ -8,7 +8,15 @@ import { generateMatchSlug } from "@/lib/match-detail";
 import { formatStageLabel } from "@/lib/stage";
 import type { Match, Team } from "@/types/match";
 
-export function MatchCard({ match, timezoneOffset = 0 }: { match: Match; timezoneOffset?: number }) {
+export function MatchCard({
+  match,
+  timezoneOffset = 0,
+  stageLabel,
+}: {
+  match: Match;
+  timezoneOffset?: number;
+  stageLabel?: string;
+}) {
   const teams = parseTeams(match.summary);
   const details = detailRows(match);
   const venue = details.find((detail) => detail.type === "venue")?.text || localizeLocationText(match.location);
@@ -25,7 +33,7 @@ export function MatchCard({ match, timezoneOffset = 0 }: { match: Match; timezon
         <TeamBlock team={teams.home} align="left" />
         <div className="absolute left-1/2 -translate-x-1/2 flex w-20 shrink-0 flex-col items-center sm:w-auto">
           <div className="max-w-full truncate text-[10px] uppercase tracking-[0.12em] text-white/40 transition group-hover:text-volt/60 sm:text-xs sm:tracking-widest">
-            {formatStageLabel(match.stage)}
+            {stageLabel ?? formatStageLabel(match.stage)}
           </div>
           <div
             className="mt-1 text-lg font-semibold leading-none text-white transition group-hover:text-volt sm:text-3xl"

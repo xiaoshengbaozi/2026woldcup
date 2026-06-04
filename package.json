@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "players:todo": "node scripts/generate-player-translations-todo.mjs"
+    "players:todo": "node scripts/generate-player-translations-todo.mjs",
+    "players:stars": "node scripts/generate-match-star-players.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",

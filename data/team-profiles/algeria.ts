@@ -75,11 +75,6 @@ const algeria: TeamProfile = {
       "highlight": true
     },
     {
-      "label": "所属足联",
-      "value": "CAF",
-      "desc": "非洲足联"
-    },
-    {
       "label": "最佳成绩",
       "value": "16强",
       "desc": "阿尔及利亚的世界杯最佳成绩为16强。"
@@ -128,6 +123,67 @@ const algeria: TeamProfile = {
       "credit": "FIFA"
     }
   ],
+  "deepDive": {
+      "overviewStats": [
+          {
+              "label": "参赛次数",
+              "value": "5",
+              "note": "首次参赛 1982"
+          },
+          {
+              "label": "最佳战绩",
+              "value": "十六强",
+              "note": "2014"
+          },
+          {
+              "label": "总进球",
+              "value": "13",
+              "note": "进失球 13 / 19"
+          },
+          {
+              "label": "总场次",
+              "value": "13",
+              "note": "胜平负 3-3-7"
+          },
+          {
+              "label": "首次参赛",
+              "value": "1982",
+              "note": "1982年西班牙世界杯 (小组赛)"
+          }
+      ],
+      "coach": {
+          "name": "Vladimir Petkovic",
+          "title": "阿尔及利亚主教练",
+          "bio": "Petkovic于2024年2月接手Les Fennecs，带来了在瑞士执教多年积累的丰富经验，曾先后执教Bellinzona和Young Boys。在经历了Türkiye和Italy的执教经历——期间他于2013年带领Lazio赢得Coppa Italia——之后，这位经验丰富的战术大师接管了Swiss国家队的教鞭。在他的任期内，Nati闯入了2018/19赛季UEFA国家联赛的决赛圈，并打入2018年FIFA世界杯™十六强。在带领Swiss闯入UEFA EURO 2020四分之一决赛后，这位出生于Sarajevo的主教练曾短暂执教Bordeaux，随",
+          "image": "/team-profiles/algeria/algeria_team_profile_history-coach.jpg",
+          "imageAlt": "Vladimir Petkovic执教阿尔及利亚的 FIFA 官方配图",
+          "highlights": [
+              "官方球队档案",
+              "2026 北美世界杯",
+              "分组赛程已确认"
+          ]
+      },
+      "historyFacts": [],
+      "featureStory": {
+          "kicker": "FIFA 官方故事",
+          "title": "阿尔及利亚的 2026 世界杯之路",
+          "body": [
+              "Les Verts在非洲区预选赛第9轮以3-0击败Somalia，锁定了世界杯参赛资格。Algeria在整个预选赛中仅输一场——2024年6月6日主场1-2负于Guamarinea——另外还有1场平局和8场胜利。预选赛征程的核心推动力是Mohamed Amoura，他在G组打入10球，遥遥领先于同组其他球员（6名球员各入3球）。",
+              "上届世界杯: 2014年巴西世界杯 (十六强)",
+              "阿尔及利亚将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。"
+          ],
+          "image": "/team-profiles/algeria/algeria_team_profile_history-main.jpg",
+          "imageAlt": "阿尔及利亚 FIFA 官方球队档案配图",
+          "source": "FIFA 官方球队档案"
+      },
+      "qualificationTimeline": [
+          "非洲区晋级",
+          "获得席位",
+          "vs Argentina / Algeria",
+          "vs Jordan / Algeria",
+          "刷新队史最佳"
+      ]
+  },
   "keyPlayers": [
     {
       "number": 13,

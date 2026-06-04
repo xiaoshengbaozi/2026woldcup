@@ -69,11 +69,6 @@ const norway: TeamProfile = {
       "highlight": true
     },
     {
-      "label": "所属足联",
-      "value": "UEFA",
-      "desc": "欧足联"
-    },
-    {
       "label": "最佳成绩",
       "value": "16强",
       "desc": "挪威的世界杯最佳成绩为16强。"
@@ -122,6 +117,67 @@ const norway: TeamProfile = {
       "credit": "FIFA"
     }
   ],
+  "deepDive": {
+      "overviewStats": [
+          {
+              "label": "参赛次数",
+              "value": "4",
+              "note": "1"
+          },
+          {
+              "label": "最佳战绩",
+              "value": "十六强",
+              "note": "1938、1998"
+          },
+          {
+              "label": "总进球",
+              "value": "7",
+              "note": "进失球 7 / 8"
+          },
+          {
+              "label": "总场次",
+              "value": "8",
+              "note": "胜平负 2-3-3"
+          },
+          {
+              "label": "首次参赛",
+              "value": "1938",
+              "note": "1938年France"
+          }
+      ],
+      "coach": {
+          "name": "Stale Solbakken",
+          "title": "挪威主教练",
+          "bio": "Norway由一位深谙世界杯的主帅带领重返决赛圈。Solbakken在六年间为国家队出场58次，曾在1998年France赛事中出场三次，随后参加了Norway最近一次大赛——2000年UEFA欧洲杯。与球员生涯如出一辙，他于2002年在Hamarkameratene开启执教之路。此后他两次执教FC Copenhagen取得成功，期间还执教过Koln和Wolverhampton Wanderers，于2020年12月接替Lars Lagerback成为Norway主教练。",
+          "image": "/team-profiles/norway/norway_team_profile_history-coach.jpg",
+          "imageAlt": "Stale Solbakken执教挪威的 FIFA 官方配图",
+          "highlights": [
+              "官方球队档案",
+              "2026 北美世界杯",
+              "分组赛程已确认"
+          ]
+      },
+      "historyFacts": [],
+      "featureStory": {
+          "kicker": "FIFA 官方故事",
+          "title": "挪威的 2026 世界杯之路",
+          "body": [
+              "回顾Norway的世界杯历史、纪录和经典瞬间。关注他们通往赛事之路，了解最新赛程、分组和教练信息。Norway以完美的预选赛战绩强势锁定FIFA世界杯2026™参赛资格，结束了长达28年缺席世界杯决赛圈的历史。",
+              "Norway是整个预选赛中仅有的四支保持全胜战绩的球队之一，Solbakken的球队在欧洲区I组中八战全胜。他们成为欧洲大陆第九支取得100%胜率的球队。",
+              "Norway主教练：Stale Solbakken"
+          ],
+          "image": "/team-profiles/norway/norway_team_profile_history-main.jpg",
+          "imageAlt": "挪威 FIFA 官方球队档案配图",
+          "source": "FIFA 官方球队档案"
+      },
+      "qualificationTimeline": [
+          "欧洲区晋级",
+          "获得席位",
+          "北美备战",
+          "北美备战",
+          "刷新队史最佳"
+      ]
+  },
   "keyPlayers": [
     {
       "number": 1,

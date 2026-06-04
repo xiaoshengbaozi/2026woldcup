@@ -159,11 +159,6 @@ const argentina: TeamProfile = {
       "highlight": true
     },
     {
-      "label": "所属足联",
-      "value": "CONMEBOL",
-      "desc": "南美足联"
-    },
-    {
       "label": "最佳成绩",
       "value": "冠军",
       "desc": "阿根廷的世界杯最佳成绩为冠军。"
@@ -212,6 +207,67 @@ const argentina: TeamProfile = {
       "credit": "FIFA"
     }
   ],
+  "deepDive": {
+      "overviewStats": [
+          {
+              "label": "参赛次数",
+              "value": "19",
+              "note": "14次"
+          },
+          {
+              "label": "最佳战绩",
+              "value": "冠军×3",
+              "note": "1978、1986、2022"
+          },
+          {
+              "label": "总进球",
+              "value": "152",
+              "note": "进失球 152 / 101"
+          },
+          {
+              "label": "总场次",
+              "value": "88",
+              "note": "胜平负 47-17-24"
+          },
+          {
+              "label": "首次参赛",
+              "value": "1930",
+              "note": "1930年乌拉圭世界杯"
+          }
+      ],
+      "coach": {
+          "name": "Lionel Scaloni",
+          "title": "阿根廷主教练",
+          "bio": "当Scaloni于2018年8月首次执掌帅印时，他只是作为临时主教练接替Jorge Sampaoli那段动荡的任期——后者在2018年FIFA世界杯 Russia™十六强中以惨烈的方式败给了最终冠军France后下课。然而，这位曾担任Sampaoli助手的前右后卫/中场球员迅速在多个方面打上了自己的烙印。",
+          "image": "/team-profiles/argentina/argentina_team_profile_history-coach.jpg",
+          "imageAlt": "Lionel Scaloni执教阿根廷的 FIFA 官方配图",
+          "highlights": [
+              "官方球队档案",
+              "2026 北美世界杯",
+              "分组赛程已确认"
+          ]
+      },
+      "historyFacts": [],
+      "featureStory": {
+          "kicker": "FIFA 官方故事",
+          "title": "阿根廷的 2026 世界杯之路",
+          "body": [
+              "在卫冕之旅开启之际，我们审视Argentina的夺冠前景，重温他们在这项足球终极舞台上的辉煌历史。Argentina志在FIFA世界杯 2026™（加拿大、墨西哥和美国联合举办）上实现卫冕，这将是他们第19次出征世界杯。Lionel Scaloni的球队将以世界冠军和洲际冠军的双重身份——他们在2024年南美足联美洲杯上成功卫冕——以及南美区预选赛遥遥领先的身份昂首出征。在长期核心Lionel Messi的带领下，阿根廷人将力争成为自邻国兼宿敌Brazil在1958年瑞典世界杯夺冠并在四年后于智利成功卫冕以来，首支蝉联FIFA世界杯™",
+              "Scaloni的球队要感谢南美区预选赛第14轮Bolivia与Uruguay的平局，帮助他们在还剩5场比赛的情况下锁定了全球盛事的参赛资格——当时他们与Brazil在El Monumental的重磅对决尚未开球。在以4-1大胜宿敌后，阿根廷人以华丽的方式庆祝了第19次世界杯出线，随后以轻松的姿态完成了预选赛征程，以小组头名收官，最近的追赶者Ecuador落后多达9分。",
+              "上届世界杯: 2022年卡塔尔世界杯 (冠军)"
+          ],
+          "image": "/team-profiles/argentina/argentina_team_profile_history-main.jpg",
+          "imageAlt": "阿根廷 FIFA 官方球队档案配图",
+          "source": "FIFA 官方球队档案"
+      },
+      "qualificationTimeline": [
+          "南美区第1",
+          "获得席位",
+          "vs Argentina / Algeria",
+          "vs Argentina / Austria",
+          "冲击冠军"
+      ]
+  },
   "keyPlayers": [
     {
       "number": 13,

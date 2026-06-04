@@ -171,11 +171,6 @@ const germany: TeamProfile = {
       "highlight": true
     },
     {
-      "label": "所属足联",
-      "value": "UEFA",
-      "desc": "欧足联"
-    },
-    {
       "label": "最佳成绩",
       "value": "冠军",
       "desc": "德国的世界杯最佳成绩为冠军。"
@@ -224,6 +219,67 @@ const germany: TeamProfile = {
       "credit": "FIFA"
     }
   ],
+  "deepDive": {
+      "overviewStats": [
+          {
+              "label": "参赛次数",
+              "value": "21",
+              "note": "首次参赛 1934"
+          },
+          {
+              "label": "最佳战绩",
+              "value": "冠军×4",
+              "note": "1954、1974、1990、2014"
+          },
+          {
+              "label": "总进球",
+              "value": "232",
+              "note": "进失球 232 / 130"
+          },
+          {
+              "label": "总场次",
+              "value": "112",
+              "note": "胜平负 68-21-23"
+          },
+          {
+              "label": "首次参赛",
+              "value": "1934",
+              "note": "Italy 1934（第四名）"
+          }
+      ],
+      "coach": {
+          "name": "Julian Nagelsmann",
+          "title": "德国主教练",
+          "bio": "Nagelsmann于2023年9月在Hansi Flick被解职后走马上任，几乎没有时间为本土举行的UEFA欧洲杯2024做准备。他最初只签约至赛事结束，但在欧洲杯开赛前续约至2026年。此后他又与德国足协（DFB）签下了第三份合同，有效期至2028年欧洲杯结束。这位38岁的教练——Germany历史上最年轻的主教练——此前在Hoffenheim、RB Leipzig和Bayern Munich都有成功的执教经历，之后接受了DFB的召唤。他以善于为球队注入极强的战术灵活性而闻名，但在执教国家队期间，他总体上采用了一种控球型、积极逼抢的战术风格。在Nag",
+          "image": "/team-profiles/germany/germany_team_profile_history-coach.jpg",
+          "imageAlt": "Julian Nagelsmann执教德国的 FIFA 官方配图",
+          "highlights": [
+              "官方球队档案",
+              "2026 北美世界杯",
+              "分组赛程已确认"
+          ]
+      },
+      "historyFacts": [],
+      "featureStory": {
+          "kicker": "FIFA 官方故事",
+          "title": "德国的 2026 世界杯之路",
+          "body": [
+              "了解Germany的世界杯历史、纪录和难忘瞬间，关注他们通往本届赛事的征程，获取最新的赛程、分组和教练信息。",
+              "Germany在2025年11月的最后一场预选赛中锁定世界杯席位，以六战五胜的成绩位居A组榜首，力压Slovakia、Northern Ireland和Luxembourg，打入16球仅失3球。在Bratislava的首战意外以0-2落败后，Germany稳步提升，在最后一场主场比赛中以6-0大胜Slovakia，为成功的征程画上圆满句号。",
+              "上届世界杯：Qatar 2022（小组赛）"
+          ],
+          "image": "/team-profiles/germany/germany_team_profile_history-main.jpg",
+          "imageAlt": "德国 FIFA 官方球队档案配图",
+          "source": "FIFA 官方球队档案"
+      },
+      "qualificationTimeline": [
+          "欧洲区 A组第1",
+          "获得席位",
+          "vs Germany / Curaçao",
+          "vs Germany / Côte d'Ivoire",
+          "冲击冠军"
+      ]
+  },
   "keyPlayers": [
     {
       "number": 21,

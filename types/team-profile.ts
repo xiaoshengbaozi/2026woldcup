@@ -35,6 +35,38 @@ export interface GalleryItem {
   credit?: string;
 }
 
+export interface TeamProfileStat {
+  label: string;
+  value: string;
+  note?: string;
+}
+
+export interface TeamProfileCoach {
+  name: string;
+  title: string;
+  bio: string;
+  image?: string;
+  imageAlt?: string;
+  highlights?: string[];
+}
+
+export interface TeamProfileFeatureStory {
+  title: string;
+  kicker: string;
+  body: string[];
+  image: string;
+  imageAlt: string;
+  source?: string;
+}
+
+export interface TeamProfileDeepDive {
+  overviewStats: TeamProfileStat[];
+  coach: TeamProfileCoach;
+  historyFacts: TeamProfileStat[];
+  featureStory: TeamProfileFeatureStory;
+  qualificationTimeline: string[];
+}
+
 export interface TeamProfile {
   countryCode: string;
   fifaCode: string;
@@ -51,5 +83,6 @@ export interface TeamProfile {
   stories: TeamStory[];
   quote?: { text: string; source: string };
   gallery?: GalleryItem[];
+  deepDive?: TeamProfileDeepDive;
   keyPlayers: KeyPlayer[];
 }

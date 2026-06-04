@@ -1,11 +1,13 @@
 "use client";
 
-import { FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
+import { FormEvent, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Bookmark,
+  CalendarDays,
+  ChevronLeft,
   ChevronRight,
   Globe2,
   LogIn,
@@ -42,6 +44,27 @@ import playerNameTranslations from "@/data/localization/players.json";
 type AuthMode = "login" | "register";
 type RegisterStep = "account" | "preferences";
 type ContinentKey = "all" | "asia" | "europe" | "africa" | "americas" | "oceania";
+type MeTab = "players" | "teams" | "matches";
+type TimelineItem = {
+  id: string;
+  kind: "player" | "team" | "match";
+  title: string;
+  subtitle: string;
+  eyebrow: string;
+  href?: string;
+  image?: string;
+  homeName?: string;
+  awayName?: string;
+  homeFlag?: string;
+  awayFlag?: string;
+  startsAt?: string;
+};
+
+const ME_TABS: Array<{ id: MeTab; label: string; icon: ReactNode }> = [
+  { id: "players", label: "关注球员", icon: <UsersRound className="h-4 w-4" /> },
+  { id: "teams", label: "关注球队", icon: <Globe2 className="h-4 w-4" /> },
+  { id: "matches", label: "收藏比赛", icon: <Bookmark className="h-4 w-4" /> },
+];
 
 const PLAYER_NAME_TRANSLATIONS = playerNameTranslations as Record<string, string>;
 
@@ -213,6 +236,7 @@ export default function MePage() {
   const [email, setEmail] = useState("demo@worldcup.local");
   const [password, setPassword] = useState("worldcup2026");
   const [repeatPassword, setRepeatPassword] = useState("");
+  const [invitationCode, setInvitationCode] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>(compactIds(fallbackUserPreferenceCatalog.teams[0]?.id));
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>(compactIds(fallbackUserPreferenceCatalog.players[0]?.id));
@@ -275,6 +299,7 @@ export default function MePage() {
       setDisplayName("");
       setPassword("");
       setRepeatPassword("");
+      setInvitationCode("");
     }
   }
 
@@ -314,6 +339,7 @@ export default function MePage() {
     if (!password) return setError("请填写密码");
     if (password.length < 8) return setError("密码至少需要 8 位");
     if (password !== repeatPassword) return setError("两次输入的密码不一致");
+    if (!invitationCode.trim()) return setError("请填写邀请码");
 
     setRegisterStep("preferences");
   }
@@ -336,6 +362,7 @@ export default function MePage() {
         body: JSON.stringify({
           email,
           password,
+          invitationCode: invitationCode.trim(),
           displayName: displayName.trim(),
           avatarPlayerId,
           followedTeams,
@@ -364,14 +391,14 @@ export default function MePage() {
 
   return (
     <DashboardShell>
-      <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_334px] xl:grid-cols-[minmax(0,1fr)_360px]">
+      <section className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_310px] xl:grid-cols-[minmax(0,1fr)_340px]">
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-          className="hero-shell min-h-[760px] overflow-hidden p-5 sm:p-7 lg:p-8 order-last lg:order-none"
+          className="min-w-0 space-y-5 order-last lg:order-none"
         >
-          <div className="relative z-10 grid gap-9">
+          <section className="hero-card overflow-hidden p-5 sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <div className="glass-chip inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold uppercase text-volt">
@@ -384,27 +411,31 @@ export default function MePage() {
                 {home ? `${home.user.profile.displayName} 的关注与收藏。` : loading ? "正在同步个人数据。" : "登录后显示你的关注球员、球队和收藏比赛。"}
               </p>
             </div>
+          </section>
 
-            <ProfileBoard home={home} catalog={catalog} topScorers={topScorers} popularTeams={popularTeams} scheduleMatches={matches} />
-          </div>
+          <ProfileBoard home={home} catalog={catalog} topScorers={topScorers} popularTeams={popularTeams} scheduleMatches={matches} />
         </motion.div>
 
         <motion.aside
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
-          className="hero-card grid h-fit gap-5 p-5 sm:p-6 order-first lg:order-none"
+          className="hidden h-fit gap-5 lg:sticky lg:top-5 lg:grid"
         >
-          <AccountCard
-            home={home}
-            catalog={catalog}
-            avatarPlayerId={avatarPlayerId}
-            busy={busy}
-            onLogin={() => openAuth("login")}
-            onRegister={() => openAuth("register")}
-            onLogout={logout}
-          />
-          <ThemePreferenceCard />
+          <section className="hero-card grid gap-5 p-5 sm:p-6">
+            <AccountCard
+              home={home}
+              catalog={catalog}
+              avatarPlayerId={avatarPlayerId}
+              busy={busy}
+              onLogin={() => openAuth("login")}
+              onRegister={() => openAuth("register")}
+              onLogout={logout}
+            />
+            <ThemePreferenceCard />
+          </section>
+          <ScorerBoard players={topScorers} />
+          <PopularTeamsPanel teams={getDefaultPopularTeams(popularTeams, catalog.teams)} />
         </motion.aside>
       </section>
 
@@ -428,11 +459,13 @@ export default function MePage() {
                 email={email}
                 password={password}
                 repeatPassword={repeatPassword}
+                invitationCode={invitationCode}
                 error={error}
                 onDisplayNameChange={setDisplayName}
                 onEmailChange={setEmail}
                 onPasswordChange={setPassword}
                 onRepeatPasswordChange={setRepeatPassword}
+                onInvitationCodeChange={setInvitationCode}
                 onSwitchToLogin={() => openAuth("login")}
                 onSubmit={continueToPreferences}
               />
@@ -481,6 +514,7 @@ function ProfileBoard({
   popularTeams: Array<{ name: string; flag: string; pct: number; code: string }>;
   scheduleMatches: Match[];
 }) {
+  const [activeTab, setActiveTab] = useState<MeTab>("players");
   const players: PlayerCardItem[] = home?.user.followedPlayers.length
     ? home.user.followedPlayers.map((player) => ({
         id: player.id,
@@ -511,71 +545,149 @@ function ProfileBoard({
     ? home.user.favoriteMatches.slice(0, 4).map(matchPreferenceToCard)
     : getRecentScheduleMatches(scheduleMatches, catalog).slice(0, 4);
 
+  const timeline = buildTimelineItems(players, teams, matches, Boolean(home));
+
   return (
-    <div className="grid gap-8">
-      <BoardSection
-        title="关注球员"
-        count={home ? home.user.followedPlayers.length : players.length}
-        icon={<UsersRound className="h-4 w-4 text-volt" />}
-        href="/players"
-        linkLabel="更多"
-      >
-        <div className="flex gap-3 overflow-x-auto py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {players.slice(0, 6).map((player) => (
-            <PlayerBubble key={player.id} player={player} catalogPlayers={catalog.players} dimmed={!home} />
-          ))}
+    <div className="grid min-w-0 gap-5">
+      <section className="hero-card overflow-hidden px-4 py-4 sm:px-5">
+        <div className="flex flex-wrap gap-2" role="tablist" aria-label="我的关注分类">
+          {ME_TABS.map((tab) => {
+            const active = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => setActiveTab(tab.id)}
+                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition duration-300 ${
+                  active
+                    ? "bg-volt text-black shadow-[0_0_26px_rgba(216,255,62,.2)]"
+                    : "bg-white/[0.045] text-white/58 ring-1 ring-white/[0.08] hover:bg-white/[0.08] hover:text-white"
+                }`}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
-      </BoardSection>
 
-      <BoardSection
-        title="关注球队"
-        count={home ? home.user.followedTeams.length : teams.length}
-        icon={<Globe2 className="h-4 w-4 text-volt" />}
-        href="/teams"
-        linkLabel="更多"
-      >
-        <div className="grid grid-cols-4 gap-[18px] sm:grid-cols-6 lg:grid-cols-8">
-          {teams.slice(0, 8).map((team) => (
-            <TeamBadge key={team.id} team={team} dimmed={!home} />
-          ))}
-        </div>
-      </BoardSection>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="mt-5 lg:h-[132px]"
+          >
+            {activeTab === "players" && (
+              <ScrollableRail ariaLabel="滚动关注球员">
+                {players.slice(0, 8).map((player) => (
+                  <div key={player.id} className="w-32 shrink-0">
+                    <PlayerBubble player={player} catalogPlayers={catalog.players} dimmed={!home} />
+                  </div>
+                ))}
+              </ScrollableRail>
+            )}
+            {activeTab === "teams" && (
+              <ScrollableRail ariaLabel="滚动关注球队">
+                {teams.slice(0, 8).map((team) => (
+                  <div key={team.id} className="w-36 shrink-0 sm:w-40">
+                    <TeamBadge team={team} dimmed={!home} />
+                  </div>
+                ))}
+              </ScrollableRail>
+            )}
+            {activeTab === "matches" && (
+              <ScrollableRail ariaLabel="滚动收藏比赛">
+                {matches.slice(0, 4).map((match) => (
+                  <div key={match.id} className="w-[min(440px,82vw)] shrink-0">
+                    <MatchStrip match={match} dimmed={!home} />
+                  </div>
+                ))}
+              </ScrollableRail>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </section>
 
-      <BoardSection
-        title="收藏比赛"
-        count={home ? home.user.favoriteMatches.length : matches.length}
-        icon={<Bookmark className="h-4 w-4 text-volt" />}
-        href="/matches"
-        linkLabel="更多"
-      >
-        <div className="grid gap-4 xl:grid-cols-2">
-          {matches.slice(0, 4).map((match) => (
-            <MatchStrip key={match.id} match={match} dimmed={!home} />
-          ))}
+      <section className="min-w-0 space-y-4 overflow-hidden">
+        <div className="flex items-center justify-between gap-3 border-b border-white/[0.08] pb-3">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-volt/55">Timeline</p>
+            <h2 className="mt-1 text-base font-semibold text-white">综合时间线</h2>
+          </div>
+          <span className="rounded-full bg-white/[0.06] px-3 py-1 text-[11px] font-bold text-white/42">{timeline.length} 条</span>
         </div>
-      </BoardSection>
+        {timeline.map((item, index) => (
+          <TimelineCard key={item.id} item={item} index={index} />
+        ))}
+      </section>
     </div>
   );
 }
 
-function BoardSection({ title, count, icon, href, linkLabel, children }: { title: string; count: number; icon?: ReactNode; href?: string; linkLabel?: string; children: ReactNode }) {
+function ScrollableRail({ ariaLabel, children }: { ariaLabel: string; children: ReactNode }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const eps = 2;
+    setCanScrollLeft(el.scrollLeft > eps);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - eps);
+  }, []);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    checkScroll();
+    el.addEventListener("scroll", checkScroll, { passive: true });
+    const ro = new ResizeObserver(checkScroll);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", checkScroll);
+      ro.disconnect();
+    };
+  }, [checkScroll, children]);
+
+  const scroll = (dir: "left" | "right") => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir === "left" ? -el.clientWidth * 0.65 : el.clientWidth * 0.65, behavior: "smooth" });
+  };
+
   return (
-    <section className="grid gap-4">
-      <div className="flex items-center justify-between gap-4 border-b border-white/14 pb-3">
-        <div className="flex items-center gap-2">
-          {icon}
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-white">{title}</h2>
-          <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] font-bold text-white/40">{count}</span>
-        </div>
-        {href && (
-          <a href={href} className="group inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40 transition hover:text-volt">
-            {linkLabel || "更多"}
-            <ChevronRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
-          </a>
-        )}
+    <div className="relative">
+      <div ref={scrollRef} className="flex h-full items-start gap-3 overflow-x-auto py-2 pr-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {children}
       </div>
-      {children}
-    </section>
+
+      {canScrollLeft && (
+        <button
+          type="button"
+          aria-label={`${ariaLabel}向左`}
+          onClick={() => scroll("left")}
+          className="absolute left-0 top-1/2 z-10 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full bg-black/60 text-white/70 backdrop-blur-sm ring-1 ring-white/[0.1] transition hover:bg-volt hover:text-black"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+      )}
+
+      {canScrollRight && (
+        <button
+          type="button"
+          aria-label={`${ariaLabel}向右`}
+          onClick={() => scroll("right")}
+          className="absolute right-0 top-1/2 z-10 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full bg-black/60 text-white/70 backdrop-blur-sm ring-1 ring-white/[0.1] transition hover:bg-volt hover:text-black"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -649,6 +761,118 @@ function MatchTeam({ name, image, align }: { name: string; image?: string; align
         <p className="mt-0.5 truncate text-[10px] uppercase tracking-[0.12em] text-white/34">{align === "left" ? "Home" : "Away"}</p>
       </div>
     </div>
+  );
+}
+
+function TimelineCard({ item, index }: { item: TimelineItem; index: number }) {
+  const icon = item.kind === "player" ? <UsersRound className="h-4 w-4" /> : item.kind === "team" ? <Globe2 className="h-4 w-4" /> : <CalendarDays className="h-4 w-4" />;
+  const content = (
+    <motion.article
+      initial={{ opacity: 0, y: 14 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-80px" }}
+      transition={{ delay: Math.min(index * 0.03, 0.18), duration: 0.42 }}
+      className="group w-full max-w-full min-w-0 overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] transition-colors duration-300 hover:border-white/[0.1] hover:bg-white/[0.03]"
+    >
+      <div className="flex items-center gap-3 px-4 py-3 sm:px-5">
+        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-volt/[0.1] text-volt ring-1 ring-volt/20">{icon}</div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-bold text-white">{item.title}</p>
+          <p className="truncate text-xs text-white/36">{item.subtitle}</p>
+        </div>
+        <span className="shrink-0 rounded-full bg-white/[0.05] px-2.5 py-1 text-[10px] font-bold text-white/42">{item.eyebrow}</span>
+      </div>
+
+      {item.kind === "match" ? (
+        <div className="px-4 pb-4 sm:px-5">
+          <MatchStrip
+            match={{
+              id: item.id,
+              title: item.title,
+              startsAt: item.startsAt,
+              homeName: item.homeName || item.title,
+              awayName: item.awayName || "TBD",
+              homeFlag: item.homeFlag,
+              awayFlag: item.awayFlag,
+              href: item.href,
+            }}
+            dimmed={false}
+          />
+        </div>
+      ) : (
+        <div className="relative aspect-[16/9] w-full max-w-full min-w-0 overflow-hidden bg-white/[0.02] sm:aspect-[16/8] lg:aspect-[16/7]">
+          {item.image ? <Image src={item.image} alt={item.title} fill sizes="760px" className="object-cover opacity-70 transition duration-700 group-hover:scale-105 group-hover:opacity-90" /> : null}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
+            <p className="text-sm leading-6 text-white/62">{item.kind === "team" ? "球队文章稍后补充，当前先汇总关注球队的赛程线索与热度变化。" : "关注球员动态已进入你的个人时间线，后续可接入新闻、伤停与首发提醒。"}</p>
+          </div>
+        </div>
+      )}
+    </motion.article>
+  );
+
+  if (!item.href || item.kind === "match") return content;
+  return (
+    <Link href={item.href} className="block rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-volt/60">
+      {content}
+    </Link>
+  );
+}
+
+function ScorerBoard({ players }: { players: WorldCupTopScorer[] }) {
+  return (
+    <section className="hero-card overflow-hidden p-4">
+      <div className="flex items-center justify-between px-1 pb-2">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-volt/50">Ranking</p>
+          <h2 className="mt-0.5 text-sm font-bold text-white/80">射手榜</h2>
+        </div>
+        <Trophy className="h-4 w-4 text-volt/60" />
+      </div>
+      <div className="divide-y divide-white/[0.04]">
+        {fillTopScorers(players).slice(0, 6).map((player, index) => (
+          <Link key={player.id} href={`/players/${player.id}/`} className="group flex items-center gap-3 px-1 py-2.5 transition hover:bg-white/[0.03]">
+            <span className="w-4 text-center text-[11px] font-bold text-white/25 group-hover:text-white/50">{index + 1}</span>
+            <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full bg-white/[0.06]">
+              <Image src={player.photo} alt={player.name} fill sizes="32px" className="object-cover" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[13px] font-bold text-white/70 group-hover:text-white/90">{getLocalizedPlayerName({ id: player.id, name: player.name })}</p>
+              <p className="truncate text-[11px] text-white/30">{player.teamName}</p>
+            </div>
+            <span className="text-xs font-bold text-volt/60 group-hover:text-volt">{player.goals ?? "-"}</span>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function PopularTeamsPanel({ teams }: { teams: TeamCardItem[] }) {
+  return (
+    <section className="hero-card p-4">
+      <div className="flex items-center justify-between px-1 pb-3">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-volt/50">Teams</p>
+          <h2 className="mt-0.5 text-sm font-bold text-white/80">热门球队</h2>
+        </div>
+        <Globe2 className="h-4 w-4 text-volt/60" />
+      </div>
+      <div className="grid gap-2">
+        {teams.slice(0, 6).map((team) => (
+          <div key={team.id} className="flex items-center gap-3 rounded-2xl bg-white/[0.03] px-3 py-2.5 ring-1 ring-white/[0.05]">
+            <div className="relative h-8 w-11 shrink-0 overflow-hidden rounded-xl bg-white/[0.06] ring-1 ring-white/10">
+              {team.flag ? <Image src={team.flag} alt={team.name} fill sizes="44px" className="object-cover" /> : team.logo ? <Image src={team.logo} alt={team.name} fill sizes="44px" className="object-contain p-1.5" /> : null}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-white/76">{team.name}</p>
+              <p className="text-[10px] uppercase tracking-[0.14em] text-white/30">World Cup Signal</p>
+            </div>
+            {team.pct !== undefined && <span className="text-xs font-black text-volt">{team.pct}%</span>}
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -806,11 +1030,13 @@ function RegisterAccountForm({
   email,
   password,
   repeatPassword,
+  invitationCode,
   error,
   onDisplayNameChange,
   onEmailChange,
   onPasswordChange,
   onRepeatPasswordChange,
+  onInvitationCodeChange,
   onSwitchToLogin,
   onSubmit,
 }: {
@@ -818,11 +1044,13 @@ function RegisterAccountForm({
   email: string;
   password: string;
   repeatPassword: string;
+  invitationCode: string;
   error: string;
   onDisplayNameChange: (value: string) => void;
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
   onRepeatPasswordChange: (value: string) => void;
+  onInvitationCodeChange: (value: string) => void;
   onSwitchToLogin: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
@@ -832,6 +1060,7 @@ function RegisterAccountForm({
       <AuthInput label="邮箱" type="email" value={email} required onChange={onEmailChange} />
       <AuthInput label="密码" type="password" value={password} required onChange={onPasswordChange} />
       <AuthInput label="重复密码" type="password" value={repeatPassword} required onChange={onRepeatPasswordChange} />
+      <AuthInput label="邀请码" value={invitationCode} required onChange={onInvitationCodeChange} />
       <ModalFooter error={error}>
         <div className="flex flex-wrap items-center gap-3">
           <SecondaryButton type="button" onClick={onSwitchToLogin}>
@@ -1106,6 +1335,43 @@ function inferFavoriteMatches(catalog: UserPreferenceCatalog, teams: UserPrefere
   return catalog.matches.filter((match) => Array.from(tokens).some((token) => token && match.title.includes(token)));
 }
 
+function buildTimelineItems(players: PlayerCardItem[], teams: TeamCardItem[], matches: MatchCardItem[], isSignedIn: boolean): TimelineItem[] {
+  const playerItems: TimelineItem[] = players.slice(0, 3).map((player) => ({
+    id: `player-${player.id}`,
+    kind: "player",
+    title: player.name,
+    subtitle: player.team ? `${player.team} · 关注球员动态` : "关注球员动态",
+    eyebrow: isSignedIn ? "球员" : "推荐",
+    href: player.href,
+    image: player.photo,
+  }));
+
+  const teamItems: TimelineItem[] = teams.slice(0, 3).map((team) => ({
+    id: `team-${team.id}`,
+    kind: "team",
+    title: team.name,
+    subtitle: "球队文章稍后补充",
+    eyebrow: isSignedIn ? "球队" : "热门",
+    image: team.flag || team.logo,
+  }));
+
+  const matchItems: TimelineItem[] = matches.slice(0, 4).map((match) => ({
+    id: `match-${match.id}`,
+    kind: "match",
+    title: match.title,
+    subtitle: [match.stage, formatMatchTime(match.startsAt)].filter(Boolean).join(" · "),
+    eyebrow: isSignedIn ? "收藏" : "赛程",
+    href: match.href,
+    startsAt: match.startsAt,
+    homeName: match.homeName,
+    awayName: match.awayName,
+    homeFlag: match.homeFlag,
+    awayFlag: match.awayFlag,
+  }));
+
+  return [...playerItems, ...teamItems, ...matchItems];
+}
+
 function fillTopScorers(players: WorldCupTopScorer[]) {
   const byId = new Map<number, WorldCupTopScorer>();
   for (const player of [...players, ...DEFAULT_TOP_SCORERS]) {
@@ -1299,6 +1565,11 @@ function readableError(err: unknown, fallback: string) {
     email_already_registered: "这个邮箱已经注册过了",
     user_disabled: "这个账号已被停用",
     authentication_required: "请先登录",
+    invitation_code_required: "请填写邀请码",
+    invalid_invitation_code: "邀请码无效",
+    invitation_code_disabled: "这个邀请码已停用",
+    invitation_code_expired: "这个邀请码已过期",
+    invitation_code_exhausted: "这个邀请码使用次数已满",
   };
   return messages[message] ?? fallback;
 }

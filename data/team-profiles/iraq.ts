@@ -51,11 +51,6 @@ const iraq: TeamProfile = {
       "highlight": true
     },
     {
-      "label": "所属足联",
-      "value": "AFC",
-      "desc": "亚洲足联"
-    },
-    {
       "label": "最佳成绩",
       "value": "小组赛",
       "desc": "伊拉克的世界杯最佳成绩为小组赛。"
@@ -104,6 +99,67 @@ const iraq: TeamProfile = {
       "credit": "FIFA"
     }
   ],
+  "deepDive": {
+      "overviewStats": [
+          {
+              "label": "参赛次数",
+              "value": "2",
+              "note": "首次参赛 1986"
+          },
+          {
+              "label": "最佳战绩",
+              "value": "小组赛",
+              "note": "1986"
+          },
+          {
+              "label": "总进球",
+              "value": "1",
+              "note": "进失球 1 / 4"
+          },
+          {
+              "label": "总场次",
+              "value": "3",
+              "note": "胜平负 0-0-3"
+          },
+          {
+              "label": "首次参赛",
+              "value": "1986",
+              "note": "Mexico 1986"
+          }
+      ],
+      "coach": {
+          "name": "待确认",
+          "title": "伊拉克主教练",
+          "bio": "力争超越1986年墨西哥世界杯小组赛出局的成绩",
+          "image": "/team-profiles/iraq/iraq_team_profile_history-coach.jpg",
+          "imageAlt": "待确认执教伊拉克的 FIFA 官方配图",
+          "highlights": [
+              "官方球队档案",
+              "2026 北美世界杯",
+              "分组赛程已确认"
+          ]
+      },
+      "historyFacts": [],
+      "featureStory": {
+          "kicker": "FIFA 官方故事",
+          "title": "伊拉克的 2026 世界杯之路",
+          "body": [
+              "被 Sierra Madre Oriental 山脉环绕的 Monterrey，是通往世界杯漫长而曲折攀登的最后一个高峰。Basra、Hanoi、Manila、Jakarta、Kuwait City、Seoul、Muscat、Amman、Jeddah 和 Abu Dhabi，是这段史诗般的21场预选赛征程中的各个站点。",
+              "伊拉克将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。",
+              "伊拉克将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。"
+          ],
+          "image": "/team-profiles/iraq/iraq_team_profile_history-main.jpg",
+          "imageAlt": "伊拉克 FIFA 官方球队档案配图",
+          "source": "FIFA 官方球队档案"
+      },
+      "qualificationTimeline": [
+          "洲际附加赛晋级",
+          "获得席位",
+          "北美备战",
+          "北美备战",
+          "刷新队史最佳"
+      ]
+  },
   "keyPlayers": [
     {
       "number": 1,

@@ -2,17 +2,68 @@
   "players": {
     "130": "Nélson Semedo",
     "228": "A. Obispo",
+    "328": "Fabián Ruiz",
     "369": "Diogo Costa",
+    "509": "A. Davies",
+    "538": "F. de Jong",
     "567": "Rúben Dias",
+    "619": "Eric García",
     "636": "Bernardo Silva",
+    "667": "M. Depay",
+    "792": "J. Kluivert",
     "874": "Cristiano Ronaldo",
+    "1150": "T. Adams",
+    "1460": "B. Saka",
+    "1646": "Lucas Paquetá",
     "2543": "Almoez Ali",
+    "2697": "M. Torabi",
+    "6236": "A. Cubas",
+    "8500": "W. Endo",
+    "10135": "Bruno Guimarães",
+    "13151": "J. Portilla",
+    "13571": "W. Ditta",
+    "14114": "V. Griffith",
+    "18938": "A. Jones",
     "19366": "O. Watkins",
+    "19974": "I. Toney",
+    "20836": "C. Operi",
+    "20850": "C. Arcus",
     "22236": "Rafael Leão",
+    "25927": "J. Mateta",
+    "30432": "M. de Roon",
+    "32862": "T. Kubo",
+    "32966": "A. Tanaka",
+    "35690": "L. Chávez",
+    "35885": "A. Zendejas",
+    "36111": "C. Huerta",
+    "36905": "G. Til",
+    "37724": "C. Summerville",
+    "38114": "K. Itakura",
+    "38746": "J. Timber",
+    "44791": "A. Tshibola",
+    "47311": "Mikel Merino",
+    "47582": "C. Hernández",
+    "53517": "D. Hadzikadunic",
     "57910": "T. Rodríguez",
     "58929": "Favio Ramiro Álvarez",
+    "70670": "I. Pitta",
+    "78547": "A. Johnston",
+    "92993": "M. Wieffer",
+    "94562": "S. Giménez",
+    "127429": "I. Rayners",
+    "161904": "B. Barcola",
+    "163041": "B. Cross",
     "183799": "Nico Williams",
-    "423737": "Tahsin Jamshid"
+    "194536": "R. Roefs",
+    "292396": "A. Londoño",
+    "295793": "Marc Pubill",
+    "296667": "Gavi",
+    "359561": "K. Sebelebele",
+    "392387": "O. Makhanya",
+    "407017": "M. Bombito",
+    "423737": "Tahsin Jamshid",
+    "446130": "M. Jurkas",
+    "547307": "Cho Wi-Je"
   },
   "clubs": {
     "Monaco": "Monaco",
@@ -34,7 +85,17 @@
     "Tottenham": "Tottenham",
     "Nottingham Forest": "Nottingham Forest",
     "Penarol": "Penarol",
-    "Norway": "Norway"
+    "Norway": "Norway",
+    "Real Madrid II": "Real Madrid II",
+    "Como": "Como",
+    "Flamengo": "Flamengo",
+    "NAC Breda": "NAC Breda",
+    "Anderlecht": "Anderlecht",
+    "Southampton": "Southampton",
+    "NEC Nijmegen": "NEC Nijmegen",
+    "VfL Wolfsburg": "VfL Wolfsburg",
+    "Machida Zelvia": "Machida Zelvia",
+    "Kashima": "Kashima"
   },
   "leagues": {
     "MLS All-Star": "MLS All-Star",
@@ -104,7 +165,17 @@
     "Trofeo de Campeones": "Trofeo de Campeones",
     "AFC Champions League Elite": "AFC Champions League Elite",
     "EAFF E-1 Football Championship": "EAFF E-1 Football Championship",
-    "CONMEBOL U20": "CONMEBOL U20"
+    "CONMEBOL U20": "CONMEBOL U20",
+    "Saudi League": "Saudi League",
+    "Super League": "Super League",
+    "Eredivisie": "Eredivisie",
+    "KNVB Beker": "KNVB Beker",
+    "Emirates Cup": "Emirates Cup",
+    "U18 Premier League": "U18 Premier League",
+    "UEFA U17 Championship - Qualification": "UEFA U17 Championship - Qualification",
+    "Premiership": "Premiership",
+    "Kirin Cup": "Kirin Cup",
+    "J-League Cup": "J-League Cup"
   },
   "positions": {},
   "countries": {
@@ -115,7 +186,9 @@
     "Sweden": "Sweden",
     "Italy": "Italy",
     "Africa": "Africa",
-    "South-America": "South-America"
+    "South-America": "South-America",
+    "Saudi Arabia": "Saudi Arabia",
+    "Scotland": "Scotland"
   },
   "transferTypes": {
     "€ 180M": "€ 180M",
@@ -123,7 +196,9 @@
     "Back from Loan": "Back from Loan",
     "€ 5M": "€ 5M",
     "€ 20M": "€ 20M",
-    "€ 75M": "€ 75M"
+    "€ 75M": "€ 75M",
+    "€ 6M": "€ 6M",
+    "€ 45M": "€ 45M"
   },
   "trophyPlaces": {},
   "injuryTypes": {
@@ -151,12 +226,23 @@
     "Facial Injury": "Facial Injury",
     "Hand Injury": "Hand Injury",
     "Thumb / Wrist Injury": "Thumb / Wrist Injury",
-    "MCL Knee Injury": "MCL Knee Injury"
+    "MCL Knee Injury": "MCL Knee Injury",
+    "Arm Injury": "Arm Injury",
+    "Dead Leg": "Dead Leg",
+    "Achilles Tendon Rupture": "Achilles Tendon Rupture",
+    "International duty": "International duty"
   },
   "birthPlaces": {
     "Mataró": "Mataró",
     "Chlef": "Chlef",
     "Leeds": "Leeds",
-    "Torreón": "Torreón"
+    "Torreón": "Torreón",
+    "Frammersbach": "Frammersbach",
+    "Tokyo": "Tokyo"
+  },
+  "coaches": {
+    "S. Migné": "S. Migné",
+    "Rui Águas": "Rui Águas",
+    "D. Deschamps": "D. Deschamps"
   }
 }

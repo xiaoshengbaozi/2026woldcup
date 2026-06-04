@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
 import playerRows from "@/data/player-translations.todo.json";
 import playerArticles from "@/data/player-articles.json";
+import fifaOfficialSquads from "@/data/fifa-official-squads.json";
+import playerNameTranslations from "@/data/localization/players.json";
+import { localizeCountryCode } from "@/lib/team-localization";
 import { PlayerProfileClient } from "./player-profile-client";
 
 type Props = {
   params: { id: string };
 };
+
+const PLAYER_NAME_TRANSLATIONS = playerNameTranslations as Record<string, string>;
 
 const countryNameCn: Record<string, string> = {
   Argentina: "阿根廷",
@@ -34,8 +39,9 @@ export function generateStaticParams() {
     .filter((row) => Number.isFinite(row.apiPlayerId))
     .map((row) => ({ id: String(row.apiPlayerId) }));
   const articleParams = playerArticles.players.map((player) => ({ id: String(player.apiPlayerId) }));
+  const officialSquadParams = getOfficialSquadRows().map((row) => ({ id: String(row.apiPlayerId) }));
 
-  return [...rowParams, ...articleParams].filter(
+  return [...rowParams, ...articleParams, ...officialSquadParams].filter(
     (param, index, params) => params.findIndex((item) => item.id === param.id) === index
   );
 }
@@ -43,7 +49,8 @@ export function generateStaticParams() {
 export function generateMetadata({ params }: Props): Metadata {
   const row = playerRows.rows.find((item) => String(item.apiPlayerId) === params.id);
   const article = playerArticles.players.find((item) => String(item.apiPlayerId) === params.id);
-  const name = article?.nameCn || row?.nameCn || row?.nameEn || "球员";
+  const officialRow = getOfficialSquadRow(params.id);
+  const name = article?.nameCn || row?.nameCn || row?.nameEn || officialRow?.nameCn || officialRow?.nameEn || "球员";
 
   return {
     title: `${name} | 2026 世界杯球员档案`,
@@ -54,6 +61,7 @@ export function generateMetadata({ params }: Props): Metadata {
 export default function PlayerPage({ params }: Props) {
   const row = playerRows.rows.find((item) => String(item.apiPlayerId) === params.id);
   const article = playerArticles.players.find((item) => String(item.apiPlayerId) === params.id);
+  const officialRow = getOfficialSquadRow(params.id);
   const articleRow = article
     ? {
         apiPlayerId: article.apiPlayerId,
@@ -66,7 +74,39 @@ export default function PlayerPage({ params }: Props) {
         photo: article.photo,
       }
     : null;
-  const nameHint = row?.nameEn || article?.nameEn || row?.nameCn || article?.nameCn || "";
+  const nameHint = row?.nameEn || article?.nameEn || officialRow?.nameEn || row?.nameCn || article?.nameCn || officialRow?.nameCn || "";
 
-  return <PlayerProfileClient playerId={params.id} nameHint={nameHint} row={row ?? articleRow ?? null} article={article ?? null} />;
+  return <PlayerProfileClient playerId={params.id} nameHint={nameHint} row={row ?? articleRow ?? officialRow ?? null} article={article ?? null} />;
+}
+
+function getOfficialSquadRow(playerId: string) {
+  return getOfficialSquadRows().find((row) => String(row.apiPlayerId) === playerId) ?? null;
+}
+
+function getOfficialSquadRows() {
+  return Object.entries(fifaOfficialSquads.squads ?? {}).flatMap(([teamCode, squad]) =>
+    (squad.players ?? [])
+      .filter((player) => Number.isFinite(player.apiFootballId))
+      .map((player) => {
+        const apiPlayerId = player.apiFootballId ?? null;
+        return {
+          apiPlayerId,
+          teamCode,
+          countryCn: localizeCountryCode(teamCode),
+          nameEn: player.name,
+          nameCn: (apiPlayerId ? PLAYER_NAME_TRANSLATIONS[String(apiPlayerId)] : "") || player.name,
+          positionCn: localizeOfficialPosition(player.position),
+          number: player.number ?? null,
+          photo: apiPlayerId ? `https://media.api-sports.io/football/players/${apiPlayerId}.png` : "",
+        };
+      })
+  );
+}
+
+function localizeOfficialPosition(position: string | null | undefined) {
+  if (position === "GK") return "门将";
+  if (position === "DF") return "后卫";
+  if (position === "MF") return "中场";
+  if (position === "FW") return "前锋";
+  return "位置待更新";
 }

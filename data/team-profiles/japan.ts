@@ -93,11 +93,6 @@ const japan: TeamProfile = {
       "highlight": true
     },
     {
-      "label": "所属足联",
-      "value": "AFC",
-      "desc": "亚洲足联"
-    },
-    {
       "label": "最佳成绩",
       "value": "16强",
       "desc": "日本的世界杯最佳成绩为16强。"
@@ -146,6 +141,67 @@ const japan: TeamProfile = {
       "credit": "FIFA"
     }
   ],
+  "deepDive": {
+      "overviewStats": [
+          {
+              "label": "参赛次数",
+              "value": "8",
+              "note": "首次参赛 1998"
+          },
+          {
+              "label": "最佳战绩",
+              "value": "十六强",
+              "note": "2002、2010、2018、2022"
+          },
+          {
+              "label": "总进球",
+              "value": "25",
+              "note": "进失球 25 / 33"
+          },
+          {
+              "label": "总场次",
+              "value": "25",
+              "note": "胜平负 7-6-12"
+          },
+          {
+              "label": "首次参赛",
+              "value": "1998",
+              "note": "France 1998"
+          }
+      ],
+      "coach": {
+          "name": "待确认",
+          "title": "日本主教练",
+          "bio": "Japan 以创纪录的速度锁定连续第八次FIFA世界杯参赛资格",
+          "image": "/team-profiles/japan/japan_team_profile_history-coach.jpg",
+          "imageAlt": "待确认执教日本的 FIFA 官方配图",
+          "highlights": [
+              "官方球队档案",
+              "2026 北美世界杯",
+              "分组赛程已确认"
+          ]
+      },
+      "historyFacts": [],
+      "featureStory": {
+          "kicker": "FIFA 官方故事",
+          "title": "日本的 2026 世界杯之路",
+          "body": [
+              "在亚足联预选赛第二轮中，Japan 与 Korea DPR、Syria 和 Myanmar 同组。他们攻入24球且一球未失，六战全胜轻松拿下小组头名。第三轮他们延续强势表现，接连战胜 China PR、Bahrain 和 Saudi Arabia。随后战平 Australia，接着击败 Indonesia，并在与中国 PR 和 Bahrain 的次回合比赛中提前锁定晋级资格。这不仅使 Japan 成为继三个东道主之后第一支晋级世界杯的球队，也创下了他们史上最快的晋级纪录。",
+              "上届世界杯: Qatar 2022 (16强)",
+              "日本将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。"
+          ],
+          "image": "/team-profiles/japan/japan_team_profile_history-main.jpg",
+          "imageAlt": "日本 FIFA 官方球队档案配图",
+          "source": "FIFA 官方球队档案"
+      },
+      "qualificationTimeline": [
+          "亚洲区小组第1",
+          "获得席位",
+          "北美备战",
+          "北美备战",
+          "刷新队史最佳"
+      ]
+  },
   "keyPlayers": [
     {
       "number": 1,

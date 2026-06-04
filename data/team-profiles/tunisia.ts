@@ -87,11 +87,6 @@ const tunisia: TeamProfile = {
       "highlight": true
     },
     {
-      "label": "所属足联",
-      "value": "CAF",
-      "desc": "非洲足联"
-    },
-    {
       "label": "最佳成绩",
       "value": "待突破",
       "desc": "突尼斯将在 2026 年冲击世界杯新突破。"
@@ -140,6 +135,67 @@ const tunisia: TeamProfile = {
       "credit": "FIFA"
     }
   ],
+  "deepDive": {
+      "overviewStats": [
+          {
+              "label": "参赛次数",
+              "value": "7",
+              "note": "首次参赛 1978"
+          },
+          {
+              "label": "最佳战绩",
+              "value": "小组赛",
+              "note": "队史最佳"
+          },
+          {
+              "label": "总进球",
+              "value": "14",
+              "note": "进失球 14 / 26"
+          },
+          {
+              "label": "总场次",
+              "value": "18",
+              "note": "胜平负 3-5-10"
+          },
+          {
+              "label": "首次参赛",
+              "value": "1978",
+              "note": "1978年阿根廷世界杯（小组赛）"
+          }
+      ],
+      "coach": {
+          "name": "Sabri Lamouchi",
+          "title": "突尼斯主教练",
+          "bio": "在Sami Trabelsi因2025年非洲杯出局而离任后，Lamouchi将在世界杯上执教Tunisia。这位54岁的前法国国脚并非首次在全球顶级赛事中执教球队，他曾在2014年巴西世界杯上执教Cote d'Ivoire。",
+          "image": "/team-profiles/tunisia/tunisia_team_profile_history-coach.jpg",
+          "imageAlt": "Sabri Lamouchi执教突尼斯的 FIFA 官方配图",
+          "highlights": [
+              "官方球队档案",
+              "2026 北美世界杯",
+              "分组赛程已确认"
+          ]
+      },
+      "historyFacts": [],
+      "featureStory": {
+          "kicker": "FIFA 官方故事",
+          "title": "突尼斯的 2026 世界杯之路",
+          "body": [
+              "全面了解Tunisia在FIFA世界杯的历史、纪录和难忘瞬间，关注他们通往本届赛事的征程。对Tunisia来说，晋级FIFA世界杯已不再是罕见之事。迦太基之鹰通过获得2026年北美FIFA世界杯的参赛资格，持续巩固着他们在全球舞台上的地位。这是他们第七次参加世界杯，也是连续第三届，Tunisia如今在21世纪的七届世界杯中已参加过五届。尽管他们从未突破小组赛阶段，但近年来多次参赛积累的经验将为球队提供宝贵财富，当他们明年踏上加拿大、墨西哥和美国的赛场时，这股势头将是突破瓶颈的关键。",
+              "Tunisia在预选赛初期便掌控了局面，在Faouzi Benzarti执教期间取得三胜一平。当前教练Sami Trabelsi接替Benzarti后，球队更上一层楼，连赢六场，在CAF预选赛小组中以30分中的28分遥遥领先。值得一提的是，迦太基之鹰在10场比赛中一球未失——这是一项卓越的防守成就，体现了球队的组织性和纪律性。",
+              "最近一届世界杯：2022年卡塔尔世界杯（小组赛）"
+          ],
+          "image": "/team-profiles/tunisia/tunisia_team_profile_history-main.jpg",
+          "imageAlt": "突尼斯 FIFA 官方球队档案配图",
+          "source": "FIFA 官方球队档案"
+      },
+      "qualificationTimeline": [
+          "非洲区晋级",
+          "获得席位",
+          "vs Sweden / Tunisia",
+          "vs Tunisia / Japan",
+          "刷新队史最佳"
+      ]
+  },
   "keyPlayers": [
     {
       "number": 7,

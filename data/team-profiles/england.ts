@@ -147,11 +147,6 @@ const england: TeamProfile = {
       "highlight": true
     },
     {
-      "label": "所属足联",
-      "value": "UEFA",
-      "desc": "欧足联"
-    },
-    {
       "label": "最佳成绩",
       "value": "Champions",
       "desc": "英格兰的世界杯最佳成绩为Champions。"
@@ -200,6 +195,67 @@ const england: TeamProfile = {
       "credit": "FIFA"
     }
   ],
+  "deepDive": {
+      "overviewStats": [
+          {
+              "label": "参赛次数",
+              "value": "17",
+              "note": "8（自1998年起）"
+          },
+          {
+              "label": "最佳战绩",
+              "value": "冠军",
+              "note": "1966"
+          },
+          {
+              "label": "总进球",
+              "value": "104",
+              "note": "进失球 104 / 68"
+          },
+          {
+              "label": "总场次",
+              "value": "74",
+              "note": "胜平负 32-22-20"
+          },
+          {
+              "label": "首次参赛",
+              "value": "1950",
+              "note": "Brazil 1950"
+          }
+      ],
+      "coach": {
+          "name": "Thomas Tuchel",
+          "title": "英格兰主教练",
+          "bio": "Tuchel于2024年10月在Gareth Southgate离任后被确认为新任England主帅，但直到次年1月才正式上任。这位德国人是第三位执教三狮军团的外籍教练，球员生涯并不突出，早早退役后转型为教练。与同胞Jurgen Klopp类似，Tuchel在Mainz开启教练生涯，随后在Borussia Dortmund取得更大成功。此后他先后带领Paris Saint-Germain、Chelsea和Bayern Munich夺得奖杯，之后入主England帅位。",
+          "image": "/team-profiles/england/england_team_profile_history-coach.jpg",
+          "imageAlt": "Thomas Tuchel执教英格兰的 FIFA 官方配图",
+          "highlights": [
+              "官方球队档案",
+              "2026 北美世界杯",
+              "分组赛程已确认"
+          ]
+      },
+      "historyFacts": [],
+      "featureStory": {
+          "kicker": "FIFA 官方故事",
+          "title": "英格兰的 2026 世界杯之路",
+          "body": [
+              "了解England的世界杯历史、纪录和难忘瞬间，关注他们通往本届赛事的征程，获取最新的赛程、分组和教练信息。England已确保FIFA世界杯2026的参赛资格，三狮军团将第17次出征世界杯，也是连续第八次参赛。本届赛事将首次由三个国家联合举办：Canada、Mexico和United States。这支欧洲劲旅渴望终结长达60年的冠军等待——England上一次夺冠是在1966年本土世界杯上于Wembley以4-2击败West Germany。此后，他们在1990年和2018年两次闯入半决赛，还有五次止步八强。在欧洲赛场上，三狮军团",
+              "England是首支锁定世界杯决赛圈席位的欧洲球队，于2025年10月提前两轮完成这一壮举。Tuchel的球队在前六场比赛中全部获胜且一球未失，从包含Serbia、Albania、Latvia和Andorra的小组中迅速出线。",
+              "上届世界杯：Qatar 2022（四分之一决赛）"
+          ],
+          "image": "/team-profiles/england/england_team_profile_history-main.jpg",
+          "imageAlt": "英格兰 FIFA 官方球队档案配图",
+          "source": "FIFA 官方球队档案"
+      },
+      "qualificationTimeline": [
+          "欧洲区小组第1",
+          "获得席位",
+          "vs England / Croatia",
+          "vs England / Ghana",
+          "冲击冠军"
+      ]
+  },
   "keyPlayers": [
     {
       "number": 1,

@@ -87,11 +87,6 @@ const colombia: TeamProfile = {
       "highlight": true
     },
     {
-      "label": "所属足联",
-      "value": "CONMEBOL",
-      "desc": "南美足联"
-    },
-    {
       "label": "最佳成绩",
       "value": "八强",
       "desc": "哥伦比亚的世界杯最佳成绩为八强。"
@@ -140,6 +135,67 @@ const colombia: TeamProfile = {
       "credit": "FIFA"
     }
   ],
+  "deepDive": {
+      "overviewStats": [
+          {
+              "label": "参赛次数",
+              "value": "7",
+              "note": "首次参赛 1962"
+          },
+          {
+              "label": "最佳战绩",
+              "value": "八强",
+              "note": "2014"
+          },
+          {
+              "label": "总进球",
+              "value": "32",
+              "note": "进失球 32 / 30"
+          },
+          {
+              "label": "总场次",
+              "value": "22",
+              "note": "胜平负 9-3-10"
+          },
+          {
+              "label": "首次参赛",
+              "value": "1962",
+              "note": "1962年智利世界杯"
+          }
+      ],
+      "coach": {
+          "name": "Nestor Lorenzo",
+          "title": "哥伦比亚主教练",
+          "bio": "尽管作为主教练的履历可能不算特别丰富，但Lorenzo拥有丰富的足球经验，无论是作为球员还是教练组成员。在2014年和2018年世界杯期间担任Jose Pekerman的得力助手，这位阿根廷人对国家队的运作了如指掌，也深知参加世界杯意味着什么。2022年6月执掌帅印后，Lorenzo迅速打造了一种令人联想起Pekerman时代的打法。除了成功将James召回队中外，他还信任一批经验尚浅的球员，如Rios、Arias、Kevin Castano和Jhon Duran——这一策略收获了丰厚回报。",
+          "image": "/team-profiles/colombia/colombia_team_profile_history-coach.jpg",
+          "imageAlt": "Nestor Lorenzo执教哥伦比亚的 FIFA 官方配图",
+          "highlights": [
+              "官方球队档案",
+              "2026 北美世界杯",
+              "分组赛程已确认"
+          ]
+      },
+      "historyFacts": [],
+      "featureStory": {
+          "kicker": "FIFA 官方故事",
+          "title": "哥伦比亚的 2026 世界杯之路",
+          "body": [
+              "在南美区预选赛第17轮提前一轮锁定出线资格，Colombia以28分排名第三，落后榜首的Argentina十分。在主场球迷营造的狂欢氛围中，状态火热的James以首开纪录定下基调，随后Jhon Cordoba和Juanfer Quintero各进一球，以3比0大胜Bolonia。Colombia在18场预选赛中取得七胜七平四负的战绩。",
+              "哥伦比亚将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。",
+              "哥伦比亚将以 2026 年世界杯为新的坐标，围绕教练团队、分组赛程与历史目标展开备战，目标是在北美赛场刷新球队档案。"
+          ],
+          "image": "/team-profiles/colombia/colombia_team_profile_history-main.jpg",
+          "imageAlt": "哥伦比亚 FIFA 官方球队档案配图",
+          "source": "FIFA 官方球队档案"
+      },
+      "qualificationTimeline": [
+          "南美区第3",
+          "获得席位",
+          "vs Uzbekistan / Colombia",
+          "vs Colombia / Congo DR",
+          "刷新队史最佳"
+      ]
+  },
   "keyPlayers": [
     {
       "number": 1,

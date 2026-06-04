@@ -10,7 +10,7 @@ const brazil: TeamProfile = {
   "flagEmoji": "🇧🇷",
   "heroTags": [
     "23 次世界杯参赛",
-    "最佳成绩：Champions",
+    "最佳成绩：冠军×5",
     "南美足联",
     "2026 北美世界杯"
   ],
@@ -20,7 +20,7 @@ const brazil: TeamProfile = {
       "label": "参赛次数"
     },
     {
-      "value": "Champions",
+      "value": "冠军×5",
       "label": "最佳成绩"
     },
     {
@@ -183,14 +183,9 @@ const brazil: TeamProfile = {
       "highlight": true
     },
     {
-      "label": "所属足联",
-      "value": "CONMEBOL",
-      "desc": "南美足联"
-    },
-    {
       "label": "最佳成绩",
-      "value": "Champions",
-      "desc": "巴西的世界杯最佳成绩为Champions。"
+      "value": "冠军×5",
+      "desc": "巴西曾在 1958、1962、1970、1994、2002 年五次夺得世界杯冠军。"
     },
     {
       "label": "首次世界杯",
@@ -212,7 +207,7 @@ const brazil: TeamProfile = {
     {
       "icon": "🏆",
       "title": "世界杯最佳篇章",
-      "body": "巴西的世界杯最佳成绩为Champions，这是球队档案中的代表性篇章。"
+      "body": "巴西的世界杯最佳成绩为五次冠军，这是球队档案中的代表性篇章。"
     },
     {
       "icon": "⏱️",
@@ -234,8 +229,74 @@ const brazil: TeamProfile = {
       "src": "/team-covers/fifa-profiles/brazil.jpg",
       "caption": "巴西 FIFA 2026 球队档案封面",
       "credit": "FIFA"
+    },
+    {
+      "src": "/team-profiles/bra/brazil-team-profile-history-main.jpg",
+      "caption": "桑巴军团冲击第六冠的官方故事主图",
+      "credit": "FIFA"
     }
   ],
+  "deepDive": {
+      "overviewStats": [
+          {
+              "label": "参赛次数",
+              "value": "23",
+              "note": "连续参赛 23 次"
+          },
+          {
+              "label": "最佳战绩",
+              "value": "冠军×5",
+              "note": "1958、1962、1970、1994、2002"
+          },
+          {
+              "label": "总进球",
+              "value": "237",
+              "note": "进失球 237 / 108"
+          },
+          {
+              "label": "总场次",
+              "value": "114",
+              "note": "胜平负 76-19-19"
+          },
+          {
+              "label": "首次参赛",
+              "value": "1930",
+              "note": "乌拉圭世界杯"
+          }
+      ],
+      "coach": {
+          "name": "卡洛·安切洛蒂",
+          "title": "巴西主教练",
+          "bio": "安切洛蒂在 2024/25 赛季结束后离开皇家马德里，接过巴西国家队帅印。他将成为首位带领巴西参加 FIFA 世界杯的外籍主教练，也把俱乐部足球顶级舞台的经验带入桑巴军团的北美备战。",
+          "image": "/team-profiles/bra/brazil-team-profile-history-coach.jpg",
+          "imageAlt": "卡洛·安切洛蒂执教巴西队的 FIFA 官方配图",
+          "highlights": [
+              "首次执教国家队",
+              "1994 年曾随意大利教练组进入世界杯决赛",
+              "以稳定控场和大赛管理能力著称"
+          ]
+      },
+      "historyFacts": [],
+      "featureStory": {
+          "kicker": "FIFA 官方故事",
+          "title": "桑巴军团的第六冠之路",
+          "body": [
+              "巴西将以创纪录的第 23 次世界杯参赛身份进入 2026 年北美舞台。作为唯一从未缺席世界杯的球队，桑巴军团的目标清晰而直接：追逐第六座冠军奖杯，结束自 2002 年以来的等待。",
+              "FIFA 官方档案特别提到，巴西上一次最长冠军荒从 1970 年持续到 1994 年，最终同样在北美终结。2026 年距离第五冠恰好过去 24 年，这让北美赛场再次被赋予了强烈的历史回声。",
+              "在安切洛蒂麾下，巴西将把维尼修斯、拉菲尼亚、马尔基尼奥斯等核心力量重新整合进一条更成熟的争冠路径。小组赛先后面对摩洛哥、海地和苏格兰，是第六冠征程的第一组压力测试。"
+          ],
+          "image": "/team-profiles/bra/brazil-team-profile-history-main.jpg",
+          "imageAlt": "巴西队 FIFA 官方球队档案配图",
+          "source": "FIFA 官方球队档案"
+      },
+      "qualificationTimeline": [
+          "南美区第5",
+          "直接晋级",
+          "vs 摩洛哥",
+          "vs 海地",
+          "冲击第六冠"
+      ]
+  },
   "keyPlayers": [
     {
       "number": 15,

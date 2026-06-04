@@ -1,4 +1,5 @@
 import http from "http";
+import { timingSafeEqual } from "crypto";
 import type { ApiFootballEndpoint, ApiFootballService } from "./apiFootball";
 import type { HistoryBuffer } from "./historyBuffer";
 import type { SnapshotCache } from "./snapshotCache";
@@ -44,13 +45,17 @@ export function createHttpServer(options: HttpServerOptions) {
     }
 
     const url = new URL(req.url ?? "/", "http://localhost");
+    if ((url.pathname === "/admin" || url.pathname === "/admini" || url.pathname.startsWith("/api/admin/")) && !isAdminAuthorized(req)) {
+      sendAdminUnauthorized(res);
+      return;
+    }
 
     if (
       options.userSystem &&
       (url.pathname.startsWith("/api/auth/") ||
         url.pathname === "/api/user-preferences" ||
         url.pathname.startsWith("/api/me/") ||
-        url.pathname.startsWith("/api/admin/users"))
+        url.pathname.startsWith("/api/admin/"))
     ) {
       options.userSystem.handleRequest(req, res, url);
       return;
@@ -282,6 +287,33 @@ function parseApiFootballEndpoint(pathname: string): ApiFootballEndpoint | null 
   ]);
 
   return allowed.has(endpoint as ApiFootballEndpoint) ? (endpoint as ApiFootballEndpoint) : null;
+}
+
+function isAdminAuthorized(req: http.IncomingMessage) {
+  const authorization = req.headers.authorization ?? "";
+  if (!authorization.startsWith("Basic ")) return false;
+
+  const decoded = Buffer.from(authorization.slice(6), "base64").toString("utf8");
+  const separatorIndex = decoded.indexOf(":");
+  if (separatorIndex === -1) return false;
+
+  const username = decoded.slice(0, separatorIndex);
+  const password = decoded.slice(separatorIndex + 1);
+  return safeEqual(username, process.env.ADMIN_USERNAME || "admin") && safeEqual(password, process.env.ADMIN_PASSWORD || "worldcup2026-admin");
+}
+
+function safeEqual(value: string, expected: string) {
+  const supplied = Buffer.from(value);
+  const target = Buffer.from(expected);
+  return supplied.length === target.length && timingSafeEqual(supplied, target);
+}
+
+function sendAdminUnauthorized(res: http.ServerResponse) {
+  res.writeHead(401, {
+    "Content-Type": "text/plain; charset=utf-8",
+    "WWW-Authenticate": 'Basic realm="World Cup Admin"',
+  });
+  res.end("Admin credentials required.");
 }
 
 function handleNewsRequest(url: URL, res: http.ServerResponse) {
