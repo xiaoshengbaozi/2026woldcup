@@ -32,11 +32,13 @@ export function ThreeGlobe({
   onWebFullscreenChange,
   onSystemFullscreen,
   className,
+  paused = false,
 }: {
   webFullscreen?: boolean;
   onWebFullscreenChange?: (v: boolean) => void;
   onSystemFullscreen?: () => void;
   className?: string;
+  paused?: boolean;
 } = {}) {
   const countries = useStore((s) => s.countries);
   const selectCountry = useStore((s) => s.selectCountry);
@@ -58,9 +60,11 @@ export function ThreeGlobe({
   const targetRef = useRef<{ y: number; x: number; s: number } | null>(null);
   const labelHoverRef = useRef(false);
   const fullscreenScaleRef = useRef(webFullscreen ? 0.85 : 1);
+  const pausedRef = useRef(paused);
+  const labelRefs = useRef(new Map<string, HTMLDivElement>());
 
   const [labels, setLabels] = useState<
-    Array<{ code: string; name: string; prob: number; sx: number; sy: number; vis: boolean }>
+    Array<{ code: string; name: string; prob: number }>
   >([]);
   const [hoveredLabelCode, setHoveredLabelCode] = useState<string | null>(null);
   const rankingHoverCode = focusedModule === "ranking" ? hoveredCountry : null;
@@ -98,6 +102,20 @@ export function ThreeGlobe({
     fullscreenScaleRef.current = webFullscreen ? 0.85 : 1;
   }, [webFullscreen]);
 
+  useEffect(() => {
+    pausedRef.current = paused;
+  }, [paused]);
+
+  useEffect(() => {
+    setLabels(
+      labelCountries.map((country) => ({
+        code: country.countryCode,
+        name: localizeTeamName(country.countryName, country.countryCode),
+        prob: country.impliedProbability,
+      }))
+    );
+  }, [labelCountries]);
+
   const expandedMatchTags = useMemo(
     () => buildMatchTags(matchLineEvents, expandedCountryCode),
     [matchLineEvents, expandedCountryCode]
@@ -111,7 +129,7 @@ export function ThreeGlobe({
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(W, H);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(getGlobePixelRatio());
     renderer.setClearColor(0x000000, 0);
     el.appendChild(renderer.domElement);
     rendererRef.current = renderer;
@@ -205,12 +223,17 @@ export function ThreeGlobe({
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
+      renderer.setPixelRatio(getGlobePixelRatio());
     });
     ro.observe(el);
 
     const autoRotSpeed = 0.15;
     const tick = () => {
       rafRef.current = requestAnimationFrame(tick);
+      if (pausedRef.current) {
+        clockRef.current.getDelta();
+        return;
+      }
       const dt = clockRef.current.getDelta();
 
       if (!dragRef.current.on && !targetRef.current) {
@@ -258,26 +281,24 @@ export function ThreeGlobe({
       const cw = el.clientWidth;
       const ch = el.clientHeight;
       const v = new THREE.Vector3();
-      setLabels(
-        topRef.current.map((c) => {
-          v.copy(ll2v(c.centroid[0], c.centroid[1], GLOBE_RADIUS + 6));
-          globe.localToWorld(v);
-          const normal = v.clone().normalize();
-          const toCamera = camera.position.clone().sub(v).normalize();
-          const facing = normal.dot(toCamera) > 0.2;
-          v.project(camera);
-          const sx = ((v.x + 1) / 2) * cw;
-          const sy = ((-v.y + 1) / 2) * ch;
-          return {
-            code: c.countryCode,
-            name: localizeTeamName(c.countryName, c.countryCode),
-            prob: c.impliedProbability,
-            sx,
-            sy,
-            vis: facing && v.z < 1 && v.z > -1,
-          };
-        })
-      );
+      for (const c of topRef.current) {
+        const labelEl = labelRefs.current.get(c.countryCode);
+        if (!labelEl) continue;
+
+        v.copy(ll2v(c.centroid[0], c.centroid[1], GLOBE_RADIUS + 6));
+        globe.localToWorld(v);
+        const normal = v.clone().normalize();
+        const toCamera = camera.position.clone().sub(v).normalize();
+        const facing = normal.dot(toCamera) > 0.2;
+        v.project(camera);
+        const sx = ((v.x + 1) / 2) * cw;
+        const sy = ((-v.y + 1) / 2) * ch;
+        const visible = facing && v.z < 1 && v.z > -1;
+
+        labelEl.style.transform = `translate3d(${sx}px, ${sy}px, 0) translate(-50%, -50%)`;
+        labelEl.style.opacity = visible ? "1" : "0";
+        labelEl.style.pointerEvents = visible ? "auto" : "none";
+      }
     };
     tick();
 
@@ -405,17 +426,20 @@ export function ThreeGlobe({
           return (
             <div
               key={l.code}
+              ref={(node) => {
+                if (node) {
+                  labelRefs.current.set(l.code, node);
+                } else {
+                  labelRefs.current.delete(l.code);
+                }
+              }}
               onPointerEnter={() => onLabelHover(l.code)}
               onPointerLeave={() => onLabelHover(null)}
               onMouseEnter={() => onLabelHover(l.code)}
               onMouseLeave={() => onLabelHover(null)}
-              className={`absolute left-0 top-0 will-change-transform ${
-                l.vis ? "pointer-events-auto" : "pointer-events-none"
-              } ${isActive ? "z-[90]" : "z-10"}`}
-              style={{
-                transform: `translate3d(${l.sx}px, ${l.sy}px, 0) translate(-50%, -50%)`,
-                opacity: l.vis ? 1 : 0,
-              }}
+              className={`pointer-events-none absolute left-0 top-0 opacity-0 will-change-transform ${
+                isActive ? "z-[90]" : "z-10"
+              }`}
             >
               <button
                 type="button"
@@ -428,7 +452,7 @@ export function ThreeGlobe({
                 onBlur={() => onLabelHover(null)}
                 onClick={() => onLabelClick(l.code)}
                 className={`globe-label probability-map-label relative z-[110] flex h-[30px] w-max items-center gap-1.5 rounded-full border bg-[rgba(8,12,12,0.82)] px-2.5 py-1.5 text-xs font-bold text-white/90 shadow-[0_12px_30px_rgba(0,0,0,0.4)] backdrop-blur-2xl transition-[background-color,border-color,box-shadow] duration-150 hover:bg-white/[0.1] ${
-                  l.vis ? "border-white/[0.08]" : "border-transparent"
+                  "border-white/[0.08]"
                 }`}
                 style={{
                   boxShadow: isActive || sel ? "0 0 0 2px rgba(216,255,62,0.18), 0 0 24px rgba(216,255,62,0.18)" : undefined,
@@ -651,4 +675,17 @@ function formatMatchDateTime(timestamp: number) {
     minute: "2-digit",
     hour12: false,
   }).format(timestamp);
+}
+
+function getGlobePixelRatio() {
+  const dpr = window.devicePixelRatio || 1;
+  const isCompactViewport = window.matchMedia("(max-width: 768px)").matches;
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const saveData = "connection" in navigator && Boolean((navigator as Navigator & {
+    connection?: { saveData?: boolean };
+  }).connection?.saveData);
+
+  if (saveData || prefersReducedMotion) return Math.min(dpr, 1);
+  if (isCompactViewport) return Math.min(dpr, 1.35);
+  return Math.min(dpr, 1.65);
 }

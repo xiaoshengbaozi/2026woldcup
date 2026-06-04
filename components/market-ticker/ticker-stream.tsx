@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useCallback, useState } from "react";
+import { useRef, useEffect, useCallback, useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
 import { TickerItem } from "./ticker-item";
 
@@ -9,7 +9,6 @@ const ITEM_WIDTH = 180;
 
 export function TickerStream() {
   const countries = useStore((s) => s.countries);
-  const allCountries = Array.from(countries.values());
   const [isPaused, setIsPaused] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -18,9 +17,9 @@ export function TickerStream() {
   const rafRef = useRef<number>(0);
   const lastTimeRef = useRef<number>(0);
 
-  // Sort by probability descending
-  const sorted = [...allCountries].sort(
-    (a, b) => b.impliedProbability - a.impliedProbability
+  const sorted = useMemo(
+    () => Array.from(countries.values()).sort((a, b) => b.impliedProbability - a.impliedProbability),
+    [countries]
   );
 
   const animate = useCallback(

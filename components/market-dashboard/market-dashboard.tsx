@@ -99,11 +99,13 @@ export function MarketDashboard() {
                 backgroundSize: "16px 16px",
               }}
             />
-            <ThreeGlobe
-              webFullscreen={webFullscreen}
-              onWebFullscreenChange={(v) => handleFullscreenChange(v, false)}
-              onSystemFullscreen={() => handleFullscreenChange(true, true)}
-            />
+            {!webFullscreen && (
+              <ThreeGlobe
+                webFullscreen={webFullscreen}
+                onWebFullscreenChange={(v) => handleFullscreenChange(v, false)}
+                onSystemFullscreen={() => handleFullscreenChange(true, true)}
+              />
+            )}
           </div>
 
           {/* Rankings — right */}

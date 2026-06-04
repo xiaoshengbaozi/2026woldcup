@@ -24,6 +24,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { BackToTopButton } from "@/components/back-to-top-button";
 import { MobileNavBar } from "@/components/mobile-nav-bar";
 import { NavBar } from "@/components/nav-bar";
+import { localizeClubName, localizeCountryName } from "@/lib/football-localization-client";
 import { getTeamLandscapePathByCode } from "@/lib/team-landscapes";
 import {
   fetchApiFootballPlayerProfileData,
@@ -216,7 +217,7 @@ export function PlayerProfileClient({ playerId, nameHint, row, article }: Props)
   const englishName = player?.name || row?.nameEn || nameHint;
   const fullName = [player?.firstname, player?.lastname].filter(Boolean).join(" ");
   const photo = player?.photo || row?.photo || data?.oneVsOne?.player?.image || "";
-  const currentTeam = data?.currentTeam?.name || data?.oneVsOne?.player?.teamName || "暂无俱乐部数据";
+  const currentTeam = localizeClubName(data?.currentTeam?.name || data?.oneVsOne?.player?.teamName) || "暂无俱乐部数据";
   const currentTeamLogo = data?.currentTeam?.logo || "";
   const total = useMemo(() => summarizeStats(data?.seasonStats ?? []), [data?.seasonStats]);
   const latestTransfers = (data?.transfers ?? []).slice(0, 5);
@@ -310,7 +311,7 @@ export function PlayerProfileClient({ playerId, nameHint, row, article }: Props)
                     className="h-3.5 w-5 rounded-sm object-cover"
                   />
                 )}
-                {row?.countryCn || player?.nationality || "国家队"}
+                {row?.countryCn || localizeCountryName(player?.nationality) || "国家队"}
               </span>
               <span className="text-white/20">|</span>
               <span>{row?.positionCn || player?.position || "位置待更新"}</span>
@@ -540,8 +541,8 @@ export function PlayerProfileClient({ playerId, nameHint, row, article }: Props)
                         <div>
                           <p className="text-sm font-bold text-white/80">1vs1 档案</p>
                           <p className="mt-0.5 text-xs text-white/38">
-                            {data.oneVsOne.player?.nationality || player?.nationality || ""}
-                            {data.oneVsOne.player?.teamName ? ` · ${data.oneVsOne.player.teamName}` : ""}
+                            {localizeCountryName(data.oneVsOne.player?.nationality || player?.nationality) || ""}
+                            {data.oneVsOne.player?.teamName ? ` · ${localizeClubName(data.oneVsOne.player.teamName)}` : ""}
                           </p>
                         </div>
                         <ExternalLink className="h-4 w-4 text-volt/50 transition-transform group-hover:translate-x-0.5 group-hover:text-volt" />
@@ -581,7 +582,7 @@ export function PlayerProfileClient({ playerId, nameHint, row, article }: Props)
                     <FamePlaceholder
                       name={displayName}
                       photo={photo || row?.photo}
-                      country={row?.countryCn || player?.nationality}
+                      country={row?.countryCn || localizeCountryName(player?.nationality)}
                     />
                   )}
                 </div>

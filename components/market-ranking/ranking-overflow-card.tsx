@@ -13,6 +13,7 @@ function probabilityLabel(value: number) {
 
 /** Approximate height for 2 rows of pills (36px row + 8px gap) */
 const COLLAPSED_PX = 80;
+const COLLAPSED_RENDER_COUNT = 24;
 
 export function RankingOverflowCard() {
   const countries = useStore((s) => s.countries);
@@ -27,6 +28,9 @@ export function RankingOverflowCard() {
     );
     return sorted.slice(10);
   }, [countries]);
+  const renderedCountries = expanded
+    ? overflowCountries
+    : overflowCountries.slice(0, COLLAPSED_RENDER_COUNT);
 
   if (overflowCountries.length === 0) return null;
 
@@ -60,7 +64,7 @@ export function RankingOverflowCard() {
         className="flex flex-wrap gap-2 overflow-hidden transition-all duration-300"
         style={{ maxHeight: expanded ? "2000px" : `${COLLAPSED_PX}px` }}
       >
-        {overflowCountries.map((country) => {
+        {renderedCountries.map((country) => {
           const isSelected = selectedCountry === country.countryCode;
 
           return (

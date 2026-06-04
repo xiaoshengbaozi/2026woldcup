@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, ChevronLeft, ChevronRight, Flame, Trophy } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import playerArticles from "@/data/player-articles.json";
 import { fallbackTopScorerProfiles } from "@/lib/world-cup-top-scorers";
@@ -237,7 +237,7 @@ function FeaturedStrip({ player }: { player: PlayerArticle }) {
   );
 }
 
-function TimelinePost({ player, index }: { player: PlayerArticle; index: number }) {
+const TimelinePost = memo(function TimelinePost({ player, index }: { player: PlayerArticle; index: number }) {
   const sections = player.articleCn?.sections ?? [];
   const coverText = sections[1]?.paragraphs?.[0] || player.excerpt;
   const tag = player.category === "superstars" ? "巨星" : "新星";
@@ -291,7 +291,7 @@ function TimelinePost({ player, index }: { player: PlayerArticle; index: number 
       </div>
     </motion.article>
   );
-}
+});
 
 function countryLabel(player: PlayerArticle) {
   return countryNameCn[player.countryCn] || countryNameCn[player.countryEn] || player.countryCn;

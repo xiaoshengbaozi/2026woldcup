@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { unstable_batchedUpdates } from "react-dom";
 import { useStore } from "@/lib/store";
 import { getBackendApiUrl } from "@/lib/world-cup-api";
 import type {
@@ -26,33 +27,31 @@ function getWsUrl(apiUrl: string) {
 
 function applySnapshot(message: SnapshotMessage) {
   const store = useStore.getState();
-  store.updateCountries(message.countries);
-  store.setEvents(message.events);
+  unstable_batchedUpdates(() => {
+    store.updateCountries(message.countries);
+    store.setEvents(message.events);
+    store.setAllHistory(message.history ?? {});
 
-  for (const [countryCode, history] of Object.entries(message.history ?? {})) {
-    store.setHistory(countryCode, history);
-  }
-
-  store.recomputeRankings();
-  store.recordUpdate(message.timestamp, Math.max(0, Date.now() - message.timestamp));
-  store.setStatus("connected");
+    store.recomputeRankings();
+    store.recordUpdate(message.timestamp, Math.max(0, Date.now() - message.timestamp));
+    store.setStatus("connected");
+  });
 }
 
 function applyDelta(message: DeltaMessage) {
   const store = useStore.getState();
-  store.updateCountriesFromDelta(message.updates);
+  unstable_batchedUpdates(() => {
+    store.updateCountriesFromDelta(message.updates);
+    store.appendHistoryPoints(message.updates);
 
-  for (const update of message.updates) {
-    store.appendHistoryPoint(update.countryCode, update.historyPoint);
-  }
+    if (message.newEvents.length) {
+      store.addEvents(message.newEvents);
+    }
 
-  if (message.newEvents.length) {
-    store.addEvents(message.newEvents);
-  }
-
-  store.recomputeRankings();
-  store.recordUpdate(message.timestamp, Math.max(0, Date.now() - message.timestamp));
-  store.setStatus("connected");
+    store.recomputeRankings();
+    store.recordUpdate(message.timestamp, Math.max(0, Date.now() - message.timestamp));
+    store.setStatus("connected");
+  });
 }
 
 function applyHistoryResponse(message: HistoryResponseMessage) {

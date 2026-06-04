@@ -60,8 +60,8 @@ export function GroupStandings({ matches }: GroupStandingsProps) {
   return (
     <motion.section
       id="groups"
-      initial={{ opacity: 0, y: 18, filter: "blur(16px)" }}
-      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      initial={{ opacity: 0, y: 18 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.28, duration: 0.74, ease: [0.16, 1, 0.3, 1] }}
       className="hero-card overflow-hidden px-3 py-4 sm:px-4"
     >

@@ -445,8 +445,8 @@ function PredictAuthLoading() {
     <div className="relative grid min-h-screen place-items-center overflow-hidden px-6 py-10">
       <div className="pointer-events-none fixed left-1/2 top-0 h-[360px] w-[min(720px,100vw)] -translate-x-1/2 rounded-full bg-volt/10 blur-[120px]" />
       <motion.div
-        initial={{ opacity: 0, y: 14, filter: "blur(12px)" }}
-        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
         className="hero-card w-full max-w-md overflow-hidden px-6 py-7 text-center"
       >
@@ -583,8 +583,8 @@ function PredictAccessGate({ onAuthenticated }: { onAuthenticated: () => void })
     <div className="relative grid min-h-screen place-items-center overflow-hidden px-4 py-10">
       <div className="pointer-events-none fixed left-1/2 top-0 h-[360px] w-[min(720px,100vw)] -translate-x-1/2 rounded-full bg-volt/10 blur-[120px]" />
       <motion.section
-        initial={{ opacity: 0, y: 16, filter: "blur(12px)" }}
-        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
         className="hero-card w-full max-w-lg overflow-hidden px-5 py-6 sm:px-7 sm:py-7"
       >
@@ -865,7 +865,7 @@ export default function PredictPage() {
           <Link href="/" className="flex items-center gap-2 text-white/40 hover:text-volt transition-colors text-sm">&larr; 返回首页</Link>
         </nav>
 
-        <motion.section initial={{ opacity: 0, y: 18, filter: "blur(16px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ duration: 0.74, ease: [0.16, 1, 0.3, 1] }} className="hero-card overflow-hidden px-5 py-6 sm:px-8 sm:py-8">
+        <motion.section initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.74, ease: [0.16, 1, 0.3, 1] }} className="hero-card overflow-hidden px-5 py-6 sm:px-8 sm:py-8">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-volt/25 to-transparent" />
           <div className="absolute right-0 top-0 h-24 w-72 bg-volt/10 blur-[90px]" />
           <div className="relative">

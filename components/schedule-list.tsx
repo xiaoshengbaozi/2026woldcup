@@ -25,9 +25,9 @@ export function DaySection({ day, matches, index, timezoneOffset, roundLabels }:
   return (
     <motion.section
       layout
-      initial={{ opacity: 0, y: 20, filter: "blur(14px)" }}
-      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-      exit={{ opacity: 0, y: -10, filter: "blur(12px)" }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
       transition={{
         delay: Math.min(index * 0.035, 0.28),
         duration: 0.55
@@ -87,9 +87,9 @@ function GroupCard({ group, matches, index, timezoneOffset, roundLabels }: Group
   return (
     <motion.section
       layout
-      initial={{ opacity: 0, y: 16, filter: "blur(12px)" }}
-      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-      exit={{ opacity: 0, y: -8, filter: "blur(10px)" }}
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
       transition={{
         delay: Math.min(index * 0.025, 0.22),
         duration: 0.45

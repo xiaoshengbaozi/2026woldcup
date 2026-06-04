@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { memo, useCallback } from "react";
 import { useStore } from "@/lib/store";
 import type { CountryData } from "@/types/country";
 import { formatDelta, formatVolume } from "@/lib/format";
@@ -10,10 +10,9 @@ interface TickerItemProps {
   country: CountryData;
 }
 
-export function TickerItem({ country }: TickerItemProps) {
+export const TickerItem = memo(function TickerItem({ country }: TickerItemProps) {
   const selectCountry = useStore((s) => s.selectCountry);
-  const selectedCountry = useStore((s) => s.selectedCountry);
-  const isSelected = selectedCountry === country.countryCode;
+  const isSelected = useStore((s) => s.selectedCountry === country.countryCode);
 
   const handleClick = useCallback(() => {
     selectCountry(country.countryCode, "ticker");
@@ -66,4 +65,4 @@ export function TickerItem({ country }: TickerItemProps) {
       </span>
     </button>
   );
-}
+});

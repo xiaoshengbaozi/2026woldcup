@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { memo, useState, useCallback, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart3, TrendingUp, X, Zap, Globe2, ChevronDown } from "lucide-react";
@@ -78,7 +78,7 @@ export function MatchLinesPanel() {
               className="grid grid-cols-1 gap-2.5 overflow-hidden transition-all duration-300 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
               style={{ maxHeight: expanded ? "4000px" : "160px" }}
             >
-              {visibleEvents(events).map((event, index) => (
+              {visibleEvents(events, expanded).map((event, index) => (
                 <MatchLineCard
                   key={event.id}
                   event={event}
@@ -121,7 +121,7 @@ export function MatchLinesPanel() {
 
 /* ──────────── Simplified Card ──────────── */
 
-function MatchLineCard({
+const MatchLineCard = memo(function MatchLineCard({
   event,
   index,
   isSelected,
@@ -253,7 +253,7 @@ function MatchLineCard({
       </div>
     </motion.article>
   );
-}
+});
 
 /* ──────────── Detail Modal (Flight-card inspired) ──────────── */
 
@@ -446,8 +446,8 @@ function MatchDetailModal({
 
 /* ──────────── Helpers ──────────── */
 
-function visibleEvents(events: MatchLineEvent[]) {
-  return events;
+function visibleEvents(events: MatchLineEvent[], expanded: boolean) {
+  return expanded ? events : events.slice(0, 8);
 }
 
 function pickMoneyline(event: MatchLineEvent) {

@@ -10,6 +10,17 @@ type Props = {
   params: { id: string };
 };
 
+type PlayerPageRow = {
+  apiPlayerId: number | null;
+  teamCode: string;
+  countryCn: string;
+  nameEn: string;
+  nameCn: string;
+  positionCn: string;
+  number: number | null;
+  photo: string;
+};
+
 const PLAYER_NAME_TRANSLATIONS = playerNameTranslations as Record<string, string>;
 
 const countryNameCn: Record<string, string> = {
@@ -50,7 +61,7 @@ export function generateMetadata({ params }: Props): Metadata {
   const row = playerRows.rows.find((item) => String(item.apiPlayerId) === params.id);
   const article = playerArticles.players.find((item) => String(item.apiPlayerId) === params.id);
   const officialRow = getOfficialSquadRow(params.id);
-  const name = article?.nameCn || row?.nameCn || row?.nameEn || officialRow?.nameCn || officialRow?.nameEn || "球员";
+  const name = officialRow?.nameCn || article?.nameCn || row?.nameCn || row?.nameEn || officialRow?.nameEn || "球员";
 
   return {
     title: `${name} | 2026 世界杯球员档案`,
@@ -75,8 +86,18 @@ export default function PlayerPage({ params }: Props) {
       }
     : null;
   const nameHint = row?.nameEn || article?.nameEn || officialRow?.nameEn || row?.nameCn || article?.nameCn || officialRow?.nameCn || "";
+  const pageRow = mergeOfficialSquadRow(row ?? articleRow, officialRow);
 
-  return <PlayerProfileClient playerId={params.id} nameHint={nameHint} row={row ?? articleRow ?? officialRow ?? null} article={article ?? null} />;
+  return <PlayerProfileClient playerId={params.id} nameHint={nameHint} row={pageRow} article={article ?? null} />;
+}
+
+function mergeOfficialSquadRow(baseRow: PlayerPageRow | null, officialRow: PlayerPageRow | null): PlayerPageRow | null {
+  if (!officialRow) return baseRow;
+  return {
+    ...(baseRow ?? officialRow),
+    ...officialRow,
+    photo: baseRow?.photo || officialRow.photo,
+  };
 }
 
 function getOfficialSquadRow(playerId: string) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { memo, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useStore } from "@/lib/store";
 import type { RankingEntry } from "@/lib/store/rankings";
@@ -14,16 +14,14 @@ interface RankingRowProps {
   isSqueezed: boolean;
 }
 
-export function RankingRow({ entry, isSqueezed }: RankingRowProps) {
+export const RankingRow = memo(function RankingRow({ entry, isSqueezed }: RankingRowProps) {
   const selectCountry = useStore((s) => s.selectCountry);
   const hoverCountry = useStore((s) => s.hoverCountry);
-  const selectedCountry = useStore((s) => s.selectedCountry);
-  const vibrationTriggers = useStore((s) => s.vibrationTriggers);
+  const isSelected = useStore((s) => s.selectedCountry === entry.countryCode);
+  const isVibrating = useStore((s) => s.vibrationTriggers.includes(entry.countryCode));
   const countries = useStore((s) => s.getCountry);
 
   const country = countries(entry.countryCode);
-  const isSelected = selectedCountry === entry.countryCode;
-  const isVibrating = vibrationTriggers.includes(entry.countryCode);
   const isTop3 = entry.rank <= 3;
 
   const handleClick = useCallback(() => {
@@ -120,4 +118,4 @@ export function RankingRow({ entry, isSqueezed }: RankingRowProps) {
       </span>
     </motion.div>
   );
-}
+});

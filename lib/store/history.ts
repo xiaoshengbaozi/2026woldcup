@@ -11,7 +11,9 @@ export interface HistorySlice {
   historyResolution: TimeResolution;
 
   setHistory: (countryCode: string, data: HistoryPoint[]) => void;
+  setAllHistory: (data: Record<string, HistoryPoint[]>) => void;
   appendHistoryPoint: (countryCode: string, point: HistoryPoint) => void;
+  appendHistoryPoints: (updates: Array<{ countryCode: string; historyPoint: HistoryPoint }>) => void;
   getHistory: (countryCode: string) => HistoryPoint[];
   setTimePreset: (preset: TimePreset) => void;
 }
@@ -38,11 +40,32 @@ export const createHistorySlice: StateCreator<
     });
   },
 
+  setAllHistory: (data) => {
+    set(() => {
+      const next = new Map<string, HistoryPoint[]>();
+      for (const [countryCode, history] of Object.entries(data)) {
+        next.set(countryCode, history);
+      }
+      return { history: next };
+    });
+  },
+
   appendHistoryPoint: (countryCode, point) => {
     set((state) => {
       const next = new Map(state.history);
       const existing = next.get(countryCode) ?? [];
       next.set(countryCode, [...existing, point]);
+      return { history: next };
+    });
+  },
+
+  appendHistoryPoints: (updates) => {
+    set((state) => {
+      const next = new Map(state.history);
+      for (const update of updates) {
+        const existing = next.get(update.countryCode) ?? [];
+        next.set(update.countryCode, [...existing, update.historyPoint]);
+      }
       return { history: next };
     });
   },
