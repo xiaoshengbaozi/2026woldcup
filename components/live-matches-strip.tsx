@@ -94,7 +94,7 @@ export function LiveMatchesStrip({ matches }: LiveMatchesStripProps) {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.65 }}
-      className="space-y-3"
+      className="hidden space-y-3 sm:block"
     >
       <div className="hero-card overflow-hidden">
         <div

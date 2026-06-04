@@ -3,6 +3,7 @@
 import { FormEvent, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Bookmark,
@@ -39,6 +40,7 @@ import { parseTeams } from "@/lib/teams";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
 import { usePopularTeams } from "@/components/world-cup-hero/use-popular-teams";
 import type { Match } from "@/types/match";
+import { qualifiedTeams } from "@/data/teams";
 import playerNameTranslations from "@/data/localization/players.json";
 
 type AuthMode = "login" | "register";
@@ -200,6 +202,7 @@ type TeamCardItem = {
   logo?: string;
   flag?: string;
   pct?: number;
+  href?: string;
 };
 
 type MatchCardItem = {
@@ -227,6 +230,8 @@ const STATIC_PLAYER_PAGE_IDS = new Set(["278", "386828", "762", "1100", "154", "
 const DEFAULT_POPULAR_TEAM_CODES = ["ARG", "BRA", "FRA", "ENG", "ESP"];
 
 export default function MePage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [home, setHome] = useState<UserHomePayload | null>(null);
   const [catalog, setCatalog] = useState<UserPreferenceCatalog>(fallbackUserPreferenceCatalog);
   const [topScorers, setTopScorers] = useState<WorldCupTopScorer[]>(DEFAULT_TOP_SCORERS);
@@ -245,10 +250,19 @@ export default function MePage() {
   const [playerCountry, setPlayerCountry] = useState("all");
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
+  const ignoreAuthParamRef = useRef(false);
   const { matches } = useWorldCupData();
   const popularTeams = usePopularTeams();
 
   const avatarPlayerId = selectedPlayerIds[0] ?? catalog.players[0]?.id ?? fallbackUserPreferenceCatalog.players[0].id;
+
+  const clearAuthUrl = useCallback(() => {
+    const nextParams = new URLSearchParams(searchParams.toString());
+    if (!nextParams.has("auth")) return;
+    nextParams.delete("auth");
+    const query = nextParams.toString();
+    router.replace(query ? `/me?${query}` : "/me", { scroll: false });
+  }, [router, searchParams]);
 
   async function loadHome() {
     try {
@@ -290,7 +304,8 @@ export default function MePage() {
     };
   }, []);
 
-  function openAuth(mode: AuthMode) {
+  const openAuth = useCallback((mode: AuthMode, syncUrl = true) => {
+    ignoreAuthParamRef.current = false;
     setAuthMode(mode);
     setRegisterStep("account");
     setError("");
@@ -301,14 +316,41 @@ export default function MePage() {
       setRepeatPassword("");
       setInvitationCode("");
     }
-  }
+    if (syncUrl) {
+      const nextParams = new URLSearchParams(searchParams.toString());
+      nextParams.set("auth", mode);
+      router.replace(`/me?${nextParams.toString()}`, { scroll: false });
+    }
+  }, [router, searchParams]);
 
   function closeAuth() {
     if (busy) return;
+    ignoreAuthParamRef.current = true;
     setAuthMode(null);
     setRegisterStep("account");
     setError("");
+    clearAuthUrl();
   }
+
+  useEffect(() => {
+    const requestedMode = searchParams.get("auth");
+    if (requestedMode !== "login" && requestedMode !== "register") {
+      ignoreAuthParamRef.current = false;
+      return;
+    }
+
+    if (ignoreAuthParamRef.current) return;
+
+    if (home && (requestedMode === "login" || requestedMode === "register")) {
+      setAuthMode(null);
+      clearAuthUrl();
+      return;
+    }
+
+    if (!home && (requestedMode === "login" || requestedMode === "register") && authMode !== requestedMode) {
+      openAuth(requestedMode, false);
+    }
+  }, [authMode, clearAuthUrl, home, openAuth, searchParams]);
 
   async function submitLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -521,7 +563,7 @@ function ProfileBoard({
         name: getLocalizedPlayerName(player),
         team: player.team,
         photo: player.photo,
-        href: numericIdHref(player.id),
+        href: playerHref(player),
       }))
     : fillTopScorers(topScorers).slice(0, 6).map((player) => ({
         id: String(player.id),
@@ -538,6 +580,7 @@ function ProfileBoard({
         name: team.name,
         logo: team.logo,
         flag: getTeamFlag(team),
+        href: teamHref(team),
       }))
     : getDefaultPopularTeams(popularTeams, catalog.teams);
 
@@ -713,7 +756,7 @@ function PlayerBubble({ player, catalogPlayers, dimmed }: { player: PlayerCardIt
 }
 
 function TeamBadge({ team, dimmed }: { team: TeamCardItem; dimmed: boolean }) {
-  return (
+  const content = (
     <div className={`grid justify-items-center gap-[9px] transition ${dimmed ? "opacity-60" : ""}`}>
       <div className="relative aspect-[3/2] w-full overflow-hidden rounded-xl bg-white/[0.045] p-1.5 ring-1 ring-white/10">
         {team.flag ? <Image src={team.flag} alt={team.name} fill sizes="120px" className="object-contain opacity-92" /> : null}
@@ -724,6 +767,13 @@ function TeamBadge({ team, dimmed }: { team: TeamCardItem; dimmed: boolean }) {
       </div>
       <p className="max-w-full truncate text-[10px] font-medium text-white/60 sm:text-[11px]">{team.name}</p>
     </div>
+  );
+
+  if (!team.href) return content;
+  return (
+    <Link href={team.href} className="block rounded-xl outline-none transition hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-volt/60">
+      {content}
+    </Link>
   );
 }
 
@@ -1352,6 +1402,7 @@ function buildTimelineItems(players: PlayerCardItem[], teams: TeamCardItem[], ma
     title: team.name,
     subtitle: "球队文章稍后补充",
     eyebrow: isSignedIn ? "球队" : "热门",
+    href: team.href,
     image: team.flag || team.logo,
   }));
 
@@ -1388,6 +1439,7 @@ function getDefaultPopularTeams(popularTeams: Array<{ name: string; flag: string
       name: team.name,
       flag: team.flag,
       pct: team.pct,
+      href: teamHref({ id: team.code, name: team.name, region: team.code }),
     }));
   }
 
@@ -1398,6 +1450,7 @@ function getDefaultPopularTeams(popularTeams: Array<{ name: string; flag: string
       name: team?.name ?? code,
       logo: team?.logo,
       flag: getFlagUrl(normalizeFlagCode(code), 160),
+      href: teamHref({ id: team?.id ?? code, name: team?.name ?? code, region: code }),
     };
   });
 }
@@ -1446,6 +1499,7 @@ function matchPreferenceToCard(match: { id: string; title: string; stage?: strin
     awayName,
     homeFlag: getFlagByTeamName(homeName),
     awayFlag: getFlagByTeamName(awayName),
+    href: `/matches/${generateMatchSlug(match.title)}/`,
   };
 }
 
@@ -1459,8 +1513,33 @@ function getFlagByTeamName(name: string) {
   return code ? getFlagUrl(normalizeFlagCode(code), 160) : "";
 }
 
-function numericIdHref(id: string) {
-  return STATIC_PLAYER_PAGE_IDS.has(id) ? `/players/${id}/` : undefined;
+function playerHref(player: { id: string; name?: string }) {
+  return STATIC_PLAYER_PAGE_IDS.has(player.id) || /^\d+$/.test(player.id)
+    ? `/players/${player.id}/`
+    : `/players/?q=${encodeURIComponent(player.name || player.id)}`;
+}
+
+function teamHref(team: { id?: string; name: string; region?: string }) {
+  const key = (team.region || team.id || "").toUpperCase();
+  const qualifiedTeam = qualifiedTeams.find((item) => (
+    item.code === key ||
+    item.nameCn === team.name ||
+    item.nameEn === team.name
+  ));
+
+  return qualifiedTeam?.detailHref || `/teams/${slugifyRoute(team.name)}`;
+}
+
+function slugifyRoute(value: string) {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/&/g, " and ")
+    .replace(/[^\p{L}\p{N}\s-]/gu, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
 }
 
 function getLocalizedPlayerName(player: { id?: string | number | null; name?: string }) {

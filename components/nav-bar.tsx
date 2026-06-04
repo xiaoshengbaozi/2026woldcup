@@ -100,8 +100,8 @@ export function NavBar() {
           meActive ? "ring-volt/55" : "ring-white/[0.08] hover:ring-volt/35"
         }`}
       >
-        {isSignedIn ? (
-          <Image src={avatarUrl || getPlayerAvatar(null)} alt="我的世界杯" fill sizes="40px" className="object-cover" />
+        {isSignedIn && avatarUrl ? (
+          <Image src={avatarUrl} alt="我的世界杯" fill sizes="40px" className="object-cover" />
         ) : (
           <UserRound className="h-4 w-4 text-volt" />
         )}

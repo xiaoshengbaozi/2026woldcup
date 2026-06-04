@@ -19,6 +19,7 @@ export function MarketDashboard() {
   useLiveMarketData();
   const [webFullscreen, setWebFullscreen] = useState(false);
   const [systemFsPending, setSystemFsPending] = useState(false);
+  const [mobileDataTab, setMobileDataTab] = useState<"teams" | "matches">("teams");
   const overlayRef = useRef<HTMLDivElement>(null);
 
   const handleFullscreenChange = useCallback((v: boolean, system = false) => {
@@ -106,17 +107,73 @@ export function MarketDashboard() {
           </div>
 
           {/* Rankings — right */}
-          <div className="hero-card relative min-h-[520px] p-5 xl:min-h-0">
+          <div className="hero-card relative hidden min-h-[520px] p-5 lg:block xl:min-h-0">
             <MarketOddsCard />
           </div>
 
         </div>
 
-        <RankingOverflowCard />
-        <div className="hero-card h-[220px] overflow-hidden p-4">
+        <section className="lg:hidden">
+          <div className="relative -mx-4 bg-black/58 px-4 py-2 backdrop-blur-2xl">
+            <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="数据分类">
+              {[
+                { key: "teams" as const, title: "球队", count: 2 },
+                { key: "matches" as const, title: "比赛", count: 1 },
+              ].map((item) => {
+                const isActive = mobileDataTab === item.key;
+
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    onClick={() => setMobileDataTab(item.key)}
+                    className={`group relative flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-left text-xs font-bold transition duration-300 ${
+                      isActive
+                        ? "bg-volt text-black shadow-[0_0_24px_rgba(216,255,62,.2)]"
+                        : "bg-white/[0.055] text-white/62 ring-1 ring-white/[0.08] hover:bg-white/[0.09] hover:text-white"
+                    }`}
+                  >
+                    <span>{item.title}</span>
+                    <span
+                      className={`rounded-full px-1.5 py-0.5 text-[10px] font-black tabular-nums ${
+                        isActive
+                          ? "bg-black/15 text-black"
+                          : "bg-black/25 text-volt/80 group-hover:bg-volt/[0.12]"
+                      }`}
+                    >
+                      {item.count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="mt-4 space-y-5">
+            {mobileDataTab === "teams" ? (
+              <>
+                <div className="hero-card relative min-h-[520px] p-5">
+                  <MarketOddsCard />
+                </div>
+                <RankingOverflowCard />
+              </>
+            ) : (
+              <MatchLinesPanel />
+            )}
+          </div>
+        </section>
+
+        <div className="hidden lg:block">
+          <RankingOverflowCard />
+        </div>
+        <div className="hero-card hidden h-[220px] overflow-hidden p-4 lg:block">
           <ModuleC_OddsTimeline />
         </div>
-        <MatchLinesPanel />
+        <div className="hidden lg:block">
+          <MatchLinesPanel />
+        </div>
 
         <StatusBar />
       </div>

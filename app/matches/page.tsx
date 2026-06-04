@@ -5,6 +5,7 @@ import { DashboardShell } from "@/components/dashboard-shell";
 import { LiveMatchesStrip } from "@/components/live-matches-strip";
 import { getCityFilterGroup, getStageFilterGroup, MatchFilters, readFilterGroupValue } from "@/components/match-filters";
 import { MatchStats } from "@/components/match-stats";
+import { MobileLiveMatchesEntry } from "@/components/mobile-live-matches-entry";
 import { MobileMatchDayStrip, type MatchDayOption } from "@/components/mobile-match-day-strip";
 import { ScheduleList } from "@/components/schedule-list";
 import { extractCity, groupMatchesByDay } from "@/lib/calendar";
@@ -130,6 +131,7 @@ export default function MatchesPage() {
         selectedDay={selectedDay}
         onSelectDay={setSelectedDay}
       />
+      <MobileLiveMatchesEntry matches={matches} />
 
       <ScheduleList
         grouped={grouped}

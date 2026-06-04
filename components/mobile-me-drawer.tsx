@@ -6,9 +6,8 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef } from "react";
 import type { ReactNode, TouchEvent, UIEvent } from "react";
-import { CalendarDays, ChevronRight, LogIn, Settings, Star, UserPlus, X } from "lucide-react";
+import { CalendarDays, ChevronRight, LogIn, Settings, Star, UserPlus, UserRound, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { getPlayerAvatar } from "@/lib/user-preferences";
 import type { UserHomePayload } from "@/lib/user-system";
 
 type MobileMeDrawerProps = {
@@ -101,9 +100,13 @@ export function MobileMeDrawer({ open, home, loading, avatarUrl, onClose }: Mobi
             <div className="pointer-events-none absolute bottom-16 right-0 h-40 w-24 rounded-full bg-flare/10 blur-[56px]" />
 
             <div className="relative flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="relative h-11 w-11 overflow-hidden rounded-full bg-white/[0.08]">
-                  <Image src={avatarUrl || getPlayerAvatar(null)} alt={displayName} fill sizes="44px" className="object-cover" />
+              <Link href="/me" onClick={onClose} className="flex min-w-0 items-center gap-3 rounded-full outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-volt/60">
+                <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full bg-white/[0.08]">
+                  {signedIn && avatarUrl ? (
+                    <Image src={avatarUrl} alt={displayName} fill sizes="44px" className="object-cover" />
+                  ) : (
+                    <UserRound className="absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 text-volt" />
+                  )}
                 </div>
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-white">{displayName}</p>
@@ -111,7 +114,7 @@ export function MobileMeDrawer({ open, home, loading, avatarUrl, onClose }: Mobi
                     {signedIn ? "已同步" : loading ? "同步中" : "未登录"}
                   </p>
                 </div>
-              </div>
+              </Link>
               <button
                 type="button"
                 aria-label="关闭"
@@ -127,24 +130,26 @@ export function MobileMeDrawer({ open, home, loading, avatarUrl, onClose }: Mobi
               <h2 className="mt-2 text-lg font-semibold leading-tight text-white">
                 {signedIn ? "管理你的关注宇宙" : "登录后同步关注与收藏"}
               </h2>
-              <div className="mt-4 grid grid-cols-2 divide-x divide-black/20 border border-white/[0.08]">
-                <Link
-                  href="/me"
-                  onClick={onClose}
-                  className="inline-flex h-11 items-center justify-center gap-1.5 bg-volt text-sm font-bold text-black shadow-[0_0_28px_rgba(216,255,62,.18)]"
-                >
-                  <LogIn className="h-4 w-4" />
-                  登录
-                </Link>
-                <Link
-                  href="/me"
-                  onClick={onClose}
-                  className="inline-flex h-11 items-center justify-center gap-1.5 text-sm font-semibold text-white/80"
-                >
-                  <UserPlus className="h-4 w-4" />
-                  注册
-                </Link>
-              </div>
+              {!signedIn && (
+                <div className="mt-4 grid grid-cols-2 divide-x divide-black/20 border border-white/[0.08]">
+                  <Link
+                    href="/me?auth=login"
+                    onClick={onClose}
+                    className="inline-flex h-11 items-center justify-center gap-1.5 bg-volt text-sm font-bold text-black shadow-[0_0_28px_rgba(216,255,62,.18)]"
+                  >
+                    <LogIn className="h-4 w-4" />
+                    登录
+                  </Link>
+                  <Link
+                    href="/me?auth=register"
+                    onClick={onClose}
+                    className="inline-flex h-11 items-center justify-center gap-1.5 text-sm font-semibold text-white/80"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    注册
+                  </Link>
+                </div>
+              )}
             </section>
 
             <nav className="relative grid divide-y divide-white/[0.08] border-b border-white/[0.08]">
@@ -156,7 +161,7 @@ export function MobileMeDrawer({ open, home, loading, avatarUrl, onClose }: Mobi
                   label="我的关注"
                   onClose={onClose}
                 />
-                <div className="grid divide-y divide-white/[0.07] border-t border-white/[0.08] pl-7">
+                <div className="grid divide-y divide-white/[0.07] border-t border-white/[0.08]">
                   <FollowSubMetric label="关注球员" value={summary.followedPlayerCount} />
                   <FollowSubMetric label="关注球队" value={summary.followedTeamCount} />
                   <FollowSubMetric label="收藏比赛" value={summary.favoriteMatchCount} />

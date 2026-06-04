@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactNode, TouchEvent } from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Search } from "lucide-react";
+import { Search, UserRound } from "lucide-react";
 import { getPlayerAvatar } from "@/lib/user-preferences";
 import { userApi, type UserHomePayload } from "@/lib/user-system";
 import { MobileMeDrawer } from "./mobile-me-drawer";
@@ -97,7 +97,11 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
             drawerOpen || pathname.startsWith("/me") ? "ring-volt/55" : "ring-white/12"
           }`}
         >
-          <Image src={avatarUrl || getPlayerAvatar(null)} alt="" fill sizes="34px" className="object-cover" />
+          {home && avatarUrl ? (
+            <Image src={avatarUrl} alt="" fill sizes="34px" className="object-cover" />
+          ) : (
+            <UserRound className="h-4 w-4 text-volt" />
+          )}
           <span className="pointer-events-none absolute inset-0 rounded-full bg-gradient-to-br from-white/18 via-transparent to-black/18" />
           {loading && <span className="absolute inset-0 bg-black/20" />}
         </button>

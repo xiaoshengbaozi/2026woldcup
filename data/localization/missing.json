@@ -11,6 +11,7 @@
     "636": "Bernardo Silva",
     "667": "M. Depay",
     "792": "J. Kluivert",
+    "860": "Alex Sandro",
     "874": "Cristiano Ronaldo",
     "1150": "T. Adams",
     "1460": "B. Saka",
@@ -28,6 +29,7 @@
     "19974": "I. Toney",
     "20836": "C. Operi",
     "20850": "C. Arcus",
+    "22090": "W. Saliba",
     "22236": "Rafael Leão",
     "25927": "J. Mateta",
     "30432": "M. de Roon",
@@ -95,7 +97,8 @@
     "NEC Nijmegen": "NEC Nijmegen",
     "VfL Wolfsburg": "VfL Wolfsburg",
     "Machida Zelvia": "Machida Zelvia",
-    "Kashima": "Kashima"
+    "Kashima": "Kashima",
+    "West Ham": "West Ham"
   },
   "leagues": {
     "MLS All-Star": "MLS All-Star",
