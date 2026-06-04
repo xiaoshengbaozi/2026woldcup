@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, Suspense, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -230,6 +230,28 @@ const STATIC_PLAYER_PAGE_IDS = new Set(["278", "386828", "762", "1100", "154", "
 const DEFAULT_POPULAR_TEAM_CODES = ["ARG", "BRA", "FRA", "ENG", "ESP"];
 
 export default function MePage() {
+  return (
+    <Suspense fallback={<MePageFallback />}>
+      <MePageContent />
+    </Suspense>
+  );
+}
+
+function MePageFallback() {
+  return (
+    <DashboardShell>
+      <main className="relative min-h-screen overflow-hidden px-4 pb-20 pt-24 text-white sm:px-6 lg:px-8">
+        <section className="mx-auto grid min-h-[50vh] max-w-6xl place-items-center">
+          <div className="rounded-[2rem] bg-white/[0.045] px-6 py-5 text-sm font-semibold text-white/62 shadow-glass ring-1 ring-white/10 backdrop-blur-2xl">
+            Loading profile...
+          </div>
+        </section>
+      </main>
+    </DashboardShell>
+  );
+}
+
+function MePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [home, setHome] = useState<UserHomePayload | null>(null);
