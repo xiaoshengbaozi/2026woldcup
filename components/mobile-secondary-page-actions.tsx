@@ -34,7 +34,7 @@ export function MobileSecondaryPageActions({ backHref, backLabel, rightAction, r
   return (
     <>
       <div
-        className={`pointer-events-none fixed inset-x-0 top-0 z-[75] bg-black/72 backdrop-blur-2xl transition-[height] duration-200 [mask-image:linear-gradient(to_bottom,black_0%,black_68%,rgba(0,0,0,0)_100%)] lg:hidden ${
+        className={`pointer-events-none fixed inset-x-0 top-0 z-[60] bg-black/72 backdrop-blur-2xl transition-[height] duration-200 [mask-image:linear-gradient(to_bottom,black_0%,black_68%,rgba(0,0,0,0)_100%)] lg:hidden ${
           topRailExpanded ? "h-[calc(env(safe-area-inset-top)+9.625rem)]" : "h-[calc(env(safe-area-inset-top)+4.125rem)]"
         }`}
       />
