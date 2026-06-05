@@ -75,6 +75,7 @@ export function parseTeam(value: string): Team {
     .replace(/[\u{1F1E6}-\u{1F1FF}]/gu, "")
     .replace(/\u{1F3F4}[\u{E0061}-\u{E007A}\u{E007F}]*/gu, "")
     .replace(/\u{1F3F3}\u{FE0F}?/gu, "")
+    .replace(/^[A-Z]{2,3}\s+(?=\p{L})/u, "")
     .trim();
 
   const placeholder = parsePlaceholderTeam(name);

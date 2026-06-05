@@ -1,12 +1,66 @@
 {
-  "players": {},
-  "clubs": {},
-  "leagues": {},
+  "players": {
+    "78": "H. Vanaken",
+    "409": "N. Bentaleb",
+    "417": "A. Schöpf",
+    "1257": "J. Koundé",
+    "1578": "G. Lo Celso",
+    "1946": "L. Trossard",
+    "4569": "M. Tougai",
+    "198352": "M. Touré",
+    "271539": "J. Hadjam",
+    "296645": "T. Yengi",
+    "535046": "A. Amaimouni"
+  },
+  "clubs": {
+    "Vasco DA Gama": "Vasco DA Gama",
+    "Bournemouth": "Bournemouth",
+    "River Plate": "River Plate",
+    "Norwich": "Norwich",
+    "Celaya": "Celaya",
+    "Pachuca": "Pachuca",
+    "Santos": "Santos",
+    "Sparta Praha": "Sparta Praha",
+    "Real Betis": "Real Betis",
+    "Celta Vigo": "Celta Vigo",
+    "Villarreal": "Villarreal",
+    "Lyon": "Lyon",
+    "Brighton": "Brighton",
+    "AC Milan": "AC Milan",
+    "USA": "USA",
+    "FC Schalke 04": "FC Schalke 04",
+    "Juventus": "Juventus",
+    "Brazil": "Brazil"
+  },
+  "leagues": {
+    "King's Cup": "King's Cup",
+    "Trofeo Silvio Berlusconi": "Trofeo Silvio Berlusconi",
+    "J2 League": "J2 League",
+    "J1 League": "J1 League",
+    "Schweizer Pokal": "Schweizer Pokal",
+    "CAF Africa Cup of Nations": "CAF Africa Cup of Nations",
+    "HNL": "HNL"
+  },
   "positions": {},
   "countries": {},
-  "transferTypes": {},
+  "transferTypes": {
+    "€ 17M": "€ 17M",
+    "€ 64M": "€ 64M"
+  },
   "trophyPlaces": {},
-  "injuryTypes": {},
-  "birthPlaces": {},
-  "coaches": {}
+  "injuryTypes": {
+    "LCL Knee Injury": "LCL Knee Injury",
+    "Tired": "Tired",
+    "Appendicitis": "Appendicitis"
+  },
+  "birthPlaces": {
+    "London": "London",
+    "Santa Cruz de Tenerife": "Santa Cruz de Tenerife",
+    "Hershey": "Hershey",
+    "São Gonçalo": "São Gonçalo"
+  },
+  "coaches": {
+    "H. Regragui": "H. Regragui",
+    "V. Montella": "V. Montella"
+  }
 }

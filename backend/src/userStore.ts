@@ -7,6 +7,7 @@ export interface UserProfile {
   displayName: string;
   homeTeamId: string | null;
   avatarPlayerId?: string | null;
+  avatarUrl?: string | null;
   timezone: string;
   language: "zh-CN" | "en-US";
 }
@@ -57,6 +58,15 @@ export interface MatchPrediction {
   confidence: number;
   createdAt: number;
   updatedAt: number;
+}
+
+export interface PredictionArchive {
+  id: string;
+  name: string;
+  createdAt: number;
+  updatedAt: number;
+  groupScores: Record<string, { home: number; away: number } | null>;
+  knockoutPicks: Record<string, { winnerCode: string; homeScore: number; awayScore: number }>;
 }
 
 export interface WatchRecord {
@@ -116,6 +126,7 @@ export interface WorldCupUser {
   favoriteMatches: FavoriteMatch[];
   reminders: MatchReminder[];
   predictions: MatchPrediction[];
+  predictionArchives: PredictionArchive[];
   watchHistory: WatchRecord[];
   newsSubscriptions: NewsSubscription[];
   notifications: UserNotification[];
@@ -214,7 +225,7 @@ export class UserStore {
     return invitation;
   }
 
-  createUser(input: { email: string; password: string; displayName?: string; avatarPlayerId?: string }) {
+  createUser(input: { email: string; password: string; displayName?: string; avatarPlayerId?: string; avatarUrl?: string }) {
     const email = normalizeEmail(input.email);
     if (!email || !input.password || input.password.length < 8) {
       throw createUserStoreError("invalid_credentials", 400);
@@ -238,6 +249,7 @@ export class UserStore {
         displayName: input.displayName?.trim() || email.split("@")[0],
         homeTeamId: null,
         avatarPlayerId: input.avatarPlayerId || "lionel-messi",
+        avatarUrl: input.avatarUrl || null,
         timezone: "Asia/Shanghai",
         language: "zh-CN",
       },
@@ -246,6 +258,7 @@ export class UserStore {
       favoriteMatches: [],
       reminders: [],
       predictions: [],
+      predictionArchives: [],
       watchHistory: [],
       newsSubscriptions: DEFAULT_TOPICS.map((topic) => ({
         id: slugify(topic),
@@ -275,6 +288,7 @@ export class UserStore {
       ...profile,
       displayName: profile.displayName?.trim() || user.profile.displayName,
       avatarPlayerId: profile.avatarPlayerId ?? user.profile.avatarPlayerId ?? "lionel-messi",
+      avatarUrl: profile.avatarUrl ?? user.profile.avatarUrl ?? null,
       language: profile.language === "en-US" ? "en-US" : "zh-CN",
     };
     this.touch(user);
@@ -359,6 +373,29 @@ export class UserStore {
     return user;
   }
 
+  upsertPredictionArchive(userId: string, input: Omit<PredictionArchive, "id" | "createdAt" | "updatedAt"> & { id?: string }) {
+    const user = this.requireUser(userId);
+    const now = Date.now();
+    const existing = input.id ? user.predictionArchives.find((item) => item.id === input.id) : null;
+    user.predictionArchives = upsertById(user.predictionArchives ?? [], {
+      id: input.id || randomUUID(),
+      name: input.name.trim() || `模拟 ${user.predictionArchives.length + 1}`,
+      createdAt: existing?.createdAt ?? now,
+      updatedAt: now,
+      groupScores: input.groupScores,
+      knockoutPicks: input.knockoutPicks,
+    }).slice(0, 4);
+    this.touch(user);
+    return user;
+  }
+
+  removePredictionArchive(userId: string, id: string) {
+    const user = this.requireUser(userId);
+    user.predictionArchives = (user.predictionArchives ?? []).filter((item) => item.id !== id);
+    this.touch(user);
+    return user;
+  }
+
   upsertWatchRecord(userId: string, input: Omit<WatchRecord, "id" | "watchedAt"> & { id?: string }) {
     const user = this.requireUser(userId);
     user.watchHistory = upsertById(user.watchHistory, {
@@ -412,10 +449,27 @@ export class UserStore {
     return user;
   }
 
+  markNotificationsRead(userId: string, ids?: string[]) {
+    const user = this.requireUser(userId);
+    const idSet = ids?.length ? new Set(ids) : null;
+    user.notifications = user.notifications.map((notification) => (
+      !idSet || idSet.has(notification.id) ? { ...notification, read: true } : notification
+    ));
+    this.touch(user);
+    return user;
+  }
+
   setUserDisabled(userId: string, disabled: boolean) {
     const user = this.requireUser(userId);
     user.disabledAt = disabled ? Date.now() : null;
     this.touch(user);
+    return user;
+  }
+
+  deleteUser(userId: string) {
+    const user = this.requireUser(userId);
+    this.data.users = this.data.users.filter((item) => item.id !== userId);
+    void this.save();
     return user;
   }
 
@@ -435,6 +489,7 @@ export class UserStore {
     user.favoriteMatches = uniqueValidById(user.favoriteMatches);
     user.reminders = uniqueValidById(user.reminders).filter((item) => Boolean(item.matchId && item.title));
     user.predictions = uniqueValidById(user.predictions).filter((item) => Boolean(item.matchId && item.title));
+    user.predictionArchives = uniqueValidById(user.predictionArchives).filter((item) => Boolean(item.name));
     user.watchHistory = uniqueValidById(user.watchHistory).filter((item) => Boolean(item.matchId && item.title));
     user.newsSubscriptions = uniqueValidById(user.newsSubscriptions);
     user.notifications = uniqueValidById(user.notifications).filter((item) => Boolean(item.title && item.body));
@@ -558,12 +613,14 @@ function normalizeStoredUser(user: WorldCupUser) {
     profile: {
       ...user.profile,
       avatarPlayerId: user.profile?.avatarPlayerId ?? "lionel-messi",
+      avatarUrl: user.profile?.avatarUrl ?? null,
     },
     followedTeams: user.followedTeams ?? [],
     followedPlayers: user.followedPlayers ?? [],
     favoriteMatches: user.favoriteMatches ?? [],
     reminders: user.reminders ?? [],
     predictions: user.predictions ?? [],
+    predictionArchives: (user.predictionArchives ?? []).slice(0, 4),
     watchHistory: user.watchHistory ?? [],
     newsSubscriptions: user.newsSubscriptions ?? [],
     notifications: user.notifications ?? [],
@@ -610,6 +667,7 @@ function getUserRecordCounts(user: WorldCupUser) {
     favoriteMatches: user.favoriteMatches?.length ?? 0,
     reminders: user.reminders?.length ?? 0,
     predictions: user.predictions?.length ?? 0,
+    predictionArchives: user.predictionArchives?.length ?? 0,
     watchHistory: user.watchHistory?.length ?? 0,
     newsSubscriptions: user.newsSubscriptions?.length ?? 0,
     notifications: user.notifications?.length ?? 0,

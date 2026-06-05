@@ -1,5 +1,8 @@
 import http from "http";
+import { execFile } from "child_process";
 import { timingSafeEqual } from "crypto";
+import { readFile, writeFile } from "fs/promises";
+import { promisify } from "util";
 import type { ApiFootballEndpoint, ApiFootballService } from "./apiFootball";
 import type { HistoryBuffer } from "./historyBuffer";
 import type { SnapshotCache } from "./snapshotCache";
@@ -15,6 +18,10 @@ import {
   getWorldCupSquads,
   getWorldCupStandings,
 } from "./worldCupData";
+
+const execFileAsync = promisify(execFile);
+const NEWS_SERVICE_DIR = process.env.NEWS_SERVICE_DIR || "/opt/worldcup-news";
+const NEWS_SERVICE_ENV_FILE = process.env.NEWS_SERVICE_ENV_FILE || `${NEWS_SERVICE_DIR}/.env`;
 
 interface HttpServerOptions {
   snapshotCache: SnapshotCache;
@@ -45,8 +52,16 @@ export function createHttpServer(options: HttpServerOptions) {
     }
 
     const url = new URL(req.url ?? "/", "http://localhost");
-    if ((url.pathname === "/admin" || url.pathname === "/admini" || url.pathname.startsWith("/api/admin/")) && !isAdminAuthorized(req)) {
+    const pathname = url.pathname.replace(/\/+$/, "") || "/";
+    if ((pathname === "/admin" || pathname === "/admini" || url.pathname.startsWith("/api/admin/")) && !isAdminAuthorized(req)) {
       sendAdminUnauthorized(res);
+      return;
+    }
+
+    if (url.pathname === "/api/admin/news-translation") {
+      handleNewsTranslationSettings(req, res).catch((error: Error & { statusCode?: number }) => {
+        sendJson(res, { error: error.message || "news_translation_settings_failed" }, error.statusCode ?? 500);
+      });
       return;
     }
 
@@ -66,7 +81,7 @@ export function createHttpServer(options: HttpServerOptions) {
       return;
     }
 
-    if (req.method === "GET" && (url.pathname === "/admin" || url.pathname === "/admini")) {
+    if (req.method === "GET" && (pathname === "/admin" || pathname === "/admini")) {
       sendHtml(res, renderAdminPage());
       return;
     }
@@ -339,6 +354,104 @@ function handleNewsRequest(url: URL, res: http.ServerResponse) {
     .catch((error: Error) => {
       sendJson(res, { error: error.message || "news_api_unavailable" }, 502);
     });
+}
+
+async function handleNewsTranslationSettings(req: http.IncomingMessage, res: http.ServerResponse) {
+  if (req.method !== "GET" && req.method !== "POST") {
+    sendJson(res, { error: "method_not_allowed" }, 405);
+    return;
+  }
+
+  if (req.method === "GET") {
+    sendJson(res, await readNewsTranslationSettings());
+    return;
+  }
+
+  const body = await readJsonBody(req);
+  const next = await updateNewsTranslationSettings({
+    listTranslationEnabled: typeof body.listTranslationEnabled === "boolean" ? body.listTranslationEnabled : undefined,
+    articleTranslationEnabled: typeof body.articleTranslationEnabled === "boolean" ? body.articleTranslationEnabled : undefined,
+  });
+  await restartNewsService();
+  sendJson(res, { ok: true, restarted: true, ...next });
+}
+
+async function readNewsTranslationSettings() {
+  const env = parseEnvFile(await readFile(NEWS_SERVICE_ENV_FILE, "utf8"));
+  return {
+    serviceDir: NEWS_SERVICE_DIR,
+    listTranslationEnabled: parseEnvBoolean(env.NEWS_LIST_TRANSLATION_ENABLED, true),
+    articleTranslationEnabled: parseEnvBoolean(env.NEWS_ARTICLE_TRANSLATION_ENABLED, false),
+    model: env.OPENAI_TRANSLATION_MODEL || "deepseek-v4-flash",
+    target: env.OPENAI_TRANSLATION_TARGET || "Simplified Chinese",
+    batchSize: Number(env.TRANSLATION_BATCH_SIZE || 4),
+  };
+}
+
+async function updateNewsTranslationSettings(settings: {
+  listTranslationEnabled?: boolean;
+  articleTranslationEnabled?: boolean;
+}) {
+  const raw = await readFile(NEWS_SERVICE_ENV_FILE, "utf8");
+  const next = upsertEnvValue(
+    upsertEnvValue(raw, "NEWS_LIST_TRANSLATION_ENABLED", settings.listTranslationEnabled),
+    "NEWS_ARTICLE_TRANSLATION_ENABLED",
+    settings.articleTranslationEnabled
+  );
+  await writeFile(NEWS_SERVICE_ENV_FILE, next, "utf8");
+  return readNewsTranslationSettings();
+}
+
+function parseEnvFile(raw: string) {
+  const env: Record<string, string> = {};
+  for (const line of raw.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const index = trimmed.indexOf("=");
+    if (index === -1) continue;
+    env[trimmed.slice(0, index)] = trimmed.slice(index + 1).replace(/^["']|["']$/g, "");
+  }
+  return env;
+}
+
+function parseEnvBoolean(value: string | undefined, fallback: boolean) {
+  if (value === undefined || value === "") return fallback;
+  return ["1", "true", "yes", "on", "enabled"].includes(value.trim().toLowerCase());
+}
+
+function upsertEnvValue(raw: string, key: string, value: boolean | undefined) {
+  if (value === undefined) return raw;
+  const line = `${key}=${value ? "true" : "false"}`;
+  const pattern = new RegExp(`^${key}=.*$`, "m");
+  if (pattern.test(raw)) return raw.replace(pattern, line);
+  return `${raw.trimEnd()}\n${line}\n`;
+}
+
+async function restartNewsService() {
+  await execFileAsync("docker", ["compose", "up", "-d", "--force-recreate", "worldcup-news"], {
+    cwd: NEWS_SERVICE_DIR,
+    timeout: 120000,
+    windowsHide: true,
+  });
+}
+
+function readJsonBody(req: http.IncomingMessage) {
+  return new Promise<Record<string, unknown>>((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    req.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+    req.on("end", () => {
+      if (!chunks.length) {
+        resolve({});
+        return;
+      }
+      try {
+        resolve(JSON.parse(Buffer.concat(chunks).toString("utf8")));
+      } catch {
+        reject(Object.assign(new Error("invalid_json_body"), { statusCode: 400 }));
+      }
+    });
+    req.on("error", reject);
+  });
 }
 
 async function getOneVsOnePlayerSummary(url: URL) {

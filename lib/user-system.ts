@@ -15,6 +15,7 @@ export interface PublicUser {
     displayName: string;
     homeTeamId: string | null;
     avatarPlayerId?: string | null;
+    avatarUrl?: string | null;
     timezone: string;
     language: "zh-CN" | "en-US";
   };
@@ -41,6 +42,14 @@ export interface PublicUser {
     confidence: number;
     createdAt: number;
     updatedAt: number;
+  }>;
+  predictionArchives: Array<{
+    id: string;
+    name: string;
+    createdAt: number;
+    updatedAt: number;
+    groupScores: Record<string, { home: number; away: number } | null>;
+    knockoutPicks: Record<string, { winnerCode: string; homeScore: number; awayScore: number }>;
   }>;
   watchHistory: Array<{
     id: string;

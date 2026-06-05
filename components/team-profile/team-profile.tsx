@@ -11,6 +11,8 @@ import { formatDate, formatTime } from "@/lib/format";
 import { fetchWorldCupSquadDetails, type WorldCupSquadDetail } from "@/lib/world-cup-squads";
 import { localizeCoachName } from "@/lib/coach-localization";
 import { TeamSquadCard } from "@/components/team-profile/team-squad-card";
+import { UserActionButton } from "@/components/user-action-button";
+import { getFlagUrl } from "@/lib/world-cup-2026";
 import type { TeamProfile } from "@/types/team-profile";
 import "./team-profile.css";
 
@@ -133,7 +135,8 @@ export function TeamProfile({ data }: TeamProfileProps) {
   const fixturesGroupLabel = groupMatches[0]
     ? formatRoundLabel(groupMatches[0].stage, groupMatches[0].summary)
     : "";
-  const coachName = getCoachName(data);
+  const fallbackCoachName = getCoachName(data);
+  const coachName = localizeCoachName(squad?.coach || fallbackCoachName) || fallbackCoachName;
 
   return (
     <div className="tp-wrap">
@@ -155,7 +158,19 @@ export function TeamProfile({ data }: TeamProfileProps) {
             <img src={`https://flagcdn.com/${flagImageCode}.svg`} alt="" className="tp-flag-img" />
           </div>
           <div className="tp-hero-info">
-            <h1>{data.nameCn}</h1>
+            <div className="tp-hero-title-row">
+              <h1>{data.nameCn}</h1>
+              <UserActionButton
+                kind="team"
+                payload={{
+                  id: targetCode,
+                  name: data.nameCn,
+                  region: targetCode,
+                  logo: getFlagUrl(flagImageCode, 160),
+                }}
+                className="tp-hero-follow-button h-9 px-3 text-[10px] backdrop-blur-md"
+              />
+            </div>
             <div className="tp-hero-sub">
               <span className="accent">{data.nameEn}</span> · {data.confederation} · FIFA 排名 #{data.fifaRanking}
             </div>
@@ -272,7 +287,7 @@ export function TeamProfile({ data }: TeamProfileProps) {
                     <section className={`tp-coach-card${deepDive.coach.image ? " has-image" : ""}`}>
                       <div className="tp-coach-copy">
                         <div className="tp-module-kicker">{deepDive.coach.title}</div>
-                        <h2>{deepDive.coach.name}</h2>
+                        <h2>{coachName || localizeCoachName(deepDive.coach.name) || deepDive.coach.name}</h2>
                         <p>{deepDive.coach.bio}</p>
                         {deepDive.coach.highlights && (
                           <div className="tp-coach-highlights">
@@ -285,7 +300,7 @@ export function TeamProfile({ data }: TeamProfileProps) {
                       {deepDive.coach.image && (
                         <div className="tp-coach-media">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={deepDive.coach.image} alt={deepDive.coach.imageAlt ?? deepDive.coach.name} loading="lazy" />
+                          <img src={deepDive.coach.image} alt={deepDive.coach.imageAlt ?? coachName ?? deepDive.coach.name} loading="lazy" />
                         </div>
                       )}
                     </section>

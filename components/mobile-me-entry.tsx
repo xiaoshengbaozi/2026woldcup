@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode, TouchEvent } from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Search, UserRound } from "lucide-react";
 import { getPlayerAvatar } from "@/lib/user-preferences";
 import { userApi, type UserHomePayload } from "@/lib/user-system";
+import { MeAuthDialog, type SharedAuthMode } from "./me-auth-dialog";
 import { MobileMeDrawer } from "./mobile-me-drawer";
 import { MobileSearchDrawer } from "./mobile-search-drawer";
 
@@ -24,35 +25,47 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
   const gestureStartRef = useRef<{ x: number; y: number } | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [topRailExpanded, setTopRailExpanded] = useState(false);
+  const [authMode, setAuthMode] = useState<SharedAuthMode | null>(null);
   const [home, setHome] = useState<UserHomePayload | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const showSearchEntry = pathname === "/" || pathname.startsWith("/news");
 
-  useEffect(() => {
-    let active = true;
+  const refreshHome = useCallback(() => {
     setLoading(true);
     userApi<UserHomePayload>("/api/me/home", { cache: "no-store" })
       .then((payload) => {
-        if (!active) return;
         const playerId = payload.user.profile.avatarPlayerId ?? null;
         const followedPlayer = payload.user.followedPlayers.find((player) => player.id === playerId);
         setHome(payload);
-        setAvatarUrl(followedPlayer?.photo || getPlayerAvatar(playerId, payload.catalog?.players));
+        setAvatarUrl(payload.user.profile.avatarUrl || followedPlayer?.photo || getPlayerAvatar(playerId, payload.catalog?.players));
       })
       .catch(() => {
-        if (!active) return;
         setHome(null);
         setAvatarUrl(null);
       })
       .finally(() => {
-        if (active) setLoading(false);
+        setLoading(false);
       });
+  }, []);
 
-    return () => {
-      active = false;
+  useEffect(() => {
+    refreshHome();
+  }, [pathname, refreshHome]);
+
+  useEffect(() => {
+    const handleTopRailChange = (event: Event) => {
+      const detail = (event as CustomEvent<{ pinned?: boolean }>).detail;
+      setTopRailExpanded(Boolean(detail?.pinned));
     };
-  }, [pathname]);
+
+    window.addEventListener("mobile-top-rail-change", handleTopRailChange);
+    return () => {
+      window.removeEventListener("mobile-top-rail-change", handleTopRailChange);
+      setTopRailExpanded(false);
+    };
+  }, []);
 
   const startEdgeGesture = (event: TouchEvent<HTMLDivElement>) => {
     const touch = event.touches[0];
@@ -88,7 +101,12 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
         onTouchEnd={endEdgeGesture}
         onTouchCancel={endEdgeGesture}
       />
-      <div className="pointer-events-none fixed inset-x-0 top-0 z-[70] h-[calc(env(safe-area-inset-top)+4.75rem)] bg-black/72 backdrop-blur-2xl [mask-image:linear-gradient(to_bottom,black_0%,black_56%,rgba(0,0,0,0)_100%)] lg:hidden">
+      <div
+        className={`pointer-events-none fixed inset-x-0 top-0 z-[60] bg-black/72 backdrop-blur-2xl transition-[height] duration-200 [mask-image:linear-gradient(to_bottom,black_0%,black_68%,rgba(0,0,0,0)_100%)] lg:hidden ${
+          topRailExpanded ? "h-[calc(env(safe-area-inset-top)+9.625rem)]" : "h-[calc(env(safe-area-inset-top)+4.125rem)]"
+        }`}
+      />
+      <div className="pointer-events-none fixed inset-x-0 top-0 z-[70] h-[calc(env(safe-area-inset-top)+4.125rem)] lg:hidden">
         <button
           type="button"
           aria-label="打开我的世界杯"
@@ -135,8 +153,11 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
         home={home}
         loading={loading}
         avatarUrl={avatarUrl}
+        onLogin={() => setAuthMode("login")}
+        onRegister={() => setAuthMode("register")}
         onClose={() => setDrawerOpen(false)}
       />
+      <MeAuthDialog mode={authMode} onClose={() => setAuthMode(null)} onAuthenticated={refreshHome} />
       {showSearchEntry ? <MobileSearchDrawer open={searchOpen} onClose={() => setSearchOpen(false)} /> : null}
     </>
   );

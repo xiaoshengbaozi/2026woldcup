@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { ExternalLink, Newspaper } from "lucide-react";
+import { ExternalLink, Languages, Loader2, Newspaper, X } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 
 type NewsItem = {
@@ -23,12 +23,46 @@ type NewsResponse = {
   count: number;
   total: number;
   errors: { feed: string; message: string }[];
+  features?: {
+    articleTranslationEnabled?: boolean;
+    articleReaderEnabled?: boolean;
+    listTranslationEnabled?: boolean;
+  };
   items: NewsItem[];
 };
+
+type ArticleResponse = {
+  title: string;
+  source: string;
+  url: string;
+  image: string;
+  publishedAt: string;
+  excerpt: string;
+  content: string[];
+  readable: boolean;
+  translation?: {
+    enabled: boolean;
+    requested: boolean;
+    cached: boolean;
+    translated: boolean;
+    model: string;
+    target: string;
+  };
+};
+
+type NewsTabId = "headline" | "editor" | "latest";
 
 const NEWS_API = process.env.NEXT_PUBLIC_NEWS_API_URL || "https://news.20250114.xyz";
 
 const editorTabs = ["体育", "旅游", "文化", "专题"];
+
+const mobileNewsTabs: { id: NewsTabId; title: string; label: string }[] = [
+  { id: "headline", title: "头条新闻", label: "头条" },
+  { id: "editor", title: "编辑精选", label: "精选" },
+  { id: "latest", title: "最新资讯", label: "最新" },
+];
+
+const MOBILE_TOP_MODULE_OFFSET = 66;
 
 const dateFormatter = new Intl.DateTimeFormat("zh-CN", {
   month: "short",
@@ -45,7 +79,20 @@ const timeFormatter = new Intl.DateTimeFormat("zh-CN", {
 export default function NewsPage() {
   const [payload, setPayload] = useState<NewsResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [readerItem, setReaderItem] = useState<NewsItem | null>(null);
+  const [readerArticle, setReaderArticle] = useState<ArticleResponse | null>(null);
+  const [readerLoading, setReaderLoading] = useState(false);
+  const [readerError, setReaderError] = useState<string | null>(null);
+  const [readerTranslate, setReaderTranslate] = useState(false);
   const [activeEditorTab, setActiveEditorTab] = useState("体育");
+  const [activeNewsTab, setActiveNewsTab] = useState<NewsTabId>("headline");
+  const mobileTabsSentinelRef = useRef<HTMLDivElement>(null);
+  const mobileTabsRef = useRef<HTMLDivElement>(null);
+  const headlineRef = useRef<HTMLElement>(null);
+  const editorRef = useRef<HTMLElement>(null);
+  const latestRef = useRef<HTMLElement>(null);
+  const [isMobileTabsPinned, setIsMobileTabsPinned] = useState(false);
+  const [mobileTabsHeight, setMobileTabsHeight] = useState(0);
 
   const endpoint = useMemo(() => {
     const params = new URLSearchParams({ limit: "72" });
@@ -73,6 +120,116 @@ export default function NewsPage() {
     return () => { alive = false; };
   }, [endpoint]);
 
+  useEffect(() => {
+    const mobileQuery = window.matchMedia("(max-width: 1023px)");
+
+    const syncActiveTab = () => {
+      if (!mobileQuery.matches) return;
+
+      const tabsOffset = MOBILE_TOP_MODULE_OFFSET + (mobileTabsRef.current?.offsetHeight ?? 0) + 12;
+      const sectionRefs = [
+        { id: "headline" as const, ref: headlineRef },
+        { id: "editor" as const, ref: editorRef },
+        { id: "latest" as const, ref: latestRef },
+      ];
+      const nextActive = sectionRefs.reduce<NewsTabId>((current, section) => {
+        const node = section.ref.current;
+        if (!node) return current;
+        return node.getBoundingClientRect().top - tabsOffset <= 0 ? section.id : current;
+      }, "headline");
+
+      setActiveNewsTab((current) => (current === nextActive ? current : nextActive));
+    };
+
+    const syncPinnedState = () => {
+      if (!mobileQuery.matches) {
+        setIsMobileTabsPinned(false);
+        setMobileTabsHeight(0);
+        return;
+      }
+
+      const sentinel = mobileTabsSentinelRef.current;
+      const tabs = mobileTabsRef.current;
+      if (!sentinel || !tabs) return;
+
+      const nextHeight = tabs.offsetHeight;
+      setMobileTabsHeight((current) => (current === nextHeight ? current : nextHeight));
+      setIsMobileTabsPinned(sentinel.getBoundingClientRect().top <= MOBILE_TOP_MODULE_OFFSET);
+      syncActiveTab();
+    };
+
+    syncPinnedState();
+    window.addEventListener("scroll", syncPinnedState, { passive: true });
+    window.addEventListener("resize", syncPinnedState);
+    mobileQuery.addEventListener?.("change", syncPinnedState);
+
+    return () => {
+      window.removeEventListener("scroll", syncPinnedState);
+      window.removeEventListener("resize", syncPinnedState);
+      mobileQuery.removeEventListener?.("change", syncPinnedState);
+    };
+  }, []);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("mobile-top-rail-change", { detail: { pinned: isMobileTabsPinned } }));
+    return () => {
+      window.dispatchEvent(new CustomEvent("mobile-top-rail-change", { detail: { pinned: false } }));
+    };
+  }, [isMobileTabsPinned]);
+
+  useEffect(() => {
+    if (!readerItem) return;
+
+    const selectedItem = readerItem;
+    let alive = true;
+    const controller = new AbortController();
+
+    async function loadArticle() {
+      setReaderLoading(true);
+      setReaderError(null);
+      try {
+        const params = new URLSearchParams({
+          url: selectedItem.url,
+          translate: readerTranslate ? "1" : "0",
+        });
+        const response = await fetch(`${NEWS_API}/api/news/article?${params.toString()}`, {
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        const data = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(data?.error || `Article API returned ${response.status}`);
+        if (alive) setReaderArticle(data);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        if (alive) setReaderError(error instanceof Error ? error.message : "article_unavailable");
+      } finally {
+        if (alive) setReaderLoading(false);
+      }
+    }
+
+    loadArticle();
+    return () => {
+      alive = false;
+      controller.abort();
+    };
+  }, [readerItem, readerTranslate]);
+
+  useEffect(() => {
+    if (!readerItem) return;
+
+    const originalOverflow = document.body.style.overflow;
+    const originalPaddingRight = document.body.style.paddingRight;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+    document.body.style.overflow = "hidden";
+    if (scrollbarWidth > 0) document.body.style.paddingRight = `${scrollbarWidth}px`;
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      document.body.style.paddingRight = originalPaddingRight;
+    };
+  }, [readerItem]);
+
   const items = payload?.items ?? [];
   const itemsWithImages = items.filter((item) => item.image.trim().length > 0);
   const itemsWithoutImages = items.filter((item) => item.image.trim().length === 0);
@@ -84,11 +241,82 @@ export default function NewsPage() {
   const latestItems = visualItems.slice(8, 14);
   const listItems = items.slice(14, 21);
   const featureItems = visualItems.slice(14, 17);
+  const articleTranslationEnabled = Boolean(payload?.features?.articleTranslationEnabled);
+
+  function openReader(item: NewsItem) {
+    setReaderItem(item);
+    setReaderArticle(null);
+    setReaderError(null);
+    setReaderTranslate(false);
+  }
+
+  function closeReader() {
+    setReaderItem(null);
+    setReaderArticle(null);
+    setReaderError(null);
+    setReaderTranslate(false);
+  }
+
+  function scrollToNewsSection(tab: NewsTabId) {
+    const sectionRefs = {
+      headline: headlineRef,
+      editor: editorRef,
+      latest: latestRef,
+    };
+    const target = sectionRefs[tab].current;
+    if (!target || !window.matchMedia("(max-width: 1023px)").matches) return;
+
+    setActiveNewsTab(tab);
+    const offset = MOBILE_TOP_MODULE_OFFSET + (mobileTabsRef.current?.offsetHeight ?? 0) + 12;
+    const top = target.getBoundingClientRect().top + window.scrollY - offset;
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: Math.max(top, 0), behavior: "smooth" });
+    });
+  }
 
   return (
     <DashboardShell>
+      <div
+        ref={mobileTabsSentinelRef}
+        className="lg:hidden"
+        style={{ height: isMobileTabsPinned ? mobileTabsHeight : 0 }}
+      />
+      <nav
+        ref={mobileTabsRef}
+        className={`${
+          isMobileTabsPinned
+            ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[65] px-3 py-2"
+            : "relative -mx-3 mt-4 bg-black/58 px-3 py-2 backdrop-blur-2xl"
+        } lg:hidden`}
+        aria-label="新闻分类"
+      >
+        <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="新闻分类">
+          {mobileNewsTabs.map((tab) => {
+            const isActive = tab.id === activeNewsTab;
+
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                aria-label={`${tab.title}：${tab.label}`}
+                onClick={() => scrollToNewsSection(tab.id)}
+                className={`group relative flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-left text-xs font-bold transition duration-300 ${
+                  isActive
+                    ? "bg-volt text-black shadow-[0_0_24px_rgba(216,255,62,.2)]"
+                    : "bg-white/[0.055] text-white/62 ring-1 ring-white/[0.08] hover:bg-white/[0.09] hover:text-white"
+                }`}
+              >
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+
       {/* ── TOP NEWS: Hero + Side Stories ── */}
-      <section className="mt-6">
+      <section ref={headlineRef} className="mt-6 scroll-mt-24">
         <SectionHeader title="头条新闻" />
 
         {loading ? (
@@ -116,6 +344,10 @@ export default function NewsPage() {
               href={heroItem.url}
               target="_blank"
               rel="noreferrer"
+              onClick={(event) => {
+                event.preventDefault();
+                openReader(heroItem);
+              }}
               className="hero-card group relative overflow-hidden transition-all duration-300 hover:-translate-y-1"
             >
               <NewsImage
@@ -151,6 +383,10 @@ export default function NewsPage() {
                   href={item.url}
                   target="_blank"
                   rel="noreferrer"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    openReader(item);
+                  }}
                   className="group flex gap-3.5 border-b border-white/[0.04] py-3.5 transition-colors hover:bg-white/[0.02] last:border-b-0"
                 >
                   <NewsImage
@@ -181,7 +417,7 @@ export default function NewsPage() {
 
       {/* ── EDITOR'S CHOICE ── */}
       {editorItems.length > 0 && (
-        <section className="mt-8">
+        <section ref={editorRef} className="mt-8 scroll-mt-24">
           <SectionHeader title="编辑精选" />
 
           {/* Tabs */}
@@ -208,6 +444,10 @@ export default function NewsPage() {
                 href={item.url}
                 target="_blank"
                 rel="noreferrer"
+                onClick={(event) => {
+                  event.preventDefault();
+                  openReader(item);
+                }}
                 className="hero-card group overflow-hidden transition-all duration-300 hover:-translate-y-1"
               >
                 <div className="relative h-44 overflow-hidden">
@@ -237,12 +477,12 @@ export default function NewsPage() {
 
       {/* ── LATEST NEWS Grid ── */}
       {latestItems.length > 0 && (
-        <section className="mt-8">
+        <section ref={latestRef} className="mt-8 scroll-mt-24">
           <SectionHeader title="最新资讯" actionLabel="查看更多" />
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {latestItems.map((item, index) => (
-              <NewsCard key={`${item.id}-${item.url}`} item={item} index={index} />
+              <NewsCard key={`${item.id}-${item.url}`} item={item} index={index} onOpen={openReader} />
             ))}
           </div>
         </section>
@@ -269,6 +509,10 @@ export default function NewsPage() {
               href={item.url}
               target="_blank"
               rel="noreferrer"
+              onClick={(event) => {
+                event.preventDefault();
+                openReader(item);
+              }}
               className="group flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-white/[0.03]"
             >
               <span className="w-12 shrink-0 text-xs font-bold text-volt/60 tabular">
@@ -295,6 +539,10 @@ export default function NewsPage() {
                 href={item.url}
                 target="_blank"
                 rel="noreferrer"
+                onClick={(event) => {
+                  event.preventDefault();
+                  openReader(item);
+                }}
                 className="hero-card group overflow-hidden transition-all duration-300 hover:-translate-y-1"
               >
                 <div className="relative h-48 overflow-hidden">
@@ -322,6 +570,16 @@ export default function NewsPage() {
           </div>
         </section>
       )}
+      <NewsReader
+        item={readerItem}
+        article={readerArticle}
+        loading={readerLoading}
+        error={readerError}
+        translate={readerTranslate}
+        canTranslate={articleTranslationEnabled}
+        onTranslate={() => setReaderTranslate(true)}
+        onClose={closeReader}
+      />
     </DashboardShell>
   );
 }
@@ -410,7 +668,7 @@ function NewsImage({
   );
 }
 
-function NewsCard({ item, index }: { item: NewsItem; index: number }) {
+function NewsCard({ item, index, onOpen }: { item: NewsItem; index: number; onOpen: (item: NewsItem) => void }) {
   const published = dateFormatter.format(new Date(item.publishedAt));
   const firstTag = item.tags[0]?.replaceAll("-", " ") ?? "world cup";
 
@@ -419,6 +677,10 @@ function NewsCard({ item, index }: { item: NewsItem; index: number }) {
       href={item.url}
       target="_blank"
       rel="noreferrer"
+      onClick={(event) => {
+        event.preventDefault();
+        onOpen(item);
+      }}
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(index * 0.025, 0.25), duration: 0.36 }}
@@ -451,6 +713,129 @@ function NewsCard({ item, index }: { item: NewsItem; index: number }) {
         </div>
       </div>
     </motion.a>
+  );
+}
+
+function NewsReader({
+  item,
+  article,
+  loading,
+  error,
+  translate,
+  canTranslate,
+  onTranslate,
+  onClose,
+}: {
+  item: NewsItem | null;
+  article: ArticleResponse | null;
+  loading: boolean;
+  error: string | null;
+  translate: boolean;
+  canTranslate: boolean;
+  onTranslate: () => void;
+  onClose: () => void;
+}) {
+  if (!item) return null;
+
+  const title = article?.title || item.title;
+  const source = article?.source || item.source;
+  const publishedAt = article?.publishedAt || item.publishedAt;
+  const content = article?.content?.length ? article.content : [];
+  const image = article?.image || item.image;
+  const showTranslateButton = canTranslate && !translate && article?.translation?.enabled;
+
+  return (
+    <div className="fixed inset-0 z-[9999] bg-black/72 px-3 py-4 backdrop-blur-2xl sm:px-6" role="dialog" aria-modal="true">
+      <div className="mx-auto flex h-full max-w-5xl flex-col overflow-hidden rounded-[2rem] border border-white/[0.1] bg-[#050708]/92 shadow-[0_30px_120px_rgba(0,0,0,.62)]">
+        <div className="flex items-center justify-between gap-3 border-b border-white/[0.08] px-4 py-3 sm:px-5">
+          <div className="min-w-0">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-volt/70">{source}</div>
+            <div className="mt-1 truncate text-xs text-white/38">{dateFormatter.format(new Date(publishedAt))}</div>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            {showTranslateButton && (
+              <button
+                type="button"
+                onClick={onTranslate}
+                className="inline-flex h-9 items-center gap-2 rounded-full bg-volt/12 px-3 text-xs font-semibold text-volt ring-1 ring-volt/25 transition hover:bg-volt hover:text-black"
+              >
+                <Languages className="h-4 w-4" />
+                翻译正文
+              </button>
+            )}
+            <a
+              href={item.url}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex h-9 items-center gap-2 rounded-full bg-white/[0.06] px-3 text-xs font-semibold text-white/70 ring-1 ring-white/[0.1] transition hover:text-white"
+            >
+              <ExternalLink className="h-4 w-4" />
+              原文
+            </a>
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.06] text-white/70 ring-1 ring-white/[0.1] transition hover:bg-white/[0.1] hover:text-white"
+              aria-label="关闭阅读器"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {image && (
+            <div className="relative h-56 overflow-hidden bg-white/[0.035] sm:h-72">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={image} alt="" className="h-full w-full object-cover opacity-75" referrerPolicy="no-referrer" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#050708] via-transparent to-transparent" />
+            </div>
+          )}
+
+          <article className="mx-auto max-w-3xl px-5 py-6 sm:px-8 sm:py-8">
+            <div className="mb-4 flex flex-wrap gap-2">
+              {(item.tags || []).slice(0, 4).map((tag) => (
+                <span key={tag} className="rounded-full bg-white/[0.06] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/45 ring-1 ring-white/[0.08]">
+                  {tag.replaceAll("-", " ")}
+                </span>
+              ))}
+            </div>
+
+            <h1 className="text-2xl font-semibold leading-tight text-white sm:text-4xl">{title}</h1>
+            {(article?.excerpt || item.summary) && (
+              <p className="mt-4 text-sm leading-7 text-white/55 sm:text-base">{article?.excerpt || item.summary}</p>
+            )}
+
+            {loading && (
+              <div className="mt-10 flex items-center gap-3 rounded-3xl bg-white/[0.045] p-5 text-sm text-white/55 ring-1 ring-white/[0.08]">
+                <Loader2 className="h-5 w-5 animate-spin text-volt" />
+                正在解析正文
+              </div>
+            )}
+
+            {error && !loading && (
+              <div className="mt-10 rounded-3xl bg-white/[0.045] p-5 text-sm leading-6 text-white/55 ring-1 ring-white/[0.08]">
+                正文解析失败，已保留摘要和原文入口。错误：{error}
+              </div>
+            )}
+
+            {!loading && !error && content.length > 0 && (
+              <div className="mt-8 space-y-5 text-[15px] leading-8 text-white/72">
+                {content.map((paragraph, index) => (
+                  <p key={`${index}-${paragraph.slice(0, 16)}`}>{paragraph}</p>
+                ))}
+              </div>
+            )}
+
+            {!loading && !error && article && content.length === 0 && (
+              <div className="mt-10 rounded-3xl bg-white/[0.045] p-5 text-sm leading-6 text-white/55 ring-1 ring-white/[0.08]">
+                这篇文章暂时只能解析到摘要，完整内容可从右上角打开原文查看。
+              </div>
+            )}
+          </article>
+        </div>
+      </div>
+    </div>
   );
 }
 

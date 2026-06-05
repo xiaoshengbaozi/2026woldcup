@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { Clock } from "lucide-react";
 import { MatchCard } from "@/components/match-card";
 import { MatchCardCompact } from "@/components/match-card-compact";
@@ -24,10 +24,8 @@ export function DaySection({ day, matches, index, timezoneOffset, roundLabels }:
 
   return (
     <motion.section
-      layout
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
       transition={{
         delay: Math.min(index * 0.035, 0.28),
         duration: 0.55
@@ -86,10 +84,8 @@ type GroupCardProps = {
 function GroupCard({ group, matches, index, timezoneOffset, roundLabels }: GroupCardProps) {
   return (
     <motion.section
-      layout
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
       transition={{
         delay: Math.min(index * 0.025, 0.22),
         duration: 0.45
@@ -165,7 +161,7 @@ export function ScheduleList({
       )}
 
       {layout === "default" && (
-        <AnimatePresence mode="popLayout">
+        <>
           {days.map(([day, dayMatches], index) => (
             <DaySection
               key={day}
@@ -176,7 +172,7 @@ export function ScheduleList({
               roundLabels={roundLabels}
             />
           ))}
-        </AnimatePresence>
+        </>
       )}
 
       {layout === "waterfall" && (

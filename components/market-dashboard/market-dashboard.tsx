@@ -15,11 +15,17 @@ import { NavBar } from "@/components/nav-bar";
 import { MobileMeEntry } from "@/components/mobile-me-entry";
 import { MobileNavBar } from "@/components/mobile-nav-bar";
 
+const MOBILE_TOP_MODULE_OFFSET = 66;
+
 export function MarketDashboard() {
   useLiveMarketData();
   const [webFullscreen, setWebFullscreen] = useState(false);
   const [systemFsPending, setSystemFsPending] = useState(false);
   const [mobileDataTab, setMobileDataTab] = useState<"teams" | "matches">("teams");
+  const mobileTabsSentinelRef = useRef<HTMLDivElement>(null);
+  const mobileTabsRef = useRef<HTMLDivElement>(null);
+  const [mobileTabsPinned, setMobileTabsPinned] = useState(false);
+  const [mobileTabsHeight, setMobileTabsHeight] = useState(0);
   const overlayRef = useRef<HTMLDivElement>(null);
 
   const handleFullscreenChange = useCallback((v: boolean, system = false) => {
@@ -51,8 +57,46 @@ export function MarketDashboard() {
     return () => document.removeEventListener("fullscreenchange", handler);
   }, [webFullscreen]);
 
+  useEffect(() => {
+    const mobileQuery = window.matchMedia("(max-width: 1023px)");
+
+    const syncPinnedState = () => {
+      if (!mobileQuery.matches) {
+        setMobileTabsPinned(false);
+        setMobileTabsHeight(0);
+        return;
+      }
+
+      const sentinel = mobileTabsSentinelRef.current;
+      const tabs = mobileTabsRef.current;
+      if (!sentinel || !tabs) return;
+
+      const nextHeight = tabs.offsetHeight;
+      setMobileTabsHeight((current) => (current === nextHeight ? current : nextHeight));
+      setMobileTabsPinned(sentinel.getBoundingClientRect().top <= MOBILE_TOP_MODULE_OFFSET);
+    };
+
+    syncPinnedState();
+    window.addEventListener("scroll", syncPinnedState, { passive: true });
+    window.addEventListener("resize", syncPinnedState);
+    mobileQuery.addEventListener?.("change", syncPinnedState);
+
+    return () => {
+      window.removeEventListener("scroll", syncPinnedState);
+      window.removeEventListener("resize", syncPinnedState);
+      mobileQuery.removeEventListener?.("change", syncPinnedState);
+    };
+  }, []);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("mobile-top-rail-change", { detail: { pinned: mobileTabsPinned } }));
+    return () => {
+      window.dispatchEvent(new CustomEvent("mobile-top-rail-change", { detail: { pinned: false } }));
+    };
+  }, [mobileTabsPinned]);
+
   return (
-    <div className="relative min-h-screen px-4 pb-28 pt-[calc(env(safe-area-inset-top)+4.75rem)] sm:px-6 lg:px-8 lg:pb-5 lg:pt-5">
+    <div className="relative min-h-screen px-4 pb-28 pt-[calc(env(safe-area-inset-top)+4.125rem)] sm:px-6 lg:px-8 lg:pb-5 lg:pt-5">
       {/* Ambient glow — same as homepage */}
       <div className="pointer-events-none fixed left-1/2 top-0 h-[520px] w-[720px] -translate-x-1/2 rounded-full bg-volt/10 blur-[120px]" />
       <div className="pointer-events-none fixed bottom-0 right-0 h-[420px] w-[420px] rounded-full bg-flare/10 blur-[110px]" />
@@ -116,7 +160,19 @@ export function MarketDashboard() {
         </div>
 
         <section className="lg:hidden">
-          <div className="relative -mx-4 bg-black/58 px-4 py-2 backdrop-blur-2xl">
+          <div
+            ref={mobileTabsSentinelRef}
+            className="lg:hidden"
+            style={{ height: mobileTabsPinned ? mobileTabsHeight : 0 }}
+          />
+          <div
+            ref={mobileTabsRef}
+            className={`${
+              mobileTabsPinned
+                ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[65] px-4 py-2"
+                : "relative -mx-4 bg-black/58 px-4 py-2 backdrop-blur-2xl"
+            } lg:static lg:mx-0 lg:bg-transparent lg:px-0 lg:py-0 lg:backdrop-blur-none`}
+          >
             <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="数据分类">
               {[
                 { key: "teams" as const, title: "球队", count: 2 },

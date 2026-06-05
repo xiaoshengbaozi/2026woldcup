@@ -112,7 +112,7 @@ export function MatchLineup({ detail }: { detail: MatchDetail }) {
           className="relative grid grid-cols-1 gap-4 p-4 sm:p-5 md:grid-cols-[2fr_3fr]"
         >
           {isSquadList ? (
-            <FeaturedSquadSummary
+            <SquadLineupPanel
               teamName={currentTeamName}
               teamCode={isHome ? detail.homeTeamCode : detail.awayTeamCode}
               coach={currentLineup.coach}
@@ -130,12 +130,13 @@ export function MatchLineup({ detail }: { detail: MatchDetail }) {
             />
           )}
 
-          {/* Right: Player List — 5 per row horizontal grid */}
-          <PlayerGrid
-            players={currentLineup.players}
-            accentHex={accentHex}
-            accentFrom={isHome ? "rgba(216,255,62," : "rgba(255,154,31,"}
-          />
+          {!isSquadList && (
+            <PlayerGrid
+              players={currentLineup.players}
+              accentHex={accentHex}
+              accentFrom={isHome ? "rgba(216,255,62," : "rgba(255,154,31,"}
+            />
+          )}
         </motion.div>
       </AnimatePresence>
     </motion.div>
@@ -273,6 +274,33 @@ function FormationPitch({
         </div>
       </div>
     </div>
+  );
+}
+
+export function SquadLineupPanel({
+  teamName, teamCode, coach, players, officialWorldCupSquad, accentHex, accentFrom,
+}: {
+  teamName: string;
+  teamCode: string;
+  coach?: string | null;
+  players: LineupPlayer[];
+  officialWorldCupSquad: boolean;
+  accentHex: string;
+  accentFrom: string;
+}) {
+  return (
+    <>
+      <FeaturedSquadSummary
+        teamName={teamName}
+        teamCode={teamCode}
+        coach={coach}
+        players={players}
+        officialWorldCupSquad={officialWorldCupSquad}
+        accentHex={accentHex}
+        accentFrom={accentFrom}
+      />
+      <PlayerGrid players={players} accentHex={accentHex} accentFrom={accentFrom} />
+    </>
   );
 }
 
@@ -606,7 +634,7 @@ function groupPlayersByPosition(players: LineupPlayer[]): Record<string, LineupP
   return grouped;
 }
 
-function PlayerGrid({
+export function PlayerGrid({
   players, accentHex, accentFrom,
 }: {
   players: LineupPlayer[]; accentHex: string; accentFrom: string;
@@ -623,14 +651,14 @@ function PlayerGrid({
 
         return (
           <div key={group.key}>
-            <div className="mb-1 flex items-center gap-1.5 pl-0.5">
-              <span className="inline-block h-2.5 w-1 rounded-full" style={{ backgroundColor: accentHex, opacity: 0.5 }} />
-              <span className="text-[9px] font-bold uppercase tracking-[0.15em]" style={{ color: `${accentHex}99` }}>
+            <div className="mb-2 flex items-center gap-2 pl-0.5">
+              <span className="inline-block h-3 w-1.5 rounded-full" style={{ backgroundColor: accentHex, opacity: 0.55 }} />
+              <span className="text-xs font-black uppercase tracking-[0.12em] sm:text-sm" style={{ color: `${accentHex}bb` }}>
                 {group.label}
               </span>
-              <span className="text-[9px] text-white/25">({groupPlayers.length})</span>
+              <span className="text-xs text-white/28 sm:text-sm">({groupPlayers.length})</span>
             </div>
-            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 sm:gap-2">
+            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 sm:gap-2">
               {groupPlayers.map((player) => {
                 const idx = globalIndex++;
                 return (

@@ -534,7 +534,7 @@ function TimedMatchCard({
     >
       <div className="flex items-center justify-between gap-1.5">
         <span className="text-[10px] font-semibold text-white/80">{formatTime(displayStart)}</span>
-        <span className="truncate text-[8px] font-medium uppercase tracking-wider text-white/40">{formatStageLabel(match.stage)}</span>
+        <span className="truncate text-[8px] font-medium uppercase tracking-wider text-white/40">{formatStageLabel(match.stage, match.summary)}</span>
       </div>
       <div className="mt-0.5 flex items-center gap-1.5 truncate text-[11px] font-bold text-white/90">
         <TeamFlag team={teams.home} size={14} />
@@ -566,7 +566,7 @@ function SelectedDayMatchRow({ match, displayStart }: { match: Match; displaySta
           {formatTime(displayStart)}
         </div>
         <div className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[9px] font-semibold text-white/40">
-          {formatStageLabel(match.stage)}
+          {formatStageLabel(match.stage, match.summary)}
         </div>
       </div>
       <div className="mt-1.5 flex items-center justify-between gap-2 text-xs font-semibold text-white/72">

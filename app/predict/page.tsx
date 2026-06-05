@@ -2,13 +2,14 @@
 
 import { type FormEvent, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link";
 import { GROUPS, getTeamByCode, type GroupTeam, type GroupMatch } from "@/data/world-cup-2026-groups";
+import { DashboardShell } from "@/components/dashboard-shell";
+import { MeAuthDialog } from "@/components/me-auth-dialog";
 import { usePredictionStore } from "@/lib/store/prediction-store";
 import type { StandingRow, KnockoutMatch } from "@/lib/store/prediction";
-import { userApi, type UserHomePayload } from "@/lib/user-system";
+import { userApi, type PublicUser, type UserHomePayload } from "@/lib/user-system";
 import { fallbackUserPreferenceCatalog, type UserPreferenceCatalog } from "@/lib/user-preferences";
-import { ChevronLeft, LogIn, ShieldCheck, Shuffle, UserPlus, X } from "lucide-react";
+import { ChevronLeft, Clock3, FolderOpen, LogIn, Save, ShieldCheck, Shuffle, Trash2, UserPlus, X } from "lucide-react";
 
 /* ── Helpers ── */
 
@@ -325,7 +326,7 @@ function RoundSection({ label, matches }: { label: string; matches: KnockoutMatc
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="px-3 pb-3 grid grid-cols-4 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="px-3 pb-3 grid grid-cols-2 gap-2 lg:grid-cols-8">
               {matches.map((m) => (
                 <KnockoutMatchCard key={m.id} match={m} />
               ))}
@@ -422,12 +423,60 @@ function KnockoutMatchCard({ match }: { match: KnockoutMatch }) {
 
 function ProgressBar() {
   const progress = usePredictionStore((s) => s.getProgress());
+
   return (
-    <div className="flex items-center gap-3">
-      <div className="flex-1 h-1.5 rounded-full bg-white/[0.08] overflow-hidden">
-        <motion.div className="h-full rounded-full bg-gradient-to-r from-volt/80 to-volt" initial={{ width: 0 }} animate={{ width: `${progress.percent}%` }} transition={{ duration: 0.5, ease: "easeOut" }} />
+    <div>
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/45">预测进度</span>
+        <span className="tabular text-sm text-volt">{progress.percent}%</span>
       </div>
-      <span className="text-[10px] tabular text-white/40 shrink-0">{progress.filled}/{progress.total}</span>
+      <PredictionProgressTrack percent={progress.percent} gradientId="prediction-football-glass" />
+      <div className="mt-1 text-right text-[10px] tabular text-white/40">{progress.filled}/{progress.total}</div>
+    </div>
+  );
+}
+
+function PredictionProgressTrack({ percent, gradientId }: { percent: number; gradientId: string }) {
+  const progressMarker = Math.min(100, Math.max(0, percent || 0));
+
+  return (
+    <div className="relative h-[18px]">
+      <div className="absolute left-0 right-0 top-1/2 h-2 -translate-y-1/2 overflow-hidden rounded-full bg-white/[0.06] shadow-[inset_0_1px_8px_rgba(0,0,0,.42)]">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${progressMarker}%` }}
+          transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+          className="h-full rounded-full bg-gradient-to-r from-volt to-flare shadow-[0_0_22px_rgba(216,255,62,.45)]"
+        />
+      </div>
+      <motion.div
+        initial={{ left: "0%" }}
+        animate={{ left: `${progressMarker}%` }}
+        transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+        className="pointer-events-none absolute top-1/2 grid h-[18px] w-[18px] -translate-x-1/2 -translate-y-1/2 place-items-center"
+        aria-hidden="true"
+      >
+        <motion.span
+          initial={{ opacity: 0, scale: 0.72, rotate: -18 }}
+          animate={{ opacity: 1, scale: 1, rotate: 0 }}
+          transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+          className="grid h-[18px] w-[18px] place-items-center"
+        >
+          <svg viewBox="0 0 32 32" className="h-[18px] w-[18px] drop-shadow-[0_0_10px_rgba(216,255,62,.42)]">
+            <circle cx="16" cy="16" r="14" fill={`url(#${gradientId})`} />
+            <path d="m16 7.4 5.1 3.7-1.95 5.95h-6.3L10.9 11.1 16 7.4Z" fill="#111" />
+            <path d="m6.2 14.3 4.7-3.2 1.95 5.95-3.9 4.7-3.25-2.25c-.22-1.7-.05-3.48.5-5.2Zm19.6 0c.55 1.72.72 3.5.5 5.2l-3.25 2.25-3.9-4.7 1.95-5.95 4.7 3.2ZM11.35 26.85l-2.4-5.1 3.9-4.7h6.3l3.9 4.7-2.4 5.1a13.9 13.9 0 0 1-9.3 0Z" fill="#111" />
+            <path d="M9.2 21.95 5.9 19.7m16.9 2.25 3.3-2.25M12.85 17.05l-1.95-5.95m8.25 5.95 1.95-5.95m-1.95 5.95 3.9 4.7m-10.2-4.7-3.9 4.7" fill="none" stroke="rgba(255,255,255,.7)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" />
+            <defs>
+              <radialGradient id={gradientId} cx="0" cy="0" r="1" gradientTransform="matrix(18 22 -22 18 10 7)">
+                <stop stopColor="#fff" />
+                <stop offset=".5" stopColor="#d8ff3e" stopOpacity=".92" />
+                <stop offset="1" stopColor="#ff9a1f" stopOpacity=".84" />
+              </radialGradient>
+            </defs>
+          </svg>
+        </motion.span>
+      </motion.div>
     </div>
   );
 }
@@ -439,6 +488,7 @@ function ProgressBar() {
 type TabId = "groups" | "knockout";
 type AuthStatus = "checking" | "unauthenticated" | "allowed";
 type AccessMode = "login" | "register";
+type PredictionArchive = PublicUser["predictionArchives"][number];
 
 function PredictAuthLoading() {
   return (
@@ -460,6 +510,47 @@ function PredictAuthLoading() {
 }
 
 function PredictAccessGate({ onAuthenticated }: { onAuthenticated: () => void }) {
+  const [authMode, setAuthMode] = useState<AccessMode | null>("login");
+
+  return (
+    <div className="relative grid min-h-screen place-items-center overflow-hidden px-4 py-10">
+      <div className="pointer-events-none fixed left-1/2 top-0 h-[360px] w-[min(720px,100vw)] -translate-x-1/2 rounded-full bg-volt/10 blur-[120px]" />
+      <motion.section
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+        className="hero-card w-full max-w-lg overflow-hidden px-5 py-6 text-center sm:px-7 sm:py-7"
+      >
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-volt/30 to-transparent" />
+        <div className="mb-5 flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-volt/80">
+          <ShieldCheck className="h-4 w-4" />
+          预测页面仅对登录用户开放
+        </div>
+        <h1 className="text-2xl font-bold text-white">先登录，再开始预测</h1>
+        <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-white/42">登录后即可保存你的比分、晋级路径和冠军预测。</p>
+        <div className="mt-6 flex justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => setAuthMode("login")}
+            className="inline-flex h-11 items-center gap-2 rounded-full bg-volt px-5 text-sm font-bold text-black shadow-[0_0_26px_rgba(216,255,62,.18)] transition hover:scale-[1.02]"
+          >
+            <LogIn className="h-4 w-4" />
+            登录
+          </button>
+          <button
+            type="button"
+            onClick={() => setAuthMode("register")}
+            className="inline-flex h-11 items-center gap-2 rounded-full bg-white/[0.05] px-5 text-sm font-bold text-white/68 ring-1 ring-white/[0.08] transition hover:bg-white/[0.08] hover:text-white"
+          >
+            <UserPlus className="h-4 w-4" />
+            注册
+          </button>
+        </div>
+      </motion.section>
+      <MeAuthDialog mode={authMode} onClose={() => setAuthMode(null)} onAuthenticated={onAuthenticated} />
+    </div>
+  );
+
   const [mode, setMode] = useState<AccessMode>("login");
   const [email, setEmail] = useState("demo@worldcup.local");
   const [password, setPassword] = useState("worldcup2026");
@@ -590,13 +681,6 @@ function PredictAccessGate({ onAuthenticated }: { onAuthenticated: () => void })
       >
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-volt/30 to-transparent" />
         <div className="relative">
-          <Link
-            href="/"
-            className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/[0.05] px-3 py-1.5 text-xs font-semibold text-white/58 ring-1 ring-white/[0.08] transition hover:bg-white/[0.08] hover:text-volt"
-          >
-            <ChevronLeft className="h-3.5 w-3.5" />
-            返回首页
-          </Link>
           <div className="mb-5 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-volt/80">
             <ShieldCheck className="h-4 w-4" />
             预测页面仅对登录用户开放
@@ -828,6 +912,259 @@ function compactIds(id: string | undefined) {
   return id ? [id] : [];
 }
 
+function PredictionArchivePanel() {
+  const groupScores = usePredictionStore((s) => s.groupScores);
+  const knockoutPicks = usePredictionStore((s) => s.knockoutPicks);
+  const progress = usePredictionStore((s) => s.getProgress());
+  const [archives, setArchives] = useState<PredictionArchive[]>([]);
+  const [activeArchiveId, setActiveArchiveId] = useState<string | null>(null);
+  const [name, setName] = useState("");
+  const [busy, setBusy] = useState("");
+  const [message, setMessage] = useState("");
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const activeArchive = archives.find((archive) => archive.id === activeArchiveId) ?? null;
+
+  useEffect(() => {
+    let active = true;
+
+    userApi<{ archives: PredictionArchive[] }>("/api/me/prediction-archives", { cache: "no-store" })
+      .then((payload) => {
+        if (active) setArchives(payload.archives ?? []);
+      })
+      .catch(() => {
+        if (active) setMessage("存档读取失败，请确认后端服务在线");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  async function saveArchive() {
+    setBusy("save");
+    setMessage("");
+
+    try {
+      const payload = await userApi<{ archive: PredictionArchive | null; archives: PredictionArchive[] }>("/api/me/prediction-archives", {
+        method: "POST",
+        body: JSON.stringify({
+          id: activeArchiveId ?? undefined,
+          name: name.trim() || activeArchive?.name || `预测存档 ${new Date().toLocaleDateString("zh-CN")}`,
+          groupScores,
+          knockoutPicks,
+        }),
+      });
+      setArchives(payload.archives ?? (payload.archive ? [payload.archive] : []));
+      if (payload.archive?.id) setActiveArchiveId(payload.archive.id);
+      setName(payload.archive?.name ?? name);
+      setMessage(activeArchiveId ? "已更新当前存档" : "已保存当前预测");
+      setShowSaveDialog(false);
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "保存失败");
+    } finally {
+      setBusy("");
+    }
+  }
+
+  function loadArchive(archive: PredictionArchive) {
+    usePredictionStore.setState({
+      groupScores: archive.groupScores ?? {},
+      knockoutPicks: archive.knockoutPicks ?? {},
+    });
+    setActiveArchiveId(archive.id);
+    setName(archive.name);
+    setMessage(`已载入：${archive.name}`);
+  }
+
+  async function deleteArchive(id: string) {
+    setBusy(id);
+    setMessage("");
+
+    try {
+      const payload = await userApi<{ archives: PredictionArchive[] }>(`/api/me/prediction-archives/${id}`, {
+        method: "DELETE",
+      });
+      setArchives(payload.archives ?? []);
+      if (activeArchiveId === id) {
+        setActiveArchiveId(null);
+        setName("");
+      }
+      setMessage("存档已删除");
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "删除失败");
+    } finally {
+      setBusy("");
+    }
+  }
+
+  return (
+    <section className="relative min-w-0">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <FolderOpen className="h-4 w-4 text-volt" />
+            <h2 className="text-sm font-bold text-white">预测存档</h2>
+            <span className="rounded-full bg-white/[0.055] px-2 py-0.5 text-[10px] font-semibold text-white/35 ring-1 ring-white/[0.08]">
+              {archives.length}/4
+            </span>
+          </div>
+          <p className="mt-1 max-w-[360px] truncate text-xs text-white/36">
+            {activeArchive ? `正在编辑：${activeArchive.name}` : "保存当前比分、晋级路径和冠军选择，之后可以一键恢复。"}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setShowSaveDialog(true)}
+          disabled={progress.filled === 0}
+          className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full bg-volt px-3.5 text-xs font-bold text-black shadow-[0_0_22px_rgba(216,255,62,.16)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-45"
+        >
+          <Save className="h-3.5 w-3.5" />
+          {activeArchiveId ? "更新" : "保存"}
+        </button>
+      </div>
+
+      <AnimatePresence>
+        {showSaveDialog && (
+          <motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.98 }}
+            transition={{ duration: 0.18 }}
+            className="absolute right-0 top-12 z-30 w-[min(360px,calc(100vw-2rem))] rounded-3xl bg-black/70 p-3 shadow-[0_28px_70px_rgba(0,0,0,.55)] ring-1 ring-white/10 backdrop-blur-2xl"
+          >
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-bold text-white">{activeArchiveId ? "更新当前存档" : "保存预测存档"}</h3>
+                <p className="mt-0.5 text-[10px] text-white/36">给这次模拟命名，之后可以快速载入。</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSaveDialog(false)}
+                aria-label="关闭保存浮窗"
+                className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/[0.04] text-white/38 ring-1 ring-white/[0.08] transition hover:bg-white/[0.08] hover:text-white"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            <form
+              className="flex flex-col gap-2 sm:flex-row"
+              onSubmit={(event) => {
+                event.preventDefault();
+                saveArchive();
+              }}
+            >
+              <input
+                type="text"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="给这次模拟起个名字"
+                maxLength={40}
+                className="h-10 min-w-0 flex-1 rounded-full bg-black/35 px-4 text-sm text-white outline-none ring-1 ring-white/10 transition placeholder:text-white/24 focus:ring-volt/40"
+              />
+              <button
+                type="submit"
+                disabled={busy === "save" || progress.filled === 0}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-volt px-4 text-sm font-bold text-black shadow-[0_0_22px_rgba(216,255,62,.16)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                {busy === "save" ? <Clock3 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                确认
+              </button>
+            </form>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {archives.length > 0 && (
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {archives.map((archive, index) => {
+            const archiveProgress = getArchiveProgress(archive);
+            const champion = archiveProgress.isComplete ? team(archive.knockoutPicks?.FINAL?.winnerCode) : null;
+            const isActive = archive.id === activeArchiveId;
+
+            return (
+            <div key={archive.id} className={`min-w-0 rounded-3xl p-2.5 ring-1 transition hover:bg-white/[0.055] ${
+              isActive ? "bg-volt/[0.075] ring-volt/25 shadow-[0_0_24px_rgba(216,255,62,.1)]" : "bg-white/[0.035] ring-white/[0.08]"
+            }`}>
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="truncate text-xs font-semibold text-white">{archive.name}</div>
+                  <div className="mt-1 text-[10px] text-white/30">{formatArchiveTime(archive.updatedAt)}</div>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => loadArchive(archive)}
+                    aria-label={`${isActive ? "正在编辑" : "载入"} ${archive.name}`}
+                    title={isActive ? "正在编辑" : "载入存档"}
+                    className={`grid h-7 w-7 place-items-center rounded-full ring-1 transition ${
+                      isActive
+                        ? "bg-volt/12 text-volt ring-volt/25 shadow-[0_0_18px_rgba(216,255,62,.1)]"
+                        : "bg-white/[0.04] text-white/35 ring-white/[0.08] hover:bg-volt/10 hover:text-volt"
+                    }`}
+                  >
+                    <FolderOpen className="h-3 w-3" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => deleteArchive(archive.id)}
+                    disabled={busy === archive.id}
+                    aria-label={`删除 ${archive.name}`}
+                    title="删除存档"
+                    className="grid h-7 w-7 place-items-center rounded-full bg-white/[0.04] text-white/35 ring-1 ring-white/[0.08] transition hover:bg-red-500/10 hover:text-red-300 disabled:opacity-40"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
+              </div>
+              <div className="mt-2">
+                <div className="flex items-center justify-between gap-2 text-[10px] font-semibold">
+                  <span className={archiveProgress.isComplete ? "text-volt" : "text-white/38"}>
+                    {archiveProgress.isComplete && champion ? `冠军 ${champion.nameCn}` : `进度 ${archiveProgress.filled}/${archiveProgress.total}`}
+                  </span>
+                  <span className="tabular-nums text-white/28">{archiveProgress.percent}%</span>
+                </div>
+                <div className="mt-1">
+                  <PredictionProgressTrack percent={archiveProgress.percent} gradientId={`archive-football-glass-${index}`} />
+                </div>
+              </div>
+            </div>
+            );
+          })}
+        </div>
+      )}
+
+      {message && <p className="mt-3 text-xs text-white/42">{message}</p>}
+    </section>
+  );
+}
+
+function formatArchiveTime(value: number) {
+  return new Date(value).toLocaleString("zh-CN", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function getArchiveProgress(archive: PredictionArchive) {
+  const groupTotal = GROUPS.reduce((sum, group) => sum + group.matches.length, 0);
+  const knockoutTotal = 32;
+  const total = groupTotal + knockoutTotal;
+  const groupFilled = Object.values(archive.groupScores ?? {}).filter(Boolean).length;
+  const knockoutFilled = Object.keys(archive.knockoutPicks ?? {}).length;
+  const filled = groupFilled + knockoutFilled;
+  const percent = Math.min(100, Math.round((filled / total) * 100));
+
+  return {
+    filled,
+    total,
+    percent,
+    isComplete: filled >= total && Boolean(archive.knockoutPicks?.FINAL?.winnerCode),
+  };
+}
+
 export default function PredictPage() {
   const [authStatus, setAuthStatus] = useState<AuthStatus>("checking");
   const [activeTab, setActiveTab] = useState<TabId>("groups");
@@ -852,26 +1189,43 @@ export default function PredictPage() {
     };
   }, []);
 
-  if (authStatus === "checking") return <PredictAuthLoading />;
-  if (authStatus === "unauthenticated") return <PredictAccessGate onAuthenticated={() => setAuthStatus("allowed")} />;
+  if (authStatus === "checking") {
+    return (
+      <DashboardShell>
+        <PredictAuthLoading />
+      </DashboardShell>
+    );
+  }
+
+  if (authStatus === "unauthenticated") {
+    return (
+      <DashboardShell>
+        <PredictAccessGate onAuthenticated={() => setAuthStatus("allowed")} />
+      </DashboardShell>
+    );
+  }
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden px-3 py-4 pb-28 sm:px-6 sm:py-5 lg:px-8 lg:pb-5">
-      <div className="pointer-events-none fixed left-1/2 top-0 h-[360px] w-[min(720px,100vw)] -translate-x-1/2 rounded-full bg-volt/10 blur-[120px] sm:h-[520px]" />
-      <div className="pointer-events-none fixed bottom-0 right-0 h-[320px] w-[min(420px,80vw)] rounded-full bg-flare/10 blur-[110px] sm:h-[420px]" />
-
-      <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-5">
-        <nav className="flex items-center justify-between py-2">
-          <Link href="/" className="flex items-center gap-2 text-white/40 hover:text-volt transition-colors text-sm">&larr; 返回首页</Link>
-        </nav>
-
+    <DashboardShell>
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-5">
         <motion.section initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.74, ease: [0.16, 1, 0.3, 1] }} className="hero-card overflow-hidden px-5 py-6 sm:px-8 sm:py-8">
+          <div
+            className="absolute inset-0 bg-[url('/polo-01-01.jpg')] bg-contain bg-right bg-no-repeat opacity-90"
+            aria-hidden="true"
+          />
+          <div
+            className="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,5,6,0.94)_0%,rgba(3,5,6,0.82)_38%,rgba(3,5,6,0.38)_70%,rgba(3,5,6,0.06)_100%),linear-gradient(180deg,rgba(3,5,6,0.28)_0%,rgba(3,5,6,0.08)_48%,rgba(3,5,6,0.34)_100%)]"
+            aria-hidden="true"
+          />
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-volt/25 to-transparent" />
           <div className="absolute right-0 top-0 h-24 w-72 bg-volt/10 blur-[90px]" />
-          <div className="relative">
-            <h1 className="text-xl sm:text-2xl font-bold text-white mb-1">&#9917; 世界杯 2026 结果预测</h1>
-            <p className="text-sm text-white/40 mb-4">填写每场比赛比分，自动计算晋级路径，预测你的冠军</p>
-            <ProgressBar />
+          <div className="relative z-10 grid gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:items-start">
+            <div className="max-w-xl">
+              <h1 className="text-xl sm:text-2xl font-bold text-white mb-1">&#9917; 2026世界杯预测</h1>
+              <p className="text-sm text-white/40 mb-4">填写比分，预测你的冠军队</p>
+              <ProgressBar />
+            </div>
+            <PredictionArchivePanel />
           </div>
         </motion.section>
 
@@ -921,6 +1275,6 @@ export default function PredictPage() {
           )}
         </AnimatePresence>
       </div>
-    </div>
+    </DashboardShell>
   );
 }

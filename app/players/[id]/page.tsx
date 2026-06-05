@@ -51,8 +51,11 @@ export function generateStaticParams() {
     .map((row) => ({ id: String(row.apiPlayerId) }));
   const articleParams = playerArticles.players.map((player) => ({ id: String(player.apiPlayerId) }));
   const officialSquadParams = getOfficialSquadRows().map((row) => ({ id: String(row.apiPlayerId) }));
+  const translatedPlayerParams = Object.keys(PLAYER_NAME_TRANSLATIONS)
+    .filter((id) => /^\d+$/.test(id))
+    .map((id) => ({ id }));
 
-  return [...rowParams, ...articleParams, ...officialSquadParams].filter(
+  return [...rowParams, ...articleParams, ...officialSquadParams, ...translatedPlayerParams].filter(
     (param, index, params) => params.findIndex((item) => item.id === param.id) === index
   );
 }
@@ -61,7 +64,8 @@ export function generateMetadata({ params }: Props): Metadata {
   const row = playerRows.rows.find((item) => String(item.apiPlayerId) === params.id);
   const article = playerArticles.players.find((item) => String(item.apiPlayerId) === params.id);
   const officialRow = getOfficialSquadRow(params.id);
-  const name = officialRow?.nameCn || article?.nameCn || row?.nameCn || row?.nameEn || officialRow?.nameEn || "球员";
+  const translatedRow = getTranslatedPlayerRow(params.id);
+  const name = officialRow?.nameCn || article?.nameCn || row?.nameCn || translatedRow?.nameCn || row?.nameEn || officialRow?.nameEn || "球员";
 
   return {
     title: `${name} | 2026 世界杯球员档案`,
@@ -73,6 +77,7 @@ export default function PlayerPage({ params }: Props) {
   const row = playerRows.rows.find((item) => String(item.apiPlayerId) === params.id);
   const article = playerArticles.players.find((item) => String(item.apiPlayerId) === params.id);
   const officialRow = getOfficialSquadRow(params.id);
+  const translatedRow = getTranslatedPlayerRow(params.id);
   const articleRow = article
     ? {
         apiPlayerId: article.apiPlayerId,
@@ -85,8 +90,8 @@ export default function PlayerPage({ params }: Props) {
         photo: article.photo,
       }
     : null;
-  const nameHint = row?.nameEn || article?.nameEn || officialRow?.nameEn || row?.nameCn || article?.nameCn || officialRow?.nameCn || "";
-  const pageRow = mergeOfficialSquadRow(row ?? articleRow, officialRow);
+  const nameHint = row?.nameEn || article?.nameEn || officialRow?.nameEn || row?.nameCn || article?.nameCn || officialRow?.nameCn || translatedRow?.nameCn || "";
+  const pageRow = mergeOfficialSquadRow(row ?? articleRow ?? translatedRow, officialRow);
 
   return <PlayerProfileClient playerId={params.id} nameHint={nameHint} row={pageRow} article={article ?? null} />;
 }
@@ -102,6 +107,22 @@ function mergeOfficialSquadRow(baseRow: PlayerPageRow | null, officialRow: Playe
 
 function getOfficialSquadRow(playerId: string) {
   return getOfficialSquadRows().find((row) => String(row.apiPlayerId) === playerId) ?? null;
+}
+
+function getTranslatedPlayerRow(playerId: string): PlayerPageRow | null {
+  const nameCn = PLAYER_NAME_TRANSLATIONS[playerId];
+  if (!nameCn || !/^\d+$/.test(playerId)) return null;
+  const apiPlayerId = Number(playerId);
+  return {
+    apiPlayerId,
+    teamCode: "",
+    countryCn: "",
+    nameEn: "",
+    nameCn,
+    positionCn: "位置待更新",
+    number: null,
+    photo: `https://media.api-sports.io/football/players/${apiPlayerId}.png`,
+  };
 }
 
 function getOfficialSquadRows() {

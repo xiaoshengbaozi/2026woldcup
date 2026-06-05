@@ -1,11 +1,11 @@
 import http from "http";
-import { randomBytes } from "crypto";
+import { createHash, createHmac, randomBytes } from "crypto";
 import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
 import type { ApiFootballService } from "./apiFootball";
 import { getWorldCupFixtures, getWorldCupSquads } from "./worldCupData";
 import { UserStore, toPublicUser } from "./userStore";
-import type { InvitationCode, WorldCupUser } from "./userStore";
+import type { InvitationCode, PredictionArchive, WorldCupUser } from "./userStore";
 
 const SESSION_COOKIE = "wc_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
@@ -45,11 +45,18 @@ export class UserSystem {
           password: String(body.password ?? ""),
           displayName: typeof body.displayName === "string" ? body.displayName : undefined,
           avatarPlayerId: typeof body.avatarPlayerId === "string" ? body.avatarPlayerId : undefined,
+          avatarUrl: typeof body.avatarUrl === "string" ? body.avatarUrl : undefined,
         });
         this.store.consumeInvitationCode(invitationCode, user);
-        applyRegistrationPreferences(this.store, user.id, body);
+        await applyRegistrationPreferences(this.store, user.id, body, await this.getPreferenceCatalog());
         this.issueSession(req, res, user);
         sendJson(res, { user: toPublicUser(this.store.getUserById(user.id) ?? user) }, 201);
+        return true;
+      }
+
+      if (req.method === "POST" && url.pathname === "/api/avatar/upload-url") {
+        const body = await readJsonBody(req);
+        sendJson(res, createAvatarUploadUrl(body));
         return true;
       }
 
@@ -85,7 +92,10 @@ export class UserSystem {
       if (url.pathname === "/api/me/home") {
         const user = this.requireSessionUser(req, res);
         if (!user) return true;
-        sendJson(res, buildHomePayload(user, await this.getPreferenceCatalog()));
+        const catalog = await this.getPreferenceCatalog();
+        const syncedUser = syncRelatedMatchesForUser(this.store, user.id, catalog);
+        queueDueMatchNotifications(this.store, syncedUser);
+        sendJson(res, buildHomePayload(this.store.getUserById(user.id) ?? syncedUser, catalog));
         return true;
       }
 
@@ -101,7 +111,10 @@ export class UserSystem {
         const user = this.requireSessionUser(req, res);
         if (!user) return true;
         const body = await readJsonBody(req);
-        sendJson(res, { user: toPublicUser(this.store.upsertTeam(user.id, normalizeNamedEntity(body))) });
+        const team = normalizeNamedEntity(body);
+        this.store.upsertTeam(user.id, team);
+        await addRelatedMatchesForEntity(this.store, user.id, team, await this.getPreferenceCatalog());
+        sendJson(res, { user: toPublicUser(this.store.getUserById(user.id) ?? user) });
         return true;
       }
 
@@ -116,7 +129,10 @@ export class UserSystem {
         const user = this.requireSessionUser(req, res);
         if (!user) return true;
         const body = await readJsonBody(req);
-        sendJson(res, { user: toPublicUser(this.store.upsertPlayer(user.id, normalizeNamedEntity(body))) });
+        const player = normalizeNamedEntity(body);
+        this.store.upsertPlayer(user.id, player);
+        await addRelatedMatchesForEntity(this.store, user.id, player, await this.getPreferenceCatalog());
+        sendJson(res, { user: toPublicUser(this.store.getUserById(user.id) ?? user) });
         return true;
       }
 
@@ -131,7 +147,19 @@ export class UserSystem {
         const user = this.requireSessionUser(req, res);
         if (!user) return true;
         const body = await readJsonBody(req);
-        sendJson(res, { user: toPublicUser(this.store.upsertFavoriteMatch(user.id, normalizeMatch(body))) });
+        const match = normalizeMatch(body);
+        this.store.upsertFavoriteMatch(user.id, match);
+        addMatchReminderPair(this.store, user.id, match);
+        sendJson(res, { user: toPublicUser(this.store.getUserById(user.id) ?? user) });
+        return true;
+      }
+
+      if (req.method === "POST" && url.pathname === "/api/me/notifications/read") {
+        const user = this.requireSessionUser(req, res);
+        if (!user) return true;
+        const body = await readJsonBody(req);
+        const ids = Array.isArray(body.ids) ? body.ids.map(String) : undefined;
+        sendJson(res, { user: toPublicUser(this.store.markNotificationsRead(user.id, ids)) });
         return true;
       }
 
@@ -155,6 +183,34 @@ export class UserSystem {
         if (!user) return true;
         const body = await readJsonBody(req);
         sendJson(res, { user: toPublicUser(this.store.upsertPrediction(user.id, normalizePrediction(body))) });
+        return true;
+      }
+
+      if (req.method === "GET" && url.pathname === "/api/me/prediction-archives") {
+        const user = this.requireSessionUser(req, res);
+        if (!user) return true;
+        sendJson(res, { archives: (user.predictionArchives ?? []).slice(0, 4) });
+        return true;
+      }
+
+      if (req.method === "POST" && url.pathname === "/api/me/prediction-archives") {
+        const user = this.requireSessionUser(req, res);
+        if (!user) return true;
+        const body = await readJsonBody(req);
+        const archiveInput = normalizePredictionArchive(body);
+        const updated = this.store.upsertPredictionArchive(user.id, archiveInput);
+        const archive = archiveInput.id
+          ? updated.predictionArchives.find((item) => item.id === archiveInput.id) ?? null
+          : updated.predictionArchives[0] ?? null;
+        sendJson(res, { archive, archives: updated.predictionArchives });
+        return true;
+      }
+
+      if (req.method === "DELETE" && url.pathname.startsWith("/api/me/prediction-archives/")) {
+        const user = this.requireSessionUser(req, res);
+        if (!user) return true;
+        const updated = this.store.removePredictionArchive(user.id, lastPathPart(url));
+        sendJson(res, { archives: updated.predictionArchives });
         return true;
       }
 
@@ -259,6 +315,13 @@ export class UserSystem {
       return;
     }
 
+    if (req.method === "POST" && action === "delete") {
+      const deleted = this.store.deleteUser(user.id);
+      this.deleteSessionsForUser(user.id);
+      sendJson(res, { deletedUserId: deleted.id, ...buildAdminUsersPayload(this.store.listUsers()) });
+      return;
+    }
+
     if (req.method === "POST" && action === "reset-reminders") {
       sendJson(res, buildAdminUserDetail(this.store.resetReminderQueue(user.id)));
       return;
@@ -271,6 +334,12 @@ export class UserSystem {
     }
 
     sendJson(res, { error: "admin_action_not_found" }, 404);
+  }
+
+  private deleteSessionsForUser(userId: string) {
+    for (const [sessionId, session] of this.sessions) {
+      if (session.userId === userId) this.sessions.delete(sessionId);
+    }
   }
 
   private async handleAdminInvitationRequest(req: http.IncomingMessage, res: http.ServerResponse, url: URL) {
@@ -474,7 +543,7 @@ async function buildPreferenceCatalog(apiFootball?: ApiFootballService): Promise
     const teams = [...teamMap.values()].sort((a, b) => (a.region || a.name).localeCompare(b.region || b.name));
     const players = await buildApiPreferencePlayers(apiFootball, teams);
 
-    const matches = fixtures.slice(0, 18).map((fixture) => ({
+    const matches = fixtures.map((fixture) => ({
       id: String(fixture.apiFixtureId || fixture.uid),
       matchId: String(fixture.apiFixtureId || fixture.uid),
       title: fixture.summary,
@@ -687,6 +756,89 @@ async function readJsonBody(req: http.IncomingMessage) {
   return JSON.parse(Buffer.concat(chunks).toString("utf8")) as Record<string, unknown>;
 }
 
+function createAvatarUploadUrl(body: Record<string, unknown>) {
+  const accountId = process.env.R2_ACCOUNT_ID;
+  const accessKeyId = process.env.R2_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
+  const bucket = process.env.R2_BUCKET;
+  const publicBaseUrl = process.env.R2_PUBLIC_BASE_URL?.replace(/\/$/, "");
+  if (!accountId || !accessKeyId || !secretAccessKey || !bucket || !publicBaseUrl) {
+    throw Object.assign(new Error("r2_not_configured"), { statusCode: 503 });
+  }
+
+  const contentType = String(body.contentType || "application/octet-stream").toLowerCase();
+  if (!/^image\/(png|jpe?g|webp|gif)$/.test(contentType)) {
+    throw Object.assign(new Error("invalid_avatar_type"), { statusCode: 400 });
+  }
+
+  const extension = contentType.includes("png")
+    ? "png"
+    : contentType.includes("webp")
+      ? "webp"
+      : contentType.includes("gif")
+        ? "gif"
+        : "jpg";
+  const now = new Date();
+  const dateStamp = toAmzDate(now).slice(0, 8);
+  const amzDate = toAmzDate(now);
+  const key = `avatars/${dateStamp}/${randomBytes(12).toString("hex")}.${extension}`;
+  const host = `${accountId}.r2.cloudflarestorage.com`;
+  const endpoint = `https://${host}/${bucket}/${key}`;
+  const credentialScope = `${dateStamp}/auto/s3/aws4_request`;
+  const params = new URLSearchParams({
+    "X-Amz-Algorithm": "AWS4-HMAC-SHA256",
+    "X-Amz-Credential": `${accessKeyId}/${credentialScope}`,
+    "X-Amz-Date": amzDate,
+    "X-Amz-Expires": "900",
+    "X-Amz-SignedHeaders": "content-type;host",
+  });
+  const canonicalUri = `/${bucket}/${key}`;
+  const canonicalQuery = [...params.entries()]
+    .map(([name, value]) => `${encodeURIComponent(name)}=${encodeURIComponent(value)}`)
+    .sort()
+    .join("&");
+  const canonicalRequest = [
+    "PUT",
+    canonicalUri,
+    canonicalQuery,
+    `content-type:${contentType}\nhost:${host}\n`,
+    "content-type;host",
+    "UNSIGNED-PAYLOAD",
+  ].join("\n");
+  const stringToSign = [
+    "AWS4-HMAC-SHA256",
+    amzDate,
+    credentialScope,
+    sha256Hex(canonicalRequest),
+  ].join("\n");
+  const signingKey = getSignatureKey(secretAccessKey, dateStamp, "auto", "s3");
+  const signature = createHmac("sha256", signingKey).update(stringToSign).digest("hex");
+  params.set("X-Amz-Signature", signature);
+
+  return {
+    uploadUrl: `${endpoint}?${params.toString()}`,
+    publicUrl: `${publicBaseUrl}/${key}`,
+    method: "PUT",
+    headers: { "Content-Type": contentType },
+    expiresIn: 900,
+  };
+}
+
+function toAmzDate(date: Date) {
+  return date.toISOString().replace(/[:-]|\.\d{3}/g, "");
+}
+
+function sha256Hex(value: string) {
+  return createHash("sha256").update(value).digest("hex");
+}
+
+function getSignatureKey(secret: string, dateStamp: string, region: string, service: string) {
+  const kDate = createHmac("sha256", `AWS4${secret}`).update(dateStamp).digest();
+  const kRegion = createHmac("sha256", kDate).update(region).digest();
+  const kService = createHmac("sha256", kRegion).update(service).digest();
+  return createHmac("sha256", kService).update("aws4_request").digest();
+}
+
 function normalizeNamedEntity(body: Record<string, unknown>) {
   const id = String(body.id || body.name || "").trim();
   const name = String(body.name || body.id || "").trim();
@@ -694,26 +846,145 @@ function normalizeNamedEntity(body: Record<string, unknown>) {
   return { ...body, id, name } as { id: string; name: string };
 }
 
-function applyRegistrationPreferences(store: UserStore, userId: string, body: Record<string, unknown>) {
+function syncRelatedMatchesForUser(store: UserStore, userId: string, catalog: UserPreferenceCatalog) {
+  const user = store.getUserById(userId);
+  if (!user) throw Object.assign(new Error("user_not_found"), { statusCode: 404 });
+
+  for (const entity of [...user.followedTeams, ...user.followedPlayers]) {
+    addRelatedMatchesForEntity(store, userId, entity, catalog);
+  }
+
+  return store.getUserById(userId) ?? user;
+}
+
+function addRelatedMatchesForEntity(store: UserStore, userId: string, entity: { id: string; name: string; team?: string; region?: string }, catalog: UserPreferenceCatalog) {
+  const existingIds = new Set((store.getUserById(userId)?.favoriteMatches ?? []).map((match) => match.id));
+  const matches = catalog.matches.filter((match) => isMatchRelatedToEntity(match, entity, catalog)).slice(0, 12);
+  for (const match of matches) {
+    const normalized = normalizeMatch(match);
+    if (existingIds.has(normalized.id)) continue;
+    store.upsertFavoriteMatch(userId, normalized);
+    addMatchReminderPair(store, userId, normalized);
+    existingIds.add(normalized.id);
+  }
+}
+
+function isMatchRelatedToEntity(match: UserPreferenceCatalog["matches"][number], entity: { id: string; name: string; team?: string; region?: string }, catalog: UserPreferenceCatalog) {
+  const title = normalizeSearchText(match.title);
+  const tokens = buildEntitySearchTokens(entity, catalog).map(normalizeSearchText);
+  return tokens.some((token) => token.length >= 2 && title.includes(token));
+}
+
+function buildEntitySearchTokens(entity: { id: string; name: string; team?: string; region?: string }, catalog: UserPreferenceCatalog) {
+  const raw = [entity.name, entity.team, entity.region, entity.id].filter(Boolean).map(String);
+  const teamTokens = new Set(raw.map((value) => value.trim()).filter(Boolean));
+  const teamIdentifierSource = entity.team ? [entity.team, entity.region] : [entity.id, entity.region, entity.name];
+  const entityCodes = teamIdentifierSource.filter(Boolean).map((value) => String(value).trim().toUpperCase()).filter(Boolean);
+
+  for (const team of catalog.teams) {
+    const identifiers = [team.id, team.region, team.name].filter(Boolean).map((value) => String(value).trim().toUpperCase());
+    if (!identifiers.some((identifier) => entityCodes.includes(identifier))) continue;
+    for (const value of [team.id, team.region, team.name]) {
+      if (value) teamTokens.add(String(value));
+    }
+  }
+
+  return [...teamTokens].filter((token) => {
+    const normalized = normalizeSearchText(token);
+    return normalized.length >= 2 && !/^\d+$/.test(normalized);
+  });
+}
+
+function addMatchReminderPair(store: UserStore, userId: string, match: ReturnType<typeof normalizeMatch>) {
+  if (!match.startsAt) return;
+  for (const reminder of [
+    { id: `${match.id}:day`, minutes: minutesFromMatchDayStart(match.startsAt), title: `${match.title} 今日比赛提醒` },
+    { id: `${match.id}:20m`, minutes: 20, title: `${match.title} 赛前 20 分钟提醒` },
+  ]) {
+    store.upsertReminder(userId, {
+      id: reminder.id,
+      matchId: match.id,
+      title: reminder.title,
+      startsAt: match.startsAt,
+      remindBeforeMinutes: reminder.minutes,
+      channel: "site",
+      enabled: true,
+    });
+  }
+}
+
+function minutesFromMatchDayStart(startsAt: string) {
+  const start = new Date(startsAt);
+  if (!Number.isFinite(start.getTime())) return 1440;
+  const dayStart = new Date(start);
+  dayStart.setHours(0, 0, 0, 0);
+  return Math.max(20, Math.round((start.getTime() - dayStart.getTime()) / 60_000));
+}
+
+function queueDueMatchNotifications(store: UserStore, user: WorldCupUser, now = Date.now()) {
+  const latestUser = store.getUserById(user.id) ?? user;
+  for (const reminder of latestUser.reminders) {
+    if (!reminder.enabled || !reminder.startsAt || reminder.lastQueuedAt) continue;
+    const startsAt = Date.parse(reminder.startsAt);
+    if (!Number.isFinite(startsAt)) continue;
+    const timeToStart = startsAt - now;
+    const isSameDay = new Date(now).toDateString() === new Date(startsAt).toDateString();
+    const isTwentyMinuteReminder = reminder.id.endsWith(":20m") || reminder.remindBeforeMinutes <= 20;
+    const isDayReminder = reminder.id.endsWith(":day") || reminder.remindBeforeMinutes > 20;
+
+    if (isDayReminder && (!isSameDay || timeToStart <= 20 * 60_000)) continue;
+    if (isTwentyMinuteReminder && (timeToStart > 20 * 60_000 || timeToStart < -2 * 60 * 60_000)) continue;
+
+    store.queueNotification(latestUser.id, {
+      type: "match_reminder",
+      title: reminder.title,
+      body: isTwentyMinuteReminder ? "比赛即将开始，别错过你收藏的比赛。" : "你收藏的比赛今天开赛。",
+      channel: reminder.channel,
+      metadata: {
+        reminderId: reminder.id,
+        matchId: reminder.matchId,
+        startsAt: reminder.startsAt,
+        urgent: isTwentyMinuteReminder,
+      },
+    });
+    store.markReminderQueued(latestUser.id, reminder.id, now);
+  }
+}
+
+function normalizeSearchText(value: string) {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\p{L}\p{N}]+/gu, "");
+}
+
+async function applyRegistrationPreferences(store: UserStore, userId: string, body: Record<string, unknown>, catalog: UserPreferenceCatalog) {
   const teams = Array.isArray(body.followedTeams) ? body.followedTeams : [];
   const players = Array.isArray(body.followedPlayers) ? body.followedPlayers : [];
   const matches = Array.isArray(body.favoriteMatches) ? body.favoriteMatches : [];
 
   for (const item of teams) {
     if (item && typeof item === "object") {
-      store.upsertTeam(userId, normalizeNamedEntity(item as Record<string, unknown>));
+      const entity = normalizeNamedEntity(item as Record<string, unknown>);
+      store.upsertTeam(userId, entity);
+      addRelatedMatchesForEntity(store, userId, entity, catalog);
     }
   }
 
   for (const item of players) {
     if (item && typeof item === "object") {
-      store.upsertPlayer(userId, normalizeNamedEntity(item as Record<string, unknown>));
+      const entity = normalizeNamedEntity(item as Record<string, unknown>);
+      store.upsertPlayer(userId, entity);
+      addRelatedMatchesForEntity(store, userId, entity, catalog);
     }
   }
 
   for (const item of matches) {
     if (item && typeof item === "object") {
-      store.upsertFavoriteMatch(userId, normalizeMatch(item as Record<string, unknown>));
+      const match = normalizeMatch(item as Record<string, unknown>);
+      store.upsertFavoriteMatch(userId, match);
+      addMatchReminderPair(store, userId, match);
     }
   }
 }
@@ -752,6 +1023,53 @@ function normalizePrediction(body: Record<string, unknown>) {
     awayScore: clampNumber(body.awayScore, 0, 20, 1),
     confidence: clampNumber(body.confidence, 1, 100, 64),
   };
+}
+
+function normalizePredictionArchive(body: Record<string, unknown>): Omit<PredictionArchive, "id" | "createdAt" | "updatedAt"> & { id?: string } {
+  return {
+    id: typeof body.id === "string" ? body.id : undefined,
+    name: String(body.name || "我的模拟").trim().slice(0, 40) || "我的模拟",
+    groupScores: normalizeGroupScores(body.groupScores),
+    knockoutPicks: normalizeKnockoutPicks(body.knockoutPicks),
+  };
+}
+
+function normalizeGroupScores(value: unknown): PredictionArchive["groupScores"] {
+  if (!value || typeof value !== "object") return {};
+
+  const scores: PredictionArchive["groupScores"] = {};
+  for (const [id, raw] of Object.entries(value as Record<string, unknown>)) {
+    if (!id || raw === null) {
+      scores[id] = null;
+      continue;
+    }
+
+    if (!raw || typeof raw !== "object") continue;
+    const item = raw as Record<string, unknown>;
+    scores[id] = {
+      home: clampNumber(item.home, 0, 20, 0),
+      away: clampNumber(item.away, 0, 20, 0),
+    };
+  }
+  return scores;
+}
+
+function normalizeKnockoutPicks(value: unknown): PredictionArchive["knockoutPicks"] {
+  if (!value || typeof value !== "object") return {};
+
+  const picks: PredictionArchive["knockoutPicks"] = {};
+  for (const [id, raw] of Object.entries(value as Record<string, unknown>)) {
+    if (!id || !raw || typeof raw !== "object") continue;
+    const item = raw as Record<string, unknown>;
+    const winnerCode = String(item.winnerCode || "").trim();
+    if (!winnerCode) continue;
+    picks[id] = {
+      winnerCode,
+      homeScore: clampNumber(item.homeScore, 0, 20, 0),
+      awayScore: clampNumber(item.awayScore, 0, 20, 0),
+    };
+  }
+  return picks;
 }
 
 function normalizeWatchRecord(body: Record<string, unknown>) {

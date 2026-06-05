@@ -13,8 +13,6 @@ import {
   Globe2,
   LogIn,
   LogOut,
-  Palette,
-  ShieldCheck,
   Sparkles,
   Star,
   Trophy,
@@ -24,7 +22,8 @@ import {
   X,
 } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { MeAuthDialog } from "@/components/me-auth-dialog";
+import { MatchTimelineBanner } from "@/components/match-detail/match-hero";
 import {
   fallbackUserPreferenceCatalog,
   getPlayerAvatar,
@@ -36,11 +35,15 @@ import { userApi, type PublicUser, type UserHomePayload } from "@/lib/user-syste
 import { fetchWorldCupTopScorers, type WorldCupTopScorer } from "@/lib/world-cup-top-scorers";
 import { getFlagUrl } from "@/lib/world-cup-2026";
 import { generateMatchSlug } from "@/lib/match-detail";
+import { formatStageLabel } from "@/lib/stage";
+import { buildMatchRoundLabels } from "@/lib/stage-rounds";
 import { parseTeams } from "@/lib/teams";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
 import { usePopularTeams } from "@/components/world-cup-hero/use-popular-teams";
 import type { Match } from "@/types/match";
 import { qualifiedTeams } from "@/data/teams";
+import playerArticles from "@/data/player-articles.json";
+import { teamProfiles } from "@/data/team-profiles";
 import playerNameTranslations from "@/data/localization/players.json";
 
 type AuthMode = "login" | "register";
@@ -57,10 +60,26 @@ type TimelineItem = {
   image?: string;
   homeName?: string;
   awayName?: string;
+  homeCode?: string;
+  awayCode?: string;
   homeFlag?: string;
   awayFlag?: string;
+  stage?: string;
   startsAt?: string;
 };
+
+type PlayerStoryArticle = {
+  id?: string | number;
+  apiPlayerId?: string | number;
+  slug?: string;
+  nameEn?: string;
+  nameCn?: string;
+  coverImage?: string;
+  photo?: string;
+  storyImages?: string[];
+};
+
+const PLAYER_STORY_ARTICLES = (playerArticles as { players?: PlayerStoryArticle[] }).players ?? [];
 
 const ME_TABS: Array<{ id: MeTab; label: string; icon: ReactNode }> = [
   { id: "players", label: "关注球员", icon: <UsersRound className="h-4 w-4" /> },
@@ -212,6 +231,8 @@ type MatchCardItem = {
   startsAt?: string;
   homeName: string;
   awayName: string;
+  homeCode?: string;
+  awayCode?: string;
   homeFlag?: string;
   awayFlag?: string;
   href?: string;
@@ -496,71 +517,13 @@ function MePageContent() {
               onRegister={() => openAuth("register")}
               onLogout={logout}
             />
-            <ThemePreferenceCard />
           </section>
           <ScorerBoard players={topScorers} />
           <PopularTeamsPanel teams={getDefaultPopularTeams(popularTeams, catalog.teams)} />
         </motion.aside>
       </section>
 
-      <AnimatePresence>
-        {authMode && (
-          <AuthModal mode={authMode} registerStep={registerStep} onClose={closeAuth}>
-            {authMode === "login" ? (
-              <LoginForm
-                email={email}
-                password={password}
-                busy={busy}
-                error={error}
-                onEmailChange={setEmail}
-                onPasswordChange={setPassword}
-                onSwitchToRegister={() => openAuth("register")}
-                onSubmit={submitLogin}
-              />
-            ) : registerStep === "account" ? (
-              <RegisterAccountForm
-                displayName={displayName}
-                email={email}
-                password={password}
-                repeatPassword={repeatPassword}
-                invitationCode={invitationCode}
-                error={error}
-                onDisplayNameChange={setDisplayName}
-                onEmailChange={setEmail}
-                onPasswordChange={setPassword}
-                onRepeatPasswordChange={setRepeatPassword}
-                onInvitationCodeChange={setInvitationCode}
-                onSwitchToLogin={() => openAuth("login")}
-                onSubmit={continueToPreferences}
-              />
-            ) : (
-              <RegisterPreferences
-                catalog={catalog}
-                selectedTeamIds={selectedTeamIds}
-                selectedPlayerIds={selectedPlayerIds}
-                teamContinent={teamContinent}
-                playerContinent={playerContinent}
-                playerCountry={playerCountry}
-                busy={busy}
-                error={error}
-                onBack={() => {
-                  setRegisterStep("account");
-                  setError("");
-                }}
-                onTeamContinentChange={setTeamContinent}
-                onPlayerContinentChange={(value) => {
-                  setPlayerContinent(value);
-                  setPlayerCountry("all");
-                }}
-                onPlayerCountryChange={setPlayerCountry}
-                onTeamToggle={(id) => setSelectedTeamIds((value) => toggleValue(value, id))}
-                onPlayerToggle={(id) => setSelectedPlayerIds((value) => toggleValue(value, id))}
-                onSubmit={submitRegister}
-              />
-            )}
-          </AuthModal>
-        )}
-      </AnimatePresence>
+      <MeAuthDialog mode={authMode} onClose={closeAuth} onAuthenticated={loadHome} />
     </DashboardShell>
   );
 }
@@ -600,15 +563,16 @@ function ProfileBoard({
     ? home.user.followedTeams.map((team) => ({
         id: team.id,
         name: team.name,
-        logo: team.logo,
+        logo: normalizeTeamImage(team.logo),
         flag: getTeamFlag(team),
         href: teamHref(team),
       }))
     : getDefaultPopularTeams(popularTeams, catalog.teams);
 
+  const roundLabels = useMemo(() => buildMatchRoundLabels(scheduleMatches), [scheduleMatches]);
   const matches: MatchCardItem[] = home?.user.favoriteMatches.length
-    ? home.user.favoriteMatches.slice(0, 4).map(matchPreferenceToCard)
-    : getRecentScheduleMatches(scheduleMatches, catalog).slice(0, 4);
+    ? home.user.favoriteMatches.map((match) => matchPreferenceToCard(match, findRoundLabelForFavorite(match, scheduleMatches, roundLabels)))
+    : getRecentScheduleMatches(scheduleMatches, catalog, roundLabels).slice(0, 4);
 
   const timeline = buildTimelineItems(players, teams, matches, Boolean(home));
 
@@ -666,7 +630,7 @@ function ProfileBoard({
             )}
             {activeTab === "matches" && (
               <ScrollableRail ariaLabel="滚动收藏比赛">
-                {matches.slice(0, 4).map((match) => (
+                {matches.map((match) => (
                   <div key={match.id} className="w-[min(440px,82vw)] shrink-0">
                     <MatchStrip match={match} dimmed={!home} />
                   </div>
@@ -856,24 +820,28 @@ function TimelineCard({ item, index }: { item: TimelineItem; index: number }) {
       </div>
 
       {item.kind === "match" ? (
-        <div className="px-4 pb-4 sm:px-5">
-          <MatchStrip
-            match={{
-              id: item.id,
-              title: item.title,
-              startsAt: item.startsAt,
-              homeName: item.homeName || item.title,
-              awayName: item.awayName || "TBD",
-              homeFlag: item.homeFlag,
-              awayFlag: item.awayFlag,
-              href: item.href,
-            }}
-            dimmed={false}
-          />
+        <div className="w-full">
+          {item.href ? (
+            <Link href={item.href} className="block outline-none transition hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-volt/60">
+              <MatchTimelineBanner
+                home={{ name: item.homeName || item.title, image: item.homeFlag, code: item.homeCode }}
+                away={{ name: item.awayName || "TBD", image: item.awayFlag, code: item.awayCode }}
+                startsAt={item.startsAt}
+                stage={item.stage || item.eyebrow}
+              />
+            </Link>
+          ) : (
+            <MatchTimelineBanner
+              home={{ name: item.homeName || item.title, image: item.homeFlag, code: item.homeCode }}
+              away={{ name: item.awayName || "TBD", image: item.awayFlag, code: item.awayCode }}
+              startsAt={item.startsAt}
+              stage={item.stage || item.eyebrow}
+            />
+          )}
         </div>
       ) : (
         <div className="relative aspect-[16/9] w-full max-w-full min-w-0 overflow-hidden bg-white/[0.02] sm:aspect-[16/8] lg:aspect-[16/7]">
-          {item.image ? <Image src={item.image} alt={item.title} fill sizes="760px" className="object-cover opacity-70 transition duration-700 group-hover:scale-105 group-hover:opacity-90" /> : null}
+          {item.image ? <Image src={item.image} alt={item.title} fill sizes="760px" className="object-cover opacity-70 transition duration-700 group-hover:scale-[1.02] group-hover:opacity-90" /> : null}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
             <p className="text-sm leading-6 text-white/62">{item.kind === "team" ? "球队文章稍后补充，当前先汇总关注球队的赛程线索与热度变化。" : "关注球员动态已进入你的个人时间线，后续可接入新闻、伤停与首发提醒。"}</p>
@@ -965,7 +933,9 @@ function AccountCard({
   onRegister: () => void;
   onLogout: () => void;
 }) {
-  const avatar = home ? getPlayerAvatar(home.user.profile.avatarPlayerId, home.catalog?.players ?? catalog.players) : getPlayerAvatar(avatarPlayerId, catalog.players);
+  const avatar = home
+    ? home.user.profile.avatarUrl || getPlayerAvatar(home.user.profile.avatarPlayerId, home.catalog?.players ?? catalog.players)
+    : getPlayerAvatar(avatarPlayerId, catalog.players);
 
   return (
     <div className="relative z-10 grid justify-items-center gap-6 py-4">
@@ -1003,31 +973,6 @@ function AccountCard({
           </button>
         </div>
       )}
-
-      <div className="flex w-full items-center justify-between rounded-[1.25rem] bg-white/[0.035] px-4 py-3 text-sm text-white/48 ring-1 ring-white/8">
-        <span className="inline-flex items-center gap-2">
-          <ShieldCheck className="h-4 w-4 text-volt" />
-          Profile Layer
-        </span>
-        <span>{home ? "ACTIVE" : "GUEST"}</span>
-      </div>
-    </div>
-  );
-}
-
-function ThemePreferenceCard() {
-  return (
-    <div className="relative z-10 flex items-center justify-between gap-4 rounded-[1.5rem] bg-white/[0.035] p-4 ring-1 ring-white/8">
-      <div className="flex min-w-0 items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-volt/10 text-volt ring-1 ring-volt/20">
-          <Palette className="h-4 w-4" />
-        </div>
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-white">主题模式</p>
-          <p className="mt-1 text-xs text-white/42">Light / Dark</p>
-        </div>
-      </div>
-      <ThemeToggle />
     </div>
   );
 }
@@ -1407,6 +1352,61 @@ function inferFavoriteMatches(catalog: UserPreferenceCatalog, teams: UserPrefere
   return catalog.matches.filter((match) => Array.from(tokens).some((token) => token && match.title.includes(token)));
 }
 
+function getPlayerStoryTimelineImage(player: PlayerCardItem) {
+  const id = String(player.id);
+  const normalizedName = normalizeLookupText(player.name);
+  const article = PLAYER_STORY_ARTICLES.find((item) => {
+    const itemIds = [item.id, item.apiPlayerId].filter((value) => value != null).map(String);
+    return (
+      itemIds.includes(id) ||
+      normalizeLookupText(item.nameCn) === normalizedName ||
+      normalizeLookupText(item.nameEn) === normalizedName
+    );
+  });
+
+  return article?.coverImage || article?.storyImages?.[0] || "";
+}
+
+function getTeamProfileTimelineImage(team: TeamCardItem) {
+  const slug = getTeamSlug(team);
+  const profile = slug ? teamProfiles[slug as keyof typeof teamProfiles] : undefined;
+
+  return (
+    profile?.heroBanner ||
+    profile?.deepDive?.featureStory?.image ||
+    profile?.stories.find((story) => Boolean(story.coverImg))?.coverImg ||
+    profile?.gallery?.[0]?.src ||
+    ""
+  );
+}
+
+function getTeamSlug(team: TeamCardItem) {
+  const hrefSlug = team.href?.match(/\/teams\/([^/?#]+)/)?.[1];
+  if (hrefSlug && teamProfiles[hrefSlug as keyof typeof teamProfiles]) return hrefSlug;
+
+  const key = normalizeTeamCode(team.id);
+  const qualifiedTeam = qualifiedTeams.find((item) => normalizeTeamCode(item.code) === key);
+  if (qualifiedTeam?.slug) return qualifiedTeam.slug;
+
+  const normalizedName = normalizeLookupText(team.name);
+  const byProfile = Object.entries(teamProfiles).find(([, profile]) => (
+    normalizeTeamCode(profile.fifaCode) === key ||
+    normalizeTeamCode(profile.countryCode) === key ||
+    normalizeLookupText(profile.nameCn) === normalizedName ||
+    normalizeLookupText(profile.nameEn) === normalizedName
+  ));
+
+  return byProfile?.[0] || "";
+}
+
+function normalizeLookupText(value?: string) {
+  return (value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\p{L}\p{N}]+/gu, "");
+}
+
 function buildTimelineItems(players: PlayerCardItem[], teams: TeamCardItem[], matches: MatchCardItem[], isSignedIn: boolean): TimelineItem[] {
   const playerItems: TimelineItem[] = players.slice(0, 3).map((player) => ({
     id: `player-${player.id}`,
@@ -1415,7 +1415,7 @@ function buildTimelineItems(players: PlayerCardItem[], teams: TeamCardItem[], ma
     subtitle: player.team ? `${player.team} · 关注球员动态` : "关注球员动态",
     eyebrow: isSignedIn ? "球员" : "推荐",
     href: player.href,
-    image: player.photo,
+    image: getPlayerStoryTimelineImage(player) || player.photo,
   }));
 
   const teamItems: TimelineItem[] = teams.slice(0, 3).map((team) => ({
@@ -1425,19 +1425,22 @@ function buildTimelineItems(players: PlayerCardItem[], teams: TeamCardItem[], ma
     subtitle: "球队文章稍后补充",
     eyebrow: isSignedIn ? "球队" : "热门",
     href: team.href,
-    image: team.flag || team.logo,
+    image: getTeamProfileTimelineImage(team) || team.flag || team.logo,
   }));
 
-  const matchItems: TimelineItem[] = matches.slice(0, 4).map((match) => ({
+  const matchItems: TimelineItem[] = matches.map((match) => ({
     id: `match-${match.id}`,
     kind: "match",
     title: match.title,
-    subtitle: [match.stage, formatMatchTime(match.startsAt)].filter(Boolean).join(" · "),
+    subtitle: [match.stage ? formatStageLabel(match.stage, match.title) : "", formatMatchTime(match.startsAt)].filter(Boolean).join(" · "),
     eyebrow: isSignedIn ? "收藏" : "赛程",
     href: match.href,
+    stage: match.stage ? formatStageLabel(match.stage, match.title) : undefined,
     startsAt: match.startsAt,
     homeName: match.homeName,
     awayName: match.awayName,
+    homeCode: match.homeCode,
+    awayCode: match.awayCode,
     homeFlag: match.homeFlag,
     awayFlag: match.awayFlag,
   }));
@@ -1477,61 +1480,98 @@ function getDefaultPopularTeams(popularTeams: Array<{ name: string; flag: string
   });
 }
 
-function getRecentScheduleMatches(matches: Match[], catalog: UserPreferenceCatalog): MatchCardItem[] {
+function getRecentScheduleMatches(matches: Match[], catalog: UserPreferenceCatalog, roundLabels?: Map<string, string>): MatchCardItem[] {
   const now = Date.now();
   const upcoming = matches
     .filter((match) => match.start.getTime() >= now)
     .sort((a, b) => a.start.getTime() - b.start.getTime());
   const source = upcoming.length ? upcoming : [...matches].sort((a, b) => Math.abs(a.start.getTime() - now) - Math.abs(b.start.getTime() - now));
 
-  if (source.length) return source.map(matchToCard);
+  if (source.length) return source.map((match) => matchToCard(match, roundLabels?.get(match.uid)));
 
-  return catalog.matches.map(matchPreferenceToCard);
+  return catalog.matches.map((match) => matchPreferenceToCard(match));
 }
 
-function matchToCard(match: Match): MatchCardItem {
+function matchToCard(match: Match, stageLabel?: string): MatchCardItem {
   const teams = parseTeams(match.summary);
   const homeName = match.homeTeam?.name || teams.home.name;
   const awayName = match.awayTeam?.name || teams.away.name;
+  const homeCode = normalizeTeamCode(match.homeTeam?.code) || getTeamCodeByName(homeName);
+  const awayCode = normalizeTeamCode(match.awayTeam?.code) || getTeamCodeByName(awayName);
   const homeFlag = match.homeTeam?.code ? getFlagUrl(normalizeFlagCode(match.homeTeam.code), 160) : teams.home.image;
   const awayFlag = match.awayTeam?.code ? getFlagUrl(normalizeFlagCode(match.awayTeam.code), 160) : teams.away.image;
 
   return {
     id: match.uid,
-    title: match.summary,
-    stage: match.stage,
+    title: formatMatchTitle(match.summary),
+    stage: stageLabel || match.stage,
     startsAt: match.start.toISOString(),
     homeName,
     awayName,
+    homeCode,
+    awayCode,
     homeFlag,
     awayFlag,
     href: `/matches/${generateMatchSlug(match.summary)}/`,
   };
 }
 
-function matchPreferenceToCard(match: { id: string; title: string; stage?: string; startsAt?: string }): MatchCardItem {
+function matchPreferenceToCard(match: { id: string; title: string; stage?: string; startsAt?: string }, stageLabel?: string): MatchCardItem {
   const [homeName, awayName] = splitMatchTitle(match.title);
 
   return {
     id: match.id,
-    title: match.title,
-    stage: match.stage,
+    title: formatMatchTitle(match.title),
+    stage: stageLabel || match.stage,
     startsAt: match.startsAt,
     homeName,
     awayName,
+    homeCode: getTeamCodeByName(homeName),
+    awayCode: getTeamCodeByName(awayName),
     homeFlag: getFlagByTeamName(homeName),
     awayFlag: getFlagByTeamName(awayName),
     href: `/matches/${generateMatchSlug(match.title)}/`,
   };
 }
 
-function getTeamFlag(team: { region?: string; name: string }) {
-  if (team.region) return getFlagUrl(normalizeFlagCode(team.region), 160);
+function findRoundLabelForFavorite(
+  favorite: { id: string; title: string; startsAt?: string },
+  scheduleMatches: Match[],
+  roundLabels: Map<string, string>,
+) {
+  const direct = roundLabels.get(favorite.id);
+  if (direct) return direct;
+
+  const title = formatMatchTitle(favorite.title);
+  const startMs = favorite.startsAt ? new Date(favorite.startsAt).getTime() : NaN;
+  const matched = scheduleMatches.find((match) => {
+    if (formatMatchTitle(match.summary) !== title) return false;
+    if (!Number.isFinite(startMs)) return true;
+    return Math.abs(match.start.getTime() - startMs) < 60_000;
+  });
+
+  return matched ? roundLabels.get(matched.uid) : undefined;
+}
+
+function getTeamCodeByName(name: string) {
+  return normalizeTeamCode(TEAM_NAME_TO_FLAG_CODE[cleanTeamName(name)]);
+}
+
+function getTeamFlag(team: { id?: string; region?: string; logo?: string; name: string }) {
+  const logoFlag = normalizeTeamImage(team.logo);
+  if (logoFlag?.includes("flagcdn.com/")) return logoFlag;
+
+  const region = normalizeTeamCode(team.region);
+  if (region) return getFlagUrl(region, 160);
+
+  const id = normalizeTeamCode(team.id);
+  if (id) return getFlagUrl(id, 160);
+
   return getFlagByTeamName(team.name);
 }
 
 function getFlagByTeamName(name: string) {
-  const code = TEAM_NAME_TO_FLAG_CODE[name.trim()];
+  const code = TEAM_NAME_TO_FLAG_CODE[cleanTeamName(name)];
   return code ? getFlagUrl(normalizeFlagCode(code), 160) : "";
 }
 
@@ -1595,6 +1635,20 @@ function normalizeFlagCode(code: string) {
   if (upper === "ALG") return "DZA";
   if (upper === "KSA") return "SAU";
   return upper;
+}
+
+function normalizeTeamCode(code?: string) {
+  if (!code) return "";
+  const upper = code.trim().toUpperCase();
+  if (!upper || ["AFC", "CAF", "CONCACAF", "CONMEBOL", "OFC", "UEFA"].includes(upper)) return "";
+  return normalizeFlagCode(upper);
+}
+
+function normalizeTeamImage(src?: string) {
+  if (!src) return "";
+  const svgMatch = src.match(/^https:\/\/flagcdn\.com\/([a-z-]+)\.svg$/i);
+  if (svgMatch) return `https://flagcdn.com/w160/${svgMatch[1].toLowerCase()}.png`;
+  return src;
 }
 
 const TEAM_NAME_TO_FLAG_CODE: Record<string, string> = {
@@ -1693,9 +1747,17 @@ function formatMatchTime(startsAt: string | undefined) {
 }
 
 function splitMatchTitle(title: string) {
-  const core = title.split("（")[0]?.trim() || title;
-  const parts = core.split(/\s+vs\s+/i);
-  return parts.length >= 2 ? [parts[0], parts[1]] : [core, "待定"];
+  const teams = parseTeams(title);
+  return [teams.home.name, teams.away.name];
+}
+
+function formatMatchTitle(title: string) {
+  const [homeName, awayName] = splitMatchTitle(title);
+  return `${homeName} vs ${awayName}`;
+}
+
+function cleanTeamName(name: string) {
+  return name.trim().replace(/^[A-Z]{2,3}\s+(?=\p{L})/u, "").trim();
 }
 
 function toggleValue(values: string[], id: string) {

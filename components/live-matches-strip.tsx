@@ -212,7 +212,7 @@ function MatchTickerItem({ match, isLive, stageLabel }: { match: Match; isLive: 
       <span className="text-white/26">vs</span>
       <span className="truncate font-semibold text-white/72">{teams.away.name}</span>
       <span className="text-white/22">/</span>
-      <span className="truncate text-white/36">{stageLabel ?? formatStageLabel(match.stage)}</span>
+      <span className="truncate text-white/36">{stageLabel ?? formatStageLabel(match.stage, match.summary)}</span>
       <span className={`ml-auto font-semibold ${isLive ? "text-volt" : "text-white/40"}`}>
         {time}
       </span>

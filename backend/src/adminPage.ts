@@ -103,6 +103,20 @@ export function renderAdminPageHtml() {
     }
     .action-btn:hover { border-color: rgba(216,255,62,.36); color: white; background: rgba(216,255,62,.1); }
     .action-btn.danger:hover { border-color: rgba(255,91,110,.42); background: rgba(255,91,110,.12); }
+    .switch-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      border-radius: 22px; background: rgba(0,0,0,.22); border: 1px solid rgba(255,255,255,.075); padding: 14px;
+    }
+    .switch-row button {
+      position: relative; width: 58px; height: 32px; border: 1px solid rgba(255,255,255,.12); border-radius: 999px;
+      background: rgba(255,255,255,.08); cursor: pointer; transition: .22s ease; flex: 0 0 auto;
+    }
+    .switch-row button::after {
+      content: ""; position: absolute; top: 4px; left: 4px; width: 22px; height: 22px; border-radius: 999px;
+      background: rgba(255,255,255,.72); box-shadow: 0 8px 20px rgba(0,0,0,.28); transition: .22s ease;
+    }
+    .switch-row button.active { border-color: rgba(216,255,62,.4); background: rgba(216,255,62,.18); }
+    .switch-row button.active::after { left: 30px; background: var(--volt); box-shadow: 0 0 22px rgba(216,255,62,.35); }
     .split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, .8fr); gap: 14px; }
     .record-list { max-height: 560px; overflow: auto; padding-right: 4px; }
     .detail-block { border-radius: 22px; background: rgba(0,0,0,.2); border: 1px solid rgba(255,255,255,.075); padding: 14px; }
@@ -223,12 +237,38 @@ export function renderAdminPageHtml() {
         <div class="card metric"><span>新闻总量</span><strong id="newsTotal">--</strong></div>
         <div class="card metric"><span>来源数量</span><strong id="newsSourceCount">--</strong></div>
         <div class="card metric"><span>同步状态</span><strong id="newsState">--</strong></div>
+        <div class="card metric"><span>翻译文章</span><strong id="newsTranslatedCount">--</strong></div>
+        <div class="card metric"><span>翻译 Token</span><strong id="newsTranslationTokens">--</strong></div>
+        <div class="card metric"><span>翻译调用</span><strong id="newsTranslationCalls">--</strong></div>
+        <div class="card metric"><span>翻译模型</span><strong id="newsTranslationModel">--</strong></div>
 
         <div class="card wide">
           <h2>新闻 API 状态</h2>
           <div class="stack">
             <div class="status-row"><i class="dot" id="newsDot"></i><div><h3>聚合新闻服务</h3><p id="newsFreshness">--</p></div><span class="badge" id="newsErrors">--</span></div>
             <div class="status-row"><i class="dot ok"></i><div><h3>新闻端点</h3><p id="newsEndpoint">--</p></div><span class="badge">/api/news</span></div>
+            <div class="status-row"><i class="dot" id="newsTranslationDot"></i><div><h3>翻译模型调用</h3><p id="newsTranslationDetail">--</p></div><span class="badge" id="newsTranslationBadge">--</span></div>
+          </div>
+        </div>
+
+        <div class="card wide">
+          <h2>翻译功能开关</h2>
+          <div class="stack">
+            <div class="switch-row">
+              <div>
+                <h3>新闻列表标题/摘要翻译</h3>
+                <p id="newsListTranslationSwitchText">--</p>
+              </div>
+              <button id="newsListTranslationSwitch" type="button" aria-label="切换新闻列表翻译"></button>
+            </div>
+            <div class="switch-row">
+              <div>
+                <h3>站内阅读正文翻译</h3>
+                <p id="newsArticleTranslationSwitchText">--</p>
+              </div>
+              <button id="newsArticleTranslationSwitch" type="button" aria-label="切换正文翻译"></button>
+            </div>
+            <div class="status-row"><i class="dot" id="newsSettingsDot"></i><div><h3>开关状态</h3><p id="newsTranslationSettingsText">正在读取配置</p></div><span class="badge" id="newsTranslationSettingsBadge">--</span></div>
           </div>
         </div>
 
@@ -509,6 +549,67 @@ export function renderAdminPageHtml() {
       }
     }
 
+    let newsTranslationSettings = {
+      listTranslationEnabled: false,
+      articleTranslationEnabled: false
+    };
+    let newsTranslationSettingsSaving = false;
+
+    function renderNewsTranslationSettings(settings, saving) {
+      newsTranslationSettings = {
+        listTranslationEnabled: Boolean(settings.listTranslationEnabled),
+        articleTranslationEnabled: Boolean(settings.articleTranslationEnabled)
+      };
+      byId("newsListTranslationSwitch").className = newsTranslationSettings.listTranslationEnabled ? "active" : "";
+      byId("newsArticleTranslationSwitch").className = newsTranslationSettings.articleTranslationEnabled ? "active" : "";
+      byId("newsListTranslationSwitch").disabled = Boolean(saving);
+      byId("newsArticleTranslationSwitch").disabled = Boolean(saving);
+      byId("newsListTranslationSwitchText").textContent = newsTranslationSettings.listTranslationEnabled ? "已开启，新闻流会翻译标题和摘要" : "已关闭，新闻流保留原文标题和摘要";
+      byId("newsArticleTranslationSwitchText").textContent = newsTranslationSettings.articleTranslationEnabled ? "已开启，站内阅读器可按需翻译正文" : "已关闭，站内阅读器不会消耗正文翻译 Token";
+      byId("newsSettingsDot").className = statusDotClass(true, newsTranslationSettings.articleTranslationEnabled);
+      byId("newsTranslationSettingsText").textContent = saving
+        ? "正在保存配置并重启新闻服务"
+        : "列表翻译 " + (newsTranslationSettings.listTranslationEnabled ? "开启" : "关闭") + "，正文翻译 " + (newsTranslationSettings.articleTranslationEnabled ? "开启" : "关闭");
+      byId("newsTranslationSettingsBadge").textContent = saving ? "保存中" : (newsTranslationSettings.articleTranslationEnabled ? "正文可翻译" : "正文关闭");
+    }
+
+    async function refreshNewsTranslationSettings() {
+      try {
+        const res = await fetch("/api/admin/news-translation", { cache: "no-store" });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "news_translation_settings_failed");
+        renderNewsTranslationSettings(data, false);
+      } catch (error) {
+        byId("newsSettingsDot").className = statusDotClass(false, false);
+        byId("newsTranslationSettingsText").textContent = "翻译开关读取失败：" + String(error.message || error);
+        byId("newsTranslationSettingsBadge").textContent = "错误";
+      }
+    }
+
+    async function updateNewsTranslationSettings(patch) {
+      if (newsTranslationSettingsSaving) return;
+      newsTranslationSettingsSaving = true;
+      renderNewsTranslationSettings({ ...newsTranslationSettings, ...patch }, true);
+      try {
+        const res = await fetch("/api/admin/news-translation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(patch)
+        });
+        const data = await res.json().catch(function () { return null; });
+        if (!res.ok) throw new Error((data && data.error) || "news_translation_settings_failed");
+        renderNewsTranslationSettings(data, false);
+        await refreshNews();
+      } catch (error) {
+        byId("newsSettingsDot").className = statusDotClass(false, false);
+        byId("newsTranslationSettingsText").textContent = "保存失败：" + String(error.message || error);
+        byId("newsTranslationSettingsBadge").textContent = "错误";
+        await refreshNewsTranslationSettings();
+      } finally {
+        newsTranslationSettingsSaving = false;
+      }
+    }
+
     async function refreshNews() {
       try {
         const res = await fetch("/api/news?limit=24", { cache: "no-store" });
@@ -533,6 +634,31 @@ export function renderAdminPageHtml() {
         byId("newsErrors").textContent = errors.length ? errors.length + " 个错误" : "无错误";
         byId("newsEndpoint").textContent = data.endpoint || "--";
 
+        const translation = data.translation || {};
+        const usage = translation.usage || {};
+        const totalTokens = usage.totalTokens ?? usage.total_tokens ?? 0;
+        const promptTokens = usage.promptTokens ?? usage.prompt_tokens ?? 0;
+        const completionTokens = usage.completionTokens ?? usage.completion_tokens ?? 0;
+        const translatedCount = translation.translatedArticleCount ?? translation.translatedItems ?? 0;
+        const candidateCount = translation.candidateCount ?? 0;
+        const callCount = translation.calls ?? 0;
+        const failedCalls = translation.failedCalls ?? 0;
+        byId("newsTranslatedCount").textContent = translatedCount + "/" + candidateCount;
+        byId("newsTranslationTokens").textContent = totalTokens ? new Intl.NumberFormat("zh-CN").format(totalTokens) : "0";
+        byId("newsTranslationCalls").textContent = failedCalls ? callCount + "/" + failedCalls + " 错误" : String(callCount);
+        byId("newsTranslationModel").textContent = translation.model || "--";
+        byId("newsTranslationDot").className = statusDotClass(Boolean(translation.enabled) && !failedCalls, Boolean(translation.enabled));
+        byId("newsTranslationDetail").textContent = translation.enabled
+          ? "已翻译 " + translatedCount + " 篇，候选 " + candidateCount + " 篇；Prompt " + promptTokens + " / Completion " + completionTokens + " tokens"
+          : "翻译服务未启用";
+        byId("newsTranslationBadge").textContent = translation.model || "未配置";
+        if (data.features) {
+          renderNewsTranslationSettings({
+            listTranslationEnabled: data.features.listTranslationEnabled,
+            articleTranslationEnabled: data.features.articleTranslationEnabled
+          }, false);
+        }
+
         byId("newsSources").innerHTML = sources.length ? sources.slice(0, 6).map(function (source) {
           return "<div class=\\"status-row\\"><i class=\\"dot ok\\"></i><div><h3>" + source + "</h3><p>当前返回 " + sourceCounts[source] + " 条新闻</p></div><span class=\\"badge\\">" + sourceCounts[source] + "</span></div>";
         }).join("") : "<div class=\\"status-row\\"><i class=\\"dot warn\\"></i><div><h3>暂无来源</h3><p>新闻 API 未返回 items。</p></div><span class=\\"badge\\">0</span></div>";
@@ -551,6 +677,13 @@ export function renderAdminPageHtml() {
         byId("newsFreshness").textContent = "新闻 API 读取失败";
         byId("newsErrors").textContent = "错误";
         byId("newsEndpoint").textContent = "--";
+        byId("newsTranslatedCount").textContent = "--";
+        byId("newsTranslationTokens").textContent = "--";
+        byId("newsTranslationCalls").textContent = "--";
+        byId("newsTranslationModel").textContent = "--";
+        byId("newsTranslationDot").className = statusDotClass(false, false);
+        byId("newsTranslationDetail").textContent = "翻译统计不可用";
+        byId("newsTranslationBadge").textContent = "错误";
         byId("newsSources").innerHTML = "<div class=\\"status-row\\"><i class=\\"dot bad\\"></i><div><h3>新闻来源不可用</h3><p>" + String(error.message || error) + "</p></div><span class=\\"badge\\">错误</span></div>";
         byId("newsItems").innerHTML = "<div class=\\"status-row\\"><i class=\\"dot bad\\"></i><div><h3>新闻列表不可用</h3><p>" + String(error.message || error) + "</p></div><span class=\\"badge\\">错误</span></div>";
       }
@@ -717,6 +850,7 @@ export function renderAdminPageHtml() {
         "<button class=\\"action-btn danger\\" data-admin-action=\\"" + (disabled ? "enable" : "disable") + "\\">" + (disabled ? "恢复用户" : "禁用用户") + "</button>" +
         "<button class=\\"action-btn\\" data-admin-action=\\"reset-reminders\\">重置提醒</button>" +
         "<button class=\\"action-btn danger\\" data-admin-action=\\"clean-anomalies\\">删除异常记录</button>" +
+        "<button class=\\"action-btn danger\\" data-admin-action=\\"delete\\">删除用户</button>" +
         "</div></div>" +
         "<div class=\\"mini-grid\\">" +
         "<div class=\\"mini\\"><span>关注/收藏</span><strong>" + (summary.followedTeams + summary.followedPlayers + summary.favoriteMatches) + "</strong></div>" +
@@ -752,6 +886,7 @@ export function renderAdminPageHtml() {
 
     async function runAdminUserAction(userId, action) {
       if (!userId || !action) return;
+      if (action === "delete" && !window.confirm("确认永久删除这个用户？此操作不可恢复。")) return;
       const res = await fetch("/api/admin/users/" + encodeURIComponent(userId) + "/" + action, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -762,15 +897,27 @@ export function renderAdminPageHtml() {
         byId("adminUserDetail").insertAdjacentHTML("afterbegin", "<div class=\\"status-row\\"><i class=\\"dot bad\\"></i><div><h3>管理动作失败</h3><p>" + escapeHtml((data && data.error) || res.status) + "</p></div><span class=\\"badge\\">ERROR</span></div>");
         return;
       }
+      if (action === "delete") {
+        selectedAdminUserId = null;
+        byId("adminUserDetail").innerHTML = "<div class=\\"status-row\\"><i class=\\"dot ok\\"></i><div><h3>用户已删除</h3><p>已从用户系统移除该账号及其个人记录。</p></div><span class=\\"badge\\">DONE</span></div>";
+        await refreshUsers();
+        return;
+      }
       renderAdminUserDetail(data);
       await refreshUsers();
     }
 
     async function refreshAll() {
-      await Promise.allSettled([refreshStatus(), refreshLive(), refreshFootballDetails(), refreshNews(), refreshUsers(), refreshInvitations()]);
+      await Promise.allSettled([refreshStatus(), refreshLive(), refreshFootballDetails(), refreshNews(), refreshNewsTranslationSettings(), refreshUsers(), refreshInvitations()]);
     }
 
     byId("invitationForm").addEventListener("submit", createInvitation);
+    byId("newsListTranslationSwitch").addEventListener("click", function () {
+      updateNewsTranslationSettings({ listTranslationEnabled: !newsTranslationSettings.listTranslationEnabled });
+    });
+    byId("newsArticleTranslationSwitch").addEventListener("click", function () {
+      updateNewsTranslationSettings({ articleTranslationEnabled: !newsTranslationSettings.articleTranslationEnabled });
+    });
     refreshAll();
     setInterval(refreshAll, 5000);
   </script>

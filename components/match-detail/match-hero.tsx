@@ -74,27 +74,6 @@ const STATUS_COLOR: Record<string, string> = {
   finished: "text-white/40",
 };
 
-const STAGE_LABEL: Record<string, string> = {
-  "小组赛A组": "A 组",
-  "小组赛B组": "B 组",
-  "小组赛C组": "C 组",
-  "小组赛D组": "D 组",
-  "小组赛E组": "E 组",
-  "小组赛F组": "F 组",
-  "小组赛G组": "G 组",
-  "小组赛H组": "H 组",
-  "小组赛I组": "I 组",
-  "小组赛J组": "J 组",
-  "小组赛K组": "K 组",
-  "小组赛L组": "L 组",
-  "1/16决赛": "1/16 决赛",
-  "1/8决赛": "1/8 决赛",
-  "1/4决赛": "1/4 决赛",
-  "半决赛": "半决赛",
-  "决赛": "决赛",
-  "三/四名决赛": "三四名决赛",
-};
-
 const PLAYER_ASSETS: Record<string, { src: string; name: string }> = {
   ARG: { src: messiImage.src, name: "Lionel Messi" },
   AUS: { src: ryanImage.src, name: "Mathew Ryan" },
@@ -216,7 +195,7 @@ function fadeToTransparent(color: string) {
 
 export function MatchHero({ detail }: { detail: MatchDetail }) {
   const teams = parseTeams(detail.match.summary);
-  const stageLabel = formatStageLabel(STAGE_LABEL[detail.match.stage] ?? detail.match.stage);
+  const stageLabel = formatStageLabel(detail.match.stage, detail.match.summary);
   const statusLabel = STATUS_LABEL[detail.status];
   const statusColor = STATUS_COLOR[detail.status];
   const adjustedStart = detail.match.start;
@@ -343,6 +322,165 @@ export function MatchHero({ detail }: { detail: MatchDetail }) {
         </div>
       </div>
     </motion.div>
+  );
+}
+
+export function MatchTimelineBanner({
+  home,
+  away,
+  startsAt,
+  stage,
+}: {
+  home: { name: string; image?: string; code?: string };
+  away: { name: string; image?: string; code?: string };
+  startsAt?: string;
+  stage?: string;
+}) {
+  const homeCode = normalizeTeamCode(home.code);
+  const awayCode = normalizeTeamCode(away.code);
+  const homeAccent = getAccent(homeCode);
+  const awayAccent = getAccent(awayCode);
+  const homePlayer = PLAYER_ASSETS[homeCode];
+  const awayPlayer = PLAYER_ASSETS[awayCode];
+  const startDate = startsAt ? new Date(startsAt) : null;
+  const displayTime = startDate && Number.isFinite(startDate.getTime()) ? formatTime(startDate) : "TBD";
+
+  return (
+    <div className="relative min-h-[15rem] overflow-hidden bg-[#070b08] ring-1 ring-white/[0.08] sm:min-h-[17rem]">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,3,3,0.08),rgba(2,3,3,0.76)),radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.08),transparent_54%)]" />
+        <div className="absolute inset-0 opacity-[0.16] [background-image:linear-gradient(rgba(255,255,255,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.09)_1px,transparent_1px)] [background-size:34px_34px]" />
+        <CompactPosterWedge side="left" accent={homeAccent} />
+        <CompactPosterWedge side="right" accent={awayAccent} />
+        <div className="absolute left-1/2 top-7 h-40 w-[360px] -translate-x-1/2 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.13),transparent_68%)] blur-2xl" />
+      </div>
+
+      <CompactPosterSide
+        side="left"
+        team={{ badge: homeCode, image: home.image || "", name: home.name }}
+        teamCode={homeCode}
+        player={homePlayer}
+        accent={homeAccent}
+      />
+      <CompactPosterSide
+        side="right"
+        team={{ badge: awayCode, image: away.image || "", name: away.name }}
+        teamCode={awayCode}
+        player={awayPlayer}
+        accent={awayAccent}
+      />
+
+      <div className="relative z-20 flex min-h-[15rem] flex-col items-center justify-center px-4 py-7 text-center sm:min-h-[17rem]">
+        <span className="glass-chip px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/58">
+          {formatStageLabel(stage || "Match")}
+        </span>
+        <div
+          className="mt-3 text-4xl font-bold tabular-nums text-white sm:text-5xl"
+          style={{ fontFamily: "ScreenMatrix, monospace" }}
+        >
+          {displayTime}
+        </div>
+        <div className="mt-4 grid w-full max-w-[520px] grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-4">
+          <CompactMatchupTeam team={{ badge: homeCode, image: home.image || "", name: home.name }} align="left" />
+          <span className="rounded-full bg-white/[0.08] px-4 py-2 text-base font-black uppercase tracking-[0.08em] text-volt shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_0_24px_rgba(216,255,62,0.16)] ring-1 ring-white/[0.1]">
+            VS
+          </span>
+          <CompactMatchupTeam team={{ badge: awayCode, image: away.image || "", name: away.name }} align="right" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CompactPosterWedge({
+  side,
+  accent,
+}: {
+  side: "left" | "right";
+  accent: { primary: string; secondary: string };
+}) {
+  const isLeft = side === "left";
+
+  return (
+    <div
+      className={`absolute inset-y-0 w-[46%] ${isLeft ? "left-0" : "right-0"}`}
+      style={{
+        background: isLeft
+          ? `linear-gradient(90deg, ${accent.primary}, ${fadeToTransparent(accent.secondary)})`
+          : `linear-gradient(90deg, ${fadeToTransparent(accent.secondary)}, ${accent.primary})`,
+      }}
+    />
+  );
+}
+
+function normalizeTeamCode(code?: string) {
+  const value = (code || "").trim().toUpperCase();
+  if (value === "ALG") return "DZA";
+  if (value === "KSA") return "SAU";
+  return value;
+}
+
+function CompactPosterSide({
+  side,
+  team,
+  teamCode,
+  player,
+  accent,
+}: {
+  team: { badge: string; image: string; name: string };
+  teamCode: string;
+  side: "left" | "right";
+  player?: { src: string; name: string };
+  accent: { primary: string; secondary: string };
+}) {
+  const isRight = side === "right";
+
+  return (
+    <div className={`pointer-events-none absolute inset-y-0 z-10 w-[42%] ${isRight ? "right-0" : "left-0"}`}>
+      <div
+        className={`absolute top-8 h-24 w-24 rounded-full blur-[54px] sm:h-36 sm:w-36 sm:blur-[70px] ${
+          isRight ? "right-4 sm:right-9" : "left-4 sm:left-9"
+        }`}
+        style={{ backgroundColor: accent.primary }}
+      />
+      {player ? (
+        <img
+          src={player.src}
+          alt={player.name}
+          className={`absolute bottom-0 h-[92%] w-auto max-w-[76%] object-contain object-bottom drop-shadow-[0_14px_22px_rgba(0,0,0,0.42)] sm:h-[98%] ${
+            isRight ? "right-0" : "left-0"
+          }`}
+          loading="lazy"
+        />
+      ) : (
+        <div
+          className={`absolute bottom-4 grid h-32 w-24 place-items-center rounded-[1.25rem] bg-black/22 p-3 ring-1 ring-white/[0.1] backdrop-blur-xl sm:h-40 sm:w-32 ${
+            isRight ? "right-4 sm:right-8" : "left-4 sm:left-8"
+          }`}
+        >
+          <MiniFlag team={team} />
+          <span className="mt-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/42">{teamCode}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CompactMatchupTeam({
+  team,
+  align,
+}: {
+  team: { badge: string; image: string; name: string };
+  align: "left" | "right";
+}) {
+  const isRight = align === "right";
+
+  return (
+    <div className={`flex min-w-0 items-center gap-2 ${isRight ? "justify-start text-left" : "justify-end text-right"}`}>
+      {!isRight && <span className="hidden min-w-0 truncate text-sm font-bold uppercase tracking-[0.08em] text-white/78 sm:block">{team.name}</span>}
+      <MiniFlag team={team} />
+      {isRight && <span className="hidden min-w-0 truncate text-sm font-bold uppercase tracking-[0.08em] text-white/78 sm:block">{team.name}</span>}
+    </div>
   );
 }
 

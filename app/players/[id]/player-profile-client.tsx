@@ -24,6 +24,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { BackToTopButton } from "@/components/back-to-top-button";
 import { MobileNavBar } from "@/components/mobile-nav-bar";
 import { NavBar } from "@/components/nav-bar";
+import { UserActionButton } from "@/components/user-action-button";
 import { localizeClubName, localizeCountryName } from "@/lib/football-localization-client";
 import { getTeamLandscapePathByCode } from "@/lib/team-landscapes";
 import {
@@ -268,11 +269,17 @@ export function PlayerProfileClient({ playerId, nameHint, row, article }: Props)
             返回球员
           </Link>
 
-          {/* Top-right: Follow button */}
-          <button className="group absolute right-4 top-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1.5 text-xs font-semibold text-white/60 ring-1 ring-white/[0.08] backdrop-blur-md transition-all hover:bg-volt/[0.1] hover:text-volt hover:ring-volt/20 sm:right-6 sm:top-5">
-            <Star className="h-3 w-3" />
-            关注
-          </button>
+          <UserActionButton
+            kind="player"
+            payload={{
+              id: playerId,
+              name: displayName,
+              team: row?.countryCn || row?.teamCode,
+              position: row?.positionCn || player?.position,
+              photo,
+            }}
+            className="absolute right-4 top-4 z-10 h-8 px-3 text-[10px] backdrop-blur-md sm:right-6 sm:top-5"
+          />
 
           {/* Avatar — overlapping top edge */}
           <div className="absolute left-1/2 top-0 z-10 -translate-x-1/2 -translate-y-1/2">

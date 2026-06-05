@@ -23,6 +23,7 @@ export function NavBar() {
   const pathname = usePathname();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -31,13 +32,15 @@ export function NavBar() {
         if (!active) return;
         const playerId = payload.user.profile.avatarPlayerId ?? null;
         const followedPlayer = payload.user.followedPlayers.find((player) => player.id === playerId);
-        setAvatarUrl(followedPlayer?.photo || getPlayerAvatar(playerId, payload.catalog?.players));
+        setAvatarUrl(payload.user.profile.avatarUrl || followedPlayer?.photo || getPlayerAvatar(playerId, payload.catalog?.players));
         setIsSignedIn(true);
+        setUnreadCount(payload.summary.unreadNotificationCount);
       })
       .catch(() => {
         if (!active) return;
         setAvatarUrl(null);
         setIsSignedIn(false);
+        setUnreadCount(0);
       });
 
     return () => {
@@ -104,6 +107,11 @@ export function NavBar() {
           <Image src={avatarUrl} alt="我的世界杯" fill sizes="40px" className="object-cover" />
         ) : (
           <UserRound className="h-4 w-4 text-volt" />
+        )}
+        {unreadCount > 0 && (
+          <span className="absolute -right-1 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-flare px-1 text-[10px] font-black text-black ring-2 ring-ink-950">
+            {unreadCount > 9 ? "9+" : unreadCount}
+          </span>
         )}
       </Link>
       </div>

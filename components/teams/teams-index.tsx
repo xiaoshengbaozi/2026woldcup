@@ -12,6 +12,8 @@ import {
   type QualifiedTeamCard,
 } from "@/data/teams";
 
+const MOBILE_TOP_MODULE_OFFSET = 66;
+
 export function TeamsIndex() {
   const [activeContinent, setActiveContinent] = useState(continentOrder[0]);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -48,7 +50,7 @@ export function TeamsIndex() {
 
       const nextHeight = tabs.offsetHeight;
       setTabsHeight((current) => (current === nextHeight ? current : nextHeight));
-      setIsPinned(sentinel.getBoundingClientRect().top <= 0);
+      setIsPinned(sentinel.getBoundingClientRect().top <= MOBILE_TOP_MODULE_OFFSET);
     };
 
     syncPinnedState();
@@ -63,22 +65,16 @@ export function TeamsIndex() {
     };
   }, []);
 
-  const scrollToTabHead = () => {
-    if (!window.matchMedia("(max-width: 639px)").matches) return;
-
-    const sentinel = sentinelRef.current;
-    if (!sentinel) return;
-
-    const target = sentinel.getBoundingClientRect().top + window.scrollY;
-    window.requestAnimationFrame(() => {
-      window.scrollTo({ top: Math.max(target - 12, 0), behavior: "smooth" });
-    });
-  };
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("mobile-top-rail-change", { detail: { pinned: isPinned } }));
+    return () => {
+      window.dispatchEvent(new CustomEvent("mobile-top-rail-change", { detail: { pinned: false } }));
+    };
+  }, [isPinned]);
 
   const handleContinentChange = (continent: typeof activeContinent) => {
     if (continent === activeContinent) return;
     setActiveContinent(continent);
-    scrollToTabHead();
   };
 
   return (
@@ -96,14 +92,11 @@ export function TeamsIndex() {
               className="sm:hidden"
               style={{ height: isPinned ? tabsHeight : 0 }}
             />
-            {isPinned ? (
-              <div className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-[calc(env(safe-area-inset-top)+6.25rem)] bg-black/72 backdrop-blur-2xl [mask-image:linear-gradient(to_bottom,black_0%,black_56%,rgba(0,0,0,0)_100%)] sm:hidden" />
-            ) : null}
             <div
               ref={tabsRef}
               className={`${
                 isPinned
-                  ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+0.75rem)] z-[70] px-3 py-2"
+                  ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[65] px-3 py-2"
                   : "relative -mx-3 bg-black/58 px-3 py-2 backdrop-blur-2xl"
               } sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none`}
             >

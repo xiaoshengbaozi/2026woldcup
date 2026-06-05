@@ -387,9 +387,24 @@ async def main():
         players = players[:args.limit]
         print(f"Limited to {len(players)} players")
 
-    # Load cache
+    # Load cache and existing results when resuming
     cache = load_cache() if args.resume else {}
     print(f"Cache contains {len(cache)} entries")
+
+    existing_results = []
+    processed_names = set()
+    if args.resume and OUTPUT_PATH.exists():
+        try:
+            existing_data = json.loads(OUTPUT_PATH.read_text(encoding="utf-8"))
+            existing_results = existing_data.get("players", [])
+            processed_names = {p["player"] for p in existing_results}
+            print(f"Loaded {len(existing_results)} existing results, skipping already-processed players")
+        except (json.JSONDecodeError, KeyError):
+            pass
+
+    # Filter out already-processed players
+    remaining_players = [p for p in players if p["name"] not in processed_names]
+    print(f"Remaining players to process: {len(remaining_players)}")
 
     # Launch browser
     async with async_playwright() as p:
@@ -399,10 +414,10 @@ async def main():
         )
         page = await context.new_page()
 
-        # Search for each player
-        all_results = []
-        for i, player in enumerate(players, 1):
-            print(f"\n[{i}/{len(players)}] Processing {player['name']}...")
+        # Search for each remaining player
+        all_results = list(existing_results)
+        for i, player in enumerate(remaining_players, 1):
+            print(f"\n[{i}/{len(remaining_players)}] Processing {player['name']}...")
             result = await search_player_breakthroughs(page, player, cache)
             all_results.append(result)
 
@@ -414,7 +429,7 @@ async def main():
 
     # Save final results
     save_results(all_results, args)
-    print(f"\nCompleted! Searched {len(players)} players")
+    print(f"\nCompleted! Searched {len(remaining_players)} new players, total {len(all_results)} players")
 
 
 if __name__ == "__main__":

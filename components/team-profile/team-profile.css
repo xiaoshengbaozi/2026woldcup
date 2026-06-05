@@ -90,12 +90,23 @@
   object-fit: cover;
 }
 
+.tp-hero-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
 .tp-hero-info h1 {
   font-size: 32px;
   font-weight: 800;
   letter-spacing: -0.5px;
   line-height: 1.1;
-  margin-bottom: 4px;
+  margin: 0;
+}
+.tp-hero-follow-button {
+  margin-top: 2px;
+  white-space: nowrap;
 }
 .tp-hero-sub {
   font-size: 13px;
@@ -938,6 +949,7 @@
     gap: 20px;
   }
   .tp-flag { margin: 0 auto; }
+  .tp-hero-title-row { justify-content: center; }
   .tp-hero-info h1 { font-size: 26px; }
   .tp-hero-tags { justify-content: center; }
   .tp-hero-stats {
@@ -1489,6 +1501,10 @@
 
   .tp-flag {
     margin: 0 auto;
+  }
+
+  .tp-hero-title-row {
+    justify-content: center;
   }
 
   .tp-hero-tags {

@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef } from "react";
 import type { ReactNode, TouchEvent, UIEvent } from "react";
-import { CalendarDays, ChevronRight, LogIn, Settings, Star, UserPlus, UserRound, X } from "lucide-react";
+import { Bell, CalendarDays, ChevronRight, LogIn, Settings, Star, UserPlus, UserRound, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { UserHomePayload } from "@/lib/user-system";
 
@@ -15,6 +15,8 @@ type MobileMeDrawerProps = {
   home: UserHomePayload | null;
   loading?: boolean;
   avatarUrl?: string | null;
+  onLogin: () => void;
+  onRegister: () => void;
   onClose: () => void;
 };
 
@@ -24,10 +26,11 @@ const emptySummary = {
   favoriteMatchCount: 0,
 };
 
-export function MobileMeDrawer({ open, home, loading, avatarUrl, onClose }: MobileMeDrawerProps) {
+export function MobileMeDrawer({ open, home, loading, avatarUrl, onLogin, onRegister, onClose }: MobileMeDrawerProps) {
   const pathname = usePathname();
   const asideRef = useRef<HTMLElement>(null);
   const summary = home?.summary ?? emptySummary;
+  const unreadCount = home?.summary.unreadNotificationCount ?? 0;
   const displayName = home?.user.profile.displayName ?? "我的世界杯";
   const signedIn = Boolean(home);
 
@@ -132,22 +135,28 @@ export function MobileMeDrawer({ open, home, loading, avatarUrl, onClose }: Mobi
               </h2>
               {!signedIn && (
                 <div className="mt-4 grid grid-cols-2 divide-x divide-black/20 border border-white/[0.08]">
-                  <Link
-                    href="/me?auth=login"
-                    onClick={onClose}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      onLogin();
+                    }}
                     className="inline-flex h-11 items-center justify-center gap-1.5 bg-volt text-sm font-bold text-black shadow-[0_0_28px_rgba(216,255,62,.18)]"
                   >
                     <LogIn className="h-4 w-4" />
                     登录
-                  </Link>
-                  <Link
-                    href="/me?auth=register"
-                    onClick={onClose}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      onRegister();
+                    }}
                     className="inline-flex h-11 items-center justify-center gap-1.5 text-sm font-semibold text-white/80"
                   >
                     <UserPlus className="h-4 w-4" />
                     注册
-                  </Link>
+                  </button>
                 </div>
               )}
             </section>
@@ -183,8 +192,21 @@ export function MobileMeDrawer({ open, home, loading, avatarUrl, onClose }: Mobi
               </button>
             </nav>
 
-            <div className="relative mt-auto flex items-center justify-start border-t border-white/[0.08] pt-4">
+            <div className="relative mt-auto flex items-center justify-between border-t border-white/[0.08] pt-4">
               <ThemeToggle />
+              <Link
+                href="/me"
+                onClick={onClose}
+                aria-label="通知"
+                className="relative grid h-10 w-10 place-items-center rounded-full bg-white/[0.06] text-white/62 ring-1 ring-white/[0.08] transition hover:bg-white/[0.1] hover:text-white"
+              >
+                <Bell className="h-4 w-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute -right-1 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-flare px-1 text-[10px] font-black text-black ring-2 ring-ink-950">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </Link>
             </div>
           </motion.aside>
         </>

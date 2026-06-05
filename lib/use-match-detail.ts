@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
 import { generateMatchSlug, findMatchBySlug } from "@/lib/match-detail";
 import { generateMatchDetail } from "@/lib/match-detail-mock";
+import { buildMatchRoundLabels } from "@/lib/stage-rounds";
 import { fetchWorldCupHeadToHead } from "@/lib/world-cup-head-to-head";
 import { fetchWorldCupSquadDetails, type WorldCupSquadDetail } from "@/lib/world-cup-squads";
 import type { HeadToHeadMatch } from "@/types/match";
@@ -26,6 +27,8 @@ export function useMatchDetail(slug: string): {
     if (loading || error || !matches.length) return null;
     return findMatchBySlug(matches, slug) ?? null;
   }, [matches, loading, error, slug]);
+
+  const roundLabels = useMemo(() => buildMatchRoundLabels(matches), [matches]);
 
   useEffect(() => {
     let active = true;
@@ -74,6 +77,10 @@ export function useMatchDetail(slug: string): {
 
     const enriched = generateMatchDetail(match);
     enriched.slug = slug;
+    const roundLabel = roundLabels.get(match.uid);
+    if (roundLabel) {
+      enriched.match = { ...enriched.match, stage: roundLabel };
+    }
 
     const homeSquad = match.homeTeam?.id ? remoteSquads?.get(match.homeTeam.id) : null;
     const awaySquad = match.awayTeam?.id ? remoteSquads?.get(match.awayTeam.id) : null;
@@ -100,7 +107,7 @@ export function useMatchDetail(slug: string): {
     }
 
     return enriched;
-  }, [match, remoteHeadToHead, remoteSquads, slug]);
+  }, [match, remoteHeadToHead, remoteSquads, roundLabels, slug]);
 
   return {
     detail,

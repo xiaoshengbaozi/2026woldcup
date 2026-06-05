@@ -12,6 +12,7 @@ import { MatchNews } from "@/components/match-detail/match-news";
 import { MatchHeadToHead } from "@/components/match-detail/match-head-to-head";
 import { MatchSeoContent } from "@/components/match-detail/match-seo-content";
 import { MatchNav, type MatchTab } from "@/components/match-detail/match-nav";
+import { UserActionButton } from "@/components/user-action-button";
 
 export function MatchDetailClient({ slug }: { slug: string }) {
   const { detail, loading, error } = useMatchDetail(slug);
@@ -44,6 +45,19 @@ export function MatchDetailClient({ slug }: { slug: string }) {
   return (
     <DashboardShell>
       <MatchHero detail={detail} />
+      <div className="-mt-2 flex justify-end">
+        <UserActionButton
+          kind="match"
+          payload={{
+            id: String(detail.match.apiFixtureId || detail.match.uid),
+            matchId: String(detail.match.apiFixtureId || detail.match.uid),
+            title: detail.match.summary,
+            stage: detail.match.stage,
+            startsAt: detail.match.start.toISOString(),
+          }}
+          className="h-9 px-4 text-[11px]"
+        />
+      </div>
       <MatchNav active={activeTab} onTabChange={setActiveTab} />
 
       <div className="space-y-5">

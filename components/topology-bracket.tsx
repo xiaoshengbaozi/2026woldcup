@@ -448,7 +448,7 @@ export function TopologyBracket({ matches, timezoneOffset = 0 }: TopologyBracket
     const inJourney = teamJourneySet.has(id);
 
     // Stage label color
-    const stageLabel = formatStageLabel(match.stage);
+    const stageLabel = formatStageLabel(match.stage, match.summary);
     const isFinal = match.stage.includes("决赛");
     const isSemi = match.stage.includes("半决赛");
 

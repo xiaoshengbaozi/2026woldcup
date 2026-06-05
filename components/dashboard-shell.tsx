@@ -6,6 +6,7 @@ import { BackToTopButton } from "./back-to-top-button";
 import { NavBar } from "./nav-bar";
 import { MobileMeEntry } from "./mobile-me-entry";
 import { MobileNavBar } from "./mobile-nav-bar";
+import { UserNotificationToast } from "./user-notification-toast";
 
 const PRIMARY_PAGES = new Set(["/", "/news", "/data", "/matches", "/players", "/me", "/teams"]);
 
@@ -17,7 +18,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   return (
     <div
       className={`relative min-h-screen overflow-x-hidden px-3 pb-28 sm:px-6 lg:px-8 lg:pb-5 lg:pt-5 ${
-        hasMobileMeEntry ? "pt-[calc(env(safe-area-inset-top)+4.75rem)]" : "pt-4 sm:pt-5"
+        hasMobileMeEntry ? "pt-[calc(env(safe-area-inset-top)+4.125rem)]" : "pt-4 sm:pt-5"
       }`}
     >
       <div className="pointer-events-none fixed left-1/2 top-0 h-[360px] w-[min(720px,100vw)] -translate-x-1/2 rounded-full bg-volt/10 blur-[120px] sm:h-[520px]" />
@@ -27,6 +28,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         {children}
       </div>
       {hasMobileMeEntry && <MobileMeEntry />}
+      <UserNotificationToast />
       <MobileNavBar />
       <BackToTopButton />
     </div>
