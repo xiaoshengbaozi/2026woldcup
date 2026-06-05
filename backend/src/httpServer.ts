@@ -8,6 +8,7 @@ import type { HistoryBuffer } from "./historyBuffer";
 import type { SnapshotCache } from "./snapshotCache";
 import type { UserSystem } from "./userSystem";
 import { renderAdminPageHtml } from "./adminPage";
+import { deleteLiveChannel, getPublicLiveChannels, readLiveChannels, upsertLiveChannel } from "./liveChannels";
 import type { CountryData, MatchLinesResponse } from "./types";
 import { getWorldCupPlayerProfile, getWorldCupTopScorers } from "./playerProfileData";
 import {
@@ -61,6 +62,13 @@ export function createHttpServer(options: HttpServerOptions) {
     if (url.pathname === "/api/admin/news-translation") {
       handleNewsTranslationSettings(req, res).catch((error: Error & { statusCode?: number }) => {
         sendJson(res, { error: error.message || "news_translation_settings_failed" }, error.statusCode ?? 500);
+      });
+      return;
+    }
+
+    if (url.pathname === "/api/live-channels" || url.pathname === "/api/admin/live-channels") {
+      handleLiveChannelsRequest(req, url, res).catch((error: Error & { statusCode?: number }) => {
+        sendJson(res, { error: error.message || "live_channels_failed" }, error.statusCode ?? 500);
       });
       return;
     }
@@ -354,6 +362,47 @@ function handleNewsRequest(url: URL, res: http.ServerResponse) {
     .catch((error: Error) => {
       sendJson(res, { error: error.message || "news_api_unavailable" }, 502);
     });
+}
+
+async function handleLiveChannelsRequest(req: http.IncomingMessage, url: URL, res: http.ServerResponse) {
+  const isAdmin = url.pathname === "/api/admin/live-channels";
+
+  if (!isAdmin) {
+    if (req.method !== "GET") {
+      sendJson(res, { error: "method_not_allowed" }, 405);
+      return;
+    }
+    const matchId = url.searchParams.get("matchId")?.trim();
+    if (!matchId) {
+      sendJson(res, { error: "missing_match_id" }, 400);
+      return;
+    }
+    sendJson(res, { channels: await getPublicLiveChannels(matchId) });
+    return;
+  }
+
+  if (req.method === "GET") {
+    sendJson(res, { channels: await readLiveChannels() });
+    return;
+  }
+
+  if (req.method === "POST") {
+    const body = await readJsonBody(req);
+    sendJson(res, { channel: await upsertLiveChannel(body) });
+    return;
+  }
+
+  if (req.method === "DELETE") {
+    const id = url.searchParams.get("id")?.trim();
+    if (!id) {
+      sendJson(res, { error: "missing_channel_id" }, 400);
+      return;
+    }
+    sendJson(res, await deleteLiveChannel(id));
+    return;
+  }
+
+  sendJson(res, { error: "method_not_allowed" }, 405);
 }
 
 async function handleNewsTranslationSettings(req: http.IncomingMessage, res: http.ServerResponse) {

@@ -16,6 +16,8 @@ backend/dist/
 backend/.env
 /data/user-system.json
 /data/api-football-cache.json
+/data/live-channels.json
 /backend/data/user-system.json
 /backend/data/api-football-cache.json
+/backend/data/live-channels.json
 scripts/__pycache__/

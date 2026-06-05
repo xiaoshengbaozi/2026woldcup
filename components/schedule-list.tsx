@@ -207,7 +207,7 @@ export function ScheduleList({
 
 function groupMatchesByStageGroup(matches: Match[]) {
   const grouped = matches.reduce<Map<string, Match[]>>((acc, match) => {
-    const groupId = getStageGroupId(match.stage) ?? "knockout";
+    const groupId = getStageGroupId(match.stage) ?? getKnockoutStageGroupId(match.stage);
     if (!acc.has(groupId)) acc.set(groupId, []);
     acc.get(groupId)?.push(match);
     return acc;
@@ -216,11 +216,20 @@ function groupMatchesByStageGroup(matches: Match[]) {
   return [...grouped.entries()].sort(([left], [right]) => rankGroup(left) - rankGroup(right));
 }
 
+function getKnockoutStageGroupId(stage: string) {
+  if (/1\/16|1\/8|1\/4|round\s+of\s+(?:32|16)|8th\s+finals|quarter-?\s*finals?/i.test(stage)) return "knockout";
+  if (/半决赛|三四名|季军|决赛|semi-?\s*finals?|final|third-?\s*place/i.test(stage)) return "final-week";
+  return "knockout";
+}
+
 function formatGroupTitle(group: string) {
-  return group === "knockout" ? "淘汰赛" : `${group} 组`;
+  if (group === "knockout") return "淘汰赛";
+  if (group === "final-week") return "决赛周";
+  return `${group} 组`;
 }
 
 function rankGroup(group: string) {
   if (group === "knockout") return 99;
+  if (group === "final-week") return 100;
   return group.charCodeAt(0) - 64;
 }

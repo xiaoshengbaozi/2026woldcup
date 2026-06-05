@@ -14,7 +14,9 @@ export function MatchLinesPanel() {
   const { events, timestamp, loading, error } = useMatchLines();
   const [selected, setSelected] = useState<MatchLineEvent | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia("(max-width: 1023px)").matches : false
+  );
   const panelRef = useRef<HTMLDivElement>(null);
 
   const close = useCallback(() => setSelected(null), []);
@@ -399,7 +401,7 @@ function MatchDetailModal({
           >
             {moneyline.map((market, idx) => {
               const isHome = idx === 0;
-              const isDraw = moneyline.length === 3 && idx === 2;
+              const isDraw = moneyline.length === 3 && idx === 1;
               const isAway = !isHome && !isDraw;
               return (
                 <div

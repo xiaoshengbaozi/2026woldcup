@@ -1,0 +1,50 @@
+"use client";
+
+import type { ReactNode } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
+
+type MobileSecondaryPageActionsProps = {
+  backHref: string;
+  backLabel: string;
+  rightAction?: ReactNode;
+  reserveSpace?: boolean;
+};
+
+const topButtonClass =
+  "pointer-events-auto absolute top-[calc(env(safe-area-inset-top)+1rem)] grid h-[34px] min-w-[34px] place-items-center rounded-full bg-white/[0.08] text-white/72 shadow-[0_14px_34px_rgba(0,0,0,.38),0_0_20px_rgba(216,255,62,.1),inset_0_1px_0_rgba(255,255,255,.16)] ring-1 ring-white/12 backdrop-blur-2xl transition hover:text-white hover:ring-volt/35";
+
+export function MobileSecondaryPageActions({ backHref, backLabel, rightAction, reserveSpace = false }: MobileSecondaryPageActionsProps) {
+  const [topRailExpanded, setTopRailExpanded] = useState(false);
+
+  useEffect(() => {
+    const handleTopRailChange = (event: Event) => {
+      const detail = (event as CustomEvent<{ pinned?: boolean }>).detail;
+      setTopRailExpanded(Boolean(detail?.pinned));
+    };
+
+    window.addEventListener("mobile-top-rail-change", handleTopRailChange);
+    return () => {
+      window.removeEventListener("mobile-top-rail-change", handleTopRailChange);
+      setTopRailExpanded(false);
+    };
+  }, []);
+
+  return (
+    <>
+      <div
+        className={`pointer-events-none fixed inset-x-0 top-0 z-[75] bg-black/72 backdrop-blur-2xl transition-[height] duration-200 [mask-image:linear-gradient(to_bottom,black_0%,black_68%,rgba(0,0,0,0)_100%)] lg:hidden ${
+          topRailExpanded ? "h-[calc(env(safe-area-inset-top)+9.625rem)]" : "h-[calc(env(safe-area-inset-top)+4.125rem)]"
+        }`}
+      />
+      <div className="pointer-events-none fixed inset-x-0 top-0 z-[85] h-[calc(env(safe-area-inset-top)+4.125rem)] lg:hidden">
+        <Link href={backHref} aria-label={backLabel} className={`${topButtonClass} left-4 w-[34px]`}>
+          <ChevronLeft className="h-4 w-4" />
+        </Link>
+        {rightAction ? <div className="pointer-events-auto absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)]">{rightAction}</div> : null}
+      </div>
+      {reserveSpace ? <div aria-hidden="true" className="h-[calc(env(safe-area-inset-top)+3.75rem)] lg:hidden" /> : null}
+    </>
+  );
+}

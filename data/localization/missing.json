@@ -10,7 +10,9 @@
     "198352": "M. Touré",
     "271539": "J. Hadjam",
     "296645": "T. Yengi",
-    "535046": "A. Amaimouni"
+    "350856": "E. Nuamah",
+    "535046": "A. Amaimouni",
+    "593759": "Ala Al Haji"
   },
   "clubs": {
     "Vasco DA Gama": "Vasco DA Gama",
@@ -30,7 +32,9 @@
     "USA": "USA",
     "FC Schalke 04": "FC Schalke 04",
     "Juventus": "Juventus",
-    "Brazil": "Brazil"
+    "Brazil": "Brazil",
+    "Fenerbahçe": "Fenerbahçe",
+    "Club America": "Club America"
   },
   "leagues": {
     "King's Cup": "King's Cup",
@@ -61,6 +65,8 @@
   },
   "coaches": {
     "H. Regragui": "H. Regragui",
-    "V. Montella": "V. Montella"
+    "V. Montella": "V. Montella",
+    "Z. Dalić": "Z. Dalić",
+    "T. Tuchel": "T. Tuchel"
   }
 }

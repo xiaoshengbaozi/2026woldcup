@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { detailRows, localizeLocationText } from "@/lib/calendar";
 import { formatTime } from "@/lib/format";
+import { areMatchTeamsConfirmed } from "@/lib/match-availability";
 import { generateMatchSlug } from "@/lib/match-detail";
 import { formatStageLabel } from "@/lib/stage";
 import { parseTeams } from "@/lib/teams";
@@ -526,12 +527,10 @@ function TimedMatchCard({
   const teams = parseTeams(match.summary);
   const slug = generateMatchSlug(match.summary);
   const toneIdx = tone % eventTones.length;
+  const isUnlocked = areMatchTeamsConfirmed(match.summary);
 
-  return (
-    <Link
-      href={"/matches/" + slug}
-      className={`block border-l-[3px] px-2 py-1.5 transition hover:bg-white/[0.06] ${eventTones[toneIdx]}`}
-    >
+  const content = (
+    <>
       <div className="flex items-center justify-between gap-1.5">
         <span className="text-[10px] font-semibold text-white/80">{formatTime(displayStart)}</span>
         <span className="truncate text-[8px] font-medium uppercase tracking-wider text-white/40">{formatStageLabel(match.stage, match.summary)}</span>
@@ -544,7 +543,23 @@ function TimedMatchCard({
         <TeamFlag team={teams.away} size={14} />
         <span className="truncate">{teams.away.name}</span>
       </div>
+    </>
+  );
+
+  return isUnlocked ? (
+    <Link
+      href={"/matches/" + slug}
+      className={`block border-l-[3px] px-2 py-1.5 transition hover:bg-white/[0.06] ${eventTones[toneIdx]}`}
+    >
+      {content}
     </Link>
+  ) : (
+    <div
+      aria-disabled="true"
+      className={`block border-l-[3px] px-2 py-1.5 opacity-70 transition ${eventTones[toneIdx]}`}
+    >
+      {content}
+    </div>
   );
 }
 
@@ -555,12 +570,10 @@ function SelectedDayMatchRow({ match, displayStart }: { match: Match; displaySta
   const details = detailRows(match);
   const venue = details.find((detail) => detail.type === "venue")?.text || localizeLocationText(match.location);
   const slug = generateMatchSlug(match.summary);
+  const isUnlocked = areMatchTeamsConfirmed(match.summary);
 
-  return (
-    <Link
-      href={"/matches/" + slug}
-      className="group block rounded-2xl bg-white/[0.04] px-3 py-2.5 transition hover:bg-white/[0.07]"
-    >
+  const content = (
+    <>
       <div className="flex items-center justify-between gap-2">
         <div className="text-sm font-bold text-white transition group-hover:text-volt">
           {formatTime(displayStart)}
@@ -584,7 +597,23 @@ function SelectedDayMatchRow({ match, displayStart }: { match: Match; displaySta
         <MapPin className="h-3 w-3 shrink-0 text-flare/60" />
         <span className="truncate">{venue}</span>
       </div>
+    </>
+  );
+
+  return isUnlocked ? (
+    <Link
+      href={"/matches/" + slug}
+      className="group block rounded-2xl bg-white/[0.04] px-3 py-2.5 transition hover:bg-white/[0.07]"
+    >
+      {content}
     </Link>
+  ) : (
+    <div
+      aria-disabled="true"
+      className="group block rounded-2xl bg-white/[0.04] px-3 py-2.5 opacity-70 transition"
+    >
+      {content}
+    </div>
   );
 }
 

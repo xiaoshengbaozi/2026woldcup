@@ -11,6 +11,7 @@ import { formatDate, formatTime } from "@/lib/format";
 import { fetchWorldCupSquadDetails, type WorldCupSquadDetail } from "@/lib/world-cup-squads";
 import { localizeCoachName } from "@/lib/coach-localization";
 import { TeamSquadCard } from "@/components/team-profile/team-squad-card";
+import { MobileSecondaryPageActions } from "@/components/mobile-secondary-page-actions";
 import { UserActionButton } from "@/components/user-action-button";
 import { getFlagUrl } from "@/lib/world-cup-2026";
 import type { TeamProfile } from "@/types/team-profile";
@@ -21,6 +22,7 @@ interface TeamProfileProps {
 }
 
 const SCROLL_STEP = 300;
+const MOBILE_TOP_MODULE_OFFSET = 66;
 const PROFILE_CODE_ALIASES: Record<string, string> = {
   ALG: "DZA",
   KSA: "SAU",
@@ -31,7 +33,11 @@ export function TeamProfile({ data }: TeamProfileProps) {
   const prevRef = useRef<HTMLButtonElement>(null);
   const nextRef = useRef<HTMLButtonElement>(null);
   const { matches } = useWorldCupData();
-  const [activeContentTab, setActiveContentTab] = useState<"profile" | "squad">("profile");
+  const [activeContentTab, setActiveContentTab] = useState<"profile" | "squad" | "fixtures">("profile");
+  const contentTabsSentinelRef = useRef<HTMLDivElement>(null);
+  const contentTabsRef = useRef<HTMLDivElement>(null);
+  const [contentTabsPinned, setContentTabsPinned] = useState(false);
+  const [contentTabsHeight, setContentTabsHeight] = useState(0);
   const [squad, setSquad] = useState<WorldCupSquadDetail | null>(null);
   const [squadLoading, setSquadLoading] = useState(false);
   const [squadError, setSquadError] = useState<string | null>(null);
@@ -59,10 +65,67 @@ export function TeamProfile({ data }: TeamProfileProps) {
     };
   }, [syncNav, data.timeline.length]);
 
+  useEffect(() => {
+    const mobileQuery = window.matchMedia("(max-width: 1023px)");
+
+    const syncPinnedState = () => {
+      if (!mobileQuery.matches) {
+        setContentTabsPinned(false);
+        setContentTabsHeight(0);
+        return;
+      }
+
+      const sentinel = contentTabsSentinelRef.current;
+      const tabs = contentTabsRef.current;
+      if (!sentinel || !tabs) return;
+
+      const nextHeight = tabs.offsetHeight;
+      setContentTabsHeight((current) => (current === nextHeight ? current : nextHeight));
+      setContentTabsPinned(sentinel.getBoundingClientRect().top <= MOBILE_TOP_MODULE_OFFSET);
+    };
+
+    syncPinnedState();
+    window.addEventListener("scroll", syncPinnedState, { passive: true });
+    window.addEventListener("resize", syncPinnedState);
+    mobileQuery.addEventListener?.("change", syncPinnedState);
+
+    return () => {
+      window.removeEventListener("scroll", syncPinnedState);
+      window.removeEventListener("resize", syncPinnedState);
+      mobileQuery.removeEventListener?.("change", syncPinnedState);
+    };
+  }, []);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("mobile-top-rail-change", { detail: { pinned: contentTabsPinned } }));
+    return () => {
+      window.dispatchEvent(new CustomEvent("mobile-top-rail-change", { detail: { pinned: false } }));
+    };
+  }, [contentTabsPinned]);
+
   const scroll = useCallback((dir: number) => {
     vpRef.current?.scrollBy({ left: dir * SCROLL_STEP, behavior: "smooth" });
     window.setTimeout(syncNav, 320);
   }, [syncNav]);
+
+  const scrollToContentTabs = () => {
+    if (!window.matchMedia("(max-width: 1023px)").matches) return;
+
+    const sentinel = contentTabsSentinelRef.current;
+    if (!sentinel) return;
+
+    const offset = MOBILE_TOP_MODULE_OFFSET + (contentTabsRef.current?.offsetHeight ?? 0) + 12;
+    const target = sentinel.getBoundingClientRect().top + window.scrollY - offset;
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: Math.max(target, 0), behavior: "smooth" });
+    });
+  };
+
+  const handleContentTabChange = (tab: "profile" | "squad" | "fixtures") => {
+    if (tab === activeContentTab) return;
+    setActiveContentTab(tab);
+    scrollToContentTabs();
+  };
 
   const groupMatches = useMemo(() => {
     const nameNeedles = [data.nameCn, data.nameEn]
@@ -137,9 +200,81 @@ export function TeamProfile({ data }: TeamProfileProps) {
     : "";
   const fallbackCoachName = getCoachName(data);
   const coachName = localizeCoachName(squad?.coach || fallbackCoachName) || fallbackCoachName;
+  const followPayload = {
+    id: targetCode,
+    name: data.nameCn,
+    region: targetCode,
+    logo: getFlagUrl(flagImageCode, 160),
+  };
+  const renderFixturesCard = (className = "tp-fixtures tp-side-card") => (
+    <section className={className}>
+      <div className="tp-side-card-heading">
+        <div className="tp-side-card-title">比赛对阵</div>
+        {fixturesGroupLabel && <div className="tp-fixtures-group">{fixturesGroupLabel}</div>}
+      </div>
+      {groupMatches.length > 0 ? (
+        <div className="tp-fixtures-grid">
+          {groupMatches.map((match) => {
+            const teams = parseTeams(match.summary);
+            const matchDate = formatDate(match.start);
+            const matchTime = formatTime(match.start);
+            return (
+              <div key={match.uid} className="tp-fixture-card">
+                <div className="tp-fixture-teams">
+                  <div className="tp-fixture-team">
+                    <div className="tp-fixture-flag">
+                      {teams.home.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={teams.home.image} alt="" />
+                      ) : (
+                        <span>{teams.home.badge}</span>
+                      )}
+                    </div>
+                    <span className="tp-fixture-team-name">{teams.home.name}</span>
+                  </div>
+                  <div className="tp-fixture-kickoff">
+                    <span>{matchDate}</span>
+                    <span>{matchTime}</span>
+                  </div>
+                  <div className="tp-fixture-team tp-fixture-team--right">
+                    <div className="tp-fixture-flag">
+                      {teams.away.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={teams.away.image} alt="" />
+                      ) : (
+                        <span>{teams.away.badge}</span>
+                      )}
+                    </div>
+                    <span className="tp-fixture-team-name">{teams.away.name}</span>
+                  </div>
+                </div>
+                {match.location && (
+                  <div className="tp-fixture-venue">{localizeLocationText(match.location)}</div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="tp-empty-state">赛程确认后自动同步</div>
+      )}
+    </section>
+  );
 
   return (
     <div className="tp-wrap">
+      <MobileSecondaryPageActions
+        backHref="/teams"
+        backLabel="返回球队"
+        reserveSpace
+        rightAction={
+          <UserActionButton
+            kind="team"
+            payload={followPayload}
+            className="h-[34px] whitespace-nowrap px-3 text-[10px] shadow-[0_14px_34px_rgba(0,0,0,.38),0_0_20px_rgba(216,255,62,.1),inset_0_1px_0_rgba(255,255,255,.16)] backdrop-blur-2xl"
+          />
+        }
+      />
       <div className="tp-hero">
         {data.heroBanner && (
           <div className="tp-hero-banner">
@@ -162,12 +297,7 @@ export function TeamProfile({ data }: TeamProfileProps) {
               <h1>{data.nameCn}</h1>
               <UserActionButton
                 kind="team"
-                payload={{
-                  id: targetCode,
-                  name: data.nameCn,
-                  region: targetCode,
-                  logo: getFlagUrl(flagImageCode, 160),
-                }}
+                payload={followPayload}
                 className="tp-hero-follow-button h-9 px-3 text-[10px] backdrop-blur-md"
               />
             </div>
@@ -248,13 +378,26 @@ export function TeamProfile({ data }: TeamProfileProps) {
         </aside>
 
         <main className="tp-main">
-          <div className="tp-content-tabs" aria-label="球队内容">
+          <div
+            ref={contentTabsSentinelRef}
+            className="lg:hidden"
+            style={{ height: contentTabsPinned ? contentTabsHeight : 0 }}
+          />
+          <div
+            ref={contentTabsRef}
+            className={`tp-content-tabs ${
+              contentTabsPinned
+                ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[65] !px-3 !py-2"
+                : ""
+            }`}
+            aria-label="球队内容"
+          >
             <button
               type="button"
               role="tab"
               aria-selected={activeContentTab === "profile"}
               className={`tp-content-tab${activeContentTab === "profile" ? " active" : ""}`}
-              onClick={() => setActiveContentTab("profile")}
+              onClick={() => handleContentTabChange("profile")}
             >
               球队档案
             </button>
@@ -263,13 +406,22 @@ export function TeamProfile({ data }: TeamProfileProps) {
               role="tab"
               aria-selected={activeContentTab === "squad"}
               className={`tp-content-tab${activeContentTab === "squad" ? " active" : ""}`}
-              onClick={() => setActiveContentTab("squad")}
+              onClick={() => handleContentTabChange("squad")}
             >
               本届阵容
             </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeContentTab === "fixtures"}
+              className={`tp-content-tab tp-content-tab--mobile-only${activeContentTab === "fixtures" ? " active" : ""}`}
+              onClick={() => handleContentTabChange("fixtures")}
+            >
+              比赛对阵
+            </button>
           </div>
 
-          <div className={`tp-content-panel${activeContentTab === "profile" ? " tp-content-panel--bare" : ""}`}>
+          <div className={`tp-content-panel${activeContentTab === "profile" ? " tp-content-panel--bare" : activeContentTab === "fixtures" ? " tp-content-panel--fixtures" : ""}`}>
             {activeContentTab === "profile" ? (
               <div className="tp-stories">
                 {deepDive && (
@@ -393,7 +545,7 @@ export function TeamProfile({ data }: TeamProfileProps) {
                   </>
                 )}
               </div>
-            ) : (
+            ) : activeContentTab === "squad" ? (
               <TeamSquadCard
                 teamName={teamMeta?.name || data.nameCn}
                 coach={coachName}
@@ -401,6 +553,8 @@ export function TeamProfile({ data }: TeamProfileProps) {
                 loading={squadLoading}
                 error={squadError}
               />
+            ) : (
+              renderFixturesCard("tp-fixtures tp-fixtures--panel")
             )}
           </div>
         </main>

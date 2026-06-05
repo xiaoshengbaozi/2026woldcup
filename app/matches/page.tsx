@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { LiveMatchesStrip } from "@/components/live-matches-strip";
 import { getCityFilterGroup, getStageFilterGroup, MatchFilters, readFilterGroupValue } from "@/components/match-filters";
@@ -14,6 +14,8 @@ import { useWorldCupData } from "@/lib/use-world-cup-data";
 
 export type ScheduleLayout = "default" | "waterfall" | "topology" | "calendar";
 
+const MOBILE_TOP_MODULE_OFFSET = 66;
+
 export default function MatchesPage() {
   const { matches, activeCity, setActiveCity, cities, loading, error } = useWorldCupData();
   const [query, setQuery] = useState("");
@@ -21,6 +23,10 @@ export default function MatchesPage() {
   const [timezoneOffset, setTimezoneOffset] = useState(0);
   const [layout, setLayout] = useState<ScheduleLayout>("default");
   const [selectedDay, setSelectedDay] = useState("");
+  const mobileRailSentinelRef = useRef<HTMLDivElement>(null);
+  const mobileRailRef = useRef<HTMLDivElement>(null);
+  const [isMobileRailPinned, setIsMobileRailPinned] = useState(false);
+  const [mobileRailHeight, setMobileRailHeight] = useState(0);
 
   useEffect(() => {
     const requestedLayout = new URLSearchParams(window.location.search).get("layout");
@@ -58,9 +64,49 @@ export default function MatchesPage() {
     [matches, timezoneOffset]
   );
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (selectedDay && !matchDays.some((day) => day.key === selectedDay)) setSelectedDay("");
   }, [matchDays, selectedDay]);
+
+  useEffect(() => {
+    const mobileQuery = window.matchMedia("(max-width: 639px)");
+
+    const syncPinnedState = () => {
+      if (!mobileQuery.matches) {
+        setIsMobileRailPinned(false);
+        setMobileRailHeight(0);
+        return;
+      }
+
+      const sentinel = mobileRailSentinelRef.current;
+      const rail = mobileRailRef.current;
+      if (!sentinel || !rail) return;
+
+      const nextHeight = rail.offsetHeight;
+      setMobileRailHeight((current) => (current === nextHeight ? current : nextHeight));
+      setIsMobileRailPinned(sentinel.getBoundingClientRect().top <= MOBILE_TOP_MODULE_OFFSET);
+    };
+
+    syncPinnedState();
+    window.addEventListener("scroll", syncPinnedState, { passive: true });
+    window.addEventListener("resize", syncPinnedState);
+    mobileQuery.addEventListener?.("change", syncPinnedState);
+
+    return () => {
+      window.removeEventListener("scroll", syncPinnedState);
+      window.removeEventListener("resize", syncPinnedState);
+      mobileQuery.removeEventListener?.("change", syncPinnedState);
+    };
+  }, []);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("mobile-top-rail-change", {
+      detail: { pinned: isMobileRailPinned, height: mobileRailHeight + 12 }
+    }));
+    return () => {
+      window.dispatchEvent(new CustomEvent("mobile-top-rail-change", { detail: { pinned: false } }));
+    };
+  }, [isMobileRailPinned, mobileRailHeight]);
 
   const totalMatchDays = new Set(matches.map((match) => match.start.toDateString())).size;
 
@@ -111,26 +157,60 @@ export default function MatchesPage() {
         totalCities={totalCities}
       />
 
-      <MatchFilters
-        query={query}
-        stage={stage}
-        stages={stages}
-        activeCity={activeCity}
-        cities={cities}
-        timezoneOffset={timezoneOffset}
-        layout={layout}
-        onQueryChange={setQuery}
-        onStageChange={setStage}
-        onCityChange={setActiveCity}
-        onTimezoneChange={setTimezoneOffset}
-        onLayoutChange={setLayout}
-      />
+      <div className="hidden sm:block">
+        <MatchFilters
+          query={query}
+          stage={stage}
+          stages={stages}
+          activeCity={activeCity}
+          cities={cities}
+          timezoneOffset={timezoneOffset}
+          layout={layout}
+          onQueryChange={setQuery}
+          onStageChange={setStage}
+          onCityChange={setActiveCity}
+          onTimezoneChange={setTimezoneOffset}
+          onLayoutChange={setLayout}
+        />
+      </div>
 
-      <MobileMatchDayStrip
-        days={matchDays}
-        selectedDay={selectedDay}
-        onSelectDay={setSelectedDay}
+      <div
+        ref={mobileRailSentinelRef}
+        data-mobile-match-rail-sentinel="true"
+        className="sm:hidden"
+        style={{ height: isMobileRailPinned ? mobileRailHeight : 0 }}
       />
+      <div
+        ref={mobileRailRef}
+        data-mobile-match-rail="true"
+        className={`${
+          isMobileRailPinned
+            ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[65] px-3 py-2"
+            : "relative -mx-3 bg-black/58 px-3 py-2 backdrop-blur-2xl"
+        } sm:hidden`}
+      >
+        <div className="space-y-2">
+          <MatchFilters
+            query={query}
+            stage={stage}
+            stages={stages}
+            activeCity={activeCity}
+            cities={cities}
+            timezoneOffset={timezoneOffset}
+            layout={layout}
+            onQueryChange={setQuery}
+            onStageChange={setStage}
+            onCityChange={setActiveCity}
+            onTimezoneChange={setTimezoneOffset}
+            onLayoutChange={setLayout}
+          />
+          <MobileMatchDayStrip
+            days={matchDays}
+            selectedDay={selectedDay}
+            onSelectDay={setSelectedDay}
+          />
+        </div>
+      </div>
       <MobileLiveMatchesEntry matches={matches} />
 
       <ScheduleList

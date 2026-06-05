@@ -232,6 +232,31 @@ button {
     -webkit-line-clamp: 2;
     overflow: hidden;
   }
+
+  .me-follow-card {
+    --me-follow-card-width: 80px;
+    --me-follow-avatar-size: 68px;
+    width: 80px;
+    height: 127px;
+  }
+
+  .me-follow-avatar {
+    width: 68px;
+    height: 68px;
+  }
+
+  @media (min-width: 640px) {
+    .me-follow-card {
+      --me-follow-card-width: 96px;
+      --me-follow-avatar-size: 80px;
+      width: 96px;
+    }
+
+    .me-follow-avatar {
+      width: 80px;
+      height: 80px;
+    }
+  }
 }
 
 @keyframes live-ping {

@@ -2,15 +2,18 @@
 
 import { useEffect, useRef, useState } from "react";
 
-export type MatchTab = "lineup" | "odds" | "timeline" | "stats" | "h2h";
+export type MatchTab = "live" | "lineup" | "odds" | "timeline" | "stats" | "h2h";
 
 const NAV_ITEMS: { id: MatchTab; label: string }[] = [
+  { id: "live", label: "直播" },
   { id: "lineup", label: "阵容" },
   { id: "odds", label: "赔率" },
   { id: "timeline", label: "事件" },
   { id: "stats", label: "统计" },
   { id: "h2h", label: "交锋" },
 ];
+
+const MOBILE_TOP_MODULE_OFFSET = 66;
 
 export function MatchNav({
   active,
@@ -25,7 +28,7 @@ export function MatchNav({
   const [navHeight, setNavHeight] = useState(0);
 
   useEffect(() => {
-    const mobileQuery = window.matchMedia("(max-width: 639px)");
+    const mobileQuery = window.matchMedia("(max-width: 1023px)");
 
     const syncPinnedState = () => {
       if (!mobileQuery.matches) {
@@ -40,7 +43,7 @@ export function MatchNav({
 
       const nextHeight = nav.offsetHeight;
       setNavHeight((current) => (current === nextHeight ? current : nextHeight));
-      setIsPinned(sentinel.getBoundingClientRect().top <= 0);
+      setIsPinned(sentinel.getBoundingClientRect().top <= MOBILE_TOP_MODULE_OFFSET);
     };
 
     syncPinnedState();
@@ -55,15 +58,23 @@ export function MatchNav({
     };
   }, []);
 
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("mobile-top-rail-change", { detail: { pinned: isPinned } }));
+    return () => {
+      window.dispatchEvent(new CustomEvent("mobile-top-rail-change", { detail: { pinned: false } }));
+    };
+  }, [isPinned]);
+
   const scrollToTabHead = () => {
-    if (!window.matchMedia("(max-width: 639px)").matches) return;
+    if (!window.matchMedia("(max-width: 1023px)").matches) return;
 
     const sentinel = sentinelRef.current;
     if (!sentinel) return;
 
-    const target = sentinel.getBoundingClientRect().top + window.scrollY;
+    const offset = MOBILE_TOP_MODULE_OFFSET + (navRef.current?.offsetHeight ?? 0) + 12;
+    const target = sentinel.getBoundingClientRect().top + window.scrollY - offset;
     window.requestAnimationFrame(() => {
-      window.scrollTo({ top: Math.max(target - 12, 0), behavior: "smooth" });
+      window.scrollTo({ top: Math.max(target, 0), behavior: "smooth" });
     });
   };
 
@@ -75,17 +86,14 @@ export function MatchNav({
 
   return (
     <>
-    <div ref={sentinelRef} className="sm:hidden" style={{ height: isPinned ? navHeight : 0 }} />
-    {isPinned ? (
-      <div className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-[calc(env(safe-area-inset-top)+6.25rem)] bg-black/72 backdrop-blur-2xl [mask-image:linear-gradient(to_bottom,black_0%,black_56%,rgba(0,0,0,0)_100%)] sm:hidden" />
-    ) : null}
+    <div ref={sentinelRef} className="lg:hidden" style={{ height: isPinned ? navHeight : 0 }} />
     <div
       ref={navRef}
       className={`${
         isPinned
-          ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+0.75rem)] z-[70] px-3 py-2"
+          ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[65] px-3 py-2"
           : "relative -mx-3 bg-black/58 px-3 py-2 backdrop-blur-2xl"
-      } mb-5 sm:static sm:mx-0 sm:bg-transparent sm:px-1 sm:py-0 sm:backdrop-blur-none`}
+      } mb-5 lg:static lg:mx-0 lg:bg-transparent lg:px-1 lg:py-0 lg:backdrop-blur-none`}
     >
       <div
         className="flex flex-wrap gap-1.5"

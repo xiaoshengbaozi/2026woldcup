@@ -5,6 +5,7 @@ import { ChevronDown, Radio } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LiveMatchCard } from "@/components/world-cup-hero/live-match-card";
+import { areMatchTeamsConfirmed } from "@/lib/match-availability";
 import { generateMatchSlug } from "@/lib/match-detail";
 import { formatStageLabel } from "@/lib/stage";
 import { buildMatchRoundLabels } from "@/lib/stage-rounds";
@@ -196,18 +197,15 @@ export function LiveMatchesStrip({ matches }: LiveMatchesStripProps) {
 function MatchTickerItem({ match, isLive, stageLabel }: { match: Match; isLive: boolean; stageLabel?: string }) {
   const teams = parseTeams(match.summary);
   const slug = generateMatchSlug(match.summary);
+  const isUnlocked = areMatchTeamsConfirmed(match.summary);
   const time = match.start.toLocaleTimeString("zh-CN", {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
   });
 
-  return (
-    <Link
-      href={"/matches/" + slug}
-      className="inline-flex h-full shrink-0 items-center gap-3 border-r border-white/[0.04] px-3 text-[10px] uppercase tracking-[0.12em] text-white/52 transition-colors duration-150 hover:bg-white/[0.04]"
-      style={{ width: TICKER_ITEM_WIDTH }}
-    >
+  const content = (
+    <>
       <span className="truncate font-semibold text-white/72">{teams.home.name}</span>
       <span className="text-white/26">vs</span>
       <span className="truncate font-semibold text-white/72">{teams.away.name}</span>
@@ -216,6 +214,24 @@ function MatchTickerItem({ match, isLive, stageLabel }: { match: Match; isLive: 
       <span className={`ml-auto font-semibold ${isLive ? "text-volt" : "text-white/40"}`}>
         {time}
       </span>
+    </>
+  );
+
+  return isUnlocked ? (
+    <Link
+      href={"/matches/" + slug}
+      className="inline-flex h-full shrink-0 items-center gap-3 border-r border-white/[0.04] px-3 text-[10px] uppercase tracking-[0.12em] text-white/52 transition-colors duration-150 hover:bg-white/[0.04]"
+      style={{ width: TICKER_ITEM_WIDTH }}
+    >
+      {content}
     </Link>
+  ) : (
+    <div
+      aria-disabled="true"
+      className="inline-flex h-full shrink-0 items-center gap-3 border-r border-white/[0.04] px-3 text-[10px] uppercase tracking-[0.12em] text-white/42 opacity-70"
+      style={{ width: TICKER_ITEM_WIDTH }}
+    >
+      {content}
+    </div>
   );
 }

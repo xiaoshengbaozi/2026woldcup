@@ -28,7 +28,7 @@ export function MatchStats({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.65 }}
-      className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3"
+      className="grid grid-cols-4 gap-1.5 sm:gap-3"
     >
       <StatCard
         label="比赛"

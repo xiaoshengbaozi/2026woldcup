@@ -1,8 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { Users, ChevronDown } from "lucide-react";
 import { useStore } from "@/lib/store";
+import { getTeamDetailHrefByCode } from "@/lib/team-links";
 import { localizeTeamName } from "@/lib/team-localization";
 import { getFlagUrl } from "@/lib/world-cup-2026";
 
@@ -20,7 +22,9 @@ export function RankingOverflowCard() {
   const selectedCountry = useStore((s) => s.selectedCountry);
   const selectCountry = useStore((s) => s.selectCountry);
   const hoverCountry = useStore((s) => s.hoverCountry);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia("(max-width: 1023px)").matches : false
+  );
 
   const overflowCountries = useMemo(() => {
     const sorted = Array.from(countries.values()).sort(
@@ -66,33 +70,56 @@ export function RankingOverflowCard() {
       >
         {renderedCountries.map((country) => {
           const isSelected = selectedCountry === country.countryCode;
+          const teamHref = getTeamDetailHrefByCode(country.countryCode);
+          const teamName = localizeTeamName(country.countryName, country.countryCode);
 
-          return (
-            <button
-              key={country.countryCode}
-              type="button"
-              onClick={() => selectCountry(country.countryCode, "map")}
-              onMouseEnter={() => hoverCountry(country.countryCode, "ranking")}
-              onMouseLeave={() => hoverCountry(null, "ranking")}
-              className="group flex items-center gap-2 rounded-full border border-white/[0.06] bg-white/[0.03] px-3 py-1.5 transition hover:border-volt/20 hover:bg-white/[0.06]"
-              style={{
-                background: isSelected ? "rgba(216,255,62,0.06)" : undefined,
-                borderColor: isSelected ? "rgba(216,255,62,0.2)" : undefined,
-              }}
-            >
+          const content = (
+            <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={getFlagUrl(country.countryCode, 40)}
-                alt={localizeTeamName(country.countryName, country.countryCode)}
+                alt={teamName}
                 className="h-3.5 w-5 shrink-0 rounded-sm object-cover"
                 loading="lazy"
               />
               <span className="text-[11px] font-semibold text-white/70">
-                {localizeTeamName(country.countryName, country.countryCode)}
+                {teamName}
               </span>
               <span className="text-[11px] font-bold tabular-nums text-white/45">
                 {probabilityLabel(country.impliedProbability)}
               </span>
+            </>
+          );
+
+          const interactionProps = {
+            onClick: () => selectCountry(country.countryCode, "map"),
+            onMouseEnter: () => hoverCountry(country.countryCode, "ranking"),
+            onMouseLeave: () => hoverCountry(null, "ranking"),
+            onFocus: () => hoverCountry(country.countryCode, "ranking"),
+            onBlur: () => hoverCountry(null, "ranking"),
+            className: "group flex items-center gap-2 rounded-full border border-white/[0.06] bg-white/[0.03] px-3 py-1.5 transition hover:border-volt/20 hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-volt/50",
+            style: {
+              background: isSelected ? "rgba(216,255,62,0.06)" : undefined,
+              borderColor: isSelected ? "rgba(216,255,62,0.2)" : undefined,
+            },
+          };
+
+          if (teamHref) {
+            return (
+              <Link
+                key={country.countryCode}
+                href={teamHref}
+                aria-label={`查看${teamName}球队页`}
+                {...interactionProps}
+              >
+                {content}
+              </Link>
+            );
+          }
+
+          return (
+            <button key={country.countryCode} type="button" {...interactionProps}>
+              {content}
             </button>
           );
         })}

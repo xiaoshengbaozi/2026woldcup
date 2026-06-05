@@ -13,7 +13,6 @@ import {
   Globe2,
   LogIn,
   LogOut,
-  Sparkles,
   Star,
   Trophy,
   UserPlus,
@@ -483,21 +482,6 @@ function MePageContent() {
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
           className="min-w-0 space-y-5 order-last lg:order-none"
         >
-          <section className="hero-card overflow-hidden p-5 sm:p-6">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <div className="glass-chip inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold uppercase text-volt">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  MY WORLD CUP
-                </div>
-                <h1 className="mt-4 text-3xl font-semibold leading-tight text-white sm:text-4xl">我的世界杯主页</h1>
-              </div>
-              <p className="max-w-sm text-sm leading-6 text-white/44">
-                {home ? `${home.user.profile.displayName} 的关注与收藏。` : loading ? "正在同步个人数据。" : "登录后显示你的关注球员、球队和收藏比赛。"}
-              </p>
-            </div>
-          </section>
-
           <ProfileBoard home={home} catalog={catalog} topScorers={topScorers} popularTeams={popularTeams} scheduleMatches={matches} />
         </motion.div>
 
@@ -608,12 +592,12 @@ function ProfileBoard({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="mt-5 lg:h-[132px]"
+            className="mt-6 h-[143px]"
           >
             {activeTab === "players" && (
               <ScrollableRail ariaLabel="滚动关注球员">
                 {players.slice(0, 8).map((player) => (
-                  <div key={player.id} className="w-32 shrink-0">
+                  <div key={player.id} className="w-20 shrink-0 sm:w-24">
                     <PlayerBubble player={player} catalogPlayers={catalog.players} dimmed={!home} />
                   </div>
                 ))}
@@ -622,7 +606,7 @@ function ProfileBoard({
             {activeTab === "teams" && (
               <ScrollableRail ariaLabel="滚动关注球队">
                 {teams.slice(0, 8).map((team) => (
-                  <div key={team.id} className="w-36 shrink-0 sm:w-40">
+                  <div key={team.id} className="w-20 shrink-0 sm:w-24">
                     <TeamBadge team={team} dimmed={!home} />
                   </div>
                 ))}
@@ -691,7 +675,7 @@ function ScrollableRail({ ariaLabel, children }: { ariaLabel: string; children: 
 
   return (
     <div className="relative">
-      <div ref={scrollRef} className="flex h-full items-start gap-3 overflow-x-auto py-2 pr-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div ref={scrollRef} className="flex h-full items-start gap-4 overflow-x-auto py-2 pr-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {children}
       </div>
 
@@ -722,14 +706,14 @@ function ScrollableRail({ ariaLabel, children }: { ariaLabel: string; children: 
 
 function PlayerBubble({ player, catalogPlayers, dimmed }: { player: PlayerCardItem; catalogPlayers: UserPreferencePlayer[]; dimmed: boolean }) {
   const content = (
-    <div className={`group flex w-[68px] shrink-0 flex-col items-center text-center sm:w-20 ${dimmed ? "opacity-60" : ""}`}>
-      <div className="relative h-14 w-14 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/[0.1] transition duration-300 group-hover:scale-105 group-hover:ring-volt/45 sm:h-16 sm:w-16">
-        <Image src={player.photo || getPlayerAvatar(player.id, catalogPlayers)} alt={player.name} fill sizes="64px" className="object-cover" />
+    <div className={`me-follow-card group flex shrink-0 flex-col items-center text-center ${dimmed ? "opacity-60" : ""}`} style={{ width: "var(--me-follow-card-width)", height: 127 }}>
+      <div className="me-follow-avatar relative overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/[0.1] transition duration-300 group-hover:scale-105 group-hover:ring-volt/45" style={{ width: "var(--me-follow-avatar-size)", height: "var(--me-follow-avatar-size)", minHeight: "var(--me-follow-avatar-size)", maxHeight: "var(--me-follow-avatar-size)" }}>
+        <Image src={player.photo || getPlayerAvatar(player.id, catalogPlayers)} alt={player.name} fill sizes="(min-width: 640px) 80px, 68px" className="object-cover" />
       </div>
-      <span className="mt-2 w-full truncate text-[10px] font-medium text-white/60 group-hover:text-volt sm:mt-2.5 sm:text-[11px]">
+      <span className="mt-2.5 w-full truncate text-[11px] font-medium text-white/60 group-hover:text-volt sm:mt-3 sm:text-xs">
         {player.name}
       </span>
-      <span className="mt-0.5 w-full truncate text-[9px] text-white/28 sm:text-[10px]">{player.team || "国家待定"}</span>
+      <span className="mt-0.5 w-full truncate text-[10px] text-white/28 sm:text-[11px]">{player.team || "国家待定"}</span>
     </div>
   );
 
@@ -743,15 +727,16 @@ function PlayerBubble({ player, catalogPlayers, dimmed }: { player: PlayerCardIt
 
 function TeamBadge({ team, dimmed }: { team: TeamCardItem; dimmed: boolean }) {
   const content = (
-    <div className={`grid justify-items-center gap-[9px] transition ${dimmed ? "opacity-60" : ""}`}>
-      <div className="relative aspect-[3/2] w-full overflow-hidden rounded-xl bg-white/[0.045] p-1.5 ring-1 ring-white/10">
-        {team.flag ? <Image src={team.flag} alt={team.name} fill sizes="120px" className="object-contain opacity-92" /> : null}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/72 via-black/18 to-transparent" />
-        {team.logo && !team.flag ? <Image src={team.logo} alt={team.name} fill sizes="48px" className="object-contain p-2" /> : null}
+    <div className={`me-follow-card group flex shrink-0 flex-col items-center text-center transition ${dimmed ? "opacity-60" : ""}`} style={{ width: "var(--me-follow-card-width)", height: 127 }}>
+      <div className="me-follow-avatar relative overflow-hidden rounded-full bg-white/[0.06] p-1.5 ring-1 ring-white/[0.1] transition duration-300 group-hover:scale-105 group-hover:ring-volt/45" style={{ width: "var(--me-follow-avatar-size)", height: "var(--me-follow-avatar-size)", minHeight: "var(--me-follow-avatar-size)", maxHeight: "var(--me-follow-avatar-size)" }}>
+        {team.flag ? <Image src={team.flag} alt={team.name} fill sizes="(min-width: 640px) 80px, 68px" className="object-cover opacity-92" /> : null}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/42 via-black/8 to-transparent" />
+        {team.logo && !team.flag ? <Image src={team.logo} alt={team.name} fill sizes="(min-width: 640px) 80px, 68px" className="object-contain p-2" /> : null}
         {!team.logo && !team.flag ? <Trophy className="absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 text-volt" /> : null}
         {team.pct !== undefined && <span className="absolute right-1 top-1 rounded-full bg-black/45 px-1.5 py-0.5 text-[8px] font-bold text-volt ring-1 ring-white/10">{team.pct}%</span>}
       </div>
-      <p className="max-w-full truncate text-[10px] font-medium text-white/60 sm:text-[11px]">{team.name}</p>
+      <p className="mt-2.5 w-full truncate text-[11px] font-medium text-white/60 group-hover:text-volt sm:mt-3 sm:text-xs">{team.name}</p>
+      <p className="mt-0.5 w-full truncate text-[10px] text-white/28 sm:text-[11px]">{team.pct !== undefined ? `${team.pct}%` : "Team"}</p>
     </div>
   );
 

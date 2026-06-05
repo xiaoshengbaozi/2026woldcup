@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { CalendarDays, Check, ChevronDown, Clock, GitFork, Grid3X3, Layers, LayoutList, MapPin, Search } from "lucide-react";
 import { ComponentType, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { ScheduleLayout } from "@/app/matches/page";
 import { formatStageLabel, getStageGroupId, rankStage } from "@/lib/stage";
 
@@ -104,12 +105,13 @@ export function MatchFilters({
 
   return (
     <motion.section
+      data-match-filters="true"
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.08, duration: 0.65 }}
-      className="relative z-20 space-y-3 sm:space-y-0 sm:flex sm:flex-wrap sm:items-center sm:gap-3"
+      className="relative z-[10000] flex items-center gap-2 sm:z-20 sm:flex-wrap sm:gap-3"
     >
-      <label className="glass-chip flex h-10 w-full items-center gap-3 px-5 text-white/70 transition focus-within:text-white sm:flex-1">
+      <label className="glass-chip flex h-10 min-w-0 flex-1 items-center gap-2 px-4 text-white/70 transition focus-within:text-white sm:gap-3 sm:px-5">
         <Search className="h-5 w-5 shrink-0 text-volt/80" />
         <input
           value={query}
@@ -123,7 +125,7 @@ export function MatchFilters({
         <LayoutToggle layout={layout} onChange={onLayoutChange} />
       </div>
 
-      <div className="grid grid-cols-3 gap-3 sm:flex sm:gap-3">
+      <div className="flex shrink-0 items-center gap-2 sm:gap-3">
         <FilterDropdown
           icon={Clock}
           value={String(timezoneOffset)}
@@ -231,6 +233,8 @@ function useDropdownClose(open: boolean, onClose: () => void) {
     if (!open) return;
 
     const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (target.closest("[data-filter-sheet='true']")) return;
       if (ref.current && !ref.current.contains(event.target as Node)) onClose();
     };
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -268,8 +272,13 @@ function FilterDropdown({
   onChange: (value: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const ref = useDropdownClose(open, () => setOpen(false));
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!open) setExpandedGroups({});
@@ -284,129 +293,156 @@ function FilterDropdown({
     return acc;
   }, {});
   const groupEntries = Object.entries(groupedOptions);
+  const panelContent = (
+    <>
+      <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-volt/35 to-transparent" />
+      <div className="flex shrink-0 items-center justify-center px-5 pb-2 pt-3 sm:hidden">
+        <span className="h-1 w-10 rounded-full bg-white/18" />
+      </div>
+      <div className="flex shrink-0 items-center gap-3 px-5 pb-3 sm:hidden">
+        <Icon className="h-4 w-4 shrink-0 text-volt/80" />
+        <div className="min-w-0">
+          <p className="text-[10px] font-semibold uppercase text-white/34">筛选</p>
+          <p className="truncate text-sm font-semibold text-white/86">{fallbackLabel}</p>
+        </div>
+      </div>
+      {allLabel && (
+        <button
+          type="button"
+          onClick={() => {
+            onChange("");
+            setOpen(false);
+          }}
+          className={`flex w-full shrink-0 items-center gap-3 px-5 py-3 text-sm font-medium transition-all duration-150 ${
+            !value ? "bg-volt/[0.08] text-volt" : "text-white/62 hover:bg-white/[0.05] hover:text-white/90"
+          }`}
+        >
+          {allLabel}
+          {!value && <Check className="ml-auto h-4 w-4 shrink-0" />}
+        </button>
+      )}
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-6 scrollbar-hidden sm:max-h-[20rem] sm:flex-none sm:pb-2">
+        {groupEntries.length ? groupEntries.map(([group, items]) => (
+          <div key={group} className="pt-2">
+            {grouped ? (
+              <>
+                <FilterGroupHeader
+                  count={items.length}
+                  expanded={Boolean(expandedGroups[group])}
+                  label={group}
+                  selected={value === makeFilterGroupValue(group)}
+                  onSelect={() => {
+                    onChange(makeFilterGroupValue(group));
+                    setOpen(false);
+                  }}
+                  onToggle={() =>
+                    setExpandedGroups((current) => ({
+                      ...current,
+                      [group]: !current[group]
+                    }))
+                  }
+                />
+                <AnimatePresence initial={false}>
+                  {expandedGroups[group] && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+                      className="overflow-hidden sm:mx-2 sm:rounded-2xl sm:bg-white/[0.025]"
+                    >
+                      <OptionList options={items} value={value} onSelect={(nextValue) => {
+                        onChange(nextValue);
+                        setOpen(false);
+                      }} />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </>
+            ) : (
+              <div className="overflow-hidden sm:mx-2 sm:rounded-2xl sm:bg-white/[0.025]">
+                <OptionList options={items} value={value} onSelect={(nextValue) => {
+                  onChange(nextValue);
+                  setOpen(false);
+                }} />
+              </div>
+            )}
+          </div>
+        )) : (
+          <button
+            type="button"
+            className="mx-2 my-3 flex w-[calc(100%-1rem)] items-center justify-center rounded-2xl bg-white/[0.04] px-4 py-4 text-sm text-white/50 transition hover:bg-white/[0.07] hover:text-white/75"
+          >
+            没有匹配项
+          </button>
+        )}
+      </div>
+    </>
+  );
+  const mobileLayer = mounted ? createPortal(
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.button
+            data-filter-backdrop="true"
+            type="button"
+            aria-label="关闭筛选器"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            onClick={() => setOpen(false)}
+            className="fixed inset-0 z-[9990] bg-black/52 backdrop-blur-md sm:hidden"
+          />
+          <motion.div
+            data-filter-sheet="true"
+            initial={{ opacity: 0, y: 28, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 28, scale: 0.98 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed inset-x-0 bottom-0 z-[9999] flex h-[54dvh] min-h-[20rem] flex-col overflow-hidden rounded-t-[2rem] bg-black/82 shadow-[0_-28px_90px_rgba(0,0,0,.72),0_0_0_1px_rgba(255,255,255,.09),0_0_48px_rgba(216,255,62,.08)] backdrop-blur-2xl sm:hidden"
+          >
+            {panelContent}
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>,
+    document.body
+  ) : null;
 
   return (
-    <div ref={ref} className="relative min-w-0 sm:min-w-[150px]">
+    <div ref={ref} className="relative min-w-0 shrink-0 sm:min-w-[150px]">
       <button
         type="button"
+        aria-label={fallbackLabel}
+        title={fallbackLabel}
         onClick={() => setOpen(!open)}
-        className={`glass-chip flex h-10 w-full items-center justify-between gap-1.5 px-3 text-left transition sm:gap-2 sm:px-5 ${
+        className={`glass-chip flex h-10 w-10 items-center justify-center gap-1.5 px-0 text-left transition sm:w-full sm:justify-between sm:gap-2 sm:px-5 ${
           open ? "text-volt ring-1 ring-volt/25" : "text-white/78 hover:text-white"
         }`}
       >
         <Icon className="h-4 w-4 shrink-0 text-volt/80" />
-        <span className="truncate text-xs">{label}</span>
-        <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
+        <span className="hidden truncate text-xs sm:block">{label}</span>
+        <motion.span className="hidden sm:block" animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
           <ChevronDown className="h-4 w-4 shrink-0" />
         </motion.span>
       </button>
 
       <AnimatePresence>
         {open && (
-          <>
-            <motion.button
-              type="button"
-              aria-label="关闭筛选器"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.18 }}
-              onClick={() => setOpen(false)}
-              className="fixed inset-0 z-40 bg-black/52 backdrop-blur-md sm:hidden"
-            />
-            <motion.div
-              initial={{ opacity: 0, y: 28, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 28, scale: 0.98 }}
-              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-              className="fixed inset-x-0 bottom-0 z-50 flex h-[54dvh] min-h-[20rem] flex-col overflow-hidden rounded-t-[2rem] bg-black/82 shadow-[0_-28px_90px_rgba(0,0,0,.72),0_0_0_1px_rgba(255,255,255,.09),0_0_48px_rgba(216,255,62,.08)] backdrop-blur-2xl sm:absolute sm:bottom-auto sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:h-auto sm:min-h-0 sm:w-40 sm:rounded-[1.35rem]"
-            >
-              <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-volt/35 to-transparent" />
-              <div className="flex shrink-0 items-center justify-center px-5 pb-2 pt-3 sm:hidden">
-                <span className="h-1 w-10 rounded-full bg-white/18" />
-              </div>
-              <div className="flex shrink-0 items-center gap-3 px-5 pb-3 sm:hidden">
-                <Icon className="h-4 w-4 shrink-0 text-volt/80" />
-                <div className="min-w-0">
-                  <p className="text-[10px] font-semibold uppercase text-white/34">筛选</p>
-                  <p className="truncate text-sm font-semibold text-white/86">{fallbackLabel}</p>
-                </div>
-              </div>
-              {allLabel && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    onChange("");
-                    setOpen(false);
-                  }}
-                  className={`flex w-full shrink-0 items-center gap-3 px-5 py-3 text-sm font-medium transition-all duration-150 ${
-                    !value ? "bg-volt/[0.08] text-volt" : "text-white/62 hover:bg-white/[0.05] hover:text-white/90"
-                  }`}
-                >
-                  {allLabel}
-                  {!value && <Check className="ml-auto h-4 w-4 shrink-0" />}
-                </button>
-              )}
-              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-6 scrollbar-hidden sm:max-h-[20rem] sm:flex-none sm:pb-2">
-                {groupEntries.length ? groupEntries.map(([group, items]) => (
-                  <div key={group} className="pt-2">
-                    {grouped ? (
-                      <>
-                        <FilterGroupHeader
-                          count={items.length}
-                          expanded={Boolean(expandedGroups[group])}
-                          label={group}
-                          selected={value === makeFilterGroupValue(group)}
-                          onSelect={() => {
-                            onChange(makeFilterGroupValue(group));
-                            setOpen(false);
-                          }}
-                          onToggle={() =>
-                            setExpandedGroups((current) => ({
-                              ...current,
-                              [group]: !current[group]
-                            }))
-                          }
-                        />
-                        <AnimatePresence initial={false}>
-                          {expandedGroups[group] && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: "auto", opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-                              className="mx-2 overflow-hidden rounded-2xl bg-white/[0.025]"
-                            >
-                              <OptionList options={items} value={value} onSelect={(nextValue) => {
-                                onChange(nextValue);
-                                setOpen(false);
-                              }} />
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </>
-                    ) : (
-                      <div className="mx-2 overflow-hidden rounded-2xl bg-white/[0.025]">
-                        <OptionList options={items} value={value} onSelect={(nextValue) => {
-                          onChange(nextValue);
-                          setOpen(false);
-                        }} />
-                      </div>
-                    )}
-                  </div>
-                )) : (
-                  <button
-                    type="button"
-                    className="mx-2 my-3 flex w-[calc(100%-1rem)] items-center justify-center rounded-2xl bg-white/[0.04] px-4 py-4 text-sm text-white/50 transition hover:bg-white/[0.07] hover:text-white/75"
-                  >
-                    没有匹配项
-                  </button>
-                )}
-              </div>
-            </motion.div>
-          </>
+          <motion.div
+            data-filter-sheet="true"
+            initial={{ opacity: 0, y: 8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.98 }}
+            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute right-0 top-full z-50 mt-2 hidden w-40 flex-col overflow-hidden rounded-[1.35rem] bg-black/82 shadow-[0_18px_55px_rgba(0,0,0,.46),0_0_0_1px_rgba(255,255,255,.09),0_0_38px_rgba(216,255,62,.08)] backdrop-blur-2xl sm:flex"
+          >
+            {panelContent}
+          </motion.div>
         )}
       </AnimatePresence>
+      {mobileLayer}
     </div>
   );
 }

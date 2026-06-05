@@ -105,34 +105,13 @@ export function MarketDashboard() {
         {/* Navigation bar */}
         <NavBar />
 
-        {/* Page header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-bold uppercase tracking-[0.08em] text-white">
-              预测市场终端
-            </h1>
-            <p className="text-xs text-white/40 mt-1 uppercase tracking-[0.12em]">
-              Real-time Polymarket Prediction Data
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="live-ping absolute inline-flex h-full w-full rounded-full bg-volt opacity-75" />
-              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-volt shadow-[0_0_14px_rgba(216,255,62,0.9)]" />
-            </span>
-            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-volt">
-              LIVE
-            </span>
-          </div>
-        </div>
-
         {/* Ticker strip */}
         <div className="hero-card overflow-hidden">
           <ModuleD_Ticker />
         </div>
 
         {/* Main grid — same max-w-7xl as homepage */}
-        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(620px,780px)_minmax(280px,1fr)]">
+        <div className="hidden grid-cols-1 gap-5 lg:grid xl:grid-cols-[minmax(620px,780px)_minmax(280px,1fr)]">
           {/* Map — left */}
           <div className="hero-card relative hidden min-h-[320px] overflow-hidden sm:min-h-[420px] lg:block xl:min-h-0">
             {/* Subtle dot matrix background */}

@@ -3,6 +3,7 @@ import { MapPin } from "lucide-react";
 import Link from "next/link";
 import { detailRows, localizeLocationText } from "@/lib/calendar";
 import { formatTime } from "@/lib/format";
+import { areMatchTeamsConfirmed } from "@/lib/match-availability";
 import { parseTeams } from "@/lib/teams";
 import { generateMatchSlug } from "@/lib/match-detail";
 import { formatStageLabel } from "@/lib/stage";
@@ -22,12 +23,15 @@ export function MatchCard({
   const venue = details.find((detail) => detail.type === "venue")?.text || localizeLocationText(match.location);
   const adjustedStart = new Date(match.start.getTime() + timezoneOffset * 3600000);
   const slug = generateMatchSlug(match.summary);
+  const isUnlocked = areMatchTeamsConfirmed(match.summary);
 
-  return (
-    <Link href={"/matches/" + slug}>
+  const card = (
     <motion.article
       layout
-      className="group relative flex min-w-0 flex-col gap-2 rounded-3xl p-2.5 transition sm:gap-3 sm:p-4 cursor-pointer"
+      aria-disabled={!isUnlocked}
+      className={`group relative flex min-w-0 flex-col gap-2 rounded-3xl p-2.5 transition sm:gap-3 sm:p-4 ${
+        isUnlocked ? "cursor-pointer" : "cursor-default opacity-70"
+      }`}
     >
       <div className="relative flex items-center justify-between gap-1 sm:gap-3">
         <TeamBlock team={teams.home} align="left" />
@@ -51,7 +55,14 @@ export function MatchCard({
         </span>
       </div>
     </motion.article>
+  );
+
+  return isUnlocked ? (
+    <Link href={"/matches/" + slug}>
+      {card}
     </Link>
+  ) : (
+    card
   );
 }
 

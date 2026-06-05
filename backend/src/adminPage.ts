@@ -123,12 +123,23 @@ export function renderAdminPageHtml() {
     .detail-block h3 { margin-bottom: 8px; }
     .detail-block ul { margin: 0; padding-left: 18px; color: var(--muted); }
     .admin-form { display: grid; grid-template-columns: 1.2fr 1fr .7fr auto; gap: 10px; align-items: end; }
+    .live-channel-form { display: grid; grid-template-columns: 1fr 1fr 1.4fr .6fr auto; gap: 10px; align-items: end; }
     .admin-field { display: grid; gap: 6px; color: var(--faint); font-size: 12px; }
-    .admin-field input {
+    .admin-field input, .admin-field select, .admin-field textarea {
       min-height: 40px; border: 1px solid rgba(255,255,255,.1); border-radius: 16px;
       background: rgba(0,0,0,.28); color: white; padding: 0 12px; outline: none; font: inherit;
     }
-    .admin-field input:focus { border-color: rgba(216,255,62,.42); box-shadow: 0 0 26px rgba(216,255,62,.08); }
+    .admin-field textarea { min-height: 96px; padding: 10px 12px; resize: vertical; }
+    .admin-field input:focus, .admin-field select:focus, .admin-field textarea:focus { border-color: rgba(216,255,62,.42); box-shadow: 0 0 26px rgba(216,255,62,.08); }
+    .channel-match-picker { display: grid; gap: 10px; margin-top: 14px; }
+    .channel-match-list { display: grid; max-height: 320px; gap: 8px; overflow: auto; padding-right: 4px; }
+    .channel-match-row {
+      display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center;
+      border-radius: 18px; background: rgba(0,0,0,.2); border: 1px solid rgba(255,255,255,.075); padding: 10px 12px;
+    }
+    .channel-match-row input { accent-color: var(--volt); }
+    .channel-match-row strong { display: block; font-size: 13px; }
+    .channel-match-row span { display: block; color: var(--faint); font-size: 11px; }
     code {
       display: block; padding: 12px 14px; border-radius: 16px; background: rgba(0,0,0,.32);
       border: 1px solid rgba(255,255,255,.08); color: rgba(255,255,255,.78); overflow: auto;
@@ -140,6 +151,7 @@ export function renderAdminPageHtml() {
       .mini-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .split { grid-template-columns: 1fr; }
       .admin-form { grid-template-columns: 1fr; }
+      .live-channel-form { grid-template-columns: 1fr; }
       .match-row { grid-template-columns: 1fr auto; }
       .match-row .score { order: 3; text-align: left; }
     }
@@ -160,6 +172,7 @@ export function renderAdminPageHtml() {
       <button class="tab active" data-tab="overview" type="button">总览</button>
       <button class="tab" data-tab="live" type="button">比赛实况</button>
       <button class="tab" data-tab="news" type="button">新闻</button>
+      <button class="tab" data-tab="channels" type="button">直播通道</button>
       <button class="tab" data-tab="users" type="button">用户系统</button>
       <button class="tab" data-tab="endpoints" type="button">接口清单</button>
     </nav>
@@ -283,6 +296,44 @@ export function renderAdminPageHtml() {
           <h2>最新新闻</h2>
           <div class="stack" id="newsItems">
             <div class="status-row"><i class="dot warn"></i><div><h3>正在加载</h3><p>读取新闻 API 数据</p></div><span class="badge">NEWS</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="channels" class="view">
+      <div class="grid">
+        <div class="card metric"><span>通道数量</span><strong id="liveChannelCount">--</strong></div>
+        <div class="card metric"><span>启用通道</span><strong id="liveChannelActiveCount">--</strong></div>
+        <div class="card metric"><span>绑定比赛</span><strong>按 slug</strong></div>
+        <div class="card metric"><span>播放器</span><strong>HLS</strong></div>
+
+        <div class="card full">
+          <h2>直播通道维护</h2>
+          <form class="live-channel-form" id="liveChannelForm">
+            <input id="liveChannelIdInput" type="hidden" />
+            <label class="admin-field">主比赛 slug<input id="liveChannelMatchInput" type="text" placeholder="mexico-vs-south-africa" /></label>
+            <label class="admin-field">通道名称<input id="liveChannelNameInput" type="text" placeholder="主直播通道" /></label>
+            <label class="admin-field">m3u8 地址<input id="liveChannelUrlInput" type="url" placeholder="https://example.com/live/index.m3u8" /></label>
+            <label class="admin-field">排序<input id="liveChannelSortInput" type="number" min="1" value="1" /></label>
+            <button class="action-btn" type="submit">保存通道</button>
+          </form>
+          <div class="channel-match-picker">
+            <label class="admin-field">适用比赛 slug（每行一个，可勾选下方比赛自动填入）<textarea id="liveChannelMatchIdsInput" placeholder="mexico-vs-south-africa&#10;canada-vs-switzerland"></textarea></label>
+            <label class="admin-field">筛选比赛<input id="liveChannelMatchSearchInput" type="search" placeholder="输入球队、城市、阶段" /></label>
+            <div class="channel-match-list" id="liveChannelMatchPicker">
+              <div class="status-row"><i class="dot warn"></i><div><h3>正在读取赛程</h3><p>稍后可勾选比赛绑定到当前直播源。</p></div><span class="badge">MATCHES</span></div>
+            </div>
+          </div>
+          <div class="toolbar" style="margin-top:12px">
+            <button class="action-btn" id="resetLiveChannelForm" type="button">新建通道</button>
+            <a class="action-btn" href="http://localhost:3000/matches" target="_blank" rel="noreferrer">打开赛程</a>
+          </div>
+          <div class="record-list" style="margin-top:14px">
+            <table>
+              <thead><tr><th>通道</th><th>比赛</th><th>地址</th><th>状态</th><th>排序</th><th>操作</th></tr></thead>
+              <tbody id="liveChannelRows"><tr><td colspan="6" class="muted">正在加载...</td></tr></tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -707,6 +758,215 @@ export function renderAdminPageHtml() {
       return new Intl.DateTimeFormat("zh-CN", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }).format(date);
     }
 
+    let liveChannelsCache = [];
+    let liveChannelMatchOptions = [];
+
+    async function refreshLiveChannels() {
+      try {
+        const res = await fetch("/api/admin/live-channels", { cache: "no-store" });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "live_channels_failed");
+
+        liveChannelsCache = Array.isArray(data.channels) ? data.channels : [];
+        byId("liveChannelCount").textContent = liveChannelsCache.length;
+        byId("liveChannelActiveCount").textContent = liveChannelsCache.filter(function (channel) { return channel.isActive; }).length;
+        byId("liveChannelRows").innerHTML = liveChannelsCache.length ? liveChannelsCache.map(function (channel) {
+          const shortUrl = channel.streamUrl ? channel.streamUrl.replace(/^https?:\\/\\//, "").slice(0, 56) : "待填入";
+          const statusLabel = channel.isActive ? "启用" : "停用";
+          const toggleLabel = channel.isActive ? "停用" : "启用";
+          const matchIds = getChannelMatchIds(channel);
+          const matchText = matchIds.length > 1 ? channel.matchId + " 等 " + matchIds.length + " 场" : channel.matchId;
+          return "<tr><td><strong>" + escapeHtml(channel.name) + "</strong><br><span class=\\"muted\\">" + escapeHtml(channel.platform || "HLS") + " · " + adminTime(channel.updatedAt) + "</span></td><td>" + escapeHtml(matchText) + "</td><td><span class=\\"muted\\">" + escapeHtml(shortUrl) + "</span></td><td><span class=\\"badge\\">" + statusLabel + "</span></td><td>" + channel.sortOrder + "</td><td><div class=\\"toolbar\\"><button class=\\"action-btn\\" data-live-edit=\\"" + escapeHtml(channel.id) + "\\">编辑</button><button class=\\"action-btn\\" data-live-toggle=\\"" + escapeHtml(channel.id) + "\\">" + toggleLabel + "</button><button class=\\"action-btn danger\\" data-live-delete=\\"" + escapeHtml(channel.id) + "\\">删除</button></div></td></tr>";
+        }).join("") : "<tr><td colspan=\\"6\\" class=\\"muted\\">暂无直播通道，先保存一个测试通道。</td></tr>";
+
+        document.querySelectorAll("[data-live-edit]").forEach(function (button) {
+          button.addEventListener("click", function () { editLiveChannel(button.dataset.liveEdit); });
+        });
+        document.querySelectorAll("[data-live-toggle]").forEach(function (button) {
+          button.addEventListener("click", function () { toggleLiveChannel(button.dataset.liveToggle); });
+        });
+        document.querySelectorAll("[data-live-delete]").forEach(function (button) {
+          button.addEventListener("click", function () { deleteLiveChannel(button.dataset.liveDelete); });
+        });
+      } catch (error) {
+        byId("liveChannelRows").innerHTML = "<tr><td colspan=\\"6\\" class=\\"muted\\">直播通道读取失败：" + escapeHtml(error.message || error) + "</td></tr>";
+      }
+    }
+
+    function getChannelMatchIds(channel) {
+      const ids = new Set();
+      if (Array.isArray(channel.matchIds)) channel.matchIds.forEach(function (id) { if (id) ids.add(String(id)); });
+      if (channel.matchId) ids.add(String(channel.matchId));
+      return Array.from(ids);
+    }
+
+    function parseMatchIdsText(value) {
+      return String(value || "")
+        .split(/[\\n,，\\s]+/)
+        .map(function (item) { return item.trim(); })
+        .filter(Boolean)
+        .filter(function (item, index, all) { return all.indexOf(item) === index; });
+    }
+
+    function syncPrimaryMatchInput() {
+      const ids = parseMatchIdsText(byId("liveChannelMatchIdsInput").value);
+      byId("liveChannelMatchInput").value = ids[0] || byId("liveChannelMatchInput").value;
+    }
+
+    function setMatchIds(ids) {
+      const unique = ids.filter(function (item, index, all) { return item && all.indexOf(item) === index; });
+      byId("liveChannelMatchIdsInput").value = unique.join("\\n");
+      byId("liveChannelMatchInput").value = unique[0] || "";
+      renderLiveChannelMatchPicker();
+    }
+
+    function toggleMatchId(slug, checked) {
+      const ids = parseMatchIdsText(byId("liveChannelMatchIdsInput").value);
+      const next = checked ? ids.concat(slug) : ids.filter(function (id) { return id !== slug; });
+      setMatchIds(next);
+    }
+
+    async function refreshLiveChannelMatchOptions() {
+      try {
+        const res = await fetch("/api/worldcup/fixtures", { cache: "no-store" });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "fixtures_failed");
+        liveChannelMatchOptions = (Array.isArray(data.fixtures) ? data.fixtures : []).map(function (fixture) {
+          return {
+            slug: generateAdminMatchSlug(fixture.summary || fixture.uid || ""),
+            summary: fixture.summary || fixture.uid || "未命名比赛",
+            stage: fixture.stage || "",
+            location: fixture.location || "",
+            start: fixture.startIso || ""
+          };
+        }).filter(function (item) { return item.slug; });
+        renderLiveChannelMatchPicker();
+      } catch (error) {
+        byId("liveChannelMatchPicker").innerHTML = "<div class=\\"status-row\\"><i class=\\"dot warn\\"></i><div><h3>赛程读取失败</h3><p>仍可手动填写比赛 slug：" + escapeHtml(error.message || error) + "</p></div><span class=\\"badge\\">手动</span></div>";
+      }
+    }
+
+    function renderLiveChannelMatchPicker() {
+      const query = String(byId("liveChannelMatchSearchInput").value || "").trim().toLowerCase();
+      const selected = new Set(parseMatchIdsText(byId("liveChannelMatchIdsInput").value));
+      const items = liveChannelMatchOptions.filter(function (item) {
+        const haystack = [item.summary, item.stage, item.location, item.slug].join(" ").toLowerCase();
+        return !query || haystack.includes(query);
+      }).slice(0, 60);
+
+      byId("liveChannelMatchPicker").innerHTML = items.length ? items.map(function (item) {
+        const checked = selected.has(item.slug) ? " checked" : "";
+        const meta = [item.stage, item.location, adminTime(item.start)].filter(Boolean).join(" · ");
+        return "<label class=\\"channel-match-row\\"><input type=\\"checkbox\\" data-live-match-slug=\\"" + escapeHtml(item.slug) + "\\"" + checked + " /><div><strong>" + escapeHtml(item.summary) + "</strong><span>" + escapeHtml(item.slug) + "</span></div><span>" + escapeHtml(meta) + "</span></label>";
+      }).join("") : "<div class=\\"status-row\\"><i class=\\"dot warn\\"></i><div><h3>没有匹配比赛</h3><p>换个关键词，或手动填写比赛 slug。</p></div><span class=\\"badge\\">0</span></div>";
+
+      document.querySelectorAll("[data-live-match-slug]").forEach(function (input) {
+        input.addEventListener("change", function () {
+          toggleMatchId(input.dataset.liveMatchSlug, input.checked);
+        });
+      });
+    }
+
+    function generateAdminMatchSlug(summary) {
+      const clean = String(summary || "")
+        .replace(/^⚽\\s*/, "")
+        .replace(/\\s*(?:\\([^)]+\\)|（[^）]+）)\\s*$/, "")
+        .trim();
+      const parts = clean.split(/\\s+vs\\s+/i);
+      if (parts.length >= 2) {
+        return slugifyAdminText(stripAdminFlag(parts[0])) + "-vs-" + slugifyAdminText(stripAdminFlag(parts[1]));
+      }
+      return slugifyAdminText(clean);
+    }
+
+    function stripAdminFlag(value) {
+      return String(value || "")
+        .replace(/[\\uD83C][\\uDDE6-\\uDDFF]/g, "")
+        .replace(/\\s+/g, " ")
+        .trim();
+    }
+
+    function slugifyAdminText(value) {
+      return String(value || "")
+        .normalize("NFKD")
+        .replace(/[\\u0300-\\u036f]/g, "")
+        .toLowerCase()
+        .replace(/&/g, " and ")
+        .replace(/[^\\p{L}\\p{N}\\s-]/gu, "")
+        .replace(/\\s+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "");
+    }
+
+    function resetLiveChannelForm() {
+      byId("liveChannelIdInput").value = "";
+      byId("liveChannelMatchInput").value = "";
+      byId("liveChannelMatchIdsInput").value = "";
+      byId("liveChannelNameInput").value = "";
+      byId("liveChannelUrlInput").value = "";
+      byId("liveChannelSortInput").value = "1";
+      renderLiveChannelMatchPicker();
+    }
+
+    function editLiveChannel(id) {
+      const channel = liveChannelsCache.find(function (item) { return item.id === id; });
+      if (!channel) return;
+      byId("liveChannelIdInput").value = channel.id;
+      const matchIds = getChannelMatchIds(channel);
+      byId("liveChannelMatchInput").value = matchIds[0] || "";
+      byId("liveChannelMatchIdsInput").value = matchIds.join("\\n");
+      byId("liveChannelNameInput").value = channel.name || "";
+      byId("liveChannelUrlInput").value = channel.streamUrl || "";
+      byId("liveChannelSortInput").value = channel.sortOrder || 1;
+      renderLiveChannelMatchPicker();
+    }
+
+    async function saveLiveChannel(event) {
+      event.preventDefault();
+      const current = liveChannelsCache.find(function (item) { return item.id === byId("liveChannelIdInput").value; });
+      syncPrimaryMatchInput();
+      const matchIds = parseMatchIdsText(byId("liveChannelMatchIdsInput").value);
+      if (!matchIds.length && byId("liveChannelMatchInput").value) matchIds.push(byId("liveChannelMatchInput").value);
+      const res = await fetch("/api/admin/live-channels", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: byId("liveChannelIdInput").value || undefined,
+          matchId: matchIds[0] || byId("liveChannelMatchInput").value,
+          matchIds: matchIds,
+          name: byId("liveChannelNameInput").value,
+          platform: "HLS",
+          streamUrl: byId("liveChannelUrlInput").value,
+          sortOrder: Number(byId("liveChannelSortInput").value || 1),
+          isActive: current ? current.isActive : true
+        })
+      });
+      const data = await res.json().catch(function () { return null; });
+      if (!res.ok) {
+        byId("liveChannelRows").insertAdjacentHTML("afterbegin", "<tr><td colspan=\\"6\\" class=\\"muted\\">保存失败：" + escapeHtml((data && data.error) || res.status) + "</td></tr>");
+        return;
+      }
+      resetLiveChannelForm();
+      await refreshLiveChannels();
+    }
+
+    async function toggleLiveChannel(id) {
+      const channel = liveChannelsCache.find(function (item) { return item.id === id; });
+      if (!channel) return;
+      const res = await fetch("/api/admin/live-channels", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...channel, isActive: !channel.isActive })
+      });
+      if (res.ok) await refreshLiveChannels();
+    }
+
+    async function deleteLiveChannel(id) {
+      if (!id) return;
+      const res = await fetch("/api/admin/live-channels?id=" + encodeURIComponent(id), { method: "DELETE" });
+      if (res.ok) await refreshLiveChannels();
+    }
+
     function invitationStatusLabel(status) {
       return {
         active: "有效",
@@ -908,10 +1168,17 @@ export function renderAdminPageHtml() {
     }
 
     async function refreshAll() {
-      await Promise.allSettled([refreshStatus(), refreshLive(), refreshFootballDetails(), refreshNews(), refreshNewsTranslationSettings(), refreshUsers(), refreshInvitations()]);
+      await Promise.allSettled([refreshStatus(), refreshLive(), refreshFootballDetails(), refreshNews(), refreshNewsTranslationSettings(), refreshLiveChannels(), refreshLiveChannelMatchOptions(), refreshUsers(), refreshInvitations()]);
     }
 
     byId("invitationForm").addEventListener("submit", createInvitation);
+    byId("liveChannelForm").addEventListener("submit", saveLiveChannel);
+    byId("resetLiveChannelForm").addEventListener("click", resetLiveChannelForm);
+    byId("liveChannelMatchSearchInput").addEventListener("input", renderLiveChannelMatchPicker);
+    byId("liveChannelMatchIdsInput").addEventListener("input", function () {
+      syncPrimaryMatchInput();
+      renderLiveChannelMatchPicker();
+    });
     byId("newsListTranslationSwitch").addEventListener("click", function () {
       updateNewsTranslationSettings({ listTranslationEnabled: !newsTranslationSettings.listTranslationEnabled });
     });

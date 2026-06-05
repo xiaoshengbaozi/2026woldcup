@@ -1,9 +1,11 @@
 "use client";
 
 import { memo, useMemo } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { Trophy } from "lucide-react";
 import { useStore } from "@/lib/store";
+import { getTeamDetailHrefByCode } from "@/lib/team-links";
 import { localizeTeamName } from "@/lib/team-localization";
 import { getFlagUrl } from "@/lib/world-cup-2026";
 import type { CountryData } from "@/types/country";
@@ -89,21 +91,11 @@ const MarketOddsRow = memo(function MarketOddsRow({
   const width = Math.max(2, (country.impliedProbability / maxProbability) * 100);
   const isUp = country.delta1h > 0.05;
   const isDown = country.delta1h < -0.05;
+  const teamHref = getTeamDetailHrefByCode(country.countryCode);
+  const teamName = localizeTeamName(country.countryName, country.countryCode);
 
-  return (
-    <button
-      type="button"
-      data-testid={`market-odds-row-${country.countryCode}`}
-      onClick={() => selectCountry(country.countryCode, "map")}
-      onMouseEnter={() => hoverCountry(country.countryCode, "ranking")}
-      onMouseLeave={() => hoverCountry(null, "ranking")}
-      onFocus={() => hoverCountry(country.countryCode, "ranking")}
-      onBlur={() => hoverCountry(null, "ranking")}
-      className="group flex w-full items-center gap-3 px-3 py-2.5 text-left transition duration-150"
-      style={{
-        background: isSelected ? "rgba(216,255,62,0.06)" : undefined,
-      }}
-    >
+  const content = (
+    <>
       <span
         className="w-5 shrink-0 text-center text-xs font-black tabular"
         style={{ color: getRankColor(rank) }}
@@ -113,13 +105,13 @@ const MarketOddsRow = memo(function MarketOddsRow({
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={getFlagUrl(country.countryCode)}
-        alt={localizeTeamName(country.countryName, country.countryCode)}
+        alt={teamName}
         className="h-4 w-6 shrink-0 rounded object-cover ring-1 ring-white/10"
         loading="lazy"
       />
       <div className="min-w-0 flex-1">
         <div className="truncate text-[13px] font-bold text-white/90">
-          {localizeTeamName(country.countryName, country.countryCode)}
+          {teamName}
         </div>
         <div className="mt-1 h-0.5 overflow-hidden rounded-full bg-white/[0.06]">
           <motion.div
@@ -146,6 +138,33 @@ const MarketOddsRow = memo(function MarketOddsRow({
           </span>
         )}
       </div>
+    </>
+  );
+
+  const interactionProps = {
+    "data-testid": `market-odds-row-${country.countryCode}`,
+    onClick: () => selectCountry(country.countryCode, "map"),
+    onMouseEnter: () => hoverCountry(country.countryCode, "ranking"),
+    onMouseLeave: () => hoverCountry(null, "ranking"),
+    onFocus: () => hoverCountry(country.countryCode, "ranking"),
+    onBlur: () => hoverCountry(null, "ranking"),
+    className: "group flex w-full items-center gap-3 px-3 py-2.5 text-left transition duration-150 hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-volt/50",
+    style: {
+      background: isSelected ? "rgba(216,255,62,0.06)" : undefined,
+    },
+  };
+
+  if (teamHref) {
+    return (
+      <Link href={teamHref} aria-label={`查看${teamName}球队页`} {...interactionProps}>
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <button type="button" {...interactionProps}>
+      {content}
     </button>
   );
 });

@@ -22,6 +22,7 @@ import {
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BackToTopButton } from "@/components/back-to-top-button";
+import { MobileSecondaryPageActions } from "@/components/mobile-secondary-page-actions";
 import { MobileNavBar } from "@/components/mobile-nav-bar";
 import { NavBar } from "@/components/nav-bar";
 import { UserActionButton } from "@/components/user-action-button";
@@ -90,6 +91,8 @@ const profilePanelTabs: { id: ProfilePanelTab; label: string }[] = [
   { id: "story", label: "故事" },
   { id: "career", label: "轨迹" },
 ];
+
+const MOBILE_TOP_MODULE_OFFSET = 66;
 
 const FIFA_CODE_TO_FLAG: Record<string, string> = {
   MEX:"mx",USA:"us",CAN:"ca",ARG:"ar",BRA:"br",COL:"co",ECU:"ec",PAR:"py",URU:"uy",
@@ -180,7 +183,7 @@ export function PlayerProfileClient({ playerId, nameHint, row, article }: Props)
 
       const nextHeight = tabs.offsetHeight;
       setPanelTabsHeight((current) => (current === nextHeight ? current : nextHeight));
-      setPanelTabsPinned(sentinel.getBoundingClientRect().top <= 0);
+      setPanelTabsPinned(sentinel.getBoundingClientRect().top <= MOBILE_TOP_MODULE_OFFSET);
     };
 
     syncPinnedState();
@@ -195,15 +198,23 @@ export function PlayerProfileClient({ playerId, nameHint, row, article }: Props)
     };
   }, []);
 
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("mobile-top-rail-change", { detail: { pinned: panelTabsPinned } }));
+    return () => {
+      window.dispatchEvent(new CustomEvent("mobile-top-rail-change", { detail: { pinned: false } }));
+    };
+  }, [panelTabsPinned]);
+
   const scrollToPanelHead = () => {
     if (!window.matchMedia("(max-width: 1023px)").matches) return;
 
     const sentinel = panelTabsSentinelRef.current;
     if (!sentinel) return;
 
-    const target = sentinel.getBoundingClientRect().top + window.scrollY;
+    const offset = MOBILE_TOP_MODULE_OFFSET + (panelTabsRef.current?.offsetHeight ?? 0) + 12;
+    const target = sentinel.getBoundingClientRect().top + window.scrollY - offset;
     window.requestAnimationFrame(() => {
-      window.scrollTo({ top: Math.max(target - 12, 0), behavior: "smooth" });
+      window.scrollTo({ top: Math.max(target, 0), behavior: "smooth" });
     });
   };
 
@@ -225,12 +236,30 @@ export function PlayerProfileClient({ playerId, nameHint, row, article }: Props)
   const trophies = (data?.trophies ?? []).slice(0, 8);
   const sidelined = (data?.sidelined ?? []).slice(0, 4);
   const heroLandscape = getTeamLandscapePathByCode(row?.teamCode);
+  const followPayload = {
+    id: playerId,
+    name: displayName,
+    team: row?.countryCn || row?.teamCode,
+    position: row?.positionCn || player?.position,
+    photo,
+  };
 
   const radarStats = useMemo(() => buildRadarStats(data), [data]);
   const careerTimeline = useMemo(() => buildCareerTimeline(latestTransfers, trophies), [latestTransfers, trophies]);
 
   return (
     <main className="player-profile-page relative min-h-screen overflow-hidden bg-ink-950 text-white">
+      <MobileSecondaryPageActions
+        backHref="/players/"
+        backLabel="返回球员"
+        rightAction={
+          <UserActionButton
+            kind="player"
+            payload={followPayload}
+            className="h-[34px] whitespace-nowrap px-3 text-[10px] shadow-[0_14px_34px_rgba(0,0,0,.38),0_0_20px_rgba(216,255,62,.1),inset_0_1px_0_rgba(255,255,255,.16)] backdrop-blur-2xl"
+          />
+        }
+      />
       {/* ── Background Effects ── */}
       <div className="pointer-events-none fixed inset-0">
         <div className="absolute left-1/2 top-0 h-[420px] w-[min(800px,100vw)] -translate-x-1/2 rounded-full bg-volt/[0.07] blur-[140px]" />
@@ -263,7 +292,7 @@ export function PlayerProfileClient({ playerId, nameHint, row, article }: Props)
           {/* Top-left: Back button */}
           <Link
             href="/players/"
-            className="group absolute left-4 top-4 z-10 inline-flex items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1.5 text-xs font-semibold text-white/60 ring-1 ring-white/[0.08] backdrop-blur-md transition-all hover:bg-volt/[0.1] hover:text-volt hover:ring-volt/20 sm:left-6 sm:top-5"
+            className="group absolute left-4 top-4 z-10 hidden items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1.5 text-xs font-semibold text-white/60 ring-1 ring-white/[0.08] backdrop-blur-md transition-all hover:bg-volt/[0.1] hover:text-volt hover:ring-volt/20 sm:left-6 sm:top-5 lg:inline-flex"
           >
             <ArrowLeft className="h-3 w-3 transition-transform group-hover:-translate-x-0.5" />
             返回球员
@@ -271,14 +300,8 @@ export function PlayerProfileClient({ playerId, nameHint, row, article }: Props)
 
           <UserActionButton
             kind="player"
-            payload={{
-              id: playerId,
-              name: displayName,
-              team: row?.countryCn || row?.teamCode,
-              position: row?.positionCn || player?.position,
-              photo,
-            }}
-            className="absolute right-4 top-4 z-10 h-8 px-3 text-[10px] backdrop-blur-md sm:right-6 sm:top-5"
+            payload={followPayload}
+            className="absolute right-4 top-4 z-10 hidden h-8 px-3 text-[10px] backdrop-blur-md sm:right-6 sm:top-5 lg:inline-flex"
           />
 
           {/* Avatar — overlapping top edge */}
@@ -382,7 +405,7 @@ export function PlayerProfileClient({ playerId, nameHint, row, article }: Props)
         </section>
 
         {/* ── Quick Access Icon Row ── */}
-        <div className="grid grid-cols-4 gap-3 sm:grid-cols-8">
+        <div className="hidden gap-3 lg:grid lg:grid-cols-8">
           {quickAccessItems.map((item) => (
             <motion.div
               key={item.label}
@@ -426,14 +449,11 @@ export function PlayerProfileClient({ playerId, nameHint, row, article }: Props)
                 className="lg:hidden"
                 style={{ height: panelTabsPinned ? panelTabsHeight : 0 }}
               />
-              {panelTabsPinned ? (
-                <div className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-[calc(env(safe-area-inset-top)+6.25rem)] bg-black/72 backdrop-blur-2xl [mask-image:linear-gradient(to_bottom,black_0%,black_56%,rgba(0,0,0,0)_100%)] lg:hidden" />
-              ) : null}
               <div
                 ref={panelTabsRef}
                 className={`${
                   panelTabsPinned
-                    ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+0.25rem)] z-[70] px-3 py-2"
+                    ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[65] px-3 py-2"
                     : "relative -mx-3 bg-black/58 px-3 py-2 backdrop-blur-2xl"
                 } lg:static lg:mx-0 lg:bg-transparent lg:px-0 lg:py-0 lg:backdrop-blur-none`}
               >

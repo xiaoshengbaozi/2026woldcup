@@ -32,9 +32,7 @@ export function MobileMatchDayStrip({
       className="sm:hidden"
       aria-label="按比赛日筛选"
     >
-      <div className="relative overflow-hidden rounded-[1.75rem] bg-white/[0.035] px-3 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,.08),0_18px_50px_rgba(0,0,0,.26)] ring-1 ring-white/[0.07] backdrop-blur-2xl">
-        <div className="pointer-events-none absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-volt/35 to-transparent" />
-        <div className="scrollbar-hidden flex min-w-0 gap-2 overflow-x-auto overscroll-x-contain pb-0.5">
+      <div className="scrollbar-hidden -mx-3 flex min-w-0 gap-2 overflow-x-auto overscroll-x-contain px-3 py-1.5 scroll-px-3">
           <DayButton
             active={!selectedDay}
             count={days.reduce((total, day) => total + day.count, 0)}
@@ -54,7 +52,6 @@ export function MobileMatchDayStrip({
               onClick={() => onSelectDay(selectedDay === day.key ? "" : day.key)}
             />
           ))}
-        </div>
       </div>
     </motion.section>
   );
@@ -79,7 +76,7 @@ function DayButton({
     <button
       type="button"
       onClick={onClick}
-      className={`relative flex h-[68px] w-[54px] shrink-0 flex-col items-center justify-center rounded-2xl text-center transition duration-200 ${
+      className={`relative flex h-[68px] w-[50px] shrink-0 flex-col items-center justify-center rounded-2xl text-center transition duration-200 ${
         active
           ? "bg-volt/[0.08] text-volt shadow-[0_0_24px_rgba(216,255,62,.16)] ring-1 ring-volt/70"
           : "bg-black/22 text-white/54 ring-1 ring-white/[0.055] hover:bg-white/[0.055] hover:text-white/80"
