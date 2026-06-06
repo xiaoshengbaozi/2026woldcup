@@ -95,20 +95,22 @@ async function getPool() {
     dbReady = import("pg")
       .then(async ({ Pool }) => {
         pool = new Pool({ connectionString: process.env.DATABASE_URL });
-        await pool.query(`
-          create table if not exists site_analytics_daily (
-            day date primary key,
-            views integer not null default 0,
-            updated_at timestamptz not null default now()
-          )
-        `);
-        await pool.query(`
-          create table if not exists site_analytics_sessions (
-            session_id text primary key,
-            last_seen_at timestamptz not null default now()
-          )
-        `);
-        await importAnalyticsFile(pool);
+        if (!isDatabaseSchemaInitDisabled()) {
+          await pool.query(`
+            create table if not exists site_analytics_daily (
+              day date primary key,
+              views integer not null default 0,
+              updated_at timestamptz not null default now()
+            )
+          `);
+          await pool.query(`
+            create table if not exists site_analytics_sessions (
+              session_id text primary key,
+              last_seen_at timestamptz not null default now()
+            )
+          `);
+          await importAnalyticsFile(pool);
+        }
         return pool;
       })
       .catch((error) => {
@@ -142,6 +144,10 @@ async function importAnalyticsFile(db: Pool) {
   } catch {
     // No local analytics file yet; start with empty Postgres stats.
   }
+}
+
+function isDatabaseSchemaInitDisabled() {
+  return process.env.DB_SCHEMA_INIT_DISABLED === "true" || process.env.DATABASE_SCHEMA_INIT_DISABLED === "true";
 }
 
 async function touchOnlineSessionInDb(db: Pool, sessionId: string) {

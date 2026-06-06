@@ -532,13 +532,15 @@ export class UserStore {
   private async loadFromPostgres(databaseUrl: string) {
     const { Pool } = await import("pg");
     this.pool = new Pool({ connectionString: databaseUrl });
-    await this.pool.query(`
-      create table if not exists user_store_documents (
-        id text primary key,
-        data jsonb not null,
-        updated_at timestamptz not null default now()
-      )
-    `);
+    if (!isDatabaseSchemaInitDisabled()) {
+      await this.pool.query(`
+        create table if not exists user_store_documents (
+          id text primary key,
+          data jsonb not null,
+          updated_at timestamptz not null default now()
+        )
+      `);
+    }
 
     const result = await this.pool.query<{ data: UserDatabase }>(
       "select data from user_store_documents where id = $1",
@@ -662,6 +664,10 @@ function clampInteger(value: unknown, min: number, max: number, fallback: number
   const number = Number(value);
   if (!Number.isFinite(number)) return fallback;
   return Math.max(min, Math.min(max, Math.round(number)));
+}
+
+function isDatabaseSchemaInitDisabled() {
+  return process.env.DB_SCHEMA_INIT_DISABLED === "true" || process.env.DATABASE_SCHEMA_INIT_DISABLED === "true";
 }
 
 function getUserRecordCounts(user: WorldCupUser) {

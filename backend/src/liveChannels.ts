@@ -99,13 +99,15 @@ async function getPool() {
     dbReady = import("pg")
       .then(async ({ Pool }) => {
         pool = new Pool({ connectionString: process.env.DATABASE_URL });
-        await pool.query(`
-          create table if not exists live_channels (
-            id text primary key,
-            data jsonb not null,
-            updated_at timestamptz not null default now()
-          )
-        `);
+        if (!isDatabaseSchemaInitDisabled()) {
+          await pool.query(`
+            create table if not exists live_channels (
+              id text primary key,
+              data jsonb not null,
+              updated_at timestamptz not null default now()
+            )
+          `);
+        }
         return pool;
       })
       .catch((error) => {
@@ -126,6 +128,10 @@ async function readLiveChannelsFile() {
     await saveLiveChannelsFile(DEFAULT_CHANNELS);
     return DEFAULT_CHANNELS;
   }
+}
+
+function isDatabaseSchemaInitDisabled() {
+  return process.env.DB_SCHEMA_INIT_DISABLED === "true" || process.env.DATABASE_SCHEMA_INIT_DISABLED === "true";
 }
 
 async function saveLiveChannelsFile(channels: LiveChannel[]) {
