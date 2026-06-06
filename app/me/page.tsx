@@ -278,6 +278,7 @@ function MePageFallback() {
 function MePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const requestedTab = normalizeMeTab(searchParams.get("tab"));
   const [home, setHome] = useState<UserHomePayload | null>(null);
   const [catalog, setCatalog] = useState<UserPreferenceCatalog>(fallbackUserPreferenceCatalog);
   const [topScorers, setTopScorers] = useState<WorldCupTopScorer[]>(DEFAULT_TOP_SCORERS);
@@ -486,7 +487,7 @@ function MePageContent() {
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
           className="min-w-0 space-y-5 order-last lg:order-none"
         >
-          <ProfileBoard home={home} catalog={catalog} topScorers={topScorers} popularTeams={popularTeams} scheduleMatches={matches} />
+          <ProfileBoard home={home} catalog={catalog} topScorers={topScorers} popularTeams={popularTeams} scheduleMatches={matches} initialTab={requestedTab} />
         </motion.div>
 
         <motion.aside
@@ -522,14 +523,16 @@ function ProfileBoard({
   topScorers,
   popularTeams,
   scheduleMatches,
+  initialTab,
 }: {
   home: UserHomePayload | null;
   catalog: UserPreferenceCatalog;
   topScorers: WorldCupTopScorer[];
   popularTeams: Array<{ name: string; flag: string; pct: number; code: string }>;
   scheduleMatches: Match[];
+  initialTab: MeTab;
 }) {
-  const [activeTab, setActiveTab] = useState<MeTab>("players");
+  const [activeTab, setActiveTab] = useState<MeTab>(initialTab);
   const [activeTimelineTab, setActiveTimelineTab] = useState<TimelineTab>("combined");
   const [xTimeline, setXTimeline] = useState<PlayerXTimelinePayload | null>(null);
   const [xTimelineLoading, setXTimelineLoading] = useState(false);
@@ -571,6 +574,10 @@ function ProfileBoard({
 
   const timeline = buildTimelineItems(players, teams, matches, Boolean(home));
   const xItemCount = xTimeline?.items.length ?? 0;
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
 
   useEffect(() => {
     const mobileQuery = window.matchMedia("(max-width: 1023px)");
@@ -1501,6 +1508,10 @@ function getPlayerStoryTimelineImage(player: PlayerCardItem) {
   });
 
   return article?.coverImage || article?.storyImages?.[0] || "";
+}
+
+function normalizeMeTab(value: string | null): MeTab {
+  return value === "teams" || value === "matches" || value === "players" ? value : "players";
 }
 
 function getTeamProfileTimelineImage(team: TeamCardItem) {
