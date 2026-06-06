@@ -80,11 +80,15 @@ export function MatchDetailClient({ slug }: { slug: string }) {
       <div className="space-y-5">
         {activeTab === "lineup" && <MatchLineup detail={detail} />}
         {activeTab === "live" && <LivePlayer detail={detail} />}
-        {activeTab === "stats" && <MatchStatsPanel detail={detail} />}
+        {activeTab === "stats" && (
+          <>
+            <MatchStatsPanel detail={detail} />
+            {detail.events.length > 0 && <MatchTimeline detail={detail} />}
+          </>
+        )}
         {activeTab === "analysis" && (
           <>
             <MatchOdds detail={detail} />
-            {detail.events.length > 0 && <MatchTimeline detail={detail} />}
             {detail.news.length > 0 && <MatchNews detail={detail} />}
             <MatchHeadToHead detail={detail} />
           </>

@@ -197,6 +197,20 @@ function isWarmupStage(stage?: string) {
   return stage === "热身赛";
 }
 
+function formatMatchStatus(detail: MatchDetail, start: Date) {
+  if (detail.status === "not_started") return formatTime(start);
+  if (detail.status === "halftime") return "中场";
+  if (detail.status === "finished") return "已结束";
+
+  const elapsed = detail.match.elapsed;
+  if (typeof elapsed === "number" && elapsed > 0) {
+    const phase = elapsed <= 45 ? "上半场" : "下半场";
+    return `${phase} ${elapsed}'`;
+  }
+
+  return "比赛中";
+}
+
 export function MatchHero({ detail }: { detail: MatchDetail }) {
   const teams = parseTeams(detail.match.summary);
   const stageLabel = formatStageLabel(detail.match.stage, detail.match.summary);
@@ -204,6 +218,8 @@ export function MatchHero({ detail }: { detail: MatchDetail }) {
   const statusColor = STATUS_COLOR[detail.status];
   const adjustedStart = detail.match.start;
   const isLive = detail.status === "live" || detail.status === "halftime";
+  const isStarted = detail.status !== "not_started";
+  const heroStatusText = formatMatchStatus(detail, adjustedStart);
   const homeAccent = getAccent(detail.homeTeamCode);
   const awayAccent = getAccent(detail.awayTeamCode);
   const hidePlayerPosters =
@@ -253,7 +269,6 @@ export function MatchHero({ detail }: { detail: MatchDetail }) {
               )}
               <span className={`glass-chip px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] ${statusColor}`}>
                 {statusLabel}
-                {detail.status === "live" && " 63'"}
               </span>
             </div>
           )}
@@ -287,26 +302,20 @@ export function MatchHero({ detail }: { detail: MatchDetail }) {
               loading="eager"
             />
             <div
-              className="mt-2 text-4xl font-bold tabular-nums text-white sm:mt-3 sm:text-5xl lg:text-6xl"
+              className="mt-2 text-3xl font-bold tabular-nums text-white sm:mt-3 sm:text-5xl lg:text-6xl"
               style={{ fontFamily: "ScreenMatrix, monospace" }}
             >
-              {detail.status === "not_started" ? (
-                formatTime(adjustedStart)
-              ) : (
-                <>
-                  {detail.score.home}<span className="mx-3 text-white/25">:</span>{detail.score.away}
-                </>
-              )}
+              {heroStatusText}
             </div>
             <span className="glass-chip mt-2 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/62">
               {stageLabel}
             </span>
             <div className="mt-2 grid w-[min(100%,560px)] grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:mt-3 sm:gap-4">
-              <MatchupTeam team={teams.home} align="left" />
+              <MatchupTeam team={teams.home} align="left" score={isStarted ? detail.score.home : null} />
               <span className="relative z-10 rounded-full bg-white/[0.08] px-4 py-2 text-lg font-black uppercase tracking-[0.08em] text-volt shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_0_24px_rgba(216,255,62,0.16)] ring-1 ring-white/[0.1] sm:px-5 sm:text-xl">
                 VS
               </span>
-              <MatchupTeam team={teams.away} align="right" />
+              <MatchupTeam team={teams.away} align="right" score={isStarted ? detail.score.away : null} />
             </div>
             <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-[10px] font-medium uppercase tracking-[0.12em] text-white/50 sm:mt-4 sm:gap-3 sm:text-[11px]">
               <span className="inline-flex items-center gap-1.5">
@@ -592,11 +601,14 @@ function PlayerPosterSide({
 function MatchupTeam({
   team,
   align,
+  score,
 }: {
   team: { badge: string; image: string; name: string };
   align: "left" | "right";
+  score?: number | null;
 }) {
   const isRight = align === "right";
+  const hasScore = typeof score === "number";
 
   return (
     <div
@@ -609,7 +621,17 @@ function MatchupTeam({
           {team.name}
         </span>
       )}
-      <MiniFlag team={team} />
+      <div className="flex shrink-0 flex-col items-center gap-1">
+        {hasScore && (
+          <span
+            className="text-2xl font-bold leading-none tabular-nums text-white drop-shadow-[0_0_18px_rgba(255,255,255,0.24)] sm:text-3xl"
+            style={{ fontFamily: "ScreenMatrix, monospace" }}
+          >
+            {score}
+          </span>
+        )}
+        <MiniFlag team={team} />
+      </div>
       {isRight && (
         <span className="min-w-0 truncate text-sm font-bold uppercase tracking-[0.08em] text-white/78 sm:text-base">
           {team.name}

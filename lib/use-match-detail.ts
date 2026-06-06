@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { findMatchBySlug } from "@/lib/match-detail";
+import { localizePlayerDisplayName } from "@/lib/football-localization-client";
 import { buildMatchRoundLabels } from "@/lib/stage-rounds";
 import { parseTeams } from "@/lib/teams";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
@@ -257,8 +258,8 @@ function toMatchEvents(events: WorldCupFixtureEvent[], home?: MatchTeamMeta, awa
         minute: event.minute,
         addedTime: event.addedTime ?? undefined,
         type: toEventType(event.type, event.detail),
-        player: event.player || undefined,
-        playerOut: event.assist || undefined,
+        player: localizePlayerDisplayName(event.player) || undefined,
+        playerOut: localizePlayerDisplayName(event.assist) || undefined,
         team,
         description: [event.detail, event.comments].filter(Boolean).join(" · ") || undefined,
       };
