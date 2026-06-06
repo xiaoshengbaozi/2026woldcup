@@ -1,4 +1,4 @@
-import breakthroughSource from "@/outputs/fifa-player-breakthroughs-cn.json";
+import breakthroughSource from "@/data/player-breakthroughs-cn.json";
 
 type RawSearchRecord = {
   查询?: string;
