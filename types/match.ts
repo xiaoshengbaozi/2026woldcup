@@ -20,6 +20,15 @@ export type Match = {
   } | null;
   stage: string;
   weather: string;
+  status?: "not_started" | "live" | "halftime" | "finished" | "postponed" | "unknown";
+  statusLabel?: string;
+  elapsed?: number | null;
+  score?: {
+    home: number | null;
+    away: number | null;
+    halftimeHome?: number | null;
+    halftimeAway?: number | null;
+  };
   homeTeam?: MatchTeamMeta;
   awayTeam?: MatchTeamMeta;
 };

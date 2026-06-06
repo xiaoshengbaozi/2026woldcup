@@ -16,6 +16,10 @@ export type NormalizedWorldCupFixture = {
   geo: null;
   stage: string;
   weather: string;
+  status?: Match["status"];
+  statusLabel?: string;
+  elapsed?: number | null;
+  score?: Match["score"];
   homeTeam?: Match["homeTeam"];
   awayTeam?: Match["awayTeam"];
 };
@@ -142,6 +146,10 @@ function toMatch(fixture: NormalizedWorldCupFixture): Match {
     geo: fixture.geo,
     stage: fixture.stage,
     weather: fixture.weather,
+    status: fixture.status,
+    statusLabel: fixture.statusLabel,
+    elapsed: fixture.elapsed,
+    score: fixture.score,
     homeTeam: fixture.homeTeam,
     awayTeam: fixture.awayTeam,
   };

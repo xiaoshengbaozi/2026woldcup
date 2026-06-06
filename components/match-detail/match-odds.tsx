@@ -14,7 +14,7 @@ import type { ReactNode } from "react";
 type OddsSelection = {
   event: MatchLineEvent | null;
   markets: MatchLineMarket[];
-  source: "api" | "mock";
+  source: "api" | "unavailable";
   updatedAt: number | null;
 };
 
@@ -57,18 +57,26 @@ export function MatchOdds({ detail }: { detail: MatchDetail }) {
         </div>
         <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.12em] text-white/35">
           <span className={selection.source === "api" ? "text-volt" : "text-white/35"}>
-            {selection.source === "api" ? "Polymarket Live" : "Projection"}
+            {selection.source === "api" ? "Polymarket Live" : "No market"}
           </span>
           {loading && <span>Syncing</span>}
         </div>
       </div>
 
-      {error && selection.source === "mock" && (
+      {error && selection.source === "unavailable" && (
         <div className="relative mb-4 rounded-2xl border border-flare/15 bg-flare/[0.04] px-4 py-3 text-xs text-flare/80">
           Live odds unavailable: {error}
         </div>
       )}
 
+      {selection.source === "unavailable" && (
+        <div className="relative rounded-2xl bg-white/[0.035] px-4 py-8 text-center ring-1 ring-white/[0.07]">
+          <p className="text-sm font-semibold text-white/70">暂无真实盘口数据</p>
+          <p className="mt-2 text-xs leading-5 text-white/38">没有匹配到该比赛的 Polymarket 市场时，不再展示模拟概率。</p>
+        </div>
+      )}
+
+      {selection.source === "api" && homeMarket && drawMarket && awayMarket && (
       <div className="relative mx-auto max-w-[520px] overflow-hidden rounded-[24px] border border-white/[0.08] bg-[#111113]/90 shadow-[0_32px_64px_rgba(0,0,0,0.34)] backdrop-blur-xl">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-volt/[0.07] to-transparent" />
 
@@ -147,6 +155,7 @@ export function MatchOdds({ detail }: { detail: MatchDetail }) {
           </div>
         </div>
       </div>
+      )}
     </motion.section>
   );
 }
@@ -251,12 +260,8 @@ function buildOddsSelection(
 
   return {
     event: null,
-    markets: [
-      mockMarket("mock-home", "Home", detail.odds.homeWin),
-      mockMarket("mock-draw", "Draw", detail.odds.draw),
-      mockMarket("mock-away", "Away", detail.odds.awayWin),
-    ],
-    source: "mock",
+    markets: [],
+    source: "unavailable",
     updatedAt: null,
   };
 }
@@ -288,23 +293,6 @@ function pickMoneyline(detail: MatchDetail, event: MatchLineEvent) {
 function findMarketByCode(markets: MatchLineMarket[], code: string) {
   const normalizedCode = normalizeCode(code);
   return markets.find((market) => normalizeCode(getTeamCodeFromName(market.label)) === normalizedCode);
-}
-
-function mockMarket(id: string, label: string, yesPrice: number): MatchLineMarket {
-  return {
-    id,
-    question: label,
-    slug: id,
-    marketType: "moneyline",
-    label,
-    yesPrice,
-    noPrice: Math.max(0, 100 - yesPrice),
-    bestBid: null,
-    bestAsk: null,
-    spread: null,
-    volume24h: 0,
-    liquidity: 0,
-  };
 }
 
 function sameMarket(a?: MatchLineMarket | null, b?: MatchLineMarket | null) {
