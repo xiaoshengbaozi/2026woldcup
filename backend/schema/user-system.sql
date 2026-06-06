@@ -119,3 +119,26 @@ create index if not exists idx_user_notifications_unread
 
 create index if not exists idx_invitation_codes_status
   on invitation_codes (disabled_at, expires_at, used_count);
+
+create table if not exists live_channels (
+  id text primary key,
+  data jsonb not null,
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_live_channels_updated
+  on live_channels (updated_at desc);
+
+create table if not exists site_analytics_daily (
+  day date primary key,
+  views integer not null default 0,
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists site_analytics_sessions (
+  session_id text primary key,
+  last_seen_at timestamptz not null default now()
+);
+
+create index if not exists idx_site_analytics_sessions_seen
+  on site_analytics_sessions (last_seen_at);

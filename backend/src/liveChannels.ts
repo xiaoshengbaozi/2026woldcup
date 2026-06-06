@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from "fs/promises";
 import { dirname, resolve } from "path";
+import type { Pool } from "pg";
 
 export type LiveChannel = {
   id: string;
@@ -18,20 +19,32 @@ const STORE_PATH = resolve(process.cwd(), "data", "live-channels.json");
 
 const DEFAULT_CHANNELS: LiveChannel[] = [];
 
+let pool: Pool | null = null;
+let dbReady: Promise<Pool | null> | null = null;
+
 export async function readLiveChannels() {
-  try {
-    const raw = await readFile(STORE_PATH, "utf8");
-    const parsed = JSON.parse(raw);
-    return normalizeChannels(Array.isArray(parsed) ? parsed : parsed.channels);
-  } catch {
-    await saveLiveChannels(DEFAULT_CHANNELS);
-    return DEFAULT_CHANNELS;
+  const db = await getPool();
+  if (db) {
+    const result = await db.query<{ data: LiveChannel }>("select data from live_channels order by updated_at desc");
+    if (result.rowCount) return normalizeChannels(result.rows.map((row) => row.data));
+
+    const fileChannels = await readLiveChannelsFile();
+    if (fileChannels.length) await saveLiveChannelsToDb(db, fileChannels);
+    return fileChannels;
   }
+
+  return readLiveChannelsFile();
 }
 
 export async function saveLiveChannels(channels: LiveChannel[]) {
-  await mkdir(dirname(STORE_PATH), { recursive: true });
-  await writeFile(STORE_PATH, JSON.stringify(channels, null, 2), "utf8");
+  const normalized = normalizeChannels(channels);
+  const db = await getPool();
+  if (db) {
+    await saveLiveChannelsToDb(db, normalized);
+    return;
+  }
+
+  await saveLiveChannelsFile(normalized);
 }
 
 export async function getPublicLiveChannels(matchId: string) {
@@ -78,6 +91,71 @@ export async function deleteLiveChannel(id: string) {
   const next = channels.filter((channel) => channel.id !== id);
   await saveLiveChannels(next);
   return { deleted: next.length !== channels.length };
+}
+
+async function getPool() {
+  if (!process.env.DATABASE_URL) return null;
+  if (!dbReady) {
+    dbReady = import("pg")
+      .then(async ({ Pool }) => {
+        pool = new Pool({ connectionString: process.env.DATABASE_URL });
+        await pool.query(`
+          create table if not exists live_channels (
+            id text primary key,
+            data jsonb not null,
+            updated_at timestamptz not null default now()
+          )
+        `);
+        return pool;
+      })
+      .catch((error) => {
+        console.warn("[LiveChannels] Postgres unavailable, falling back to file store:", error);
+        return null;
+      });
+  }
+
+  return dbReady;
+}
+
+async function readLiveChannelsFile() {
+  try {
+    const raw = await readFile(STORE_PATH, "utf8");
+    const parsed = JSON.parse(raw);
+    return normalizeChannels(Array.isArray(parsed) ? parsed : parsed.channels);
+  } catch {
+    await saveLiveChannelsFile(DEFAULT_CHANNELS);
+    return DEFAULT_CHANNELS;
+  }
+}
+
+async function saveLiveChannelsFile(channels: LiveChannel[]) {
+  await mkdir(dirname(STORE_PATH), { recursive: true });
+  await writeFile(STORE_PATH, JSON.stringify(channels, null, 2), "utf8");
+}
+
+async function saveLiveChannelsToDb(db: Pool, channels: LiveChannel[]) {
+  const client = await db.connect();
+  try {
+    await client.query("begin");
+    await client.query("delete from live_channels");
+    for (const channel of channels) {
+      await client.query(
+        `
+        insert into live_channels (id, data, updated_at)
+        values ($1, $2, now())
+        on conflict (id)
+        do update set data = excluded.data, updated_at = now()
+        `,
+        [channel.id, channel]
+      );
+    }
+    await client.query("commit");
+  } catch (error) {
+    await client.query("rollback");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 function normalizeChannels(value: unknown): LiveChannel[] {

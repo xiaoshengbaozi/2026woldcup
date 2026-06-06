@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from "fs/promises";
 import { dirname, resolve } from "path";
+import type { Pool } from "pg";
 
 type SiteAnalyticsData = {
   days: Record<string, { views: number }>;
@@ -17,31 +18,142 @@ const TIME_ZONE = process.env.SITE_ANALYTICS_TIME_ZONE || "Asia/Shanghai";
 let data: SiteAnalyticsData = { days: {} };
 let loaded = false;
 let writeChain = Promise.resolve();
+let pool: Pool | null = null;
+let dbReady: Promise<Pool | null> | null = null;
 const onlineSessions = new Map<string, number>();
 
 export async function recordSiteVisit(sessionId: string) {
-  await ensureLoaded();
+  const db = await getPool();
   const today = getTodayKey();
+  const normalizedSessionId = normalizeSessionId(sessionId);
+  if (db) {
+    await db.query(
+      `
+      insert into site_analytics_daily (day, views, updated_at)
+      values ($1::date, 1, now())
+      on conflict (day)
+      do update set views = site_analytics_daily.views + 1, updated_at = now()
+      `,
+      [today]
+    );
+    await touchOnlineSessionInDb(db, normalizedSessionId);
+    return getSiteAnalyticsStats();
+  }
+
+  await ensureLoaded();
   data.days[today] = data.days[today] ?? { views: 0 };
   data.days[today].views += 1;
-  touchOnlineSession(sessionId);
+  touchOnlineSession(normalizedSessionId);
   queueSave();
   return getSiteAnalyticsStats();
 }
 
 export async function recordSiteHeartbeat(sessionId: string) {
+  const db = await getPool();
+  const normalizedSessionId = normalizeSessionId(sessionId);
+  if (db) {
+    await touchOnlineSessionInDb(db, normalizedSessionId);
+    return getSiteAnalyticsStats();
+  }
+
   await ensureLoaded();
-  touchOnlineSession(sessionId);
+  touchOnlineSession(normalizedSessionId);
   return getSiteAnalyticsStats();
 }
 
 export async function getSiteAnalyticsStats(): Promise<SiteAnalyticsStats> {
+  const db = await getPool();
+  const today = getTodayKey();
+  if (db) {
+    const staleBefore = new Date(Date.now() - ONLINE_WINDOW_MS);
+    await db.query("delete from site_analytics_sessions where last_seen_at < $1", [staleBefore]);
+    const result = await db.query<{ today_views: number; online_users: number }>(
+      `
+      select
+        coalesce((select views from site_analytics_daily where day = $1::date), 0)::int as today_views,
+        (select count(*) from site_analytics_sessions where last_seen_at >= $2)::int as online_users
+      `,
+      [today, staleBefore]
+    );
+    return {
+      todayViews: result.rows[0]?.today_views ?? 0,
+      onlineUsers: result.rows[0]?.online_users ?? 0,
+    };
+  }
+
   await ensureLoaded();
   pruneOnlineSessions();
   return {
-    todayViews: data.days[getTodayKey()]?.views ?? 0,
+    todayViews: data.days[today]?.views ?? 0,
     onlineUsers: onlineSessions.size,
   };
+}
+
+async function getPool() {
+  if (!process.env.DATABASE_URL) return null;
+  if (!dbReady) {
+    dbReady = import("pg")
+      .then(async ({ Pool }) => {
+        pool = new Pool({ connectionString: process.env.DATABASE_URL });
+        await pool.query(`
+          create table if not exists site_analytics_daily (
+            day date primary key,
+            views integer not null default 0,
+            updated_at timestamptz not null default now()
+          )
+        `);
+        await pool.query(`
+          create table if not exists site_analytics_sessions (
+            session_id text primary key,
+            last_seen_at timestamptz not null default now()
+          )
+        `);
+        await importAnalyticsFile(pool);
+        return pool;
+      })
+      .catch((error) => {
+        console.warn("[SiteAnalytics] Postgres unavailable, falling back to file store:", error);
+        return null;
+      });
+  }
+
+  return dbReady;
+}
+
+async function importAnalyticsFile(db: Pool) {
+  try {
+    const existing = await db.query<{ count: string }>("select count(*) from site_analytics_daily");
+    if (Number(existing.rows[0]?.count ?? 0) > 0) return;
+
+    const raw = await readFile(ANALYTICS_FILE, "utf8");
+    const parsed = JSON.parse(raw) as Partial<SiteAnalyticsData>;
+    const days = parsed.days && typeof parsed.days === "object" ? normalizeDays(parsed.days) : {};
+    for (const [day, value] of Object.entries(days)) {
+      await db.query(
+        `
+        insert into site_analytics_daily (day, views, updated_at)
+        values ($1::date, $2, now())
+        on conflict (day)
+        do update set views = excluded.views, updated_at = now()
+        `,
+        [day, value.views]
+      );
+    }
+  } catch {
+    // No local analytics file yet; start with empty Postgres stats.
+  }
+}
+
+async function touchOnlineSessionInDb(db: Pool, sessionId: string) {
+  await db.query(
+    `
+    insert into site_analytics_sessions (session_id, last_seen_at)
+    values ($1, now())
+    on conflict (session_id)
+    do update set last_seen_at = now()
+    `,
+    [sessionId]
+  );
 }
 
 async function ensureLoaded() {
@@ -69,8 +181,7 @@ function normalizeDays(days: SiteAnalyticsData["days"]) {
 }
 
 function touchOnlineSession(sessionId: string) {
-  const normalized = normalizeSessionId(sessionId);
-  onlineSessions.set(normalized, Date.now());
+  onlineSessions.set(sessionId, Date.now());
   pruneOnlineSessions();
 }
 
