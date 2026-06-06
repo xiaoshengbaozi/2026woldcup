@@ -33,7 +33,7 @@ export function TeamProfile({ data }: TeamProfileProps) {
   const prevRef = useRef<HTMLButtonElement>(null);
   const nextRef = useRef<HTMLButtonElement>(null);
   const { matches } = useWorldCupData();
-  const [activeContentTab, setActiveContentTab] = useState<"profile" | "squad" | "fixtures">("profile");
+  const [activeContentTab, setActiveContentTab] = useState<"profile" | "squad" | "fixtures">("squad");
   const contentTabsSentinelRef = useRef<HTMLDivElement>(null);
   const contentTabsRef = useRef<HTMLDivElement>(null);
   const [contentTabsPinned, setContentTabsPinned] = useState(false);
@@ -204,12 +204,32 @@ export function TeamProfile({ data }: TeamProfileProps) {
     : "";
   const fallbackCoachName = getCoachName(data);
   const coachName = localizeCoachName(squad?.coach || fallbackCoachName) || fallbackCoachName;
+  const profileOverviewStats = deepDive?.overviewStats.slice(2) ?? [];
   const followPayload = {
     id: targetCode,
     name: data.nameCn,
     region: targetCode,
     logo: getFlagUrl(flagImageCode, 160),
   };
+  const renderGallery = () =>
+    gallery && gallery.length > 0 ? (
+      <div className="tp-gallery">
+        <div className="tp-gallery-grid">
+          {gallery.map((g, i) => (
+            <div key={i} className="tp-gallery-cell">
+              <div className="tp-gallery-img-wrap">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={g.src} alt={g.caption} className="tp-gallery-img" loading="lazy" />
+                <div className="tp-gallery-overlay">
+                  <div className="tp-gallery-caption">{g.caption}</div>
+                  {g.credit && <div className="tp-gallery-credit">© {g.credit}</div>}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    ) : null;
   const renderFixturesCard = (className = "tp-fixtures tp-side-card") => (
     <section className={className}>
       <div className="tp-side-card-heading">
@@ -270,7 +290,6 @@ export function TeamProfile({ data }: TeamProfileProps) {
       <MobileSecondaryPageActions
         backHref="/teams"
         backLabel="返回球队"
-        reserveSpace
         rightAction={
           <UserActionButton
             kind="team"
@@ -399,20 +418,20 @@ export function TeamProfile({ data }: TeamProfileProps) {
             <button
               type="button"
               role="tab"
-              aria-selected={activeContentTab === "profile"}
-              className={`tp-content-tab${activeContentTab === "profile" ? " active" : ""}`}
-              onClick={() => handleContentTabChange("profile")}
-            >
-              球队档案
-            </button>
-            <button
-              type="button"
-              role="tab"
               aria-selected={activeContentTab === "squad"}
               className={`tp-content-tab${activeContentTab === "squad" ? " active" : ""}`}
               onClick={() => handleContentTabChange("squad")}
             >
               本届阵容
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeContentTab === "profile"}
+              className={`tp-content-tab${activeContentTab === "profile" ? " active" : ""}`}
+              onClick={() => handleContentTabChange("profile")}
+            >
+              球队档案
             </button>
             <button
               type="button"
@@ -431,7 +450,7 @@ export function TeamProfile({ data }: TeamProfileProps) {
                 {deepDive && (
                   <div className="tp-deep-dive">
                     <div className="tp-overview-strip">
-                      {deepDive.overviewStats.map((stat) => (
+                      {profileOverviewStats.map((stat) => (
                         <div key={stat.label} className="tp-overview-card">
                           <div className={`tp-overview-value${isNumericStat(stat.value) ? " is-number" : ""}`}>{stat.value}</div>
                           <div className="tp-overview-label">{stat.label}</div>
@@ -558,7 +577,10 @@ export function TeamProfile({ data }: TeamProfileProps) {
                 error={squadError}
               />
             ) : (
-              renderFixturesCard("tp-fixtures tp-fixtures--panel")
+              <>
+                {renderGallery()}
+                {renderFixturesCard("tp-fixtures tp-fixtures--panel")}
+              </>
             )}
           </div>
         </main>
@@ -568,32 +590,6 @@ export function TeamProfile({ data }: TeamProfileProps) {
         <div className="tp-quote">
           <div className="tp-quote-text">{quote.text}</div>
           <div className="tp-quote-src">— {quote.source}</div>
-        </div>
-      )}
-
-      {gallery && gallery.length > 0 && (
-        <div className="tp-gallery">
-          <div className="tp-section-hd">
-            <div className="tp-section-hd-left">
-              <div className="tp-section-icon">{"\u{1F4F8}"}</div>
-              <span className="tp-section-title">经典瞬间</span>
-            </div>
-            <span className="tp-section-badge volt">{gallery.length} 张</span>
-          </div>
-          <div className="tp-gallery-grid">
-            {gallery.map((g, i) => (
-              <div key={i} className="tp-gallery-cell">
-                <div className="tp-gallery-img-wrap">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={g.src} alt={g.caption} className="tp-gallery-img" loading="lazy" />
-                  <div className="tp-gallery-overlay">
-                    <div className="tp-gallery-caption">{g.caption}</div>
-                    {g.credit && <div className="tp-gallery-credit">© {g.credit}</div>}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       )}
 

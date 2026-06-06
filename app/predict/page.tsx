@@ -1210,10 +1210,6 @@ export default function PredictPage() {
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-5">
         <motion.section initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.74, ease: [0.16, 1, 0.3, 1] }} className="hero-card overflow-hidden px-5 py-6 sm:px-8 sm:py-8">
           <div
-            className="absolute inset-0 bg-[url('/polo-01-01.jpg')] bg-contain bg-right bg-no-repeat opacity-90"
-            aria-hidden="true"
-          />
-          <div
             className="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,5,6,0.94)_0%,rgba(3,5,6,0.82)_38%,rgba(3,5,6,0.38)_70%,rgba(3,5,6,0.06)_100%),linear-gradient(180deg,rgba(3,5,6,0.28)_0%,rgba(3,5,6,0.08)_48%,rgba(3,5,6,0.34)_100%)]"
             aria-hidden="true"
           />

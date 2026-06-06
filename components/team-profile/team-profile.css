@@ -1498,13 +1498,18 @@
 
 @media (max-width: 860px) {
   .tp-wrap {
-    padding: 18px 0 56px;
+    margin-top: -1rem;
+    padding: 0 0 56px;
   }
 
   .tp-hero {
+    left: 50%;
+    width: 100vw;
+    transform: translateX(-50%);
     min-height: auto;
     margin-bottom: 18px;
-    border-radius: 1.65rem;
+    margin-top: 0;
+    border-radius: 0 0 1.65rem 1.65rem;
   }
 
   .tp-hero-inner {
@@ -1594,6 +1599,12 @@
 
   .tp-gallery-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 640px) and (max-width: 860px) {
+  .tp-wrap {
+    margin-top: -1.25rem;
   }
 }
 
@@ -1940,7 +1951,10 @@
 }
 
 @media (max-width: 860px) {
-  .tp-overview-strip,
+  .tp-overview-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .tp-history-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1971,7 +1985,10 @@
 }
 
 @media (max-width: 520px) {
-  .tp-overview-strip,
+  .tp-overview-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .tp-history-grid {
     grid-template-columns: 1fr;
   }

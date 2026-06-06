@@ -219,7 +219,7 @@ export function MatchHero({ detail }: { detail: MatchDetail }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      className="hero-card relative mt-0 min-h-[280px] overflow-visible rounded-[2rem] shadow-none sm:mt-14 sm:min-h-[380px] lg:min-h-[360px]"
+      className="hero-card relative -mx-3 -mt-4 min-h-[280px] overflow-visible rounded-b-[2rem] rounded-t-none shadow-none sm:-mx-6 sm:-mt-5 sm:min-h-[380px] lg:mx-0 lg:mt-14 lg:min-h-[360px] lg:rounded-[2rem]"
     >
       <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">
         {venueBannerImage && (

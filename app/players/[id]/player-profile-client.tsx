@@ -269,12 +269,12 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, breakthr
         <div className="absolute bottom-0 right-0 h-[340px] w-[min(460px,80vw)] rounded-full bg-volt/[0.04] blur-[120px]" />
         <div className="absolute bottom-0 left-0 h-[280px] w-[min(380px,80vw)] rounded-full bg-flare/[0.04] blur-[100px]" />
       </div>
-      <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-5 px-3 py-4 pb-28 sm:px-6 sm:py-5 sm:pb-28 lg:px-8 lg:pb-5">
+      <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-5 px-3 pb-28 pt-0 sm:px-6 sm:pb-28 sm:pt-0 lg:px-8 lg:pb-5 lg:pt-5">
         {/* ── Site Navigation ── */}
         <div className="relative z-10 hidden lg:block"><NavBar /></div>
 
         {/* ── Profile Hero Card ── */}
-        <section className="player-profile-hero hero-card relative z-0 mt-14 overflow-hidden rounded-[1.65rem] px-5 pb-6 pt-40 sm:mt-16 sm:px-8 sm:pb-8 sm:pt-44 lg:mt-16 lg:overflow-visible lg:pt-20">
+        <section className="player-profile-hero hero-card relative left-1/2 z-0 mt-0 w-screen -translate-x-1/2 overflow-hidden rounded-b-[1.65rem] rounded-t-none px-5 pb-6 pt-40 sm:mt-0 sm:px-8 sm:pb-8 sm:pt-44 lg:left-auto lg:mt-16 lg:w-auto lg:translate-x-0 lg:overflow-visible lg:rounded-[1.65rem] lg:pt-20">
           {heroLandscape && (
             <div className="absolute inset-0 z-0 overflow-hidden rounded-[inherit]">
               {/* eslint-disable-next-line @next/next/no-img-element */}

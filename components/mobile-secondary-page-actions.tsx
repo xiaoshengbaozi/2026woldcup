@@ -51,7 +51,7 @@ export function MobileSecondaryPageActions({ backHref, backLabel, rightAction, r
         </button>
         {rightAction ? <div className="pointer-events-auto absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)]">{rightAction}</div> : null}
       </div>
-      {reserveSpace ? <div aria-hidden="true" className="h-[calc(env(safe-area-inset-top)+3.75rem)] lg:hidden" /> : null}
+      {reserveSpace ? <div aria-hidden="true" className="h-[calc(env(safe-area-inset-top)+4.125rem)] lg:hidden" /> : null}
     </>
   );
 }

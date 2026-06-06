@@ -59,7 +59,6 @@ export function MatchDetailClient({ slug }: { slug: string }) {
       <MobileSecondaryPageActions
         backHref="/matches/"
         backLabel="返回赛程"
-        reserveSpace
         rightAction={
           <UserActionButton
             kind="match"

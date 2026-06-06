@@ -6,6 +6,7 @@ export type LiveChannel = {
   id: string;
   matchId: string;
   matchIds?: string[];
+  matchType?: "official" | "warmup";
   name: string;
   platform: string;
   streamUrl: string;
@@ -69,6 +70,7 @@ export async function upsertLiveChannel(input: Partial<LiveChannel>) {
     id,
     matchId,
     matchIds,
+    matchType: input.matchType === "warmup" ? "warmup" : "official",
     name,
     platform: String(input.platform || "HLS").trim() || "HLS",
     streamUrl: String(input.streamUrl || "").trim(),
@@ -172,6 +174,7 @@ function normalizeChannels(value: unknown): LiveChannel[] {
       id: String(channel.id || `channel-${Math.random().toString(36).slice(2)}`),
       matchId: String(channel.matchId || ""),
       matchIds: normalizeMatchIds(channel.matchIds, channel.matchId),
+      matchType: channel.matchType === "warmup" ? "warmup" : "official",
       name: String(channel.name || "未命名通道"),
       platform: String(channel.platform || "HLS"),
       streamUrl: String(channel.streamUrl || ""),

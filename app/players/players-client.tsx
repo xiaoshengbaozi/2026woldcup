@@ -152,6 +152,7 @@ export function PlayersClient() {
             configured={xTimeline?.configured}
             warning={xTimeline?.warning}
             loading={xTimelineLoading}
+            showHeader={false}
           />
 
           <section className="space-y-4">

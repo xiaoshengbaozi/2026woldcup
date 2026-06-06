@@ -140,6 +140,13 @@ export function renderAdminPageHtml() {
     .channel-match-row input { accent-color: var(--volt); }
     .channel-match-row strong { display: block; font-size: 13px; }
     .channel-match-row span { display: block; color: var(--faint); font-size: 11px; }
+    .source-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+    .source-tab {
+      min-height: 36px; border: 1px solid rgba(255,255,255,.1); border-radius: 999px;
+      background: rgba(255,255,255,.055); color: rgba(255,255,255,.64); padding: 0 14px;
+      font: inherit; font-size: 12px; cursor: pointer; transition: .2s ease;
+    }
+    .source-tab.active { border-color: rgba(216,255,62,.42); background: rgba(216,255,62,.12); color: white; }
     code {
       display: block; padding: 12px 14px; border-radius: 16px; background: rgba(0,0,0,.32);
       border: 1px solid rgba(255,255,255,.08); color: rgba(255,255,255,.78); overflow: auto;
@@ -314,6 +321,7 @@ export function renderAdminPageHtml() {
           <h2>直播通道维护</h2>
           <form class="live-channel-form" id="liveChannelForm">
             <input id="liveChannelIdInput" type="hidden" />
+            <label class="admin-field">赛事类型<select id="liveChannelMatchTypeInput"><option value="official">正赛</option><option value="warmup">热身赛</option></select></label>
             <label class="admin-field">主比赛 slug<input id="liveChannelMatchInput" type="text" placeholder="mexico-vs-south-africa" /></label>
             <label class="admin-field">通道名称<input id="liveChannelNameInput" type="text" placeholder="主直播通道" /></label>
             <label class="admin-field">m3u8 地址<input id="liveChannelUrlInput" type="url" placeholder="https://example.com/live/index.m3u8" /></label>
@@ -321,6 +329,10 @@ export function renderAdminPageHtml() {
             <button class="action-btn" type="submit">保存通道</button>
           </form>
           <div class="channel-match-picker">
+            <div class="source-tabs" aria-label="直播通道比赛类型">
+              <button class="source-tab active" data-live-source="official" type="button">正赛</button>
+              <button class="source-tab" data-live-source="warmup" type="button">热身赛</button>
+            </div>
             <label class="admin-field">适用比赛 slug（每行一个，可勾选下方比赛自动填入）<textarea id="liveChannelMatchIdsInput" placeholder="mexico-vs-south-africa&#10;canada-vs-switzerland"></textarea></label>
             <label class="admin-field">筛选比赛<input id="liveChannelMatchSearchInput" type="search" placeholder="输入球队、城市、阶段" /></label>
             <div class="channel-match-list" id="liveChannelMatchPicker">
@@ -779,7 +791,8 @@ export function renderAdminPageHtml() {
     }
 
     let liveChannelsCache = [];
-    let liveChannelMatchOptions = [];
+    let liveChannelMatchSource = "official";
+    let liveChannelMatchOptionsBySource = { official: [], warmup: [] };
 
     async function refreshLiveChannels() {
       try {
@@ -795,7 +808,8 @@ export function renderAdminPageHtml() {
           const statusLabel = channel.isActive ? "启用" : "停用";
           const toggleLabel = channel.isActive ? "停用" : "启用";
           const matchIds = getChannelMatchIds(channel);
-          const matchText = matchIds.length > 1 ? channel.matchId + " 等 " + matchIds.length + " 场" : channel.matchId;
+          const matchTypeLabel = channel.matchType === "warmup" ? "热身赛" : "正赛";
+          const matchText = matchIds.length > 1 ? matchTypeLabel + " · " + channel.matchId + " 等 " + matchIds.length + " 场" : matchTypeLabel + " · " + channel.matchId;
           return "<tr><td><strong>" + escapeHtml(channel.name) + "</strong><br><span class=\\"muted\\">" + escapeHtml(channel.platform || "HLS") + " · " + adminTime(channel.updatedAt) + "</span></td><td>" + escapeHtml(matchText) + "</td><td><span class=\\"muted\\">" + escapeHtml(shortUrl) + "</span></td><td><span class=\\"badge\\">" + statusLabel + "</span></td><td>" + channel.sortOrder + "</td><td><div class=\\"toolbar\\"><button class=\\"action-btn\\" data-live-edit=\\"" + escapeHtml(channel.id) + "\\">编辑</button><button class=\\"action-btn\\" data-live-toggle=\\"" + escapeHtml(channel.id) + "\\">" + toggleLabel + "</button><button class=\\"action-btn danger\\" data-live-delete=\\"" + escapeHtml(channel.id) + "\\">删除</button></div></td></tr>";
         }).join("") : "<tr><td colspan=\\"6\\" class=\\"muted\\">暂无直播通道，先保存一个测试通道。</td></tr>";
 
@@ -840,6 +854,19 @@ export function renderAdminPageHtml() {
       renderLiveChannelMatchPicker();
     }
 
+    function setLiveChannelMatchSource(source) {
+      liveChannelMatchSource = source === "warmup" ? "warmup" : "official";
+      byId("liveChannelMatchTypeInput").value = liveChannelMatchSource;
+      document.querySelectorAll("[data-live-source]").forEach(function (button) {
+        button.classList.toggle("active", button.dataset.liveSource === liveChannelMatchSource);
+      });
+      if (!liveChannelMatchOptionsBySource[liveChannelMatchSource].length) {
+        refreshLiveChannelMatchOptions();
+      } else {
+        renderLiveChannelMatchPicker();
+      }
+    }
+
     function toggleMatchId(slug, checked) {
       const ids = parseMatchIdsText(byId("liveChannelMatchIdsInput").value);
       const next = checked ? ids.concat(slug) : ids.filter(function (id) { return id !== slug; });
@@ -848,12 +875,14 @@ export function renderAdminPageHtml() {
 
     async function refreshLiveChannelMatchOptions() {
       try {
-        const res = await fetch("/api/worldcup/fixtures", { cache: "no-store" });
+        const endpoint = liveChannelMatchSource === "warmup" ? "/api/worldcup/warmups" : "/api/worldcup/fixtures";
+        const res = await fetch(endpoint, { cache: "no-store" });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "fixtures_failed");
-        liveChannelMatchOptions = (Array.isArray(data.fixtures) ? data.fixtures : []).map(function (fixture) {
+        liveChannelMatchOptionsBySource[liveChannelMatchSource] = (Array.isArray(data.fixtures) ? data.fixtures : []).map(function (fixture) {
+          const baseSlug = generateAdminMatchSlug(fixture.summary || fixture.uid || "");
           return {
-            slug: generateAdminMatchSlug(fixture.summary || fixture.uid || ""),
+            slug: liveChannelMatchSource === "warmup" && !baseSlug.startsWith("warmup-") ? "warmup-" + baseSlug : baseSlug,
             summary: fixture.summary || fixture.uid || "未命名比赛",
             stage: fixture.stage || "",
             location: fixture.location || "",
@@ -869,7 +898,7 @@ export function renderAdminPageHtml() {
     function renderLiveChannelMatchPicker() {
       const query = String(byId("liveChannelMatchSearchInput").value || "").trim().toLowerCase();
       const selected = new Set(parseMatchIdsText(byId("liveChannelMatchIdsInput").value));
-      const items = liveChannelMatchOptions.filter(function (item) {
+      const items = liveChannelMatchOptionsBySource[liveChannelMatchSource].filter(function (item) {
         const haystack = [item.summary, item.stage, item.location, item.slug].join(" ").toLowerCase();
         return !query || haystack.includes(query);
       }).slice(0, 60);
@@ -920,6 +949,7 @@ export function renderAdminPageHtml() {
 
     function resetLiveChannelForm() {
       byId("liveChannelIdInput").value = "";
+      byId("liveChannelMatchTypeInput").value = liveChannelMatchSource;
       byId("liveChannelMatchInput").value = "";
       byId("liveChannelMatchIdsInput").value = "";
       byId("liveChannelNameInput").value = "";
@@ -932,6 +962,7 @@ export function renderAdminPageHtml() {
       const channel = liveChannelsCache.find(function (item) { return item.id === id; });
       if (!channel) return;
       byId("liveChannelIdInput").value = channel.id;
+      setLiveChannelMatchSource(channel.matchType || "official");
       const matchIds = getChannelMatchIds(channel);
       byId("liveChannelMatchInput").value = matchIds[0] || "";
       byId("liveChannelMatchIdsInput").value = matchIds.join("\\n");
@@ -954,6 +985,7 @@ export function renderAdminPageHtml() {
           id: byId("liveChannelIdInput").value || undefined,
           matchId: matchIds[0] || byId("liveChannelMatchInput").value,
           matchIds: matchIds,
+          matchType: byId("liveChannelMatchTypeInput").value,
           name: byId("liveChannelNameInput").value,
           platform: "HLS",
           streamUrl: byId("liveChannelUrlInput").value,
@@ -1194,6 +1226,14 @@ export function renderAdminPageHtml() {
     byId("invitationForm").addEventListener("submit", createInvitation);
     byId("liveChannelForm").addEventListener("submit", saveLiveChannel);
     byId("resetLiveChannelForm").addEventListener("click", resetLiveChannelForm);
+    byId("liveChannelMatchTypeInput").addEventListener("change", function () {
+      setLiveChannelMatchSource(byId("liveChannelMatchTypeInput").value);
+    });
+    document.querySelectorAll("[data-live-source]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        setLiveChannelMatchSource(button.dataset.liveSource);
+      });
+    });
     byId("liveChannelMatchSearchInput").addEventListener("input", renderLiveChannelMatchPicker);
     byId("liveChannelMatchIdsInput").addEventListener("input", function () {
       syncPrimaryMatchInput();

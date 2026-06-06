@@ -75,7 +75,7 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
   const [topScorers, setTopScorers] = useState<WorldCupTopScorer[]>(fallbackTopScorerProfiles);
 
   useEffect(() => {
-    const timer = window.setInterval(() => setCurrentTime(Date.now()), 30000);
+    const timer = window.setInterval(() => setCurrentTime(Date.now()), 1000);
     return () => window.clearInterval(timer);
   }, []);
 
@@ -223,7 +223,7 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
               <div className="mt-3 grid w-full max-w-sm grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[1.45rem] bg-black/34 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,.08)] backdrop-blur-2xl sm:mt-5 sm:p-4">
                 <div>
                   <p className="text-xs uppercase tracking-[0.18em] text-white/42">距离开赛</p>
-                  <p className="mt-1 flex items-baseline text-3xl font-semibold leading-none text-volt sm:text-4xl" style={{ fontFamily: "ScreenMatrix, monospace" }}><span style={{ fontFamily: "Inter, system-ui, sans-serif" }}>{countdown.days}<span className="text-base font-normal text-white/38">天</span></span><span className="ml-2">{countdown.hours}</span><span className="countdown-colon text-3xl sm:text-4xl">:</span><span>{countdown.minutes}</span></p>
+                  <p className="mt-1 flex items-baseline text-3xl font-semibold leading-none text-volt sm:text-4xl" style={{ fontFamily: "ScreenMatrix, monospace" }}><span>{countdown.days}</span><span className="countdown-colon text-3xl sm:text-4xl">:</span><span>{countdown.hours}</span><span className="countdown-colon text-3xl sm:text-4xl">:</span><span>{countdown.minutes}</span><span className="countdown-colon text-3xl sm:text-4xl">:</span><span>{countdown.seconds}</span></p>
                 </div>
                 <div className="rounded-full bg-volt/15 p-3 text-volt shadow-[0_0_44px_rgba(216,255,62,.34)] ring-1 ring-volt/25 sm:p-4"><ArrowRight className="h-5 w-5 sm:h-7 sm:w-7" /></div>
               </div>

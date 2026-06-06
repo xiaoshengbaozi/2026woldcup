@@ -4,6 +4,7 @@ export type LiveChannel = {
   id: string;
   matchId: string;
   matchIds?: string[];
+  matchType?: "official" | "warmup";
   name: string;
   platform: string;
   streamUrl: string;
