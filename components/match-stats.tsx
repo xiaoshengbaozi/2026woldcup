@@ -37,6 +37,7 @@ export function MatchStats({
         icon={Trophy}
         accent
         href="/matches"
+        tone="violet"
       />
       <StatCard
         label="比赛日"
@@ -44,19 +45,22 @@ export function MatchStats({
         detail="剩余 / 全部"
         icon={CalendarDays}
         href="/matches"
+        tone="emerald"
       />
       <StatCard
         label="球队"
         value={`${activeTeamCount}/${totalTeamCount}`}
-        detail="未淘汰 / 全部"
+        detail="当前 / 全部"
         icon={Flag}
         href="/teams"
+        tone="amber"
       />
       <StatCard
         label="城市"
         value={`${visibleCities}/${totalCities}`}
         detail="筛选 / 全部"
         icon={MapPin}
+        tone="cyan"
       />
     </motion.section>
   );

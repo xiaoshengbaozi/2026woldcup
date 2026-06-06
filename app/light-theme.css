@@ -127,6 +127,26 @@
     inset 0 -1px 0 rgba(54, 65, 44, 0.08);
 }
 
+[data-theme="light"] .me-account-card {
+  background:
+    radial-gradient(circle at 22% 18%, rgb(213 187 187 / 44%), transparent 30%),
+    radial-gradient(circle at 86% 78%, rgba(89, 118, 0, 0.2), transparent 34%),
+    linear-gradient(343deg, rgb(194 241 12 / 84%) 0%, rgb(184 214 65) 44%, rgb(183 235 20) 100%);
+}
+
+[data-theme="light"] .me-account-card::after {
+  background:
+    linear-gradient(120deg, rgba(255, 255, 255, 0.22), transparent 42%),
+    radial-gradient(ellipse at 50% 100%, rgba(12, 19, 0, 0.12), transparent 58%);
+}
+
+[data-theme="light"] .account-wordmark-shell {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.48)),
+    rgba(255, 255, 255, 0.62);
+  border-color: rgba(12, 19, 0, 0.12);
+}
+
 [data-theme="light"] .hero-link {
   background: rgba(0, 0, 0, 0.03);
   color: var(--lm-text-secondary);

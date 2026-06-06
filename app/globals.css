@@ -206,6 +206,26 @@ button {
       inset 0 -1px 0 rgba(216, 255, 62, 0.1);
   }
 
+  .me-account-card {
+    background:
+      radial-gradient(circle at 22% 18%, rgb(213 187 187 / 44%), transparent 30%),
+      radial-gradient(circle at 86% 78%, rgba(89, 118, 0, 0.2), transparent 34%),
+      linear-gradient(343deg, rgb(163 204 6 / 84%) 0%, rgb(184 214 65) 44%, rgb(139 178 18) 100%);
+  }
+
+  .me-account-card::after {
+    background:
+      linear-gradient(120deg, rgba(255, 255, 255, 0.22), transparent 42%),
+      radial-gradient(ellipse at 50% 100%, rgba(12, 19, 0, 0.12), transparent 58%);
+  }
+
+  .account-wordmark-shell {
+    background:
+      linear-gradient(135deg, rgba(5, 8, 8, 0.78), rgba(5, 8, 8, 0.48)),
+      rgba(0, 0, 0, 0.42);
+    border-color: rgba(255, 255, 255, 0.16);
+  }
+
   .hero-link {
     display: flex;
     min-height: 44px;

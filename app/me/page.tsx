@@ -482,6 +482,17 @@ function MePageContent() {
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
           className="min-w-0 space-y-5 order-last lg:order-none"
         >
+          <section className="hero-card me-account-card grid gap-5 overflow-hidden p-5 text-black lg:hidden">
+            <AccountCard
+              home={home}
+              catalog={catalog}
+              avatarPlayerId={avatarPlayerId}
+              busy={busy}
+              onLogin={() => openAuth("login")}
+              onRegister={() => openAuth("register")}
+              onLogout={logout}
+            />
+          </section>
           <ProfileBoard home={home} catalog={catalog} topScorers={topScorers} popularTeams={popularTeams} scheduleMatches={matches} />
         </motion.div>
 
@@ -491,7 +502,7 @@ function MePageContent() {
           transition={{ duration: 0.45, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
           className="hidden h-fit gap-5 lg:sticky lg:top-5 lg:grid"
         >
-          <section className="hero-card grid gap-5 p-5 sm:p-6">
+          <section className="hero-card me-account-card grid gap-5 overflow-hidden p-5 text-black sm:p-6">
             <AccountCard
               home={home}
               catalog={catalog}
@@ -923,11 +934,13 @@ function AccountCard({
         </div>
       )}
 
+      <AccountWordmark />
+
       {home ? (
-        <div className="grid w-full gap-5 text-center">
+        <div className="grid w-full gap-5 text-center text-black">
           <div>
-            <p className="text-xl font-semibold text-white">{home.user.profile.displayName}</p>
-            <div className="mt-4 grid grid-cols-3 gap-2">
+            <p className="text-xl font-semibold text-black">{home.user.profile.displayName}</p>
+            <div className="mt-5 grid grid-cols-3 divide-x divide-black/18 overflow-hidden rounded-[1.5rem] bg-black/[0.055] py-3 shadow-[inset_0_1px_0_rgba(255,255,255,.22)]">
               <AccountStat value={home.summary.followedPlayerCount} label="关注球员" />
               <AccountStat value={home.summary.followedTeamCount} label="关注球队" />
               <AccountStat value={home.summary.favoriteMatchCount} label="收藏比赛" />
@@ -950,11 +963,36 @@ function AccountCard({
   );
 }
 
+function AccountWordmark() {
+  return (
+    <div className="account-wordmark-shell relative flex h-16 w-full max-w-[292px] items-center justify-center overflow-hidden rounded-[1.75rem] px-5 shadow-[0_18px_42px_rgba(0,0,0,.24),inset_0_1px_0_rgba(255,255,255,.18)] ring-1 backdrop-blur-2xl">
+      <Image
+        src="/logos/world-cup-2026-wordmark-dark.svg"
+        alt="FIFA World Cup 2026"
+        width={1366}
+        height={97}
+        className="site-logo-dark h-[24px] w-full object-contain drop-shadow-[0_12px_26px_rgba(0,0,0,.5)]"
+        priority
+      />
+      <Image
+        src="/logos/world-cup-2026-wordmark-light.svg"
+        alt="FIFA World Cup 2026"
+        width={1366}
+        height={97}
+        className="site-logo-light h-[24px] w-full object-contain drop-shadow-[0_12px_22px_rgba(0,0,0,.18)]"
+        priority
+      />
+    </div>
+  );
+}
+
 function AccountStat({ value, label }: { value: number; label: string }) {
   return (
-    <div className="grid justify-items-center gap-1">
-      <span className="font-mono text-lg font-semibold leading-none text-volt">{value}</span>
-      <span className="text-[10px] font-medium text-white/42">{label}</span>
+    <div className="grid justify-items-center gap-1.5 px-2">
+      <span className="text-3xl font-semibold leading-none tabular-nums text-black" style={{ fontFamily: "ScreenMatrix, monospace" }}>
+        {value}
+      </span>
+      <span className="text-[12px] font-bold leading-none text-black/78">{label}</span>
     </div>
   );
 }

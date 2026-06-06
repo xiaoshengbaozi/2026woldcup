@@ -93,7 +93,7 @@ const profilePanelTabs: { id: ProfilePanelTab; label: string }[] = [
   { id: "career", label: "轨迹" },
 ];
 
-const MOBILE_TOP_MODULE_OFFSET = 66;
+const MOBILE_TOP_MODULE_OFFSET = 56;
 
 const FIFA_CODE_TO_FLAG: Record<string, string> = {
   MEX:"mx",USA:"us",CAN:"ca",ARG:"ar",BRA:"br",COL:"co",ECU:"ec",PAR:"py",URU:"uy",
@@ -267,13 +267,12 @@ export function PlayerProfileClient({ playerId, nameHint, row, article }: Props)
         <div className="absolute bottom-0 right-0 h-[340px] w-[min(460px,80vw)] rounded-full bg-volt/[0.04] blur-[120px]" />
         <div className="absolute bottom-0 left-0 h-[280px] w-[min(380px,80vw)] rounded-full bg-flare/[0.04] blur-[100px]" />
       </div>
-
       <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-5 px-3 py-4 pb-28 sm:px-6 sm:py-5 sm:pb-28 lg:px-8 lg:pb-5">
         {/* ── Site Navigation ── */}
-        <div className="relative z-10"><NavBar /></div>
+        <div className="relative z-10 hidden lg:block"><NavBar /></div>
 
         {/* ── Profile Hero Card ── */}
-        <section className="player-profile-hero hero-card relative z-0 mt-16 overflow-visible pt-20 pb-6 px-6 sm:px-8 sm:pb-8">
+        <section className="player-profile-hero hero-card relative left-1/2 z-0 -mt-4 w-screen -translate-x-1/2 overflow-visible rounded-b-[2rem] rounded-t-none px-6 pb-6 pt-44 sm:-mt-5 sm:px-8 sm:pb-8 lg:left-auto lg:mx-0 lg:mt-16 lg:w-auto lg:translate-x-0 lg:rounded-[1.65rem] lg:pt-20">
           {heroLandscape && (
             <div className="absolute inset-0 z-0 overflow-hidden rounded-[inherit]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -286,7 +285,6 @@ export function PlayerProfileClient({ playerId, nameHint, row, article }: Props)
               <div className="player-profile-hero-fade absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-ink-950/70 to-transparent" />
             </div>
           )}
-
           {/* Top glow line */}
           <div className="absolute inset-x-0 top-0 z-10 h-px bg-gradient-to-r from-transparent via-volt/40 to-transparent" />
 
@@ -306,10 +304,10 @@ export function PlayerProfileClient({ playerId, nameHint, row, article }: Props)
           />
 
           {/* Avatar — overlapping top edge */}
-          <div className="absolute left-1/2 top-0 z-10 -translate-x-1/2 -translate-y-1/2">
+          <div className="absolute left-1/2 top-[4.75rem] z-10 -translate-x-1/2 lg:top-0 lg:-translate-y-1/2">
             <div className="relative">
               <div className="absolute -inset-3 rounded-full bg-gradient-to-br from-volt/25 via-volt/10 to-transparent blur-xl" />
-              <div className="relative h-28 w-28 overflow-hidden rounded-full ring-[3px] ring-volt/30 ring-offset-4 ring-offset-ink-950 sm:h-32 sm:w-32 sm:ring-[4px]">
+              <div className="relative h-[5.6rem] w-[5.6rem] overflow-hidden rounded-full ring-[3px] ring-volt/30 ring-offset-4 ring-offset-ink-950 sm:h-[6.4rem] sm:w-[6.4rem] sm:ring-[4px] lg:h-32 lg:w-32">
                 {photo ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={photo} alt={englishName} className="h-full w-full object-cover" />
@@ -324,7 +322,7 @@ export function PlayerProfileClient({ playerId, nameHint, row, article }: Props)
 
           {/* Names — centered */}
           <div className="relative z-10 text-center">
-            <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
+            <h1 className="text-2xl font-black tracking-tight text-white sm:text-4xl">
               {displayName}
             </h1>
             <p className="mt-1.5 text-sm text-white/40 sm:text-base">{fullName || englishName}</p>
@@ -454,9 +452,9 @@ export function PlayerProfileClient({ playerId, nameHint, row, article }: Props)
                 ref={panelTabsRef}
                 className={`${
                   panelTabsPinned
-                    ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[65] px-3 py-2"
-                    : "relative -mx-3 bg-black/58 px-3 py-2 backdrop-blur-2xl"
-                } lg:static lg:mx-0 lg:bg-transparent lg:px-0 lg:py-0 lg:backdrop-blur-none`}
+                    ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+3.5rem)] z-[90]"
+                    : "relative -mx-3 bg-black/58 backdrop-blur-2xl"
+                } px-3 py-1.5 lg:static lg:mx-0 lg:bg-transparent lg:px-0 lg:py-0 lg:backdrop-blur-none`}
               >
               <div className="hero-card grid grid-cols-3 gap-1 p-1 lg:hidden">
                 {profilePanelTabs.map((tab) => {
@@ -466,7 +464,7 @@ export function PlayerProfileClient({ playerId, nameHint, row, article }: Props)
                       key={tab.id}
                       type="button"
                       onClick={() => handleMobilePanelChange(tab.id)}
-                      className={`rounded-2xl px-3 py-2 text-xs font-black transition ${
+                      className={`rounded-2xl px-3 py-1.5 text-xs font-black transition ${
                         active
                           ? "bg-volt text-black shadow-[0_0_22px_rgba(216,255,62,.18)]"
                           : "text-white/45 hover:bg-white/[0.05] hover:text-white/70"
