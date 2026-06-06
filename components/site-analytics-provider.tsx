@@ -12,7 +12,16 @@ export function SiteAnalyticsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true;
-    const sessionId = getSiteAnalyticsSessionId();
+    let sessionId: string;
+
+    try {
+      sessionId = getSiteAnalyticsSessionId();
+    } catch (error) {
+      console.warn("[SiteAnalytics] session unavailable:", error);
+      return () => {
+        active = false;
+      };
+    }
 
     const syncStats = (action: "view" | "heartbeat") => {
       sendSiteAnalytics(action, sessionId)
