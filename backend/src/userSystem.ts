@@ -6,6 +6,7 @@ import type { ApiFootballService } from "./apiFootball";
 import { getWorldCupFixtures, getWorldCupSquads } from "./worldCupData";
 import { UserStore, toPublicUser } from "./userStore";
 import type { InvitationCode, PredictionArchive, WorldCupUser } from "./userStore";
+import type { PlayerXTimelineService, XTimelinePlayerInput } from "./playerXTimeline";
 
 const SESSION_COOKIE = "wc_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
@@ -27,12 +28,27 @@ export class UserSystem {
   private readonly sessions = new Map<string, SessionRecord>();
   private catalogCache: { expiresAt: number; payload: UserPreferenceCatalog } | null = null;
 
-  constructor(private readonly store = new UserStore(), private readonly apiFootball?: ApiFootballService) {}
+  constructor(
+    private readonly store = new UserStore(),
+    private readonly apiFootball?: ApiFootballService,
+    private readonly playerXTimeline?: PlayerXTimelineService,
+  ) {}
 
   async handleRequest(req: http.IncomingMessage, res: http.ServerResponse, url: URL) {
     try {
       if (req.method === "GET" && url.pathname === "/api/user-preferences") {
         sendJson(res, await this.getPreferenceCatalog());
+        return true;
+      }
+
+      if (req.method === "GET" && url.pathname === "/api/player-x-timeline") {
+        sendJson(res, await this.getPublicPlayerXTimeline(url));
+        return true;
+      }
+
+      if (req.method === "GET" && url.pathname === "/api/popular-players") {
+        const limit = clampInteger(Number(url.searchParams.get("limit") || 24), 1, 48, 24);
+        sendJson(res, buildPopularPlayersPayload(this.store.listUsers(), limit));
         return true;
       }
 
@@ -96,6 +112,13 @@ export class UserSystem {
         const syncedUser = syncRelatedMatchesForUser(this.store, user.id, catalog);
         queueDueMatchNotifications(this.store, syncedUser);
         sendJson(res, buildHomePayload(this.store.getUserById(user.id) ?? syncedUser, catalog));
+        return true;
+      }
+
+      if (req.method === "GET" && url.pathname === "/api/me/player-x-timeline") {
+        const user = this.requireSessionUser(req, res);
+        if (!user) return true;
+        sendJson(res, await this.getPlayerXTimeline(user.followedPlayers));
         return true;
       }
 
@@ -389,10 +412,35 @@ export class UserSystem {
     };
     return payload;
   }
+
+  private async getPublicPlayerXTimeline(url: URL) {
+    const playerIds = parseCsv(url.searchParams.get("playerIds"));
+    const limit = clampInteger(Number(url.searchParams.get("limit") || 12), 1, 24, 12);
+    if (playerIds.length) {
+      return this.getPlayerXTimeline(playerIds.slice(0, limit).map((id) => ({ id })));
+    }
+
+    const catalog = await this.getPreferenceCatalog();
+    return this.getPlayerXTimeline(catalog.players.slice(0, limit));
+  }
+
+  private async getPlayerXTimeline(players: XTimelinePlayerInput[]) {
+    if (!this.playerXTimeline) {
+      return {
+        timestamp: Date.now(),
+        configured: false,
+        warning: "x_timeline_service_unavailable",
+        players: [],
+        items: [],
+      };
+    }
+
+    return this.playerXTimeline.getTimeline(players);
+  }
 }
 
-export function createUserSystem(store = new UserStore(), apiFootball?: ApiFootballService) {
-  return new UserSystem(store, apiFootball);
+export function createUserSystem(store = new UserStore(), apiFootball?: ApiFootballService, playerXTimeline?: PlayerXTimelineService) {
+  return new UserSystem(store, apiFootball, playerXTimeline);
 }
 
 function buildAdminUsersPayload(users: WorldCupUser[]) {
@@ -451,6 +499,66 @@ function buildAdminUserDetail(user: WorldCupUser) {
         user.newsSubscriptions.length,
     },
   };
+}
+
+function buildPopularPlayersPayload(users: WorldCupUser[], limit: number) {
+  const activeUsers = users.filter((user) => !user.disabledAt);
+  const byPlayer = new Map<
+    string,
+    {
+      id: string;
+      name: string;
+      team?: string;
+      position?: string;
+      photo?: string;
+      followCount: number;
+      lastFollowedAt: number;
+    }
+  >();
+
+  for (const user of activeUsers) {
+    for (const player of user.followedPlayers) {
+      const id = normalizePopularPlayerId(player.id || player.name);
+      if (!id) continue;
+
+      const current = byPlayer.get(id);
+      if (current) {
+        current.followCount += 1;
+        current.lastFollowedAt = Math.max(current.lastFollowedAt, player.followedAt || 0);
+        current.name = current.name || player.name;
+        current.team = current.team || player.team;
+        current.position = current.position || player.position;
+        current.photo = current.photo || player.photo;
+      } else {
+        byPlayer.set(id, {
+          id,
+          name: player.name,
+          team: player.team,
+          position: player.position,
+          photo: player.photo,
+          followCount: 1,
+          lastFollowedAt: player.followedAt || 0,
+        });
+      }
+    }
+  }
+
+  return {
+    timestamp: Date.now(),
+    totalUsers: activeUsers.length,
+    players: [...byPlayer.values()]
+      .sort((a, b) => b.followCount - a.followCount || b.lastFollowedAt - a.lastFollowedAt || a.name.localeCompare(b.name))
+      .slice(0, limit),
+  };
+}
+
+function normalizePopularPlayerId(value: string | undefined) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/['’]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 function buildAdminUserListItem(user: WorldCupUser) {
@@ -747,6 +855,19 @@ function slugifyTeam(value: string) {
     .replace(/&/g, "and")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
+}
+
+function parseCsv(value: string | null) {
+  return (value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function clampInteger(value: unknown, min: number, max: number, fallback: number) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(max, Math.max(min, Math.floor(parsed)));
 }
 
 async function readJsonBody(req: http.IncomingMessage) {

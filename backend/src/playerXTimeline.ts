@@ -43,6 +43,7 @@ export interface PlayerXTimelineRuntimeStats {
   knownHandleCount: number;
   cacheEntries: number;
   cacheTtlSeconds: number;
+  apiTimeoutMs: number;
   maxPlayers: number;
   maxResultsPerPlayer: number;
   requestsTotal: number;
@@ -81,11 +82,13 @@ const DEFAULT_PLAYER_HANDLES: Record<string, string> = {
 const DEFAULT_CACHE_MS = 2 * 60 * 1000;
 const DEFAULT_MAX_PLAYERS = 12;
 const DEFAULT_MAX_RESULTS_PER_PLAYER = 5;
+const DEFAULT_X_API_TIMEOUT_MS = 10_000;
 
 export class PlayerXTimelineService {
   private readonly cache = new Map<string, TimelineCacheEntry>();
   private readonly handles: Record<string, string>;
   private readonly cacheMs: number;
+  private readonly apiTimeoutMs: number;
   private readonly maxPlayers: number;
   private readonly maxResultsPerPlayer: number;
   private readonly runtime = {
@@ -107,6 +110,7 @@ export class PlayerXTimelineService {
   constructor() {
     this.handles = { ...DEFAULT_PLAYER_HANDLES, ...parseHandleMap(process.env.X_PLAYER_HANDLES_JSON) };
     this.cacheMs = parsePositiveInt(process.env.X_TIMELINE_CACHE_SECONDS, DEFAULT_CACHE_MS / 1000) * 1000;
+    this.apiTimeoutMs = parsePositiveInt(process.env.X_API_TIMEOUT_MS, DEFAULT_X_API_TIMEOUT_MS);
     this.maxPlayers = parsePositiveInt(process.env.X_TIMELINE_MAX_PLAYERS, DEFAULT_MAX_PLAYERS);
     this.maxResultsPerPlayer = parsePositiveInt(process.env.X_TIMELINE_MAX_RESULTS, DEFAULT_MAX_RESULTS_PER_PLAYER);
   }
@@ -135,6 +139,7 @@ export class PlayerXTimelineService {
       knownHandleCount: Object.keys(this.handles).length,
       cacheEntries: this.cache.size,
       cacheTtlSeconds: Math.round(this.cacheMs / 1000),
+      apiTimeoutMs: this.apiTimeoutMs,
       maxPlayers: this.maxPlayers,
       maxResultsPerPlayer: this.maxResultsPerPlayer,
       ...this.runtime,
@@ -244,12 +249,23 @@ export class PlayerXTimelineService {
 
   private async fetchJson<T>(url: URL) {
     const token = getBearerToken();
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "User-Agent": "worldcup-player-x-timeline/1.0",
-      },
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), this.apiTimeoutMs);
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        signal: controller.signal,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "User-Agent": "worldcup-player-x-timeline/1.0",
+        },
+      });
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") throw new Error("x_api_timeout");
+      throw error;
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (!response.ok) {
       throw new Error(`x_api_${response.status}`);
