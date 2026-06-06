@@ -1,6 +1,7 @@
 import http from "http";
 import { execFile } from "child_process";
 import { timingSafeEqual } from "crypto";
+import { existsSync } from "fs";
 import { readFile, writeFile } from "fs/promises";
 import { promisify } from "util";
 import type { ApiFootballEndpoint, ApiFootballService } from "./apiFootball";
@@ -126,6 +127,16 @@ export function createHttpServer(options: HttpServerOptions) {
       return;
     }
 
+    if (req.method === "GET" && url.pathname === "/cf-failover-active") {
+      if (!isFailoverOriginActive()) {
+        sendJson(res, { status: "standby" }, 503);
+        return;
+      }
+
+      sendJson(res, { status: "active" });
+      return;
+    }
+
     if (req.method === "GET" && url.pathname === "/api/status") {
       const state = options.getState();
       const snapshot = options.snapshotCache.getLatest();
@@ -219,6 +230,12 @@ export function createHttpServer(options: HttpServerOptions) {
 
     sendJson(res, { error: "not_found", path: url.pathname }, 404);
   });
+}
+
+function isFailoverOriginActive() {
+  const activeFile = process.env.CF_FAILOVER_ACTIVE_FILE;
+  if (activeFile) return existsSync(activeFile);
+  return process.env.CF_FAILOVER_ACTIVE !== "false";
 }
 
 async function handleSiteAnalyticsRequest(req: http.IncomingMessage, res: http.ServerResponse) {
