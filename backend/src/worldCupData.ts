@@ -89,7 +89,12 @@ export interface NormalizedSquad {
 
 const DEFAULT_LEAGUE = "1";
 const DEFAULT_SEASON = "2026";
+const DEFAULT_FRIENDLIES_LEAGUE = "10";
+const DEFAULT_WARMUP_WINDOW_DAYS = 45;
 const FIFA_OFFICIAL_EXPECTED_SQUAD_SIZE = 26;
+const PLAYER_PHOTO_OVERRIDES: Record<number, string> = {
+  304229: "https://img.a.transfermarkt.technology/portrait/big/534398-1692797432.jpg?lm=1",
+};
 
 type FifaOfficialSquadsFile = {
   source?: string;
@@ -243,6 +248,30 @@ export async function getWorldCupMatchDetail(apiFootball: ApiFootballService, ur
   };
 }
 
+export async function getWorldCupWarmupFixtures(apiFootball: ApiFootballService, url: URL) {
+  const params = getWarmupParams(url);
+  const payload = await apiFootball.request("fixtures", params);
+  const upstream = payload.upstream as ApiFootballFixturesResponse;
+  assertNoApiFootballErrors(upstream);
+
+  const fixtures = (upstream.response ?? [])
+    .map(normalizeWarmupFixture)
+    .filter(isWorldCupTeamFixture);
+
+  return {
+    source: "api-football",
+    normalized: true,
+    cached: payload.cached,
+    timestamp: payload.timestamp,
+    league: Number(params.get("league") || DEFAULT_FRIENDLIES_LEAGUE),
+    season: Number(params.get("season") || DEFAULT_SEASON),
+    from: params.get("from"),
+    to: params.get("to"),
+    count: fixtures.length,
+    fixtures,
+  };
+}
+
 export async function getWorldCupSquads(apiFootball: ApiFootballService, url: URL) {
   const teamIds = url.searchParams
     .getAll("team")
@@ -282,6 +311,23 @@ function getTournamentParams(url: URL) {
   const params = new URLSearchParams(url.searchParams);
   if (!params.has("league")) params.set("league", DEFAULT_LEAGUE);
   if (!params.has("season")) params.set("season", DEFAULT_SEASON);
+  return params;
+}
+
+function getWarmupParams(url: URL) {
+  const params = new URLSearchParams(url.searchParams);
+  if (!params.has("league")) params.set("league", process.env.API_FOOTBALL_FRIENDLIES_LEAGUE || DEFAULT_FRIENDLIES_LEAGUE);
+  if (!params.has("season")) params.set("season", DEFAULT_SEASON);
+  if (!params.has("timezone")) params.set("timezone", "Asia/Shanghai");
+
+  if (!params.has("from")) {
+    params.set("from", formatApiFootballDate(new Date()));
+  }
+
+  if (!params.has("to")) {
+    params.set("to", formatApiFootballDate(addUtcDays(new Date(), DEFAULT_WARMUP_WINDOW_DAYS)));
+  }
+
   return params;
 }
 
@@ -407,6 +453,48 @@ function normalizePlayers(items: unknown[]) {
   }));
 }
 
+function normalizeWarmupFixture(raw: ApiFootballFixture): NormalizedWorldCupFixture {
+  const fixture = normalizeFixture(raw);
+  const stage = "\u70ed\u8eab\u8d5b";
+
+  return {
+    ...fixture,
+    uid: `warmup-${fixture.uid}`,
+    summary: `${fixture.homeTeam.name} vs ${fixture.awayTeam.name}\uff08${stage}\uff09`,
+    description: buildWarmupDescription(fixture),
+    stage,
+  };
+}
+
+function buildWarmupDescription(fixture: NormalizedWorldCupFixture) {
+  const date = fixture.startIso
+    ? new Date(fixture.startIso).toLocaleString("zh-CN", {
+        timeZone: "Asia/Shanghai",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "\u65f6\u95f4\u5f85\u5b9a";
+  const venue = fixture.location || "\u573a\u9986\u5f85\u5b9a";
+  return `${fixture.homeTeam.name} \u5bf9\u9635 ${fixture.awayTeam.name}\uff0c\u70ed\u8eab\u8d5b\uff0c\u5317\u4eac\u65f6\u95f4 ${date}\uff0c${venue}`;
+}
+
+function isWorldCupTeamFixture(fixture: NormalizedWorldCupFixture) {
+  return WORLD_CUP_TEAM_CODES.has(fixture.homeTeam.code) || WORLD_CUP_TEAM_CODES.has(fixture.awayTeam.code);
+}
+
+function addUtcDays(date: Date, days: number) {
+  const next = new Date(date);
+  next.setUTCDate(next.getUTCDate() + days);
+  return next;
+}
+
+function formatApiFootballDate(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
 async function getCurrentCoachName(apiFootball: ApiFootballService, teamId: number): Promise<string | null> {
   try {
     const payload = await apiFootball.request("coachs", new URLSearchParams({ team: String(teamId) }));
@@ -476,7 +564,7 @@ function normalizeSquadPlayer(player: NonNullable<ApiFootballSquad["players"]>[n
     number: player.number ?? null,
     position: localized?.positionEn ?? player.position ?? "Unknown",
     positionCn: localized?.position ?? localizeFootballPosition(player.position),
-    photo: player.photo ?? "",
+    photo: getPlayerPhoto(player.id, player.photo ?? ""),
   };
 }
 
@@ -571,20 +659,26 @@ function mergeOfficialPlayerWithApi(
     number: typeof officialPlayer.number === "number" ? officialPlayer.number : apiPlayer.number,
     position,
     positionCn: localizeFootballPosition(position),
+    photo: getPlayerPhoto(officialPlayer.apiFootballId ?? apiPlayer.id, apiPlayer.photo),
   };
 }
 
 function officialPlayerToNormalized(player: FifaOfficialSquadPlayer): NormalizedSquadPlayer {
+  const apiFootballId = typeof player.apiFootballId === "number" ? player.apiFootballId : null;
   return {
-    id: null,
+    id: apiFootballId,
     nameEn: player.name,
-    nameCn: localizePlayerName(null, player.name),
+    nameCn: localizePlayerName(apiFootballId, player.name),
     age: null,
     number: typeof player.number === "number" ? player.number : null,
     position: officialPositionToApiPosition(player.position),
     positionCn: localizeFootballPosition(officialPositionToApiPosition(player.position)),
-    photo: "",
+    photo: getPlayerPhoto(apiFootballId, apiFootballId ? `https://media.api-sports.io/football/players/${apiFootballId}.png` : ""),
   };
+}
+
+function getPlayerPhoto(playerId: number | null | undefined, fallback = "") {
+  return typeof playerId === "number" ? PLAYER_PHOTO_OVERRIDES[playerId] ?? fallback : fallback;
 }
 
 function officialPositionToApiPosition(position: string | null | undefined) {
@@ -1007,6 +1101,8 @@ const TEAM_ID_TO_OFFICIAL_TEAM: Record<number, [string, string]> = {
   5529: ["CAN", "Canada"],
   5530: ["CUW", "Curaçao"],
 };
+
+const WORLD_CUP_TEAM_CODES = new Set(Object.keys(TEAM_ID_TO_OFFICIAL_TEAM).map((teamId) => TEAM_ID_TO_OFFICIAL_TEAM[Number(teamId)][0]));
 
 const TEAM_NAME_TO_CODE: Record<string, string> = {
   argentina: "ARG",

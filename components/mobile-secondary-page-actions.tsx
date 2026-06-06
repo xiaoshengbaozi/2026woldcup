@@ -2,7 +2,6 @@
 
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 
 type MobileSecondaryPageActionsProps = {
@@ -31,6 +30,14 @@ export function MobileSecondaryPageActions({ backHref, backLabel, rightAction, r
     };
   }, []);
 
+  const goBack = () => {
+    if (window.history.length > 1) {
+      window.history.back();
+      return;
+    }
+    window.location.href = backHref;
+  };
+
   return (
     <>
       <div
@@ -39,9 +46,9 @@ export function MobileSecondaryPageActions({ backHref, backLabel, rightAction, r
         }`}
       />
       <div className="pointer-events-none fixed inset-x-0 top-0 z-[85] h-[calc(env(safe-area-inset-top)+4.125rem)] lg:hidden">
-        <Link href={backHref} aria-label={backLabel} className={`${topButtonClass} left-4 w-[34px]`}>
+        <button type="button" onClick={goBack} aria-label={backLabel} className={`${topButtonClass} left-4 w-[34px]`}>
           <ChevronLeft className="h-4 w-4" />
-        </Link>
+        </button>
         {rightAction ? <div className="pointer-events-auto absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)]">{rightAction}</div> : null}
       </div>
       {reserveSpace ? <div aria-hidden="true" className="h-[calc(env(safe-area-inset-top)+3.75rem)] lg:hidden" /> : null}

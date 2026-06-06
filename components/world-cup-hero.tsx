@@ -123,20 +123,30 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
     <section className="space-y-5">
       <div className="grid min-w-0 gap-5 lg:grid-cols-[.78fr_1.45fr_.78fr]">
         <motion.aside initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08, duration: 0.72, ease: [0.16, 1, 0.3, 1] }} className="grid gap-5">
-          <div className="hero-card relative h-auto min-h-[230px] overflow-hidden p-5">
+          <div className="world-cup-identity-card hero-card relative h-auto min-h-[230px] overflow-hidden p-5">
             <div className="absolute inset-0 opacity-45 [background-image:radial-gradient(circle_at_78%_62%,rgba(216,255,62,.18),transparent_30%),radial-gradient(circle_at_45%_48%,rgba(255,255,255,.07)_1px,transparent_1px)] [background-size:auto,12px_12px]" />
-            <img
-              src="https://digitalhub.fifa.com/transform/157d23bf-7e13-4d7b-949e-5d27d340987e/WC26_Logo?&io=transform:fill&quality=75"
-              alt=""
-              className="pointer-events-none absolute right-[calc(1rem+10vw)] top-[44px] h-[106px] w-auto object-contain opacity-90 drop-shadow-[0_12px_34px_rgba(0,0,0,.55)] sm:hidden"
-              aria-hidden="true"
-            />
-            <div className="relative flex h-full flex-col justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-white/45">全球足球盛会</p>
-                <h1 className="mt-2 text-[34px] uppercase leading-[0.95] text-white" style={{ fontFamily: "ScreenMatrix, monospace" }}>FIFA World<span className="block" style={{ color: "rgb(216 255 62 / 0.9)" }}>Cup 2026<span className="text-[0.45em] align-top">TM</span></span></h1>
-                <p className="mt-3 text-xs uppercase tracking-[0.12em] text-white/56">2026 年 6 月 11 日 - 7 月 19 日</p>
-                <p className="mt-1 text-xs uppercase tracking-[0.1em] text-white/48">美国 · 加拿大 · 墨西哥</p>
+            <div className="relative flex h-full flex-col justify-between gap-4">
+              <div className="grid grid-cols-[minmax(0,1fr)_72px] items-start gap-3 sm:block">
+                <div className="min-w-0">
+                  <p className="text-xs uppercase tracking-[0.2em] text-white/45">全球足球盛会</p>
+                  <h1 className="mt-2 text-[34px] uppercase leading-[0.95] text-white" style={{ fontFamily: "ScreenMatrix, monospace" }}>FIFA World<span className="block" style={{ color: "rgb(216 255 62 / 0.9)" }}>Cup 2026<span className="text-[0.45em] align-top">TM</span></span></h1>
+                  <p className="mt-3 text-xs uppercase tracking-[0.12em] text-white/56">2026 年 6 月 11 日 - 7 月 19 日</p>
+                  <p className="mt-1 text-xs uppercase tracking-[0.1em] text-white/48">美国 · 加拿大 · 墨西哥</p>
+                </div>
+                <div className="flex justify-end pt-7 sm:hidden">
+                  <img
+                    src="/logos/world-cup-2026-inverted.svg"
+                    alt=""
+                    className="site-logo-dark pointer-events-none h-[88px] w-auto object-contain opacity-90 drop-shadow-[0_12px_34px_rgba(0,0,0,.55)]"
+                    aria-hidden="true"
+                  />
+                  <img
+                    src="/logos/world-cup-2026-alternate.svg"
+                    alt=""
+                    className="site-logo-light pointer-events-none h-[88px] w-auto object-contain opacity-90 drop-shadow-[0_12px_34px_rgba(0,0,0,.18)]"
+                    aria-hidden="true"
+                  />
+                </div>
               </div>
               <div className="flex gap-2">
                 <a href={calendarUrl} className="group inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-white/[0.035] px-3 py-2.5 text-xs font-semibold uppercase text-white ring-1 ring-volt/35 transition hover:bg-volt hover:text-black hover:shadow-[0_0_28px_rgba(216,255,62,.28)]"><Download className="h-4 w-4 text-volt transition group-hover:text-black" />下载日历</a>

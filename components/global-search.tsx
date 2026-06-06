@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, CalendarDays, ExternalLink, Newspaper, Search, Shield, UserRound, X } from "lucide-react";
+import { ArrowRight, CalendarDays, Newspaper, Search, Shield, UserRound, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -13,6 +13,8 @@ import {
   type SearchNewsItem,
   type SearchResultItem,
 } from "@/lib/global-search";
+import { UserActionButton } from "@/components/user-action-button";
+import { userApi, type UserHomePayload } from "@/lib/user-system";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
 
 type NewsResponse = {
@@ -21,12 +23,27 @@ type NewsResponse = {
 
 const NEWS_API = process.env.NEXT_PUBLIC_NEWS_API_URL || "https://news.20250114.xyz";
 
+type SavedSearchItems = {
+  teamIds: Set<string>;
+  teamNames: Set<string>;
+  playerIds: Set<string>;
+  matchIds: Set<string>;
+};
+
+const emptySavedItems = (): SavedSearchItems => ({
+  teamIds: new Set(),
+  teamNames: new Set(),
+  playerIds: new Set(),
+  matchIds: new Set(),
+});
+
 export function GlobalSearchDrawerCard({ onNavigate }: { onNavigate?: () => void }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const { matches } = useWorldCupData();
   const [query, setQuery] = useState("");
   const [news, setNews] = useState<SearchNewsItem[]>([]);
+  const [savedItems, setSavedItems] = useState<SavedSearchItems>(() => emptySavedItems());
 
   useEffect(() => {
     window.requestAnimationFrame(() => inputRef.current?.focus());
@@ -51,8 +68,22 @@ export function GlobalSearchDrawerCard({ onNavigate }: { onNavigate?: () => void
     };
   }, [news.length]);
 
+  useEffect(() => {
+    let alive = true;
+    userApi<UserHomePayload>("/api/me/home", { cache: "no-store" })
+      .then((home) => {
+        if (alive) setSavedItems(buildSavedSearchItems(home));
+      })
+      .catch(() => {
+        if (alive) setSavedItems(emptySavedItems());
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   const results = useMemo(() => buildGlobalSearchResults(query, matches, news), [matches, news, query]);
-  const suggestions = useMemo(() => buildSuggestions(results), [results]);
+  const suggestions = useMemo(() => buildSuggestions(results, savedItems), [results, savedItems]);
 
   const submitSearch = (event?: FormEvent) => {
     event?.preventDefault();
@@ -108,7 +139,7 @@ export function GlobalSearchDrawerCard({ onNavigate }: { onNavigate?: () => void
             {suggestions.map((item, index) => (
               <div key={`${item.type}-${item.id}`} className="relative">
                 {index > 0 ? <div className="absolute left-[3.875rem] right-0 top-0 border-t border-white/[0.08]" /> : null}
-                <SuggestionRow item={item} onNavigate={closeAfterNavigate} thumbnailShape="circle" />
+                <SuggestionRow item={item} onNavigate={closeAfterNavigate} />
               </div>
             ))}
           </div>
@@ -134,6 +165,7 @@ export function GlobalSearch() {
   const [focused, setFocused] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [news, setNews] = useState<SearchNewsItem[]>([]);
+  const [savedItems, setSavedItems] = useState<SavedSearchItems>(() => emptySavedItems());
 
   useEffect(() => {
     setFocused(false);
@@ -159,8 +191,23 @@ export function GlobalSearch() {
     };
   }, [focused, news.length]);
 
+  useEffect(() => {
+    if (!focused) return;
+    let alive = true;
+    userApi<UserHomePayload>("/api/me/home", { cache: "no-store" })
+      .then((home) => {
+        if (alive) setSavedItems(buildSavedSearchItems(home));
+      })
+      .catch(() => {
+        if (alive) setSavedItems(emptySavedItems());
+      });
+    return () => {
+      alive = false;
+    };
+  }, [focused]);
+
   const results = useMemo(() => buildGlobalSearchResults(query, matches, news), [matches, news, query]);
-  const suggestions = useMemo(() => buildSuggestions(results), [results]);
+  const suggestions = useMemo(() => buildSuggestions(results, savedItems), [results, savedItems]);
   const showSuggestions = focused && (query.trim().length > 0 || suggestions.length > 0);
 
   const submitSearch = (event?: FormEvent) => {
@@ -189,7 +236,7 @@ export function GlobalSearch() {
   };
 
   return (
-    <div className="relative hidden h-10 w-10 shrink-0 xl:block" onMouseDown={keepOpen}>
+    <div className="relative hidden h-8 w-8 shrink-0 xl:block" onMouseDown={keepOpen}>
       <AnimatePresence initial={false} mode="popLayout">
         {!expanded ? (
           <button
@@ -197,7 +244,7 @@ export function GlobalSearch() {
             type="button"
             onClick={openSearch}
             aria-label="打开全局搜索"
-            className="group absolute right-0 top-0 flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.06] text-white/60 ring-1 ring-white/[0.08] transition-all duration-200 hover:bg-white/[0.1] hover:text-white hover:ring-volt/35"
+            className="group absolute right-0 top-0 flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-white/60 ring-1 ring-white/[0.08] transition-all duration-200 hover:bg-white/[0.1] hover:text-white hover:ring-volt/35"
           >
             <Search className="h-4 w-4 transition duration-300 group-hover:scale-110 group-hover:text-volt" />
           </button>
@@ -214,7 +261,7 @@ export function GlobalSearch() {
             exit={{ width: 36, opacity: 0, scaleX: 0.78 }}
             transition={{ type: "spring", stiffness: 360, damping: 34 }}
             style={{ transformOrigin: "right center" }}
-            className="group absolute right-0 top-0 z-[220] flex h-10 items-center gap-2 overflow-hidden rounded-full bg-[#070a10]/92 px-3 ring-1 ring-white/[0.1] shadow-[0_16px_48px_rgba(0,0,0,.28),0_0_28px_rgba(216,255,62,.08)] backdrop-blur-2xl focus-within:ring-volt/42"
+            className="group absolute right-0 top-0 z-[220] flex h-8 items-center gap-2 overflow-hidden rounded-full bg-[#070a10]/92 px-3 ring-1 ring-white/[0.1] shadow-[0_16px_48px_rgba(0,0,0,.28),0_0_28px_rgba(216,255,62,.08)] backdrop-blur-2xl focus-within:ring-volt/42"
           >
             <Search className="h-4 w-4 shrink-0 text-volt/75" />
             <input
@@ -286,17 +333,16 @@ export function GlobalSearch() {
 function SuggestionRow({
   item,
   onNavigate,
-  thumbnailShape = "soft",
 }: {
   item: SearchResultItem;
   onNavigate: () => void;
-  thumbnailShape?: "soft" | "circle";
 }) {
+  const [hidden, setHidden] = useState(false);
   const Icon = item.type === "teams" ? Shield : item.type === "players" ? UserRound : item.type === "matches" ? CalendarDays : Newspaper;
-  const thumbnailClassName = thumbnailShape === "circle" ? "rounded-full" : "rounded-2xl";
+  const actionKind = item.type === "teams" ? "team" : item.type === "players" ? "player" : item.type === "matches" ? "match" : null;
   const content = (
-    <>
-      <div className={`relative h-10 w-10 shrink-0 overflow-hidden bg-white/[0.055] ring-1 ring-white/[0.08] ${thumbnailClassName}`}>
+    <Link href={item.href} onClick={onNavigate} className="group/link flex min-w-0 flex-1 items-center gap-3">
+      <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-white/[0.055] ring-1 ring-white/[0.08]">
         {item.image ? (
           <Image src={item.image} alt="" fill sizes="40px" className="object-cover" />
         ) : (
@@ -307,42 +353,84 @@ function SuggestionRow({
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 items-center gap-2">
-          <p className="truncate text-sm font-black text-white transition group-hover:text-volt">{item.title}</p>
+          <p className="truncate text-sm font-black text-white transition group-hover/link:text-volt">{item.title}</p>
           <span className="shrink-0 rounded-full bg-volt/[0.14] px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-volt">
             {labelByType(item.type)}
           </span>
         </div>
         <p className="mt-0.5 truncate text-xs text-white/72">{item.eyebrow || item.description}</p>
       </div>
-      {item.external ? <ExternalLink className="h-3.5 w-3.5 shrink-0 text-white/58 transition group-hover:text-volt" /> : <ArrowRight className="h-3.5 w-3.5 shrink-0 text-white/58 transition group-hover:text-volt" />}
-    </>
+    </Link>
   );
 
-  const className = "group flex items-center gap-3 px-2.5 py-3 transition hover:bg-white/[0.045]";
-
-  if (item.external) {
-    return (
-      <a href={item.href} target="_blank" rel="noreferrer" onClick={onNavigate} className={className}>
-        {content}
-      </a>
-    );
-  }
+  if (hidden) return null;
 
   return (
-    <Link href={item.href} onClick={onNavigate} className={className}>
+    <div className="group flex items-center gap-3 px-2.5 py-3 transition hover:bg-white/[0.045]">
       {content}
-    </Link>
+      {actionKind ? (
+        <UserActionButton
+          kind={actionKind}
+          payload={buildActionPayload(item)}
+          className="h-8 shrink-0 px-3 text-[10px] tracking-[0.08em]"
+          onChanged={(active) => {
+            if (active) setHidden(true);
+          }}
+        />
+      ) : null}
+    </div>
   );
 }
 
-function buildSuggestions(results: Record<SearchCategory, SearchResultItem[]>) {
+function buildSuggestions(results: Record<SearchCategory, SearchResultItem[]>, savedItems: SavedSearchItems) {
   const picked: SearchResultItem[] = [];
 
-  for (const tab of searchTabs) {
-    picked.push(...results[tab.id].slice(0, 2));
+  for (const tab of searchTabs.filter((tab) => tab.id !== "news")) {
+    picked.push(...results[tab.id].filter((item) => !isSavedSearchItem(item, savedItems)).slice(0, 2));
   }
 
   return picked.slice(0, 8);
+}
+
+function buildSavedSearchItems(home: UserHomePayload): SavedSearchItems {
+  return {
+    teamIds: new Set(home.user.followedTeams.map((item) => normalizeSavedKey(item.id))),
+    teamNames: new Set(home.user.followedTeams.map((item) => normalizeSavedKey(item.name))),
+    playerIds: new Set(home.user.followedPlayers.map((item) => normalizeSavedKey(item.id))),
+    matchIds: new Set(home.user.favoriteMatches.map((item) => normalizeSavedKey(item.id))),
+  };
+}
+
+function isSavedSearchItem(item: SearchResultItem, savedItems: SavedSearchItems) {
+  if (item.type === "teams") {
+    return savedItems.teamIds.has(normalizeSavedKey(item.id)) || savedItems.teamNames.has(normalizeSavedKey(item.title));
+  }
+
+  if (item.type === "players") {
+    return savedItems.playerIds.has(normalizeSavedKey(item.id));
+  }
+
+  if (item.type === "matches") {
+    return savedItems.matchIds.has(normalizeSavedKey(item.id));
+  }
+
+  return false;
+}
+
+function normalizeSavedKey(value: string | number | null | undefined) {
+  return String(value ?? "").trim().toLowerCase();
+}
+
+function buildActionPayload(item: SearchResultItem) {
+  if (item.type === "teams") {
+    return { id: item.id, name: item.title, region: item.eyebrow.split(" ")[0], logo: item.image };
+  }
+
+  if (item.type === "players") {
+    return { id: item.id, name: item.title, team: item.eyebrow.split(" ")[0], photo: item.image };
+  }
+
+  return { id: item.id, matchId: item.id, title: item.title, stage: item.eyebrow.split(" ")[0] };
 }
 
 function firstResultTab(results: Record<SearchCategory, SearchResultItem[]>): SearchCategory {

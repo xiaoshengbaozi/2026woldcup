@@ -25,6 +25,7 @@ import { BackToTopButton } from "@/components/back-to-top-button";
 import { MobileSecondaryPageActions } from "@/components/mobile-secondary-page-actions";
 import { MobileNavBar } from "@/components/mobile-nav-bar";
 import { NavBar } from "@/components/nav-bar";
+import { SiteFooter } from "@/components/site-footer";
 import { UserActionButton } from "@/components/user-action-button";
 import { localizeClubName, localizeCountryName } from "@/lib/football-localization-client";
 import { getTeamLandscapePathByCode } from "@/lib/team-landscapes";
@@ -256,7 +257,7 @@ export function PlayerProfileClient({ playerId, nameHint, row, article }: Props)
           <UserActionButton
             kind="player"
             payload={followPayload}
-            className="h-[34px] whitespace-nowrap px-3 text-[10px] shadow-[0_14px_34px_rgba(0,0,0,.38),0_0_20px_rgba(216,255,62,.1),inset_0_1px_0_rgba(255,255,255,.16)] backdrop-blur-2xl"
+            iconOnly
           />
         }
       />
@@ -646,18 +647,7 @@ export function PlayerProfileClient({ playerId, nameHint, row, article }: Props)
                 </div>
               </div>
 
-              {/* ── Bottom Info Row ── */}
-              <div className="flex flex-wrap items-center justify-between gap-4 hero-card px-6 py-4">
-                <div className="flex items-center gap-6 text-xs text-white/35">
-                  <span>
-                    API ID: <span className="font-mono text-white/55">{playerId}</span>
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wider text-volt/30">
-                  <Sparkles className="h-3 w-3" />
-                  Powered by API-Football
-                </div>
-              </div>
+              <SiteFooter />
 
             </motion.div>
           )}

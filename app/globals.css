@@ -139,6 +139,18 @@ button {
     font-variant-numeric: tabular-nums;
   }
 
+  .site-logo-light {
+    display: none;
+  }
+
+  [data-theme="light"] .site-logo-dark {
+    display: none;
+  }
+
+  [data-theme="light"] .site-logo-light {
+    display: block;
+  }
+
   .hero-shell,
   .hero-card {
     position: relative;

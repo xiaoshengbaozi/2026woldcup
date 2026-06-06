@@ -6,6 +6,7 @@ import { BackToTopButton } from "./back-to-top-button";
 import { NavBar } from "./nav-bar";
 import { MobileMeEntry } from "./mobile-me-entry";
 import { MobileNavBar } from "./mobile-nav-bar";
+import { SiteFooter } from "./site-footer";
 import { UserNotificationToast } from "./user-notification-toast";
 
 const PRIMARY_PAGES = new Set(["/", "/news", "/data", "/matches", "/players", "/me", "/teams"]);
@@ -26,6 +27,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-5">
         <NavBar />
         {children}
+        <SiteFooter />
       </div>
       {hasMobileMeEntry && <MobileMeEntry />}
       <UserNotificationToast />

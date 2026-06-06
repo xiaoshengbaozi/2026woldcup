@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
-import { generateMatchSlug, findMatchBySlug } from "@/lib/match-detail";
+import { findMatchBySlug } from "@/lib/match-detail";
 import { generateMatchDetail } from "@/lib/match-detail-mock";
 import { buildMatchRoundLabels } from "@/lib/stage-rounds";
 import { fetchWorldCupHeadToHead } from "@/lib/world-cup-head-to-head";
@@ -19,16 +19,20 @@ export function useMatchDetail(slug: string): {
   loading: boolean;
   error: string | null;
 } {
-  const { matches, loading, error } = useWorldCupData();
+  const { matches, warmupMatches, loading, warmupLoading, error, warmupError } = useWorldCupData();
   const [remoteSquads, setRemoteSquads] = useState<Map<number, WorldCupSquadDetail> | null>(null);
   const [remoteHeadToHead, setRemoteHeadToHead] = useState<HeadToHeadMatch[] | null>(null);
+  const isWarmupSlug = slug.startsWith("warmup-");
+  const lookupMatches = isWarmupSlug ? warmupMatches : matches;
+  const lookupLoading = isWarmupSlug ? warmupLoading : loading;
+  const lookupError = isWarmupSlug ? warmupError : error;
 
   const match = useMemo(() => {
-    if (loading || error || !matches.length) return null;
-    return findMatchBySlug(matches, slug) ?? null;
-  }, [matches, loading, error, slug]);
+    if (lookupLoading || lookupError || !lookupMatches.length) return null;
+    return findMatchBySlug(lookupMatches, slug) ?? null;
+  }, [lookupError, lookupLoading, lookupMatches, slug]);
 
-  const roundLabels = useMemo(() => buildMatchRoundLabels(matches), [matches]);
+  const roundLabels = useMemo(() => buildMatchRoundLabels(lookupMatches), [lookupMatches]);
 
   useEffect(() => {
     let active = true;
@@ -111,7 +115,7 @@ export function useMatchDetail(slug: string): {
 
   return {
     detail,
-    loading,
-    error: error || (!loading && !detail && matches.length > 0 ? "未找到该比赛" : null),
+    loading: lookupLoading,
+    error: lookupError || (!lookupLoading && !detail && lookupMatches.length > 0 ? "未找到该比赛" : null),
   };
 }

@@ -11,6 +11,7 @@ import { renderAdminPageHtml } from "./adminPage";
 import { deleteLiveChannel, getPublicLiveChannels, readLiveChannels, upsertLiveChannel } from "./liveChannels";
 import type { CountryData, MatchLinesResponse } from "./types";
 import { getWorldCupPlayerProfile, getWorldCupTopScorers } from "./playerProfileData";
+import { getSiteAnalyticsStats, recordSiteHeartbeat, recordSiteVisit } from "./siteAnalytics";
 import {
   getWorldCupFixtures,
   getWorldCupLiveFixtures,
@@ -18,11 +19,14 @@ import {
   getWorldCupRounds,
   getWorldCupSquads,
   getWorldCupStandings,
+  getWorldCupWarmupFixtures,
 } from "./worldCupData";
 
 const execFileAsync = promisify(execFile);
 const NEWS_SERVICE_DIR = process.env.NEWS_SERVICE_DIR || "/opt/worldcup-news";
 const NEWS_SERVICE_ENV_FILE = process.env.NEWS_SERVICE_ENV_FILE || `${NEWS_SERVICE_DIR}/.env`;
+const DEFAULT_ADMIN_USERNAME = "admin";
+const DEFAULT_ADMIN_PASSWORD = "worldcup2026-admin";
 
 interface HttpServerOptions {
   snapshotCache: SnapshotCache;
@@ -44,6 +48,8 @@ interface HttpServerOptions {
 }
 
 export function createHttpServer(options: HttpServerOptions) {
+  assertProductionAdminCredentials();
+
   return http.createServer((req, res) => {
     setCorsHeaders(req, res);
 
@@ -92,6 +98,13 @@ export function createHttpServer(options: HttpServerOptions) {
 
     if (req.method === "GET" && (pathname === "/admin" || pathname === "/admini")) {
       sendHtml(res, renderAdminPage());
+      return;
+    }
+
+    if (url.pathname === "/api/site-analytics") {
+      handleSiteAnalyticsRequest(req, res).catch((error: Error & { statusCode?: number }) => {
+        sendJson(res, { error: error.message || "site_analytics_failed" }, error.statusCode ?? 500);
+      });
       return;
     }
 
@@ -208,6 +221,29 @@ export function createHttpServer(options: HttpServerOptions) {
   });
 }
 
+async function handleSiteAnalyticsRequest(req: http.IncomingMessage, res: http.ServerResponse) {
+  if (req.method === "GET") {
+    sendJson(res, await getSiteAnalyticsStats());
+    return;
+  }
+
+  if (req.method !== "POST") {
+    sendJson(res, { error: "method_not_allowed" }, 405);
+    return;
+  }
+
+  const body = await readJsonBody(req);
+  const sessionId = typeof body.sessionId === "string" ? body.sessionId : "";
+  const action = body.action === "heartbeat" ? "heartbeat" : "view";
+
+  if (action === "heartbeat") {
+    sendJson(res, await recordSiteHeartbeat(sessionId));
+    return;
+  }
+
+  sendJson(res, await recordSiteVisit(sessionId));
+}
+
 function handleWorldCupRequest(
   apiFootball: ApiFootballService | undefined,
   url: URL,
@@ -227,6 +263,7 @@ function handleWorldCupRequest(
     "/api/worldcup/player-profile": getWorldCupPlayerProfile,
     "/api/worldcup/top-scorers": getWorldCupTopScorers,
     "/api/worldcup/squads": getWorldCupSquads,
+    "/api/worldcup/warmups": getWorldCupWarmupFixtures,
   };
 
   const handler = handlers[url.pathname.replace(/\/+$/, "")];
@@ -323,7 +360,17 @@ function isAdminAuthorized(req: http.IncomingMessage) {
 
   const username = decoded.slice(0, separatorIndex);
   const password = decoded.slice(separatorIndex + 1);
-  return safeEqual(username, process.env.ADMIN_USERNAME || "admin") && safeEqual(password, process.env.ADMIN_PASSWORD || "worldcup2026-admin");
+  return safeEqual(username, process.env.ADMIN_USERNAME || DEFAULT_ADMIN_USERNAME) && safeEqual(password, process.env.ADMIN_PASSWORD || DEFAULT_ADMIN_PASSWORD);
+}
+
+function assertProductionAdminCredentials() {
+  if (process.env.NODE_ENV !== "production") return;
+
+  if (!process.env.ADMIN_USERNAME || !process.env.ADMIN_PASSWORD) {
+    throw new Error(
+      "ADMIN_USERNAME and ADMIN_PASSWORD must be set when NODE_ENV=production."
+    );
+  }
 }
 
 function safeEqual(value: string, expected: string) {

@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { CalendarDays, Check, ChevronDown, Clock, GitFork, Grid3X3, Layers, LayoutList, MapPin, Search } from "lucide-react";
 import { ComponentType, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import type { ScheduleLayout } from "@/app/matches/page";
+import type { ScheduleLayout, ScheduleMatchSource } from "@/app/matches/page";
 import { formatStageLabel, getStageGroupId, rankStage } from "@/lib/stage";
 
 type Timezone = {
@@ -22,6 +22,7 @@ const timezones: Timezone[] = [
 
 type MatchFiltersProps = {
   query: string;
+  matchSource: ScheduleMatchSource;
   stage: string;
   stages: string[];
   activeCity: string;
@@ -29,6 +30,7 @@ type MatchFiltersProps = {
   timezoneOffset: number;
   layout: ScheduleLayout;
   onQueryChange: (value: string) => void;
+  onMatchSourceChange: (value: ScheduleMatchSource) => void;
   onStageChange: (value: string) => void;
   onCityChange: (value: string) => void;
   onTimezoneChange: (offset: number) => void;
@@ -73,6 +75,7 @@ function sortStages(stages: string[]): string[] {
 
 export function MatchFilters({
   query,
+  matchSource,
   stage,
   stages,
   activeCity,
@@ -80,6 +83,7 @@ export function MatchFilters({
   timezoneOffset,
   layout,
   onQueryChange,
+  onMatchSourceChange,
   onStageChange,
   onCityChange,
   onTimezoneChange,
@@ -111,6 +115,8 @@ export function MatchFilters({
       transition={{ delay: 0.08, duration: 0.65 }}
       className="relative z-[10000] flex items-center gap-2 sm:z-20 sm:flex-wrap sm:gap-3"
     >
+      <MatchSourceToggle value={matchSource} onChange={onMatchSourceChange} />
+
       <label className="glass-chip flex h-10 min-w-0 flex-1 items-center gap-2 px-4 text-white/70 transition focus-within:text-white sm:gap-3 sm:px-5">
         <Search className="h-5 w-5 shrink-0 text-volt/80" />
         <input
@@ -158,6 +164,39 @@ export function MatchFilters({
         />
       </div>
     </motion.section>
+  );
+}
+
+function MatchSourceToggle({
+  value,
+  onChange
+}: {
+  value: ScheduleMatchSource;
+  onChange: (value: ScheduleMatchSource) => void;
+}) {
+  const options: { value: ScheduleMatchSource; label: string }[] = [
+    { value: "official", label: "\u6b63\u8d5b" },
+    { value: "warmups", label: "\u70ed\u8eab" },
+  ];
+
+  return (
+    <div className="glass-chip flex h-10 shrink-0 items-center overflow-hidden p-1">
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          data-match-source={option.value}
+          onClick={() => onChange(option.value)}
+          className={`h-8 rounded-full px-3 text-[11px] font-semibold transition-all duration-150 sm:px-4 ${
+            value === option.value
+              ? "bg-volt/10 text-volt ring-1 ring-volt/25 shadow-[0_0_18px_rgba(216,255,62,.12)]"
+              : "text-white/50 hover:text-white/78"
+          }`}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
   );
 }
 

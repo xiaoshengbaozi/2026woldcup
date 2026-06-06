@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowUpRight, Globe2 } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import {
   continentOrder,
   qualifiedTeams,
@@ -81,12 +81,7 @@ export function TeamsIndex() {
     <main className="relative min-h-screen overflow-hidden py-8 text-white">
       <div className="relative">
         <section className="scroll-mt-24">
-          <div className="mb-5 flex flex-col gap-4 px-1">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-volt/85">
-              <Globe2 className="h-4 w-4" />
-              Qualified Teams
-            </div>
-
+          <div className="mb-4 flex flex-col gap-3 px-1">
             <div
               ref={sentinelRef}
               className="sm:hidden"

@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowRight, Sparkles, Table } from "lucide-react";
+import { Sparkles, Table } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { getStageGroupId } from "@/lib/stage";
@@ -74,21 +74,14 @@ export function GroupStandings({ matches }: GroupStandingsProps) {
           <h2 className="text-sm font-semibold uppercase tracking-[0.08em] text-white">
             小组积分榜
           </h2>
-          <Link
-            href="/predict"
-            className="group inline-flex items-center gap-1.5 rounded-full bg-volt/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-volt ring-1 ring-volt/20 transition hover:bg-volt hover:text-black hover:shadow-[0_0_24px_rgba(216,255,62,0.24)]"
-          >
-            <Sparkles className="h-3.5 w-3.5 transition group-hover:scale-110" />
-            我要预测
-          </Link>
         </div>
-        <a
-          href="/matches/"
-          className="group inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/50 transition hover:text-volt"
+        <Link
+          href="/predict"
+          className="group inline-flex items-center gap-1.5 rounded-full bg-volt/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-volt ring-1 ring-volt/20 transition hover:bg-volt hover:text-black hover:shadow-[0_0_24px_rgba(216,255,62,0.24)]"
         >
-          查看全部
-          <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
-        </a>
+          <Sparkles className="h-3.5 w-3.5 transition group-hover:scale-110" />
+          我要预测
+        </Link>
       </div>
 
       <div className="relative grid gap-3 md:grid-cols-2 xl:grid-cols-4">

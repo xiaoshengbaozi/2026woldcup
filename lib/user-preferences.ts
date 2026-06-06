@@ -1,4 +1,5 @@
 import officialSquadsData from "@/data/fifa-official-squads.json";
+import { getApiSportsPlayerPhoto } from "@/lib/player-photo-overrides";
 
 export type UserPreferenceTeam = {
   id: string;
@@ -159,7 +160,7 @@ function buildOfficialPreferenceCatalog() {
         name,
         team: teamName,
         position: normalizePosition(player.position),
-        photo: apiFootballId ? `https://media.api-sports.io/football/players/${apiFootballId}.png` : undefined,
+        photo: apiFootballId ? getApiSportsPlayerPhoto(apiFootballId) : undefined,
       });
     }
   }

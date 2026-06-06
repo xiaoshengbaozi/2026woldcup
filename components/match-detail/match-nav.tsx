@@ -2,15 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 
-export type MatchTab = "live" | "lineup" | "odds" | "timeline" | "stats" | "h2h";
+export type MatchTab = "lineup" | "live" | "stats" | "analysis";
 
 const NAV_ITEMS: { id: MatchTab; label: string }[] = [
-  { id: "live", label: "直播" },
   { id: "lineup", label: "阵容" },
-  { id: "odds", label: "赔率" },
-  { id: "timeline", label: "事件" },
+  { id: "live", label: "直播" },
   { id: "stats", label: "统计" },
-  { id: "h2h", label: "交锋" },
+  { id: "analysis", label: "分析" },
 ];
 
 const MOBILE_TOP_MODULE_OFFSET = 66;

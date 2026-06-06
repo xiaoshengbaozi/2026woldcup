@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 
 type StatCardProps = {
@@ -7,13 +8,14 @@ type StatCardProps = {
   detail: string;
   icon: LucideIcon;
   accent?: boolean;
+  href?: string;
 };
 
-export function StatCard({ label, value, detail: _detail, icon: Icon, accent = false }: StatCardProps) {
+export function StatCard({ label, value, detail: _detail, icon: Icon, accent = false, href }: StatCardProps) {
   const parts = typeof value === "string" ? value.split("/") : null;
   const isFraction = parts && parts.length === 2;
 
-  return (
+  const card = (
     <motion.div
       whileHover={{ y: -4, scale: 1.01 }}
       transition={{ type: "spring", stiffness: 260, damping: 22 }}
@@ -67,5 +69,13 @@ export function StatCard({ label, value, detail: _detail, icon: Icon, accent = f
         </p>
       </div>
     </motion.div>
+  );
+
+  if (!href) return card;
+
+  return (
+    <Link href={href} className="block rounded-[1.5rem] outline-none focus-visible:ring-2 focus-visible:ring-volt/60">
+      {card}
+    </Link>
   );
 }

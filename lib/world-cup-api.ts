@@ -87,6 +87,26 @@ export async function fetchWorldCupFixtures(options: { season?: number; league?:
   return (payload.fixtures ?? []).map(toMatch);
 }
 
+export async function fetchWorldCupWarmupFixtures(options: { season?: number; league?: number; from?: string; to?: string } = {}) {
+  const apiUrl = getBackendApiUrl();
+  const params = new URLSearchParams({
+    season: String(options.season ?? 2026),
+  });
+
+  if (options.league) params.set("league", String(options.league));
+  if (options.from) params.set("from", options.from);
+  if (options.to) params.set("to", options.to);
+
+  const response = await fetch(`${apiUrl}/api/worldcup/warmups?${params}`, { cache: "no-store" });
+  const payload = (await response.json()) as FixturesResponse & { error?: string };
+
+  if (!response.ok) {
+    throw new Error(payload.error || `World Cup warmup fixtures returned ${response.status}`);
+  }
+
+  return (payload.fixtures ?? []).map(toMatch);
+}
+
 export async function fetchWorldCupStandings(options: { season?: number; league?: number } = {}) {
   const apiUrl = getBackendApiUrl();
   const params = new URLSearchParams({

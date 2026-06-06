@@ -271,7 +271,7 @@ export function TeamProfile({ data }: TeamProfileProps) {
           <UserActionButton
             kind="team"
             payload={followPayload}
-            className="h-[34px] whitespace-nowrap px-3 text-[10px] shadow-[0_14px_34px_rgba(0,0,0,.38),0_0_20px_rgba(216,255,62,.1),inset_0_1px_0_rgba(255,255,255,.16)] backdrop-blur-2xl"
+            iconOnly
           />
         }
       />

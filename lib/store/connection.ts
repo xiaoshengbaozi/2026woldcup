@@ -21,7 +21,8 @@ export const createConnectionSlice: StateCreator<
   updateCount: 0,
   latency: 0,
 
-  setStatus: (status) => set({ status }),
+  setStatus: (status) =>
+    set((state) => (state.status === status ? state : { status })),
 
   recordUpdate: (timestamp, latency) =>
     set((state) => ({

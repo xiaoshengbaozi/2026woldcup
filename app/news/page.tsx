@@ -47,6 +47,8 @@ type ArticleResponse = {
     translated: boolean;
     model: string;
     target: string;
+    failed?: boolean;
+    error?: string;
   };
 };
 
@@ -65,6 +67,7 @@ const mobileNewsTabs: { id: NewsTabId; title: string; label: string }[] = [
 const MOBILE_TOP_MODULE_OFFSET = 66;
 
 const dateFormatter = new Intl.DateTimeFormat("zh-CN", {
+  timeZone: "Asia/Shanghai",
   month: "short",
   day: "numeric",
   hour: "2-digit",
@@ -72,6 +75,7 @@ const dateFormatter = new Intl.DateTimeFormat("zh-CN", {
 });
 
 const timeFormatter = new Intl.DateTimeFormat("zh-CN", {
+  timeZone: "Asia/Shanghai",
   hour: "2-digit",
   minute: "2-digit",
 });
@@ -348,11 +352,11 @@ export default function NewsPage() {
                 event.preventDefault();
                 openReader(heroItem);
               }}
-              className="hero-card group relative overflow-hidden transition-all duration-300 hover:-translate-y-1"
+              className="hero-card group relative min-h-[400px] overflow-hidden bg-white/[0.035] transition-all duration-300 hover:-translate-y-1"
             >
               <NewsImage
                 src={heroItem.image}
-                imageClassName="h-[400px] w-full object-cover opacity-80 transition duration-500 group-hover:scale-105 group-hover:opacity-100"
+                imageClassName="block h-[400px] w-full object-cover opacity-80 transition duration-500 group-hover:scale-105 group-hover:opacity-100"
                 fallbackClassName="flex h-[400px] items-center justify-center bg-[radial-gradient(circle_at_50%_30%,rgba(216,255,62,0.16),transparent_36%)]"
                 iconClassName="h-12 w-12 text-volt/50"
               />
@@ -804,6 +808,12 @@ function NewsReader({
             <h1 className="text-2xl font-semibold leading-tight text-white sm:text-4xl">{title}</h1>
             {(article?.excerpt || item.summary) && (
               <p className="mt-4 text-sm leading-7 text-white/55 sm:text-base">{article?.excerpt || item.summary}</p>
+            )}
+
+            {article?.translation?.failed && (
+              <div className="mt-5 rounded-3xl bg-flare/10 p-4 text-sm leading-6 text-white/62 ring-1 ring-flare/25">
+                正文已解析成功，但本次翻译返回格式异常，已先显示原文内容。
+              </div>
             )}
 
             {loading && (

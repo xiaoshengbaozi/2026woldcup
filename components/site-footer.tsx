@@ -1,0 +1,69 @@
+"use client";
+
+import type { ReactNode } from "react";
+import { Eye, UsersRound } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { getSiteAnalyticsSessionId, sendSiteAnalytics, type SiteAnalyticsStats } from "@/lib/site-analytics";
+
+export function SiteFooter() {
+  const pathname = usePathname();
+  const [stats, setStats] = useState<SiteAnalyticsStats | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const sessionId = getSiteAnalyticsSessionId();
+
+    const syncStats = (action: "view" | "heartbeat") => {
+      sendSiteAnalytics(action, sessionId)
+        .then((nextStats) => {
+          if (active) setStats(nextStats);
+        })
+        .catch((error) => {
+          console.warn("[SiteFooter] analytics unavailable:", error);
+        });
+    };
+
+    syncStats("view");
+    const interval = window.setInterval(() => syncStats("heartbeat"), 30_000);
+
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, [pathname]);
+
+  return (
+    <footer className="hero-card hidden overflow-hidden lg:block">
+      <div className="relative z-10 flex h-[var(--ticker-height)] items-center justify-end overflow-hidden border-b border-white/[0.04]">
+        <FooterStat icon={<Eye className="h-3.5 w-3.5" />} label="今日浏览" value={formatStat(stats?.todayViews)} />
+        <FooterStat icon={<UsersRound className="h-3.5 w-3.5" />} label="在线用户" value={formatStat(stats?.onlineUsers)} live />
+      </div>
+    </footer>
+  );
+}
+
+function FooterStat({
+  icon,
+  label,
+  value,
+  live,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+  live?: boolean;
+}) {
+  return (
+    <div className="flex h-full shrink-0 items-center gap-2 border-l border-white/[0.06] px-4 text-white/55">
+      <span className="text-volt/55">{icon}</span>
+      <span className="whitespace-nowrap text-[10px] text-white/32">{label}</span>
+      <span className="font-mono text-[11px] font-black tabular-nums text-white/78">{value}</span>
+      {live && <span className="h-1.5 w-1.5 rounded-full bg-volt shadow-[0_0_12px_rgba(216,255,62,.65)]" />}
+    </div>
+  );
+}
+
+function formatStat(value: number | undefined) {
+  return typeof value === "number" ? value.toLocaleString("en-US") : "--";
+}

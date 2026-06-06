@@ -36,18 +36,21 @@ export function MatchStats({
         detail="筛选 / 全部"
         icon={Trophy}
         accent
+        href="/matches"
       />
       <StatCard
         label="比赛日"
         value={`${remainingMatchDays}/${totalMatchDays}`}
         detail="剩余 / 全部"
         icon={CalendarDays}
+        href="/matches"
       />
       <StatCard
         label="球队"
         value={`${activeTeamCount}/${totalTeamCount}`}
         detail="未淘汰 / 全部"
         icon={Flag}
+        href="/teams"
       />
       <StatCard
         label="城市"

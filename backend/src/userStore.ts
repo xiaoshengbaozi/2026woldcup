@@ -283,12 +283,15 @@ export class UserStore {
 
   updateProfile(userId: string, profile: Partial<UserProfile>) {
     const user = this.requireUser(userId);
+    const nextAvatarUrl = Object.prototype.hasOwnProperty.call(profile, "avatarUrl")
+      ? profile.avatarUrl || null
+      : user.profile.avatarUrl ?? null;
     user.profile = {
       ...user.profile,
       ...profile,
       displayName: profile.displayName?.trim() || user.profile.displayName,
       avatarPlayerId: profile.avatarPlayerId ?? user.profile.avatarPlayerId ?? "lionel-messi",
-      avatarUrl: profile.avatarUrl ?? user.profile.avatarUrl ?? null,
+      avatarUrl: nextAvatarUrl,
       language: profile.language === "en-US" ? "en-US" : "zh-CN",
     };
     this.touch(user);
@@ -333,6 +336,7 @@ export class UserStore {
   removeFavoriteMatch(userId: string, id: string) {
     const user = this.requireUser(userId);
     user.favoriteMatches = user.favoriteMatches.filter((item) => item.id !== id);
+    user.reminders = user.reminders.filter((item) => item.matchId !== id);
     this.touch(user);
     return user;
   }

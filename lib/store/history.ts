@@ -51,6 +51,8 @@ export const createHistorySlice: StateCreator<
   },
 
   appendHistoryPoint: (countryCode, point) => {
+    if (!point) return;
+
     set((state) => {
       const next = new Map(state.history);
       const existing = next.get(countryCode) ?? [];
@@ -60,6 +62,8 @@ export const createHistorySlice: StateCreator<
   },
 
   appendHistoryPoints: (updates) => {
+    if (!updates.length) return;
+
     set((state) => {
       const next = new Map(state.history);
       for (const update of updates) {

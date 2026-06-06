@@ -42,6 +42,7 @@ type AvatarPickerProps = {
   onPlayerSelect: (id: string) => void;
   onCustomAvatarUrlChange: (url: string) => void;
   onUploadError?: (message: string) => void;
+  variant?: "register" | "settings";
 };
 
 type AvatarUploadPayload = {
@@ -51,12 +52,19 @@ type AvatarUploadPayload = {
   headers: Record<string, string>;
 };
 
-export function AvatarPicker({ selectedPlayerId, customAvatarUrl, onPlayerSelect, onCustomAvatarUrlChange, onUploadError }: AvatarPickerProps) {
+export function AvatarPicker({
+  selectedPlayerId,
+  customAvatarUrl,
+  onPlayerSelect,
+  onCustomAvatarUrlChange,
+  onUploadError,
+  variant = "register",
+}: AvatarPickerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const avatarPlayers = useMemo(() => SUPERSTAR_AVATARS, []);
   const selectedAvatar = customAvatarUrl
-    ? { name: "自定义", image: customAvatarUrl }
+    ? { name: "自定义头像", image: customAvatarUrl }
     : avatarPlayers.find((player) => player.id === selectedPlayerId) ?? avatarPlayers[0];
 
   async function uploadAvatar(file: File) {
@@ -84,6 +92,75 @@ export function AvatarPicker({ selectedPlayerId, customAvatarUrl, onPlayerSelect
     }
   }
 
+  const uploadButton = (
+    <>
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        disabled={uploading}
+        className={`inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-full px-4 text-xs font-bold transition ${
+          customAvatarUrl ? "bg-volt text-black" : "bg-white/[0.06] text-white/72 ring-1 ring-white/10 hover:bg-white/[0.1] hover:text-white"
+        } disabled:opacity-60`}
+      >
+        <Upload className="h-4 w-4" />
+        {uploading ? "上传中" : customAvatarUrl ? "已上传" : "上传头像"}
+      </button>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/gif"
+        className="hidden"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          if (file) void uploadAvatar(file);
+        }}
+      />
+    </>
+  );
+
+  if (variant === "settings") {
+    return (
+      <section className="grid gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full bg-white/[0.06] ring-2 ring-volt/55">
+              <Image src={selectedAvatar.image} alt={selectedAvatar.name} fill sizes="64px" className="object-cover" />
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-xs font-black uppercase tracking-[0.12em] text-white">{selectedAvatar.name}</p>
+              <p className="mt-1 text-xs text-white/45">当前头像预览</p>
+            </div>
+          </div>
+          {uploadButton}
+        </div>
+
+        {customAvatarUrl && (
+          <button
+            type="button"
+            onClick={() => onCustomAvatarUrlChange("")}
+            className="w-full truncate rounded-2xl bg-volt/10 px-3 py-2 text-left text-xs font-semibold text-volt ring-1 ring-volt/25"
+          >
+            正在使用自定义头像，点击切回内置头像
+          </button>
+        )}
+
+        <div>
+          <p className="text-sm font-semibold text-white">选择头像</p>
+          <div className="mt-3 rounded-[1.35rem] bg-white/[0.035] p-3 ring-1 ring-white/10">
+            <AvatarGrid
+              avatars={avatarPlayers}
+              customAvatarUrl={customAvatarUrl}
+              selectedPlayerId={selectedPlayerId}
+              onPlayerSelect={onPlayerSelect}
+              onCustomAvatarUrlChange={onCustomAvatarUrlChange}
+              compact
+            />
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="sm:col-span-2 rounded-[1.5rem] bg-white/[0.035] p-3 ring-1 ring-white/10">
       <div className="grid gap-3 sm:grid-cols-[92px_minmax(0,1fr)]">
@@ -102,27 +179,7 @@ export function AvatarPicker({ selectedPlayerId, customAvatarUrl, onPlayerSelect
               <p className="text-sm font-semibold text-white">选择头像</p>
               <p className="mt-0.5 text-xs text-white/40">内置 26 位巨星头像，也可以上传自己的头像。</p>
             </div>
-            <button
-              type="button"
-              onClick={() => inputRef.current?.click()}
-              disabled={uploading}
-              className={`inline-flex h-10 shrink-0 items-center gap-2 rounded-full px-4 text-xs font-bold transition ${
-                customAvatarUrl ? "bg-volt text-black" : "bg-white/[0.06] text-white/68 ring-1 ring-white/10 hover:bg-white/[0.1] hover:text-white"
-              } disabled:opacity-60`}
-            >
-              <Upload className="h-4 w-4" />
-              {uploading ? "上传中" : customAvatarUrl ? "已上传" : "上传"}
-            </button>
-            <input
-              ref={inputRef}
-              type="file"
-              accept="image/png,image/jpeg,image/webp,image/gif"
-              className="hidden"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) void uploadAvatar(file);
-              }}
-            />
+            {uploadButton}
           </div>
 
           {customAvatarUrl && (
@@ -131,37 +188,63 @@ export function AvatarPicker({ selectedPlayerId, customAvatarUrl, onPlayerSelect
               onClick={() => onCustomAvatarUrlChange("")}
               className="mt-3 w-full truncate rounded-2xl bg-volt/10 px-3 py-2 text-left text-xs font-semibold text-volt ring-1 ring-volt/25"
             >
-              使用自定义头像，点击可切回内置头像
+              正在使用自定义头像，点击切回内置头像
             </button>
           )}
 
-          <div className="mt-3 grid grid-cols-7 gap-2 sm:grid-cols-9 xl:grid-cols-[repeat(13,minmax(0,1fr))]">
-            {avatarPlayers.map((player) => {
-              const active = !customAvatarUrl && selectedPlayerId === player.id;
-              return (
-                <button
-                  key={player.id}
-                  type="button"
-                  title={player.name}
-                  onClick={() => {
-                    onCustomAvatarUrlChange("");
-                    onPlayerSelect(player.id);
-                  }}
-                  className={`relative h-10 w-10 overflow-hidden rounded-full transition ${
-                    active
-                      ? "scale-105 ring-2 ring-volt shadow-[0_0_24px_rgba(216,255,62,.18)]"
-                      : "ring-1 ring-white/12 hover:scale-105 hover:ring-volt/45"
-                  }`}
-                >
-                  <Image src={player.image} alt={player.name} fill sizes="40px" className="object-cover" />
-                  {active && <span className="absolute inset-0 rounded-full ring-2 ring-inset ring-black/30" />}
-                </button>
-              );
-            })}
-          </div>
+          <AvatarGrid
+            avatars={avatarPlayers}
+            customAvatarUrl={customAvatarUrl}
+            selectedPlayerId={selectedPlayerId}
+            onPlayerSelect={onPlayerSelect}
+            onCustomAvatarUrlChange={onCustomAvatarUrlChange}
+          />
         </div>
       </div>
     </section>
+  );
+}
+
+function AvatarGrid({
+  avatars,
+  customAvatarUrl,
+  selectedPlayerId,
+  onPlayerSelect,
+  onCustomAvatarUrlChange,
+  compact = false,
+}: {
+  avatars: typeof SUPERSTAR_AVATARS;
+  customAvatarUrl: string;
+  selectedPlayerId: string;
+  onPlayerSelect: (id: string) => void;
+  onCustomAvatarUrlChange: (url: string) => void;
+  compact?: boolean;
+}) {
+  return (
+    <div className={`grid gap-2 ${compact ? "grid-cols-6 sm:grid-cols-8" : "mt-3 grid-cols-7 sm:grid-cols-9 xl:grid-cols-[repeat(13,minmax(0,1fr))]"}`}>
+      {avatars.map((player) => {
+        const active = !customAvatarUrl && selectedPlayerId === player.id;
+        return (
+          <button
+            key={player.id}
+            type="button"
+            title={player.name}
+            onClick={() => {
+              onCustomAvatarUrlChange("");
+              onPlayerSelect(player.id);
+            }}
+            className={`relative h-10 w-10 overflow-hidden rounded-full transition ${
+              active
+                ? "scale-105 ring-2 ring-volt shadow-[0_0_24px_rgba(216,255,62,.18)]"
+                : "ring-1 ring-white/12 hover:scale-105 hover:ring-volt/45"
+            }`}
+          >
+            <Image src={player.image} alt={player.name} fill sizes="40px" className="object-cover" />
+            {active && <span className="absolute inset-0 rounded-full ring-2 ring-inset ring-black/30" />}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 

@@ -40,15 +40,21 @@ function applySnapshot(message: SnapshotMessage) {
 
 function applyDelta(message: DeltaMessage) {
   const store = useStore.getState();
+  const historyUpdates = message.updates.filter((update) => update.historyPoint);
   unstable_batchedUpdates(() => {
-    store.updateCountriesFromDelta(message.updates);
-    store.appendHistoryPoints(message.updates);
+    const changedCountryCodes = store.updateCountriesFromDelta(message.updates);
+
+    if (historyUpdates.length) {
+      store.appendHistoryPoints(historyUpdates);
+    }
 
     if (message.newEvents.length) {
       store.addEvents(message.newEvents);
     }
 
-    store.recomputeRankings();
+    if (changedCountryCodes.length) {
+      store.scheduleRankingsRecompute();
+    }
     store.recordUpdate(message.timestamp, Math.max(0, Date.now() - message.timestamp));
     store.setStatus("connected");
   });

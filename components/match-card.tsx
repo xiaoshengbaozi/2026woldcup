@@ -5,7 +5,7 @@ import { detailRows, localizeLocationText } from "@/lib/calendar";
 import { formatTime } from "@/lib/format";
 import { areMatchTeamsConfirmed } from "@/lib/match-availability";
 import { parseTeams } from "@/lib/teams";
-import { generateMatchSlug } from "@/lib/match-detail";
+import { generateMatchRouteSlug } from "@/lib/match-detail";
 import { formatStageLabel } from "@/lib/stage";
 import type { Match, Team } from "@/types/match";
 
@@ -22,7 +22,7 @@ export function MatchCard({
   const details = detailRows(match);
   const venue = details.find((detail) => detail.type === "venue")?.text || localizeLocationText(match.location);
   const adjustedStart = new Date(match.start.getTime() + timezoneOffset * 3600000);
-  const slug = generateMatchSlug(match.summary);
+  const slug = generateMatchRouteSlug(match);
   const isUnlocked = areMatchTeamsConfirmed(match.summary);
 
   const card = (

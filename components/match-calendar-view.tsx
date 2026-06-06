@@ -7,7 +7,7 @@ import { useMemo, useState } from "react";
 import { detailRows, localizeLocationText } from "@/lib/calendar";
 import { formatTime } from "@/lib/format";
 import { areMatchTeamsConfirmed } from "@/lib/match-availability";
-import { generateMatchSlug } from "@/lib/match-detail";
+import { generateMatchRouteSlug } from "@/lib/match-detail";
 import { formatStageLabel } from "@/lib/stage";
 import { parseTeams } from "@/lib/teams";
 import type { Match } from "@/types/match";
@@ -525,7 +525,7 @@ function TimedMatchCard({
   tone: number;
 }) {
   const teams = parseTeams(match.summary);
-  const slug = generateMatchSlug(match.summary);
+  const slug = generateMatchRouteSlug(match);
   const toneIdx = tone % eventTones.length;
   const isUnlocked = areMatchTeamsConfirmed(match.summary);
 
@@ -569,7 +569,7 @@ function SelectedDayMatchRow({ match, displayStart }: { match: Match; displaySta
   const teams = parseTeams(match.summary);
   const details = detailRows(match);
   const venue = details.find((detail) => detail.type === "venue")?.text || localizeLocationText(match.location);
-  const slug = generateMatchSlug(match.summary);
+  const slug = generateMatchRouteSlug(match);
   const isUnlocked = areMatchTeamsConfirmed(match.summary);
 
   const content = (

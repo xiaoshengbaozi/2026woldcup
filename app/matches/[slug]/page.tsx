@@ -42,8 +42,26 @@ async function getApiFixtureSlugs(): Promise<string[]> {
   }
 }
 
+async function getWarmupFixtureSlugs(): Promise<string[]> {
+  try {
+    const response = await fetch("http://localhost:3001/api/worldcup/warmups", { cache: "no-store" });
+    if (!response.ok) return [];
+    const payload = (await response.json()) as { fixtures?: Array<{ summary?: string }> };
+    const slugs = (payload.fixtures ?? [])
+      .filter((fixture): fixture is { summary: string } => Boolean(fixture.summary))
+      .flatMap((fixture) => {
+        const slug = `warmup-${generateMatchSlug(fixture.summary)}`;
+        return [slug, encodeURIComponent(slug)];
+      });
+
+    return slugs;
+  } catch {
+    return [];
+  }
+}
+
 export async function generateStaticParams() {
-  const slugs = [...getAllSlugs(), ...(await getApiFixtureSlugs())];
+  const slugs = [...getAllSlugs(), ...(await getApiFixtureSlugs()), ...(await getWarmupFixtureSlugs())];
   return [...new Set(slugs)].map((slug) => ({ slug }));
 }
 

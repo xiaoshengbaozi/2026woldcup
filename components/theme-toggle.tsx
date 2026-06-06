@@ -20,7 +20,7 @@ export function ThemeToggle() {
       type="button"
       onClick={toggleTheme}
       aria-label={isLight ? "Switch to dark theme" : "Switch to light theme"}
-      className="group relative flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.06] text-white/60 ring-1 ring-white/[0.08] transition-all duration-200 hover:bg-white/[0.1] hover:text-white hover:ring-volt/35 data-[theme=light]:bg-black/[0.05] data-[theme=light]:text-black/50 data-[theme=light]:ring-black/[0.08] data-[theme=light]:hover:bg-black/[0.08] data-[theme=light]:hover:text-black/70"
+      className="group relative flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-white/60 ring-1 ring-white/[0.08] transition-all duration-200 hover:bg-white/[0.1] hover:text-white hover:ring-volt/35 data-[theme=light]:bg-black/[0.05] data-[theme=light]:text-black/50 data-[theme=light]:ring-black/[0.08] data-[theme=light]:hover:bg-black/[0.08] data-[theme=light]:hover:text-black/70"
       data-theme={theme}
       suppressHydrationWarning
     >

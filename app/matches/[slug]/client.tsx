@@ -64,7 +64,7 @@ export function MatchDetailClient({ slug }: { slug: string }) {
           <UserActionButton
             kind="match"
             payload={favoritePayload}
-            className="h-[34px] whitespace-nowrap px-3 text-[10px] shadow-[0_14px_34px_rgba(0,0,0,.38),0_0_20px_rgba(216,255,62,.1),inset_0_1px_0_rgba(255,255,255,.16)] backdrop-blur-2xl"
+            iconOnly
           />
         }
       />
@@ -79,19 +79,17 @@ export function MatchDetailClient({ slug }: { slug: string }) {
       <MatchNav active={activeTab} onTabChange={setActiveTab} />
 
       <div className="space-y-5">
-        {activeTab === "live" && <LivePlayer detail={detail} />}
-        {activeTab === "odds" && <MatchOdds detail={detail} />}
         {activeTab === "lineup" && <MatchLineup detail={detail} />}
-        {activeTab === "timeline" && (
+        {activeTab === "live" && <LivePlayer detail={detail} />}
+        {activeTab === "stats" && <MatchStatsPanel detail={detail} />}
+        {activeTab === "analysis" && (
           <>
+            <MatchOdds detail={detail} />
             {detail.events.length > 0 && <MatchTimeline detail={detail} />}
             {detail.news.length > 0 && <MatchNews detail={detail} />}
+            <MatchHeadToHead detail={detail} />
           </>
         )}
-        {activeTab === "stats" && (detail.status === "finished" || detail.status === "live") && (
-          <MatchStatsPanel detail={detail} />
-        )}
-        {activeTab === "h2h" && <MatchHeadToHead detail={detail} />}
       </div>
 
       <MatchSeoContent detail={detail} />

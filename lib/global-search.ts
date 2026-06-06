@@ -1,6 +1,6 @@
 import playerArticles from "@/data/player-articles.json";
 import { qualifiedTeams } from "@/data/teams";
-import { generateMatchSlug } from "@/lib/match-detail";
+import { generateMatchRouteSlug } from "@/lib/match-detail";
 import type { Match } from "@/types/match";
 
 export type SearchCategory = "teams" | "players" | "matches" | "news";
@@ -108,7 +108,7 @@ function buildMatchResults(matches: Match[]): SearchResultItem[] {
       title: match.summary,
       eyebrow: [match.stage, start].filter(Boolean).join(" · "),
       description: match.location || match.description,
-      href: `/matches/${generateMatchSlug(match.summary)}/`,
+      href: `/matches/${generateMatchRouteSlug(match)}/`,
       tokens: makeTokens(match.summary, match.stage, match.location, match.description, start, match.homeTeam?.name, match.awayTeam?.name, match.homeTeam?.englishName, match.awayTeam?.englishName),
     };
   });

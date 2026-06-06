@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LiveMatchCard } from "@/components/world-cup-hero/live-match-card";
 import { areMatchTeamsConfirmed } from "@/lib/match-availability";
-import { generateMatchSlug } from "@/lib/match-detail";
+import { generateMatchRouteSlug } from "@/lib/match-detail";
 import { formatStageLabel } from "@/lib/stage";
 import { buildMatchRoundLabels } from "@/lib/stage-rounds";
 import { parseTeams } from "@/lib/teams";
@@ -196,7 +196,7 @@ export function LiveMatchesStrip({ matches }: LiveMatchesStripProps) {
 
 function MatchTickerItem({ match, isLive, stageLabel }: { match: Match; isLive: boolean; stageLabel?: string }) {
   const teams = parseTeams(match.summary);
-  const slug = generateMatchSlug(match.summary);
+  const slug = generateMatchRouteSlug(match);
   const isUnlocked = areMatchTeamsConfirmed(match.summary);
   const time = match.start.toLocaleTimeString("zh-CN", {
     hour: "2-digit",

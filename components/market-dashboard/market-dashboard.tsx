@@ -14,6 +14,7 @@ import { StatusBar } from "./status-bar";
 import { NavBar } from "@/components/nav-bar";
 import { MobileMeEntry } from "@/components/mobile-me-entry";
 import { MobileNavBar } from "@/components/mobile-nav-bar";
+import { SiteFooter } from "@/components/site-footer";
 
 const MOBILE_TOP_MODULE_OFFSET = 66;
 
@@ -213,6 +214,7 @@ export function MarketDashboard() {
         </div>
 
         <StatusBar />
+        <SiteFooter />
       </div>
 
       <MobileMeEntry

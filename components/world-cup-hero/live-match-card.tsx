@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { areMatchTeamsConfirmed } from "@/lib/match-availability";
-import { generateMatchSlug } from "@/lib/match-detail";
+import { generateMatchRouteSlug } from "@/lib/match-detail";
 import { formatStageLabel } from "@/lib/stage";
 import { parseTeams } from "@/lib/teams";
 import type { Match } from "@/types/match";
@@ -17,7 +17,7 @@ export function LiveMatchCard({
   stageLabel?: string;
 }) {
   const teams = parseTeams(match.summary);
-  const slug = generateMatchSlug(match.summary);
+  const slug = generateMatchRouteSlug(match);
   const isUnlocked = areMatchTeamsConfirmed(match.summary);
   const elapsed = Math.max(0, Math.floor((Date.now() - match.start.getTime()) / 60000));
   const isHT = isLive && elapsed >= 45 && elapsed < 60;

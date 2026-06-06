@@ -8,7 +8,7 @@ import { parseTeams } from "@/lib/teams";
 import { formatTime } from "@/lib/format";
 import { formatStageLabel } from "@/lib/stage";
 import { areMatchTeamsConfirmed } from "@/lib/match-availability";
-import { generateMatchSlug } from "@/lib/match-detail";
+import { generateMatchRouteSlug } from "@/lib/match-detail";
 import { getStageGroupId } from "@/lib/stage";
 import type { Match, Team } from "@/types/match";
 
@@ -442,7 +442,7 @@ export function TopologyBracket({ matches, timezoneOffset = 0 }: TopologyBracket
     if (!match) return null;
     const teams = parseTeams(match.summary);
     const adjustedStart = new Date(match.start.getTime() + timezoneOffset * 3600000);
-    const slug = generateMatchSlug(match.summary);
+    const slug = generateMatchRouteSlug(match);
     const isUnlocked = areMatchTeamsConfirmed(match.summary);
     const isHomeH = hoveredTeam === teams.home.name;
     const isAwayH = hoveredTeam === teams.away.name;

@@ -3,6 +3,7 @@ import playerRows from "@/data/player-translations.todo.json";
 import playerArticles from "@/data/player-articles.json";
 import fifaOfficialSquads from "@/data/fifa-official-squads.json";
 import playerNameTranslations from "@/data/localization/players.json";
+import { getApiSportsPlayerPhoto } from "@/lib/player-photo-overrides";
 import { localizeCountryCode } from "@/lib/team-localization";
 import { PlayerProfileClient } from "./player-profile-client";
 
@@ -121,7 +122,7 @@ function getTranslatedPlayerRow(playerId: string): PlayerPageRow | null {
     nameCn,
     positionCn: "位置待更新",
     number: null,
-    photo: `https://media.api-sports.io/football/players/${apiPlayerId}.png`,
+    photo: getApiSportsPlayerPhoto(apiPlayerId),
   };
 }
 
@@ -139,7 +140,7 @@ function getOfficialSquadRows() {
           nameCn: (apiPlayerId ? PLAYER_NAME_TRANSLATIONS[String(apiPlayerId)] : "") || player.name,
           positionCn: localizeOfficialPosition(player.position),
           number: player.number ?? null,
-          photo: apiPlayerId ? `https://media.api-sports.io/football/players/${apiPlayerId}.png` : "",
+          photo: getApiSportsPlayerPhoto(apiPlayerId),
         };
       })
   );

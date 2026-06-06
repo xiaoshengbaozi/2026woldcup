@@ -3,15 +3,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { extractCity, getTournamentProgress, parseCalendar } from "@/lib/calendar";
 import { parseTeams } from "@/lib/teams";
-import { fetchWorldCupFixtures } from "@/lib/world-cup-api";
+import { fetchWorldCupFixtures, fetchWorldCupWarmupFixtures } from "@/lib/world-cup-api";
 import type { Match } from "@/types/match";
 
 export function useWorldCupData() {
   const [matches, setMatches] = useState<Match[]>([]);
+  const [warmupMatches, setWarmupMatches] = useState<Match[]>([]);
   const [activeCity, setActiveCity] = useState("全部城市");
   const [calendarUrl, setCalendarUrl] = useState("calendar.ics");
   const [loading, setLoading] = useState(true);
+  const [warmupLoading, setWarmupLoading] = useState(true);
   const [error, setError] = useState("");
+  const [warmupError, setWarmupError] = useState("");
 
   useEffect(() => {
     setCalendarUrl(new URL("/calendar.ics", window.location.href).href);
@@ -59,6 +62,30 @@ export function useWorldCupData() {
     };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+
+    async function loadWarmups() {
+      try {
+        const warmups = await fetchWorldCupWarmupFixtures();
+        if (!active) return;
+        setWarmupMatches(warmups);
+        setWarmupError("");
+      } catch (err) {
+        console.warn("[WorldCupData] warmup fixtures unavailable:", err);
+        if (active) setWarmupError("热身赛同步失败，请稍后重试。");
+      } finally {
+        if (active) setWarmupLoading(false);
+      }
+    }
+
+    void loadWarmups();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const cities = useMemo(() => {
     const values = matches
       .map((match) => extractCity(match.location))
@@ -88,6 +115,7 @@ export function useWorldCupData() {
 
   return {
     matches,
+    warmupMatches,
     activeCity,
     setActiveCity,
     calendarUrl,
@@ -98,7 +126,9 @@ export function useWorldCupData() {
     completedCount: matchStats.completedCount,
     ongoingCount: matchStats.ongoingCount,
     loading,
-    error
+    warmupLoading,
+    error,
+    warmupError
   };
 }
 

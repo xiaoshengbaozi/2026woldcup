@@ -13,15 +13,17 @@ import { getStageGroupId } from "@/lib/stage";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
 
 export type ScheduleLayout = "default" | "waterfall" | "topology" | "calendar";
+export type ScheduleMatchSource = "official" | "warmups";
 
-const MOBILE_TOP_MODULE_OFFSET = 66;
+const MOBILE_MATCH_RAIL_STICKY_OFFSET = 56;
 
 export default function MatchesPage() {
-  const { matches, activeCity, setActiveCity, cities, loading, error } = useWorldCupData();
+  const { matches, warmupMatches, activeCity, setActiveCity, loading, warmupLoading, error, warmupError } = useWorldCupData();
   const [query, setQuery] = useState("");
   const [stage, setStage] = useState("");
   const [timezoneOffset, setTimezoneOffset] = useState(0);
   const [layout, setLayout] = useState<ScheduleLayout>("default");
+  const [matchSource, setMatchSource] = useState<ScheduleMatchSource>("official");
   const [selectedDay, setSelectedDay] = useState("");
   const mobileRailSentinelRef = useRef<HTMLDivElement>(null);
   const mobileRailRef = useRef<HTMLDivElement>(null);
@@ -33,17 +35,29 @@ export default function MatchesPage() {
     if (requestedLayout === "calendar") setLayout("calendar");
   }, []);
 
+  const scheduleMatches = matchSource === "warmups" ? warmupMatches : matches;
+  const scheduleLoading = matchSource === "warmups" ? warmupLoading : loading;
+  const scheduleError = matchSource === "warmups" ? warmupError : error;
+
   const stages = useMemo(
-    () => [...new Set(matches.map((match) => match.stage))],
-    [matches]
+    () => [...new Set(scheduleMatches.map((match) => match.stage))],
+    [scheduleMatches]
   );
+
+  const cities = useMemo(() => {
+    const values = scheduleMatches
+      .map((match) => extractCity(match.location))
+      .filter(Boolean);
+
+    return ["全部城市", ...Array.from(new Set(values)).sort((a, b) => a.localeCompare(b, "zh-CN"))];
+  }, [scheduleMatches]);
 
   const filteredMatches = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     const stageGroup = readFilterGroupValue(stage);
     const cityGroup = readFilterGroupValue(activeCity);
 
-    return matches.filter((match) => {
+    return scheduleMatches.filter((match) => {
       const city = extractCity(match.location);
       const haystack = [match.summary, match.location, match.description, match.stage]
         .join(" ")
@@ -56,17 +70,27 @@ export default function MatchesPage() {
         (!selectedDay || getMatchDayKey(match.start, timezoneOffset) === selectedDay)
       );
     });
-  }, [activeCity, matches, query, selectedDay, stage, timezoneOffset]);
+  }, [activeCity, query, scheduleMatches, selectedDay, stage, timezoneOffset]);
 
   const grouped = useMemo(() => groupMatchesByDay(filteredMatches), [filteredMatches]);
   const matchDays = useMemo(
-    () => buildMatchDayOptions(matches, timezoneOffset),
-    [matches, timezoneOffset]
+    () => buildMatchDayOptions(scheduleMatches, timezoneOffset),
+    [scheduleMatches, timezoneOffset]
   );
 
   useLayoutEffect(() => {
     if (selectedDay && !matchDays.some((day) => day.key === selectedDay)) setSelectedDay("");
   }, [matchDays, selectedDay]);
+
+  useEffect(() => {
+    setStage("");
+    setSelectedDay("");
+    setActiveCity("全部城市");
+  }, [matchSource, setActiveCity]);
+
+  useEffect(() => {
+    if (!cities.includes(activeCity)) setActiveCity("全部城市");
+  }, [activeCity, cities, setActiveCity]);
 
   useEffect(() => {
     const mobileQuery = window.matchMedia("(max-width: 639px)");
@@ -84,7 +108,7 @@ export default function MatchesPage() {
 
       const nextHeight = rail.offsetHeight;
       setMobileRailHeight((current) => (current === nextHeight ? current : nextHeight));
-      setIsMobileRailPinned(sentinel.getBoundingClientRect().top <= MOBILE_TOP_MODULE_OFFSET);
+      setIsMobileRailPinned(sentinel.getBoundingClientRect().top <= MOBILE_MATCH_RAIL_STICKY_OFFSET);
     };
 
     syncPinnedState();
@@ -108,14 +132,14 @@ export default function MatchesPage() {
     };
   }, [isMobileRailPinned, mobileRailHeight]);
 
-  const totalMatchDays = new Set(matches.map((match) => match.start.toDateString())).size;
+  const totalMatchDays = new Set(scheduleMatches.map((match) => match.start.toDateString())).size;
 
   const totalTeams = 48;
   const now = Date.now();
 
   const totalCities = useMemo(
-    () => new Set(matches.map((m) => extractCity(m.location)).filter(Boolean)).size,
-    [matches]
+    () => new Set(scheduleMatches.map((m) => extractCity(m.location)).filter(Boolean)).size,
+    [scheduleMatches]
   );
 
   const filteredCities = useMemo(
@@ -124,10 +148,22 @@ export default function MatchesPage() {
   );
 
   const remainingMatchDays = new Set(
-    matches.filter((m) => m.start.getTime() > now).map((m) => m.start.toDateString())
+    scheduleMatches.filter((m) => m.start.getTime() > now).map((m) => m.start.toDateString())
   ).size;
 
+  const visibleTeamCount = useMemo(() => {
+    const teams = new Set<string>();
+    for (const match of scheduleMatches) {
+      if (match.homeTeam?.code || match.homeTeam?.name) teams.add(match.homeTeam.code || match.homeTeam.name);
+      if (match.awayTeam?.code || match.awayTeam?.name) teams.add(match.awayTeam.code || match.awayTeam.name);
+    }
+    return teams.size;
+  }, [scheduleMatches]);
+
+  const scheduleTeamTotal = matchSource === "warmups" ? visibleTeamCount : totalTeams;
+
   const stageTeamCount = useMemo(() => {
+    if (matchSource === "warmups") return visibleTeamCount;
     if (!stage) return totalTeams;
     const stageGroup = readFilterGroupValue(stage);
     if (stageGroup === "小组赛") return totalTeams;
@@ -140,19 +176,19 @@ export default function MatchesPage() {
     if (stage.includes("半决赛")) return 4;
     if (stage.includes("决赛")) return 2;
     return totalTeams;
-  }, [stage, totalTeams]);
+  }, [matchSource, stage, totalTeams, visibleTeamCount]);
 
   return (
     <DashboardShell>
-      <LiveMatchesStrip matches={matches} />
+      <LiveMatchesStrip matches={scheduleMatches} />
 
       <MatchStats
-        totalMatches={matches.length}
+        totalMatches={scheduleMatches.length}
         visible={filteredMatches.length}
         totalMatchDays={totalMatchDays}
         remainingMatchDays={remainingMatchDays}
         activeTeamCount={stageTeamCount}
-        totalTeamCount={totalTeams}
+        totalTeamCount={scheduleTeamTotal}
         visibleCities={filteredCities}
         totalCities={totalCities}
       />
@@ -160,6 +196,7 @@ export default function MatchesPage() {
       <div className="hidden sm:block">
         <MatchFilters
           query={query}
+          matchSource={matchSource}
           stage={stage}
           stages={stages}
           activeCity={activeCity}
@@ -167,6 +204,7 @@ export default function MatchesPage() {
           timezoneOffset={timezoneOffset}
           layout={layout}
           onQueryChange={setQuery}
+          onMatchSourceChange={setMatchSource}
           onStageChange={setStage}
           onCityChange={setActiveCity}
           onTimezoneChange={setTimezoneOffset}
@@ -174,53 +212,56 @@ export default function MatchesPage() {
         />
       </div>
 
-      <div
-        ref={mobileRailSentinelRef}
-        data-mobile-match-rail-sentinel="true"
-        className="sm:hidden"
-        style={{ height: isMobileRailPinned ? mobileRailHeight : 0 }}
-      />
-      <div
-        ref={mobileRailRef}
-        data-mobile-match-rail="true"
-        className={`${
-          isMobileRailPinned
-            ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[65] px-3 py-2"
-            : "relative -mx-3 bg-black/58 px-3 py-2 backdrop-blur-2xl"
-        } sm:hidden`}
-      >
-        <div className="space-y-2">
-          <MatchFilters
-            query={query}
-            stage={stage}
-            stages={stages}
-            activeCity={activeCity}
-            cities={cities}
-            timezoneOffset={timezoneOffset}
-            layout={layout}
-            onQueryChange={setQuery}
-            onStageChange={setStage}
-            onCityChange={setActiveCity}
-            onTimezoneChange={setTimezoneOffset}
-            onLayoutChange={setLayout}
-          />
-          <MobileMatchDayStrip
-            days={matchDays}
-            selectedDay={selectedDay}
-            onSelectDay={setSelectedDay}
-          />
+      <div className="-mt-3 sm:hidden">
+        <div
+          ref={mobileRailSentinelRef}
+          data-mobile-match-rail-sentinel="true"
+          style={{ height: isMobileRailPinned ? mobileRailHeight : 0 }}
+        />
+        <div
+          ref={mobileRailRef}
+          data-mobile-match-rail="true"
+          className={`${
+            isMobileRailPinned
+              ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+3.5rem)] z-[65]"
+              : "relative -mx-3 bg-black/58 backdrop-blur-2xl"
+          } px-3 py-1.5`}
+        >
+          <div className="space-y-2">
+            <MatchFilters
+              query={query}
+              matchSource={matchSource}
+              stage={stage}
+              stages={stages}
+              activeCity={activeCity}
+              cities={cities}
+              timezoneOffset={timezoneOffset}
+              layout={layout}
+              onQueryChange={setQuery}
+              onMatchSourceChange={setMatchSource}
+              onStageChange={setStage}
+              onCityChange={setActiveCity}
+              onTimezoneChange={setTimezoneOffset}
+              onLayoutChange={setLayout}
+            />
+            <MobileMatchDayStrip
+              days={matchDays}
+              selectedDay={selectedDay}
+              onSelectDay={setSelectedDay}
+            />
+          </div>
         </div>
       </div>
-      <MobileLiveMatchesEntry matches={matches} />
+      <MobileLiveMatchesEntry matches={scheduleMatches} />
 
       <ScheduleList
         grouped={grouped}
-        loading={loading}
-        error={error}
-        isEmpty={!loading && !error && !filteredMatches.length}
+        loading={scheduleLoading}
+        error={scheduleError}
+        isEmpty={!scheduleLoading && !scheduleError && !filteredMatches.length}
         timezoneOffset={timezoneOffset}
         layout={layout}
-        matchesForRoundLabels={matches}
+        matchesForRoundLabels={scheduleMatches}
       />
     </DashboardShell>
   );

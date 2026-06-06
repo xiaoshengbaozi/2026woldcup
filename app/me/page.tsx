@@ -847,12 +847,9 @@ function TimelineCard({ item, index }: { item: TimelineItem; index: number }) {
 function ScorerBoard({ players }: { players: WorldCupTopScorer[] }) {
   return (
     <section className="hero-card overflow-hidden p-4">
-      <div className="flex items-center justify-between px-1 pb-2">
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-volt/50">Ranking</p>
-          <h2 className="mt-0.5 text-sm font-bold text-white/80">射手榜</h2>
-        </div>
-        <Trophy className="h-4 w-4 text-volt/60" />
+      <div className="flex items-center gap-2 px-1 pb-2">
+        <Trophy className="h-4 w-4 text-volt" />
+        <h2 className="text-sm font-semibold text-white">射手榜</h2>
       </div>
       <div className="divide-y divide-white/[0.04]">
         {fillTopScorers(players).slice(0, 6).map((player, index) => (
@@ -876,25 +873,21 @@ function ScorerBoard({ players }: { players: WorldCupTopScorer[] }) {
 function PopularTeamsPanel({ teams }: { teams: TeamCardItem[] }) {
   return (
     <section className="hero-card p-4">
-      <div className="flex items-center justify-between px-1 pb-3">
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-volt/50">Teams</p>
-          <h2 className="mt-0.5 text-sm font-bold text-white/80">热门球队</h2>
-        </div>
-        <Globe2 className="h-4 w-4 text-volt/60" />
+      <div className="flex items-center gap-2 px-1 pb-3">
+        <Star className="h-4 w-4 text-volt" />
+        <h2 className="text-sm font-semibold text-white">热门球队</h2>
       </div>
-      <div className="grid gap-2">
+      <div className="divide-y divide-white/[0.06]">
         {teams.slice(0, 6).map((team) => (
-          <div key={team.id} className="flex items-center gap-3 rounded-2xl bg-white/[0.03] px-3 py-2.5 ring-1 ring-white/[0.05]">
+          <Link key={team.id} href={team.href || "/teams"} className="group flex items-center gap-3 px-1 py-3 transition hover:text-volt">
             <div className="relative h-8 w-11 shrink-0 overflow-hidden rounded-xl bg-white/[0.06] ring-1 ring-white/10">
               {team.flag ? <Image src={team.flag} alt={team.name} fill sizes="44px" className="object-cover" /> : team.logo ? <Image src={team.logo} alt={team.name} fill sizes="44px" className="object-contain p-1.5" /> : null}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-white/76">{team.name}</p>
-              <p className="text-[10px] uppercase tracking-[0.14em] text-white/30">World Cup Signal</p>
+              <p className="truncate text-sm font-medium text-white/76 transition group-hover:text-volt">{team.name}</p>
             </div>
             {team.pct !== undefined && <span className="text-xs font-black text-volt">{team.pct}%</span>}
-          </div>
+          </Link>
         ))}
       </div>
     </section>
@@ -934,30 +927,34 @@ function AccountCard({
         <div className="grid w-full gap-5 text-center">
           <div>
             <p className="text-xl font-semibold text-white">{home.user.profile.displayName}</p>
-            <p className="mt-1 text-sm text-white/44">{home.user.email}</p>
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              <AccountStat value={home.summary.followedPlayerCount} label="关注球员" />
+              <AccountStat value={home.summary.followedTeamCount} label="关注球队" />
+              <AccountStat value={home.summary.favoriteMatchCount} label="收藏比赛" />
+            </div>
           </div>
-          <button
-            type="button"
-            onClick={onLogout}
-            disabled={busy === "logout"}
-            className="mx-auto inline-flex h-11 items-center gap-2 rounded-full bg-white/[0.06] px-5 text-sm font-semibold text-white/72 shadow-glass transition hover:bg-white/[0.1] hover:text-white disabled:opacity-60"
-          >
-            <LogOut className="h-4 w-4" />
-            退出
-          </button>
         </div>
       ) : (
-        <div className="grid w-full grid-cols-2 gap-4">
-          <button type="button" onClick={onLogin} className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-white/[0.06] text-sm font-semibold text-white/82 ring-1 ring-white/12 transition hover:bg-white/[0.1]">
-            <LogIn className="h-4 w-4" />
+        <div className="grid w-full grid-cols-2 gap-3">
+          <button type="button" onClick={onLogin} className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full bg-white/[0.06] px-3 text-xs font-medium text-white/82 ring-1 ring-white/12 transition hover:bg-white/[0.1]">
+            <LogIn className="h-3.5 w-3.5" />
             登录
           </button>
-          <button type="button" onClick={onRegister} className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-volt text-sm font-bold text-black shadow-[0_0_30px_rgba(216,255,62,.18)] transition hover:scale-[1.02]">
-            <UserPlus className="h-4 w-4" />
+          <button type="button" onClick={onRegister} className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full bg-volt px-3 text-xs font-semibold text-black shadow-[0_0_30px_rgba(216,255,62,.18)] transition hover:scale-[1.02]">
+            <UserPlus className="h-3.5 w-3.5" />
             注册
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+function AccountStat({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="grid justify-items-center gap-1">
+      <span className="font-mono text-lg font-semibold leading-none text-volt">{value}</span>
+      <span className="text-[10px] font-medium text-white/42">{label}</span>
     </div>
   );
 }
