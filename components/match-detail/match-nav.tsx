@@ -11,7 +11,7 @@ const NAV_ITEMS: { id: MatchTab; label: string }[] = [
   { id: "analysis", label: "分析" },
 ];
 
-const MOBILE_TOP_MODULE_OFFSET = 66;
+const MOBILE_TOP_MODULE_OFFSET = 54;
 
 export function MatchNav({
   active,
@@ -79,7 +79,7 @@ export function MatchNav({
   const handleTabChange = (tab: MatchTab) => {
     if (tab === active) return;
     onTabChange(tab);
-    scrollToTabHead();
+    if (!isPinned) scrollToTabHead();
   };
 
   return (
@@ -89,7 +89,7 @@ export function MatchNav({
       ref={navRef}
       className={`${
         isPinned
-          ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[65] px-3 py-2"
+          ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+3.375rem)] z-[65] px-3 py-2"
           : "relative -mx-3 bg-black/58 px-3 py-2 backdrop-blur-2xl"
       } mb-5 lg:static lg:mx-0 lg:bg-transparent lg:px-1 lg:py-0 lg:backdrop-blur-none`}
     >

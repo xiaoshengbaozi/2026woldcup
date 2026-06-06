@@ -71,7 +71,11 @@ export function LivePlayer({ detail }: { detail: MatchDetail }) {
       hls.on(Hls.Events.ERROR, (_, data) => {
         if (!data.fatal) return;
         setPlayerState("error");
-        setMessage(data.details || "直播加载失败");
+        setMessage(
+          data.details === "manifestLoadError"
+            ? "直播源不支持浏览器直连，请更换支持 HTTPS/CORS 的 m3u8 源"
+            : data.details || "直播加载失败"
+        );
         hls.destroy();
         hlsRef.current = null;
       });

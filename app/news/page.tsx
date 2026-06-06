@@ -320,7 +320,7 @@ export default function NewsPage() {
       </nav>
 
       {/* ── TOP NEWS: Hero + Side Stories ── */}
-      <section ref={headlineRef} className="mt-6 scroll-mt-24">
+      <section ref={headlineRef} className="mt-3 scroll-mt-24 sm:mt-6">
         <SectionHeader title="头条新闻" hideOnMobile />
 
         {loading ? (
@@ -421,7 +421,7 @@ export default function NewsPage() {
 
       {/* ── EDITOR'S CHOICE ── */}
       {editorItems.length > 0 && (
-        <section ref={editorRef} className="mt-8 scroll-mt-24">
+        <section ref={editorRef} className="mt-4 scroll-mt-24 sm:mt-8">
           <SectionHeader title="编辑精选" hideOnMobile />
 
           {/* Tabs */}

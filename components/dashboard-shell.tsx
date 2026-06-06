@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { BackToTopButton } from "./back-to-top-button";
 import { NavBar } from "./nav-bar";
 import { MobileMeEntry } from "./mobile-me-entry";
-import { MobileNavBar } from "./mobile-nav-bar";
 import { SiteFooter } from "./site-footer";
 import { UserNotificationToast } from "./user-notification-toast";
 
@@ -31,7 +30,6 @@ export function DashboardShell({ children }: { children: ReactNode }) {
       </div>
       {hasMobileMeEntry && <MobileMeEntry />}
       <UserNotificationToast />
-      <MobileNavBar />
       <BackToTopButton />
     </div>
   );

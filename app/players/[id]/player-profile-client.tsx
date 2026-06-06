@@ -23,7 +23,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BackToTopButton } from "@/components/back-to-top-button";
 import { MobileSecondaryPageActions } from "@/components/mobile-secondary-page-actions";
-import { MobileNavBar } from "@/components/mobile-nav-bar";
 import { NavBar } from "@/components/nav-bar";
 import { SiteFooter } from "@/components/site-footer";
 import { UserActionButton } from "@/components/user-action-button";
@@ -95,7 +94,7 @@ const profilePanelTabs: { id: ProfilePanelTab; label: string }[] = [
   { id: "career", label: "轨迹" },
 ];
 
-const MOBILE_TOP_MODULE_OFFSET = 56;
+const MOBILE_TOP_MODULE_OFFSET = 54;
 
 const FIFA_CODE_TO_FLAG: Record<string, string> = {
   MEX:"mx",USA:"us",CAN:"ca",ARG:"ar",BRA:"br",COL:"co",ECU:"ec",PAR:"py",URU:"uy",
@@ -224,7 +223,7 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, breakthr
   const handleMobilePanelChange = (tab: ProfilePanelTab) => {
     if (tab === activeMobilePanel) return;
     setActiveMobilePanel(tab);
-    scrollToPanelHead();
+    if (!panelTabsPinned) scrollToPanelHead();
   };
 
   const player = data?.player;
@@ -274,7 +273,7 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, breakthr
         <div className="relative z-10 hidden lg:block"><NavBar /></div>
 
         {/* ── Profile Hero Card ── */}
-        <section className="player-profile-hero hero-card relative left-1/2 z-0 mt-0 w-screen -translate-x-1/2 overflow-hidden rounded-b-[1.65rem] rounded-t-none px-5 pb-6 pt-40 sm:mt-0 sm:px-8 sm:pb-8 sm:pt-44 lg:left-auto lg:mt-16 lg:w-auto lg:translate-x-0 lg:overflow-visible lg:rounded-[1.65rem] lg:pt-20">
+        <section className="player-profile-hero hero-card relative left-1/2 z-0 mt-0 w-screen -translate-x-1/2 overflow-hidden rounded-b-[1.65rem] rounded-t-none px-5 pb-6 pt-48 sm:mt-0 sm:px-8 sm:pb-8 sm:pt-52 lg:left-auto lg:mt-16 lg:w-auto lg:translate-x-0 lg:overflow-visible lg:rounded-[1.65rem] lg:pt-20">
           {heroLandscape && (
             <div className="absolute inset-0 z-0 overflow-hidden rounded-[inherit]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -454,7 +453,7 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, breakthr
                 ref={panelTabsRef}
                 className={`${
                   panelTabsPinned
-                    ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+3.5rem)] z-[90]"
+                    ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+3.375rem)] z-[90]"
                     : "relative -mx-3 bg-black/58 backdrop-blur-2xl"
                 } px-3 py-1.5 lg:static lg:mx-0 lg:bg-transparent lg:px-0 lg:py-0 lg:backdrop-blur-none`}
               >
@@ -667,7 +666,6 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, breakthr
           )}
         </AnimatePresence>
       </div>
-      <MobileNavBar />
       <BackToTopButton />
     </main>
   );

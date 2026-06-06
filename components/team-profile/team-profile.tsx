@@ -22,7 +22,7 @@ interface TeamProfileProps {
 }
 
 const SCROLL_STEP = 300;
-const MOBILE_TOP_MODULE_OFFSET = 66;
+const MOBILE_TOP_MODULE_OFFSET = 54;
 const PROFILE_CODE_ALIASES: Record<string, string> = {
   ALG: "DZA",
   KSA: "SAU",
@@ -128,7 +128,7 @@ export function TeamProfile({ data }: TeamProfileProps) {
   const handleContentTabChange = (tab: "profile" | "squad" | "fixtures") => {
     if (tab === activeContentTab) return;
     setActiveContentTab(tab);
-    scrollToContentTabs();
+    if (!contentTabsPinned) scrollToContentTabs();
   };
 
   const groupMatches = useMemo(() => {
@@ -410,7 +410,7 @@ export function TeamProfile({ data }: TeamProfileProps) {
             ref={contentTabsRef}
             className={`tp-content-tabs ${
               contentTabsPinned
-                ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[65] !px-3 !py-2"
+                ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+3.375rem)] z-[65] !px-3 !py-2"
                 : ""
             }`}
             aria-label="球队内容"

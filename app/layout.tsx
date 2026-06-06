@@ -4,6 +4,8 @@ import "./globals.css";
 import "./light-theme.css";
 import "./light-theme-polish.css";
 import { ThemeInit } from "@/components/theme-init";
+import { MobileNavBar } from "@/components/mobile-nav-bar";
+import { SiteAnalyticsProvider } from "@/components/site-analytics-provider";
 
 const interTight = Inter_Tight({
   subsets: ["latin"],
@@ -29,8 +31,11 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className={interTight.variable}>
-        <ThemeInit />
-        {children}
+        <SiteAnalyticsProvider>
+          <ThemeInit />
+          {children}
+          <MobileNavBar />
+        </SiteAnalyticsProvider>
       </body>
     </html>
   );

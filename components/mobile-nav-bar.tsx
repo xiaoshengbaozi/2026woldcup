@@ -11,8 +11,13 @@ const navItems = [
   { label: "数据", href: "/data", icon: BarChart3 },
 ];
 
+const HIDE_MOBILE_NAV_PAGES = new Set(["/matches/calendar"]);
+
 export function MobileNavBar() {
   const pathname = usePathname();
+  const normalizedPathname = pathname !== "/" ? pathname.replace(/\/$/, "") : pathname;
+
+  if (HIDE_MOBILE_NAV_PAGES.has(normalizedPathname)) return null;
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";

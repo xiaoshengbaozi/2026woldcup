@@ -880,7 +880,7 @@ export function renderAdminPageHtml() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "fixtures_failed");
         liveChannelMatchOptionsBySource[liveChannelMatchSource] = (Array.isArray(data.fixtures) ? data.fixtures : []).map(function (fixture) {
-          const baseSlug = generateAdminMatchSlug(fixture.summary || fixture.uid || "");
+          const baseSlug = generateAdminFixtureSlug(fixture);
           return {
             slug: liveChannelMatchSource === "warmup" && !baseSlug.startsWith("warmup-") ? "warmup-" + baseSlug : baseSlug,
             summary: fixture.summary || fixture.uid || "未命名比赛",
@@ -916,6 +916,13 @@ export function renderAdminPageHtml() {
       });
     }
 
+    function generateAdminFixtureSlug(fixture) {
+      const home = fixture && fixture.homeTeam ? fixture.homeTeam.englishName || fixture.homeTeam.name || fixture.homeTeam.code : "";
+      const away = fixture && fixture.awayTeam ? fixture.awayTeam.englishName || fixture.awayTeam.name || fixture.awayTeam.code : "";
+      if (home && away) return slugifyAdminTeamName(home) + "-vs-" + slugifyAdminTeamName(away);
+      return generateAdminMatchSlug(fixture && (fixture.summary || fixture.uid) || "");
+    }
+
     function generateAdminMatchSlug(summary) {
       const clean = String(summary || "")
         .replace(/^⚽\\s*/, "")
@@ -926,6 +933,25 @@ export function renderAdminPageHtml() {
         return slugifyAdminText(stripAdminFlag(parts[0])) + "-vs-" + slugifyAdminText(stripAdminFlag(parts[1]));
       }
       return slugifyAdminText(clean);
+    }
+
+    function slugifyAdminTeamName(name) {
+      const aliases = {
+        "Bosnia & Herzegovina": "bosnia-and-herzegovina",
+        "Cape Verde Islands": "cape-verde",
+        "Congo DR": "dr-congo",
+        "Curaçao": "curacao",
+        "Czech Republic": "czech-republic",
+        "Ivory Coast": "ivory-coast",
+        "New Zealand": "new-zealand",
+        "Saudi Arabia": "saudi-arabia",
+        "South Africa": "south-africa",
+        "South Korea": "south-korea",
+        "Türkiye": "turkiye",
+        "USA": "united-states",
+        "United States": "united-states"
+      };
+      return slugifyAdminText(aliases[name] || name);
     }
 
     function stripAdminFlag(value) {

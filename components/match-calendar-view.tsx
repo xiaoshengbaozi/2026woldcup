@@ -17,6 +17,7 @@ type CalendarMode = "month" | "week" | "day";
 type MatchCalendarViewProps = {
   matches: Match[];
   timezoneOffset: number;
+  frameless?: boolean;
 };
 
 const modeOptions: { value: CalendarMode; label: string }[] = [
@@ -27,7 +28,7 @@ const modeOptions: { value: CalendarMode; label: string }[] = [
 
 const weekDays = ["一", "二", "三", "四", "五", "六", "日"];
 
-export function MatchCalendarView({ matches, timezoneOffset }: MatchCalendarViewProps) {
+export function MatchCalendarView({ matches, timezoneOffset, frameless = false }: MatchCalendarViewProps) {
   const [mode, setMode] = useState<CalendarMode>("month");
 
   const calendarMatches = useMemo(
@@ -85,7 +86,7 @@ export function MatchCalendarView({ matches, timezoneOffset }: MatchCalendarView
       initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="hero-card overflow-hidden"
+      className={frameless ? "overflow-visible" : "hero-card overflow-hidden"}
     >
       <div className="relative z-10 flex flex-col lg:flex-row">
         {/* ── Left Panel ── */}

@@ -190,7 +190,7 @@ function normalizeMatchIds(value: unknown, fallback?: unknown) {
   const ids = new Set<string>();
 
   const add = (item: unknown) => {
-    const text = String(item || "").trim();
+    const text = normalizeMatchId(String(item || "").trim());
     if (text) ids.add(text);
   };
 
@@ -206,5 +206,116 @@ function normalizeMatchIds(value: unknown, fallback?: unknown) {
 
 function isChannelLinkedToMatch(channel: LiveChannel, matchId: string) {
   const ids = normalizeMatchIds(channel.matchIds, channel.matchId);
-  return ids.includes(matchId);
+  const normalizedMatchId = normalizeMatchId(matchId);
+  return ids.includes(normalizedMatchId);
 }
+
+function normalizeMatchId(value: string) {
+  const text = value.trim();
+  if (!text) return "";
+  if (/^[a-z0-9-]+$/i.test(text)) return slugifyMatchId(text);
+  const isWarmup = text.toLowerCase().startsWith("warmup-");
+
+  const clean = (isWarmup ? text.slice("warmup-".length) : text)
+    .replace(/^⚽\s*/, "")
+    .replace(/\s*(?:\([^)]+\)|（[^）]+）)\s*$/, "")
+    .trim();
+  const parts = clean.split(/\s*[-\s]+vs[-\s]+\s*/i);
+  if (parts.length >= 2) {
+    const home = slugifyTeamName(parts[0]);
+    const away = slugifyTeamName(parts[1]);
+    if (home && away) return `${isWarmup ? "warmup-" : ""}${home}-vs-${away}`;
+  }
+
+  return `${isWarmup ? "warmup-" : ""}${slugifyMatchId(clean)}`;
+}
+
+function slugifyTeamName(value: string) {
+  const key = stripFlag(value).trim();
+  return slugifyMatchId(TEAM_NAME_TO_SLUG[key] || key);
+}
+
+function stripFlag(value: string) {
+  return value
+    .replace(/[\u{1F1E6}-\u{1F1FF}]/gu, "")
+    .replace(/\u{1F3F4}[\u{E0061}-\u{E007A}\u{E007F}]*/gu, "")
+    .replace(/\u{1F3F3}\u{FE0F}?/gu, "")
+    .trim();
+}
+
+function slugifyMatchId(value: string) {
+  return value
+    .normalize("NFKD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^\p{L}\p{N}\s-]/gu, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+const TEAM_NAME_TO_SLUG: Record<string, string> = {
+  "阿根廷": "argentina",
+  "阿尔及利亚": "algeria",
+  "澳大利亚": "australia",
+  "奥地利": "austria",
+  "巴拉圭": "paraguay",
+  "巴拿马": "panama",
+  "巴西": "brazil",
+  "比利时": "belgium",
+  "波黑": "bosnia-and-herzegovina",
+  "波斯尼亚和黑塞哥维那": "bosnia-and-herzegovina",
+  "德国": "germany",
+  "厄瓜多尔": "ecuador",
+  "法国": "france",
+  "佛得角": "cape-verde",
+  "哥伦比亚": "colombia",
+  "韩国": "south-korea",
+  "荷兰": "netherlands",
+  "加拿大": "canada",
+  "加纳": "ghana",
+  "捷克": "czech-republic",
+  "卡塔尔": "qatar",
+  "科特迪瓦": "ivory-coast",
+  "克罗地亚": "croatia",
+  "库拉索": "curacao",
+  "美国": "united-states",
+  "墨西哥": "mexico",
+  "摩洛哥": "morocco",
+  "南非": "south-africa",
+  "挪威": "norway",
+  "葡萄牙": "portugal",
+  "日本": "japan",
+  "瑞典": "sweden",
+  "瑞士": "switzerland",
+  "沙特阿拉伯": "saudi-arabia",
+  "塞内加尔": "senegal",
+  "苏格兰": "scotland",
+  "突尼斯": "tunisia",
+  "土耳其": "turkiye",
+  "乌拉圭": "uruguay",
+  "乌兹别克斯坦": "uzbekistan",
+  "西班牙": "spain",
+  "新西兰": "new-zealand",
+  "伊拉克": "iraq",
+  "伊朗": "iran",
+  "英格兰": "england",
+  "约旦": "jordan",
+  "刚果民主共和国": "dr-congo",
+  "海地": "haiti",
+  "埃及": "egypt",
+  "Bosnia & Herzegovina": "bosnia-and-herzegovina",
+  "Cape Verde Islands": "cape-verde",
+  "Congo DR": "dr-congo",
+  "Curaçao": "curacao",
+  "Czech Republic": "czech-republic",
+  "Ivory Coast": "ivory-coast",
+  "New Zealand": "new-zealand",
+  "Saudi Arabia": "saudi-arabia",
+  "South Africa": "south-africa",
+  "South Korea": "south-korea",
+  "Türkiye": "turkiye",
+  "USA": "united-states",
+  "United States": "united-states"
+};

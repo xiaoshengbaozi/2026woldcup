@@ -2,36 +2,10 @@
 
 import type { ReactNode } from "react";
 import { Eye, UsersRound } from "lucide-react";
-import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { getSiteAnalyticsSessionId, sendSiteAnalytics, type SiteAnalyticsStats } from "@/lib/site-analytics";
+import { useSiteAnalyticsStats } from "@/components/site-analytics-provider";
 
 export function SiteFooter() {
-  const pathname = usePathname();
-  const [stats, setStats] = useState<SiteAnalyticsStats | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    const sessionId = getSiteAnalyticsSessionId();
-
-    const syncStats = (action: "view" | "heartbeat") => {
-      sendSiteAnalytics(action, sessionId)
-        .then((nextStats) => {
-          if (active) setStats(nextStats);
-        })
-        .catch((error) => {
-          console.warn("[SiteFooter] analytics unavailable:", error);
-        });
-    };
-
-    syncStats("view");
-    const interval = window.setInterval(() => syncStats("heartbeat"), 30_000);
-
-    return () => {
-      active = false;
-      window.clearInterval(interval);
-    };
-  }, [pathname]);
+  const stats = useSiteAnalyticsStats();
 
   return (
     <footer className="hero-card sticky bottom-0 z-40 hidden overflow-hidden lg:block">

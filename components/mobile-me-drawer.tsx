@@ -201,8 +201,8 @@ export function MobileMeDrawer({ open, home, loading, avatarUrl, onLogin, onRegi
                 ) : null}
               </div>
               <DrawerLink
-                href="/matches?layout=calendar"
-                active={pathname.startsWith("/matches")}
+                href="/matches/calendar"
+                active={pathname.startsWith("/matches/calendar")}
                 icon={<CalendarDays className="h-4 w-4" />}
                 label="比赛日历"
                 onClose={onClose}
