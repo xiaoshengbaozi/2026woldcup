@@ -28,6 +28,17 @@ const NEWS_SERVICE_DIR = process.env.NEWS_SERVICE_DIR || "/opt/worldcup-news";
 const NEWS_SERVICE_ENV_FILE = process.env.NEWS_SERVICE_ENV_FILE || `${NEWS_SERVICE_DIR}/.env`;
 const DEFAULT_ADMIN_USERNAME = "admin";
 const DEFAULT_ADMIN_PASSWORD = "worldcup2026-admin";
+const DEFAULT_CORS_ORIGINS = [
+  "https://ball.boyzi.fun",
+  "https://beta-wzja.world-cup-2026-625.pages.dev",
+  "https://world-cup-2026-625.pages.dev",
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "http://localhost:3002",
+  "http://127.0.0.1:3000",
+  "http://127.0.0.1:3001",
+  "http://127.0.0.1:3002",
+];
 
 interface HttpServerOptions {
   snapshotCache: SnapshotCache;
@@ -683,23 +694,40 @@ function toMarketSummary(country: CountryData) {
 }
 
 function setCorsHeaders(req: http.IncomingMessage, res: http.ServerResponse) {
-  const allowedOrigins = (process.env.CORS_ORIGIN || "*")
-    .split(",")
-    .map((origin) => origin.trim())
-    .filter(Boolean);
-  const requestOrigin = req.headers.origin;
+  const allowedOrigins = getAllowedCorsOrigins();
+  const requestOrigin = typeof req.headers.origin === "string" ? req.headers.origin : "";
+  const pathname = new URL(req.url ?? "/", "http://localhost").pathname.replace(/\/+$/, "") || "/";
 
-  if (allowedOrigins.includes("*")) {
-    res.setHeader("Access-Control-Allow-Origin", requestOrigin || "*");
-    if (requestOrigin) res.setHeader("Vary", "Origin");
-  } else if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
+  if (requestOrigin && allowedOrigins.has(requestOrigin)) {
     res.setHeader("Access-Control-Allow-Origin", requestOrigin);
     res.setHeader("Vary", "Origin");
+    if (isCredentialedCorsPath(pathname)) {
+      res.setHeader("Access-Control-Allow-Credentials", "true");
+    }
   }
 
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+}
+
+function getAllowedCorsOrigins() {
+  const configured = (process.env.CORS_ORIGIN || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter((origin) => origin && origin !== "*");
+  return new Set(configured.length ? configured : DEFAULT_CORS_ORIGINS);
+}
+
+function isCredentialedCorsPath(pathname: string) {
+  return (
+    pathname === "/admin" ||
+    pathname === "/admini" ||
+    pathname === "/api/user-preferences" ||
+    pathname.startsWith("/api/auth/") ||
+    pathname.startsWith("/api/avatar/") ||
+    pathname.startsWith("/api/me/") ||
+    pathname.startsWith("/api/admin/")
+  );
 }
 
 function sendEmpty(res: http.ServerResponse, statusCode: number) {
