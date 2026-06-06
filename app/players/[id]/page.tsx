@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import playerRows from "@/data/player-translations.todo.json";
 import playerArticles from "@/data/player-articles.json";
-import fifaOfficialSquads from "@/data/fifa-official-squads.json";
 import playerNameTranslations from "@/data/localization/players.json";
+import { getOfficialPlayerById, getOfficialPlayerCatalog } from "@/lib/official-player-catalog";
 import { findPlayerBreakthroughProfile } from "@/lib/player-breakthroughs";
 import { getApiSportsPlayerPhoto } from "@/lib/player-photo-overrides";
-import { localizeCountryCode } from "@/lib/team-localization";
 import { PlayerProfileClient } from "./player-profile-client";
 
 type Props = {
@@ -52,7 +51,7 @@ export function generateStaticParams() {
     .filter((row) => Number.isFinite(row.apiPlayerId))
     .map((row) => ({ id: String(row.apiPlayerId) }));
   const articleParams = playerArticles.players.map((player) => ({ id: String(player.apiPlayerId) }));
-  const officialSquadParams = getOfficialSquadRows().map((row) => ({ id: String(row.apiPlayerId) }));
+  const officialSquadParams = getOfficialPlayerCatalog().map((row) => ({ id: String(row.apiPlayerId) }));
   const translatedPlayerParams = Object.keys(PLAYER_NAME_TRANSLATIONS)
     .filter((id) => /^\d+$/.test(id))
     .map((id) => ({ id }));
@@ -122,7 +121,7 @@ function mergeOfficialSquadRow(baseRow: PlayerPageRow | null, officialRow: Playe
 }
 
 function getOfficialSquadRow(playerId: string) {
-  return getOfficialSquadRows().find((row) => String(row.apiPlayerId) === playerId) ?? null;
+  return getOfficialPlayerById(playerId);
 }
 
 function getTranslatedPlayerRow(playerId: string): PlayerPageRow | null {
@@ -139,32 +138,4 @@ function getTranslatedPlayerRow(playerId: string): PlayerPageRow | null {
     number: null,
     photo: getApiSportsPlayerPhoto(apiPlayerId),
   };
-}
-
-function getOfficialSquadRows() {
-  return Object.entries(fifaOfficialSquads.squads ?? {}).flatMap(([teamCode, squad]) =>
-    (squad.players ?? [])
-      .filter((player) => Number.isFinite(player.apiFootballId))
-      .map((player) => {
-        const apiPlayerId = player.apiFootballId ?? null;
-        return {
-          apiPlayerId,
-          teamCode,
-          countryCn: localizeCountryCode(teamCode),
-          nameEn: player.name,
-          nameCn: (apiPlayerId ? PLAYER_NAME_TRANSLATIONS[String(apiPlayerId)] : "") || player.name,
-          positionCn: localizeOfficialPosition(player.position),
-          number: player.number ?? null,
-          photo: getApiSportsPlayerPhoto(apiPlayerId),
-        };
-      })
-  );
-}
-
-function localizeOfficialPosition(position: string | null | undefined) {
-  if (position === "GK") return "门将";
-  if (position === "DF") return "后卫";
-  if (position === "MF") return "中场";
-  if (position === "FW") return "前锋";
-  return "位置待更新";
 }

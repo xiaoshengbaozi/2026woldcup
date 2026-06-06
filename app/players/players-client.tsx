@@ -7,18 +7,23 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { PlayerXTimeline } from "@/components/player-x-timeline";
 import playerArticles from "@/data/player-articles.json";
+import { getOfficialPlayerCatalog, type OfficialPlayerCatalogItem } from "@/lib/official-player-catalog";
 import { fetchPlayerXTimeline, type PlayerXTimelinePayload } from "@/lib/player-x-timeline";
 import { fetchPopularPlayers, type PopularPlayerFollow } from "@/lib/user-system";
 import { fallbackTopScorerProfiles } from "@/lib/world-cup-top-scorers";
 
 type PlayerArticle = (typeof playerArticles.players)[number];
-type PlayerTab = "superstars" | "wonderkids" | "popular";
+type PlayerListItem = PlayerArticle | OfficialPlayerCatalogItem;
+type PlayerTab = "superstars" | "wonderkids" | "popular" | "squads";
 
 const tabs: { id: PlayerTab; label: string }[] = [
   { id: "superstars", label: "超级巨星" },
   { id: "wonderkids", label: "神童" },
   { id: "popular", label: "最受欢迎" },
+  { id: "squads", label: "本届阵容" },
 ];
+
+const officialPlayers = getOfficialPlayerCatalog();
 
 const countryNameCn: Record<string, string> = {
   Argentina: "阿根廷",
@@ -66,12 +71,17 @@ export function PlayersClient() {
       });
   }, [popularFollows]);
 
-  const visiblePlayers = useMemo(
-    () => (activeTab === "popular" ? popularPlayers : playerArticles.players.filter((player) => player.category === activeTab)),
-    [activeTab, popularPlayers]
-  );
+  const visiblePlayers = useMemo((): PlayerListItem[] => {
+    if (activeTab === "popular") return popularPlayers;
+    if (activeTab === "squads") return officialPlayers;
+    return playerArticles.players.filter((player) => player.category === activeTab);
+  }, [activeTab, popularPlayers]);
 
-  const visiblePlayerIds = useMemo(() => visiblePlayers.map((player) => player.apiPlayerId || player.id), [visiblePlayers]);
+  const articlePlayers = useMemo(() => visiblePlayers.filter(isArticlePlayer), [visiblePlayers]);
+  const visiblePlayerIds = useMemo(
+    () => (activeTab === "squads" ? [] : articlePlayers.map((player) => player.apiPlayerId || player.id)),
+    [activeTab, articlePlayers]
+  );
 
   useEffect(() => {
     let active = true;
@@ -147,18 +157,22 @@ export function PlayersClient() {
             </AnimatePresence>
           </section>
 
-          <PlayerXTimeline
-            items={xTimeline?.items ?? []}
-            configured={xTimeline?.configured}
-            warning={xTimeline?.warning}
-            loading={xTimelineLoading}
-            showHeader={false}
-          />
+          {activeTab !== "squads" && (
+            <PlayerXTimeline
+              items={xTimeline?.items ?? []}
+              configured={xTimeline?.configured}
+              warning={xTimeline?.warning}
+              loading={xTimelineLoading}
+              showHeader={false}
+            />
+          )}
 
           <section className="space-y-4">
-            {visiblePlayers.map((player, index) => (
-              <TimelinePost key={player.id} player={player} index={index} />
-            ))}
+            {activeTab === "squads" ? (
+              <SquadPlayerGrid players={officialPlayers} />
+            ) : (
+              articlePlayers.map((player, index) => <TimelinePost key={player.id} player={player} index={index} />)
+            )}
           </section>
         </main>
 
@@ -169,9 +183,10 @@ export function PlayersClient() {
               <h2 className="text-xs font-bold uppercase tracking-wider text-white/50">{"资料覆盖"}</h2>
               <span className="text-xs font-black text-volt">{playerArticles.count}</span>
             </div>
-            <div className="mt-3 grid grid-cols-2 gap-3">
+            <div className="mt-3 grid grid-cols-3 gap-3">
               <MiniStat label="巨星" value={playerArticles.players.filter((p) => p.category === "superstars").length} />
               <MiniStat label="新星" value={playerArticles.players.filter((p) => p.category === "wonderkids").length} />
+              <MiniStat label="阵容" value={officialPlayers.length} />
             </div>
           </section>
         </aside>
@@ -180,7 +195,7 @@ export function PlayersClient() {
   );
 }
 
-function PlayerRail({ players }: { players: PlayerArticle[] }) {
+function PlayerRail({ players }: { players: PlayerListItem[] }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -319,8 +334,41 @@ const TimelinePost = memo(function TimelinePost({ player, index }: { player: Pla
   );
 });
 
-function countryLabel(player: PlayerArticle) {
+function SquadPlayerGrid({ players }: { players: OfficialPlayerCatalogItem[] }) {
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      {players.map((player) => (
+        <Link
+          key={player.id}
+          href={playerProfileHref(player)}
+          className="group flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-3 transition duration-300 hover:border-volt/30 hover:bg-white/[0.04]"
+        >
+          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-2xl bg-white/[0.06] ring-1 ring-white/[0.08]">
+            <img src={player.photo} alt={player.nameCn} className="h-full w-full object-cover" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <p className="truncate text-sm font-bold text-white/82 group-hover:text-volt">{player.nameCn}</p>
+              {player.number ? <span className="shrink-0 text-[11px] font-black text-white/30">#{player.number}</span> : null}
+            </div>
+            <p className="mt-0.5 truncate text-xs text-white/36">{player.nameEn}</p>
+            <p className="mt-1 truncate text-[11px] font-medium text-white/32">
+              {player.countryCn} · {player.positionCn}
+            </p>
+          </div>
+          <ArrowRight className="h-4 w-4 shrink-0 text-white/22 transition group-hover:translate-x-0.5 group-hover:text-volt" />
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+function countryLabel(player: PlayerListItem) {
   return countryNameCn[player.countryCn] || countryNameCn[player.countryEn] || player.countryCn;
+}
+
+function isArticlePlayer(player: PlayerListItem): player is PlayerArticle {
+  return player.category !== "squads";
 }
 
 function normalizePlayerLookupKey(value: string | number | null | undefined) {

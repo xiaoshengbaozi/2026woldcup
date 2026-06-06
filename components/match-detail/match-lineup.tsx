@@ -6,8 +6,9 @@ import Link from "next/link";
 import matchStarPlayers from "@/data/match-star-players.json";
 import playerArticles from "@/data/player-articles.json";
 import { localizeCoachName } from "@/lib/coach-localization";
+import { getOfficialPlayerCatalog, type OfficialPlayerCatalogItem } from "@/lib/official-player-catalog";
 import { parseTeams } from "@/lib/teams";
-import type { MatchDetail, LineupPlayer } from "@/types/match";
+import type { MatchDetail, LineupPlayer, PlayerPosition } from "@/types/match";
 
 /* ─────────────────────────────────────────────
    Formation pitch layouts  [x%, y%]
@@ -47,6 +48,60 @@ function getLayout(formation: string) {
   return FORMATION_LAYOUTS[formation] ?? FORMATION_LAYOUTS["4-3-3"];
 }
 
+const OFFICIAL_PLAYERS = getOfficialPlayerCatalog();
+const OFFICIAL_PLAYERS_BY_TEAM = OFFICIAL_PLAYERS.reduce((map, player) => {
+  const code = player.teamCode.toUpperCase();
+  const players = map.get(code) ?? [];
+  players.push(player);
+  map.set(code, players);
+  return map;
+}, new Map<string, OfficialPlayerCatalogItem[]>());
+
+function reconcileLineupPlayers(players: LineupPlayer[], teamCode: string): LineupPlayer[] {
+  const officialPlayers = OFFICIAL_PLAYERS_BY_TEAM.get(teamCode.toUpperCase()) ?? [];
+  if (!officialPlayers.length || !players.length) return players;
+
+  const officialById = new Map(officialPlayers.map((player) => [String(player.apiPlayerId), player]));
+  const officialByName = new Map<string, OfficialPlayerCatalogItem>();
+  for (const player of officialPlayers) {
+    for (const key of [player.nameEn, player.nameCn, ...player.aliases].map(normalizePlayerKey).filter(Boolean)) {
+      officialByName.set(key, player);
+    }
+  }
+
+  return players.map((player) => {
+    const official =
+      officialById.get(String(player.id)) ??
+      [player.nameEn, player.nameCn, player.name]
+        .map(normalizePlayerKey)
+        .map((key) => officialByName.get(key))
+        .find((item): item is OfficialPlayerCatalogItem => Boolean(item));
+
+    if (!official) return player;
+
+    return {
+      ...player,
+      id: String(official.apiPlayerId),
+      name: official.nameCn || official.nameEn || player.name,
+      nameCn: official.nameCn || player.nameCn,
+      nameEn: official.nameEn || player.nameEn,
+      number: official.number ?? player.number,
+      position: reconcilePlayerPosition(player.position, official.position),
+      positionCn: official.positionCn || player.positionCn,
+      photo: official.photo || player.photo,
+    };
+  });
+}
+
+function reconcilePlayerPosition(current: PlayerPosition, officialPosition: string): PlayerPosition {
+  if (current && current !== "CM") return current;
+  if (officialPosition === "GK") return "GK";
+  if (officialPosition === "DF") return "CB";
+  if (officialPosition === "MF") return "CM";
+  if (officialPosition === "FW") return "ST";
+  return current || "CM";
+}
+
 /* ═══════════════════════════════════════════════
    Main Lineup Component
    ═══════════════════════════════════════════════ */
@@ -59,6 +114,8 @@ export function MatchLineup({ detail }: { detail: MatchDetail }) {
   const currentTeamName = activeSide === "home" ? teams.home.name : teams.away.name;
   const isSquadList = currentLineup.listType === "squad_pool" || currentLineup.listType === "final_squad";
   const isHome = activeSide === "home";
+  const currentTeamCode = isHome ? detail.homeTeamCode : detail.awayTeamCode;
+  const currentPlayers = reconcileLineupPlayers(currentLineup.players, currentTeamCode);
 
   const accentHex = isHome ? "#D8FF3E" : "#FF9A1F";
   const accentDark = isHome ? "#8BA824" : "#CC7C19";
@@ -114,16 +171,16 @@ export function MatchLineup({ detail }: { detail: MatchDetail }) {
           {isSquadList ? (
             <SquadLineupPanel
               teamName={currentTeamName}
-              teamCode={isHome ? detail.homeTeamCode : detail.awayTeamCode}
+              teamCode={currentTeamCode}
               coach={currentLineup.coach}
-              players={currentLineup.players}
+              players={currentPlayers}
               officialWorldCupSquad={Boolean(currentLineup.officialWorldCupSquad)}
               accentHex={accentHex}
               accentFrom={isHome ? "rgba(216,255,62," : "rgba(255,154,31,"}
             />
           ) : (
             <FormationPitch
-              players={currentLineup.players}
+              players={currentPlayers}
               formation={currentLineup.formation}
               accentHex={accentHex}
               accentDark={accentDark}
@@ -132,7 +189,7 @@ export function MatchLineup({ detail }: { detail: MatchDetail }) {
 
           {!isSquadList && (
             <PlayerGrid
-              players={currentLineup.players}
+              players={currentPlayers}
               accentHex={accentHex}
               accentFrom={isHome ? "rgba(216,255,62," : "rgba(255,154,31,"}
             />

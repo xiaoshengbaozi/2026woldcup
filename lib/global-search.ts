@@ -1,6 +1,7 @@
 import playerArticles from "@/data/player-articles.json";
 import { qualifiedTeams } from "@/data/teams";
 import { generateMatchRouteSlug } from "@/lib/match-detail";
+import { getOfficialPlayerCatalog } from "@/lib/official-player-catalog";
 import type { Match } from "@/types/match";
 
 export type SearchCategory = "teams" | "players" | "matches" | "news";
@@ -87,9 +88,9 @@ function buildTeamResults(): SearchResultItem[] {
 }
 
 function buildPlayerResults(): SearchResultItem[] {
-  return playerArticles.players.map((player) => ({
+  const articleResults = playerArticles.players.map((player) => ({
     id: String(player.apiPlayerId || player.id),
-    type: "players",
+    type: "players" as const,
     title: player.nameCn || player.nameEn,
     eyebrow: [player.teamCode, player.category === "wonderkids" ? "新星" : "球星"].filter(Boolean).join(" · "),
     description: player.nameEn || player.excerpt || player.teams || "",
@@ -97,6 +98,32 @@ function buildPlayerResults(): SearchResultItem[] {
     image: player.photo,
     tokens: makeTokens(player.nameCn, player.nameEn, player.countryCn, player.countryEn, player.teamCode, player.teams, player.title),
   }));
+
+  const seen = new Set(articleResults.map((player) => player.id));
+  const officialResults = getOfficialPlayerCatalog()
+    .filter((player) => !seen.has(String(player.apiPlayerId)))
+    .map((player) => ({
+      id: String(player.apiPlayerId),
+      type: "players" as const,
+      title: player.nameCn || player.nameEn,
+      eyebrow: [player.teamCode, player.positionCn].filter(Boolean).join(" · "),
+      description: [player.nameEn, player.countryCn, player.number ? `${player.number}号` : ""].filter(Boolean).join(" · "),
+      href: `/players/${player.apiPlayerId}/`,
+      image: player.photo,
+      tokens: makeTokens(
+        player.nameCn,
+        player.nameEn,
+        player.countryCn,
+        player.countryEn,
+        player.teamCode,
+        player.position,
+        player.positionCn,
+        player.number,
+        ...player.aliases
+      ),
+    }));
+
+  return [...articleResults, ...officialResults];
 }
 
 function buildMatchResults(matches: Match[]): SearchResultItem[] {
