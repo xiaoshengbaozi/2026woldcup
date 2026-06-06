@@ -4,9 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode, TouchEvent, UIEvent } from "react";
-import { Bell, CalendarDays, ChevronRight, LogIn, Settings, Star, UserPlus, UserRound, X } from "lucide-react";
+import { Bell, Bookmark, CalendarDays, ChevronRight, Flag, LogIn, Settings, Star, UserPlus, UserRound, UsersRound, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { UserHomePayload } from "@/lib/user-system";
 
@@ -17,6 +17,7 @@ type MobileMeDrawerProps = {
   avatarUrl?: string | null;
   onLogin: () => void;
   onRegister: () => void;
+  onOpenAvatarSettings: () => void;
   onClose: () => void;
 };
 
@@ -26,12 +27,14 @@ const emptySummary = {
   favoriteMatchCount: 0,
 };
 
-export function MobileMeDrawer({ open, home, loading, avatarUrl, onLogin, onRegister, onClose }: MobileMeDrawerProps) {
+export function MobileMeDrawer({ open, home, loading, avatarUrl, onLogin, onRegister, onOpenAvatarSettings, onClose }: MobileMeDrawerProps) {
   const pathname = usePathname();
   const asideRef = useRef<HTMLElement>(null);
+  const [followOpen, setFollowOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const summary = home?.summary ?? emptySummary;
   const unreadCount = home?.summary.unreadNotificationCount ?? 0;
-  const displayName = home?.user.profile.displayName ?? "我的世界杯";
+  const displayName = home?.user.profile.displayName ?? "赛博世界波";
   const signedIn = Boolean(home);
 
   useEffect(() => {
@@ -69,6 +72,13 @@ export function MobileMeDrawer({ open, home, loading, avatarUrl, onLogin, onRegi
     };
   }, [open]);
 
+  useEffect(() => {
+    if (!open) {
+      setFollowOpen(false);
+      setSettingsOpen(false);
+    }
+  }, [open]);
+
   const stopBackgroundScroll = (event: UIEvent | TouchEvent) => {
     event.preventDefault();
   };
@@ -103,7 +113,19 @@ export function MobileMeDrawer({ open, home, loading, avatarUrl, onLogin, onRegi
             <div className="pointer-events-none absolute bottom-16 right-0 h-40 w-24 rounded-full bg-flare/10 blur-[56px]" />
 
             <div className="relative flex items-center justify-between">
-              <Link href="/me" onClick={onClose} className="flex min-w-0 items-center gap-3 rounded-full outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-volt/60">
+              <Link
+                href="/me"
+                onClick={(event) => {
+                  if (!signedIn) {
+                    event.preventDefault();
+                    onClose();
+                    onLogin();
+                    return;
+                  }
+                  onClose();
+                }}
+                className="flex min-w-0 items-center gap-3 rounded-full outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-volt/60"
+              >
                 <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full bg-white/[0.08]">
                   {signedIn && avatarUrl ? (
                     <Image src={avatarUrl} alt={displayName} fill sizes="44px" className="object-cover" />
@@ -112,7 +134,7 @@ export function MobileMeDrawer({ open, home, loading, avatarUrl, onLogin, onRegi
                   )}
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-white">{displayName}</p>
+                  <p className="truncate text-xs font-medium text-white/90">{displayName}</p>
                   <p className="text-[10px] uppercase tracking-[0.16em] text-white/34">
                     {signedIn ? "已同步" : loading ? "同步中" : "未登录"}
                   </p>
@@ -129,19 +151,18 @@ export function MobileMeDrawer({ open, home, loading, avatarUrl, onLogin, onRegi
             </div>
 
             <section className="relative mt-5 border-y border-white/[0.08] py-4">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-volt/80">Account</p>
-              <h2 className="mt-2 text-lg font-semibold leading-tight text-white">
-                {signedIn ? "管理你的关注宇宙" : "登录后同步关注与收藏"}
+              <h2 className="text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-volt/80">
+                赛波 CYBERBALL | 足球 × AI × 数据
               </h2>
               {!signedIn && (
-                <div className="mt-4 grid grid-cols-2 divide-x divide-black/20 border border-white/[0.08]">
+                <div className="mt-4 grid grid-cols-2 divide-x divide-black/20 overflow-hidden rounded-full border border-white/[0.08]">
                   <button
                     type="button"
                     onClick={() => {
                       onClose();
                       onLogin();
                     }}
-                    className="inline-flex h-11 items-center justify-center gap-1.5 bg-volt text-sm font-bold text-black shadow-[0_0_28px_rgba(216,255,62,.18)]"
+                    className="inline-flex h-9 items-center justify-center gap-1.5 bg-volt text-xs font-bold text-black shadow-[0_0_28px_rgba(216,255,62,.18)]"
                   >
                     <LogIn className="h-4 w-4" />
                     登录
@@ -152,7 +173,7 @@ export function MobileMeDrawer({ open, home, loading, avatarUrl, onLogin, onRegi
                       onClose();
                       onRegister();
                     }}
-                    className="inline-flex h-11 items-center justify-center gap-1.5 text-sm font-semibold text-white/80"
+                    className="inline-flex h-9 items-center justify-center gap-1.5 text-xs font-semibold text-white/80"
                   >
                     <UserPlus className="h-4 w-4" />
                     注册
@@ -163,18 +184,20 @@ export function MobileMeDrawer({ open, home, loading, avatarUrl, onLogin, onRegi
 
             <nav className="relative grid divide-y divide-white/[0.08] border-b border-white/[0.08]">
               <div>
-                <DrawerLink
-                  href="/me"
-                  active={pathname.startsWith("/me")}
-                  icon={<Star className="h-4 w-4" />}
-                  label="我的关注"
-                  onClose={onClose}
-                />
-                <div className="grid divide-y divide-white/[0.07] border-t border-white/[0.08]">
-                  <FollowSubMetric label="关注球员" value={summary.followedPlayerCount} />
-                  <FollowSubMetric label="关注球队" value={summary.followedTeamCount} />
-                  <FollowSubMetric label="收藏比赛" value={summary.favoriteMatchCount} />
-                </div>
+                <button type="button" onClick={() => setFollowOpen((value) => !value)} className="flex h-[3.25rem] w-full items-center justify-between px-1 text-left text-sm font-semibold text-white/62 transition hover:text-white">
+                  <span className="flex items-center gap-3">
+                    <Star className="h-4 w-4" />
+                    我的关注
+                  </span>
+                  <ChevronRight className={`h-4 w-4 text-white/34 transition ${followOpen ? "rotate-90 text-volt" : ""}`} />
+                </button>
+                {followOpen ? (
+                  <div className="grid border-t border-white/[0.07] py-1">
+                    <FollowSubMetric href="/players" icon={<UsersRound className="h-3.5 w-3.5" />} label="关注球员" value={summary.followedPlayerCount} onClose={onClose} />
+                    <FollowSubMetric href="/teams" icon={<Flag className="h-3.5 w-3.5" />} label="关注球队" value={summary.followedTeamCount} onClose={onClose} />
+                    <FollowSubMetric icon={<Bookmark className="h-3.5 w-3.5" />} label="收藏比赛" value={summary.favoriteMatchCount} />
+                  </div>
+                ) : null}
               </div>
               <DrawerLink
                 href="/matches?layout=calendar"
@@ -183,13 +206,36 @@ export function MobileMeDrawer({ open, home, loading, avatarUrl, onLogin, onRegi
                 label="比赛日历"
                 onClose={onClose}
               />
-              <button type="button" className="flex h-[3.25rem] items-center justify-between px-1 text-left text-white/46">
+              <button type="button" onClick={() => setSettingsOpen((value) => !value)} className="flex h-[3.25rem] items-center justify-between px-1 text-left text-white/62 transition hover:text-white">
                 <span className="flex items-center gap-3 text-sm font-semibold">
                   <Settings className="h-4 w-4" />
                   设置
                 </span>
-                <span className="text-[10px] uppercase tracking-[0.14em] text-white/28">Soon</span>
+                <ChevronRight className={`h-4 w-4 text-white/34 transition ${settingsOpen ? "rotate-90 text-volt" : ""}`} />
               </button>
+              {settingsOpen ? (
+                <div className="grid border-t border-white/[0.07] py-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!signedIn) {
+                        onClose();
+                        onLogin();
+                        return;
+                      }
+                      onClose();
+                      onOpenAvatarSettings();
+                    }}
+                    className="flex h-10 items-center justify-between px-1 pl-7 text-left text-xs font-semibold text-white/58 transition hover:text-volt"
+                  >
+                    <span className="flex items-center gap-2">
+                      <UserRound className="h-3.5 w-3.5" />
+                      修改头像
+                    </span>
+                    <span className="text-[10px] uppercase tracking-[0.14em] text-white/28">{signedIn ? "Profile" : "Login"}</span>
+                  </button>
+                </div>
+              ) : null}
             </nav>
 
             <div className="relative mt-auto flex items-center justify-between border-t border-white/[0.08] pt-4">
@@ -215,14 +261,27 @@ export function MobileMeDrawer({ open, home, loading, avatarUrl, onLogin, onRegi
   );
 }
 
-function FollowSubMetric({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="flex min-h-10 items-center justify-between pr-1">
-      <div className="text-xs font-medium text-white/42">{label}</div>
+function FollowSubMetric({ href, icon, label, value, onClose }: { href?: string; icon: ReactNode; label: string; value: number; onClose?: () => void }) {
+  const content = (
+    <>
+      <span className="flex items-center gap-2">
+        {icon}
+        {label}
+      </span>
       <div className="text-xl font-semibold leading-none text-white/86" style={{ fontFamily: "ScreenMatrix, monospace" }}>
         {value}
       </div>
-    </div>
+    </>
+  );
+
+  const className = "flex h-10 items-center justify-between px-1 pl-7 text-left text-xs font-semibold text-white/58 transition hover:text-volt";
+
+  return href ? (
+    <Link href={href} onClick={onClose} className={className}>
+      {content}
+    </Link>
+  ) : (
+    <div className={className}>{content}</div>
   );
 }
 

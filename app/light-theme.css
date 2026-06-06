@@ -140,13 +140,6 @@
     radial-gradient(ellipse at 50% 100%, rgba(12, 19, 0, 0.12), transparent 58%);
 }
 
-[data-theme="light"] .account-wordmark-shell {
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.48)),
-    rgba(255, 255, 255, 0.62);
-  border-color: rgba(12, 19, 0, 0.12);
-}
-
 [data-theme="light"] .hero-link {
   background: rgba(0, 0, 0, 0.03);
   color: var(--lm-text-secondary);

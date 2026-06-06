@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
+import { FormEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronRight, LogIn, Trophy, UserPlus, UserRound, X } from "lucide-react";
@@ -274,11 +274,41 @@ export function MeAuthDialog({ mode, onClose, onAuthenticated }: MeAuthDialogPro
 }
 
 function AuthModal({ mode, registerStep, onClose, children }: { mode: SharedAuthMode; registerStep: RegisterStep; onClose: () => void; children: ReactNode }) {
+  const modalRef = useRef<HTMLDivElement>(null);
   const wide = mode === "register" || registerStep === "preferences";
+
+  useEffect(() => {
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    const previousHtmlOverscrollBehavior = document.documentElement.style.overscrollBehavior;
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousBodyOverscrollBehavior = document.body.style.overscrollBehavior;
+
+    const preventBackgroundTouch = (event: Event) => {
+      const target = event.target;
+      if (target instanceof Node && modalRef.current?.contains(target)) return;
+      event.preventDefault();
+    };
+
+    document.documentElement.style.overflow = "hidden";
+    document.documentElement.style.overscrollBehavior = "none";
+    document.body.style.overflow = "hidden";
+    document.body.style.overscrollBehavior = "none";
+    document.addEventListener("touchmove", preventBackgroundTouch, { passive: false, capture: true });
+
+    return () => {
+      document.removeEventListener("touchmove", preventBackgroundTouch, { capture: true });
+      document.documentElement.style.overflow = previousHtmlOverflow;
+      document.documentElement.style.overscrollBehavior = previousHtmlOverscrollBehavior;
+      document.body.style.overflow = previousBodyOverflow;
+      document.body.style.overscrollBehavior = previousBodyOverscrollBehavior;
+    };
+  }, []);
+
   return (
-    <motion.div className="fixed inset-0 z-[120] grid place-items-center overflow-hidden bg-black/72 px-4 py-6 backdrop-blur-xl sm:py-10" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+    <motion.div className="fixed inset-0 z-[500] grid place-items-center overflow-hidden bg-black/72 px-4 py-6 backdrop-blur-xl sm:py-10" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <div className="pointer-events-none fixed left-1/2 top-0 h-[360px] w-[min(720px,100vw)] -translate-x-1/2 rounded-full bg-volt/10 blur-[120px]" />
       <motion.div
+        ref={modalRef}
         initial={{ opacity: 0, y: 16, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 12, scale: 0.98 }}
@@ -295,7 +325,7 @@ function AuthModal({ mode, registerStep, onClose, children }: { mode: SharedAuth
             <X className="h-5 w-5" />
           </button>
         </div>
-        <div className="relative overflow-hidden">{children}</div>
+        <div className="relative max-h-[calc(100dvh-10rem)] overflow-y-auto overscroll-contain pr-1">{children}</div>
       </motion.div>
     </motion.div>
   );

@@ -5,6 +5,7 @@ import type { ReactNode, TouchEvent } from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Search, UserRound } from "lucide-react";
+import { AvatarSettingsDialog } from "./avatar-settings-dialog";
 import { getPlayerAvatar } from "@/lib/user-preferences";
 import { userApi, type UserHomePayload } from "@/lib/user-system";
 import { MeAuthDialog, type SharedAuthMode } from "./me-auth-dialog";
@@ -22,15 +23,19 @@ type MobileMeEntryProps = {
 
 export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
   const pathname = usePathname();
+  const normalizedPathname = pathname !== "/" ? pathname.replace(/\/$/, "") : pathname;
   const gestureStartRef = useRef<{ x: number; y: number } | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [avatarSettingsOpen, setAvatarSettingsOpen] = useState(false);
   const [topRailExpanded, setTopRailExpanded] = useState(false);
   const [topRailHeight, setTopRailHeight] = useState(88);
   const [authMode, setAuthMode] = useState<SharedAuthMode | null>(null);
   const [home, setHome] = useState<UserHomePayload | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const showHomeWordmark = normalizedPathname === "/";
+  const showFifaWordmark = normalizedPathname === "/news" || normalizedPathname === "/matches" || normalizedPathname === "/data";
   const showSearchEntry = pathname === "/" || pathname.startsWith("/news");
 
   const refreshHome = useCallback(() => {
@@ -126,6 +131,8 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
           <span className="pointer-events-none absolute inset-0 rounded-full bg-gradient-to-br from-white/18 via-transparent to-black/18" />
           {loading && <span className="absolute inset-0 bg-black/20" />}
         </button>
+        {showHomeWordmark ? <MobileHomeWordmark /> : null}
+        {showFifaWordmark ? <MobileFifaWordmark /> : null}
         {topRightAction ? (
           <button
             type="button"
@@ -158,10 +165,45 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
         avatarUrl={avatarUrl}
         onLogin={() => setAuthMode("login")}
         onRegister={() => setAuthMode("register")}
+        onOpenAvatarSettings={() => setAvatarSettingsOpen(true)}
         onClose={() => setDrawerOpen(false)}
       />
       <MeAuthDialog mode={authMode} onClose={() => setAuthMode(null)} onAuthenticated={refreshHome} />
+      <AvatarSettingsDialog open={avatarSettingsOpen} home={home} onClose={() => setAvatarSettingsOpen(false)} onSaved={refreshHome} />
       {showSearchEntry ? <MobileSearchDrawer open={searchOpen} onClose={() => setSearchOpen(false)} /> : null}
     </>
+  );
+}
+
+function MobileHomeWordmark() {
+  return (
+    <div className="pointer-events-none absolute left-1/2 top-[calc(env(safe-area-inset-top)+1.18rem)] flex h-8 w-[min(60vw,236px)] -translate-x-1/2 items-center justify-center whitespace-nowrap text-center">
+      <span className="text-[19px] font-normal leading-none tracking-[0.26em] text-volt drop-shadow-[0_0_16px_rgba(216,255,62,.5)]" style={{ fontFamily: "CyberballBrand, ScreenMatrix, sans-serif" }}>
+        CYBERBALL
+      </span>
+    </div>
+  );
+}
+
+function MobileFifaWordmark() {
+  return (
+    <div className="pointer-events-none absolute left-1/2 top-[calc(env(safe-area-inset-top)+1.24rem)] flex h-7 w-[min(58vw,236px)] -translate-x-1/2 items-center justify-center">
+      <Image
+        src="/logos/world-cup-2026-wordmark-dark.svg"
+        alt="FIFA World Cup 2026"
+        width={1366}
+        height={97}
+        className="site-logo-dark h-[22px] w-full object-contain drop-shadow-[0_10px_22px_rgba(0,0,0,.5)]"
+        priority
+      />
+      <Image
+        src="/logos/world-cup-2026-wordmark-light.svg"
+        alt="FIFA World Cup 2026"
+        width={1366}
+        height={97}
+        className="site-logo-light h-[22px] w-full object-contain drop-shadow-[0_10px_18px_rgba(255,255,255,.16)]"
+        priority
+      />
+    </div>
   );
 }

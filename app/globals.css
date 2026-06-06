@@ -10,6 +10,14 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: "CyberballBrand";
+  src: url("/fonts/Sounso-Undividedad-2.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   color-scheme: dark;
   background: #050505;
@@ -217,13 +225,6 @@ button {
     background:
       linear-gradient(120deg, rgba(255, 255, 255, 0.22), transparent 42%),
       radial-gradient(ellipse at 50% 100%, rgba(12, 19, 0, 0.12), transparent 58%);
-  }
-
-  .account-wordmark-shell {
-    background:
-      linear-gradient(135deg, rgba(5, 8, 8, 0.78), rgba(5, 8, 8, 0.48)),
-      rgba(0, 0, 0, 0.42);
-    border-color: rgba(255, 255, 255, 0.16);
   }
 
   .hero-link {

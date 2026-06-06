@@ -321,7 +321,7 @@ export default function NewsPage() {
 
       {/* ── TOP NEWS: Hero + Side Stories ── */}
       <section ref={headlineRef} className="mt-6 scroll-mt-24">
-        <SectionHeader title="头条新闻" />
+        <SectionHeader title="头条新闻" hideOnMobile />
 
         {loading ? (
           <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
@@ -422,7 +422,7 @@ export default function NewsPage() {
       {/* ── EDITOR'S CHOICE ── */}
       {editorItems.length > 0 && (
         <section ref={editorRef} className="mt-8 scroll-mt-24">
-          <SectionHeader title="编辑精选" />
+          <SectionHeader title="编辑精选" hideOnMobile />
 
           {/* Tabs */}
           <div className="mb-5 flex gap-1">
@@ -482,7 +482,7 @@ export default function NewsPage() {
       {/* ── LATEST NEWS Grid ── */}
       {latestItems.length > 0 && (
         <section ref={latestRef} className="mt-8 scroll-mt-24">
-          <SectionHeader title="最新资讯" actionLabel="查看更多" />
+          <SectionHeader title="最新资讯" actionLabel="查看更多" hideOnMobile />
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {latestItems.map((item, index) => (
@@ -590,9 +590,9 @@ export default function NewsPage() {
 
 /* ── Shared Components ── */
 
-function SectionHeader({ title, actionLabel }: { title: string; actionLabel?: string }) {
+function SectionHeader({ title, actionLabel, hideOnMobile = false }: { title: string; actionLabel?: string; hideOnMobile?: boolean }) {
   return (
-    <div className="mb-5 flex items-baseline justify-between">
+    <div className={`${hideOnMobile ? "mb-5 hidden items-baseline justify-between sm:flex" : "mb-5 flex items-baseline justify-between"}`}>
       <h2 className="text-lg font-bold text-white sm:text-xl">
         {title}
       </h2>

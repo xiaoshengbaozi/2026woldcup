@@ -482,17 +482,6 @@ function MePageContent() {
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
           className="min-w-0 space-y-5 order-last lg:order-none"
         >
-          <section className="hero-card me-account-card grid gap-5 overflow-hidden p-5 text-black lg:hidden">
-            <AccountCard
-              home={home}
-              catalog={catalog}
-              avatarPlayerId={avatarPlayerId}
-              busy={busy}
-              onLogin={() => openAuth("login")}
-              onRegister={() => openAuth("register")}
-              onLogout={logout}
-            />
-          </section>
           <ProfileBoard home={home} catalog={catalog} topScorers={topScorers} popularTeams={popularTeams} scheduleMatches={matches} />
         </motion.div>
 
@@ -502,7 +491,7 @@ function MePageContent() {
           transition={{ duration: 0.45, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
           className="hidden h-fit gap-5 lg:sticky lg:top-5 lg:grid"
         >
-          <section className="hero-card me-account-card grid gap-5 overflow-hidden p-5 text-black sm:p-6">
+          <section className="hero-card me-account-card grid h-[235px] overflow-hidden p-5 text-black sm:p-6">
             <AccountCard
               home={home}
               catalog={catalog}
@@ -925,22 +914,36 @@ function AccountCard({
   const avatar = home
     ? home.user.profile.avatarUrl || getPlayerAvatar(home.user.profile.avatarPlayerId, home.catalog?.players ?? catalog.players)
     : getPlayerAvatar(avatarPlayerId, catalog.players);
+  const followedTeamFlags = home
+    ? home.user.followedTeams
+        .slice(0, 5)
+        .map((team) => ({ id: team.id, name: team.name, flag: getTeamFlag(team) }))
+        .filter((team) => team.flag)
+    : [];
 
   return (
-    <div className="relative z-10 grid justify-items-center gap-6 py-4">
-      {home && (
-        <div className="relative h-28 w-28 overflow-hidden rounded-full bg-white/[0.06] shadow-[0_0_44px_rgba(216,255,62,.13)] ring-1 ring-volt/28 sm:h-32 sm:w-32">
-          <Image src={avatar} alt={home.user.profile.displayName} fill sizes="128px" className="object-cover" />
-        </div>
-      )}
-
-      <AccountWordmark />
-
+    <div className="relative z-10 grid h-full content-center justify-items-center gap-4">
       {home ? (
-        <div className="grid w-full gap-5 text-center text-black">
-          <div>
-            <p className="text-xl font-semibold text-black">{home.user.profile.displayName}</p>
-            <div className="mt-5 grid grid-cols-3 divide-x divide-black/18 overflow-hidden rounded-[1.5rem] bg-black/[0.055] py-3 shadow-[inset_0_1px_0_rgba(255,255,255,.22)]">
+        <div className="grid w-full gap-4 text-black">
+          <div className="flex items-center justify-start gap-3">
+            <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full bg-white/[0.06] shadow-[0_0_34px_rgba(12,19,0,.18)] ring-1 ring-black/10">
+              <Image src={avatar} alt={home.user.profile.displayName} fill sizes="80px" className="object-cover" />
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-xl font-semibold text-black">{home.user.profile.displayName}</p>
+              {followedTeamFlags.length > 0 && (
+                <div className="mt-1.5 flex items-center gap-1.5">
+                  {followedTeamFlags.map((team) => (
+                    <span key={team.id} className="relative h-5 w-7 overflow-hidden rounded-[0.35rem] bg-black/10 ring-1 ring-black/10">
+                      <Image src={team.flag} alt={team.name} fill sizes="28px" className="object-cover" />
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="border-t border-dashed border-[#20242d61] pt-4">
+            <div className="grid grid-cols-3 divide-x divide-[#20242d61] text-center">
               <AccountStat value={home.summary.followedPlayerCount} label="关注球员" />
               <AccountStat value={home.summary.followedTeamCount} label="关注球队" />
               <AccountStat value={home.summary.favoriteMatchCount} label="收藏比赛" />
@@ -959,29 +962,6 @@ function AccountCard({
           </button>
         </div>
       )}
-    </div>
-  );
-}
-
-function AccountWordmark() {
-  return (
-    <div className="account-wordmark-shell relative flex h-16 w-full max-w-[292px] items-center justify-center overflow-hidden rounded-[1.75rem] px-5 shadow-[0_18px_42px_rgba(0,0,0,.24),inset_0_1px_0_rgba(255,255,255,.18)] ring-1 backdrop-blur-2xl">
-      <Image
-        src="/logos/world-cup-2026-wordmark-dark.svg"
-        alt="FIFA World Cup 2026"
-        width={1366}
-        height={97}
-        className="site-logo-dark h-[24px] w-full object-contain drop-shadow-[0_12px_26px_rgba(0,0,0,.5)]"
-        priority
-      />
-      <Image
-        src="/logos/world-cup-2026-wordmark-light.svg"
-        alt="FIFA World Cup 2026"
-        width={1366}
-        height={97}
-        className="site-logo-light h-[24px] w-full object-contain drop-shadow-[0_12px_22px_rgba(0,0,0,.18)]"
-        priority
-      />
     </div>
   );
 }

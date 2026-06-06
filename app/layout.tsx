@@ -12,8 +12,8 @@ const interTight = Inter_Tight({
 });
 
 export const metadata: Metadata = {
-  title: "FIFA World Cup 2026 Dashboard",
-  description: "A futuristic World Cup 2026 match control dashboard."
+  title: "赛波 | CYBERBALL",
+  description: "赛波（CYBERBALL）源于赛博世界波，将实时赛事、AI 预测、全球新闻与数据可视化融合为足球时代的数字竞技场。"
 };
 
 const themeScript = "(function(){try{var t=localStorage.getItem('wc-theme');if(t!=='light'&&t!=='dark')t='dark';document.documentElement.setAttribute('data-theme',t)}catch(e){document.documentElement.setAttribute('data-theme','dark')}})()";
