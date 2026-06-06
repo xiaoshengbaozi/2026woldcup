@@ -194,7 +194,7 @@ export function MobileMeDrawer({ open, home, loading, avatarUrl, onLogin, onRegi
                 </button>
                 {followOpen ? (
                   <div className="grid border-t border-white/[0.07] py-1">
-                    <FollowSubMetric href="/players" icon={<UsersRound className="h-3.5 w-3.5" />} label="关注球员" value={summary.followedPlayerCount} onClose={onClose} />
+                    <FollowSubMetric href="/me" icon={<UsersRound className="h-3.5 w-3.5" />} label="关注球员" value={summary.followedPlayerCount} onClose={onClose} />
                     <FollowSubMetric href="/teams" icon={<Flag className="h-3.5 w-3.5" />} label="关注球队" value={summary.followedTeamCount} onClose={onClose} />
                     <FollowSubMetric icon={<Bookmark className="h-3.5 w-3.5" />} label="收藏比赛" value={summary.favoriteMatchCount} />
                   </div>
