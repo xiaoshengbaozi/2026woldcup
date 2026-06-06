@@ -8,6 +8,7 @@ import { createEventDetector } from "./eventDetector";
 import { createHistoryBuffer } from "./historyBuffer";
 import { createHttpServer } from "./httpServer";
 import { createMatchLinesService } from "./matchLines";
+import { createPlayerXTimelineService } from "./playerXTimeline";
 import { createSnapshotCache } from "./snapshotCache";
 import { UserStore } from "./userStore";
 import { createUserSystem } from "./userSystem";
@@ -50,9 +51,10 @@ async function main() {
   const wsServer = createWsServer();
   const matchLines = createMatchLinesService();
   const apiFootball = createApiFootballService();
+  const playerXTimeline = createPlayerXTimelineService();
   const userStore = new UserStore();
   await userStore.ready();
-  const userSystem = createUserSystem(userStore, apiFootball);
+  const userSystem = createUserSystem(userStore, apiFootball, playerXTimeline);
   matchLines.start();
 
   // 2. Connect to Polymarket
@@ -162,6 +164,7 @@ async function main() {
     historyBuffer,
     wsServer,
     apiFootball,
+    playerXTimeline,
     userSystem,
     getState: () => ({
       countries: Array.from(currentCountries.values()),

@@ -6,6 +6,7 @@ import { readFile, writeFile } from "fs/promises";
 import { promisify } from "util";
 import type { ApiFootballEndpoint, ApiFootballService } from "./apiFootball";
 import type { HistoryBuffer } from "./historyBuffer";
+import type { PlayerXTimelineService } from "./playerXTimeline";
 import type { SnapshotCache } from "./snapshotCache";
 import type { UserSystem } from "./userSystem";
 import { renderAdminPageHtml } from "./adminPage";
@@ -48,6 +49,7 @@ interface HttpServerOptions {
     getSubscribedClientCount: () => number;
   };
   apiFootball?: ApiFootballService;
+  playerXTimeline?: PlayerXTimelineService;
   getState: () => {
     countries: CountryData[];
     sequenceNumber: number;
@@ -95,6 +97,7 @@ export function createHttpServer(options: HttpServerOptions) {
       options.userSystem &&
       (url.pathname.startsWith("/api/auth/") ||
         url.pathname.startsWith("/api/avatar/") ||
+        url.pathname === "/api/player-x-timeline" ||
         url.pathname === "/api/user-preferences" ||
         url.pathname.startsWith("/api/me/") ||
         url.pathname.startsWith("/api/admin/"))
@@ -128,6 +131,7 @@ export function createHttpServer(options: HttpServerOptions) {
           polymarketConnected: state.polymarketConnected,
           lastUpdateTimestamp: state.lastPolymarketUpdate,
           apiFootballConfigured: options.apiFootball?.isConfigured() ?? false,
+          xApi: options.playerXTimeline?.getRuntimeStats() ?? null,
         },
         clients: options.wsServer.getClientCount(),
         subscribedClients: options.wsServer.getSubscribedClientCount(),
@@ -165,6 +169,7 @@ export function createHttpServer(options: HttpServerOptions) {
           polymarketConnected: state.polymarketConnected,
           lastUpdateTimestamp: state.lastPolymarketUpdate,
           apiFootballConfigured: options.apiFootball?.isConfigured() ?? false,
+          xApi: options.playerXTimeline?.getRuntimeStats() ?? null,
         },
         data: {
           sequenceNumber: state.sequenceNumber,
