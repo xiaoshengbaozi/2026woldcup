@@ -728,6 +728,7 @@ function isCredentialedCorsPath(pathname: string) {
     pathname === "/admin" ||
     pathname === "/admini" ||
     pathname === "/api/player-x-timeline" ||
+    pathname === "/api/site-analytics" ||
     pathname === "/api/user-preferences" ||
     pathname.startsWith("/api/auth/") ||
     pathname.startsWith("/api/avatar/") ||
