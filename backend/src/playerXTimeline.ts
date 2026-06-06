@@ -62,7 +62,6 @@ export interface PlayerXTimelineRuntimeStats {
 }
 
 const DEFAULT_PLAYER_HANDLES: Record<string, string> = {
-  "154": "Messi",
   "278": "KMbappe",
   "762": "vinijr",
   "1100": "ErlingHaaland",
