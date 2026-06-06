@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { ExternalLink, Languages, Loader2, Newspaper, X } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { userApi, type UserHomePayload } from "@/lib/user-system";
 
 type NewsItem = {
   id: string;
@@ -88,6 +89,7 @@ export default function NewsPage() {
   const [readerLoading, setReaderLoading] = useState(false);
   const [readerError, setReaderError] = useState<string | null>(null);
   const [readerTranslate, setReaderTranslate] = useState(false);
+  const [isSignedIn, setIsSignedIn] = useState(false);
   const [activeEditorTab, setActiveEditorTab] = useState("体育");
   const [activeNewsTab, setActiveNewsTab] = useState<NewsTabId>("headline");
   const mobileTabsSentinelRef = useRef<HTMLDivElement>(null);
@@ -101,6 +103,20 @@ export default function NewsPage() {
   const endpoint = useMemo(() => {
     const params = new URLSearchParams({ limit: "72" });
     return `${NEWS_API}/api/news?${params.toString()}`;
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+
+    userApi<UserHomePayload>("/api/me/home", { cache: "no-store" })
+      .then(() => {
+        if (alive) setIsSignedIn(true);
+      })
+      .catch(() => {
+        if (alive) setIsSignedIn(false);
+      });
+
+    return () => { alive = false; };
   }, []);
 
   useEffect(() => {
@@ -246,6 +262,7 @@ export default function NewsPage() {
   const listItems = items.slice(14, 21);
   const featureItems = visualItems.slice(14, 17);
   const articleTranslationEnabled = Boolean(payload?.features?.articleTranslationEnabled);
+  const canTranslateReaderArticle = articleTranslationEnabled && isSignedIn && !isChineseNewsItem(readerItem);
 
   function openReader(item: NewsItem) {
     setReaderItem(item);
@@ -580,7 +597,7 @@ export default function NewsPage() {
         loading={readerLoading}
         error={readerError}
         translate={readerTranslate}
-        canTranslate={articleTranslationEnabled}
+        canTranslate={canTranslateReaderArticle}
         onTranslate={() => setReaderTranslate(true)}
         onClose={closeReader}
       />
@@ -720,6 +737,15 @@ function NewsCard({ item, index, onOpen }: { item: NewsItem; index: number; onOp
   );
 }
 
+function isChineseNewsItem(item: NewsItem | null) {
+  if (!item) return false;
+
+  const language = item.language.trim().toLowerCase();
+  if (language.startsWith("zh") || language === "cn" || language.includes("chinese")) return true;
+
+  return /[\u3400-\u9fff]/.test(`${item.source} ${item.sourceFeed}`);
+}
+
 function NewsReader({
   item,
   article,
@@ -746,7 +772,7 @@ function NewsReader({
   const publishedAt = article?.publishedAt || item.publishedAt;
   const content = article?.content?.length ? article.content : [];
   const image = article?.image || item.image;
-  const showTranslateButton = canTranslate && !translate && article?.translation?.enabled;
+  const showTranslateButton = canTranslate && !translate && article?.translation?.enabled && !article.translation.translated;
 
   return (
     <div className="fixed inset-0 z-[9999] bg-black/72 px-3 py-4 backdrop-blur-2xl sm:px-6" role="dialog" aria-modal="true">
@@ -819,7 +845,7 @@ function NewsReader({
             {loading && (
               <div className="mt-10 flex items-center gap-3 rounded-3xl bg-white/[0.045] p-5 text-sm text-white/55 ring-1 ring-white/[0.08]">
                 <Loader2 className="h-5 w-5 animate-spin text-volt" />
-                正在解析正文
+                {translate ? "AI努力翻译中" : "正在解析正文"}
               </div>
             )}
 
