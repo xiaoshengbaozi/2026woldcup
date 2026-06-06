@@ -98,6 +98,11 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
     gestureStartRef.current = null;
   };
 
+  const logout = async () => {
+    await userApi("/api/auth/logout", { method: "POST", body: "{}" }).catch(() => undefined);
+    refreshHome();
+  };
+
   return (
     <>
       <div
@@ -166,6 +171,7 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
         onLogin={() => setAuthMode("login")}
         onRegister={() => setAuthMode("register")}
         onOpenAvatarSettings={() => setAvatarSettingsOpen(true)}
+        onLogout={logout}
         onClose={() => setDrawerOpen(false)}
       />
       <MeAuthDialog mode={authMode} onClose={() => setAuthMode(null)} onAuthenticated={refreshHome} />

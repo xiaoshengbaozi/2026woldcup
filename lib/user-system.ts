@@ -86,6 +86,22 @@ export interface UserHomePayload {
   };
 }
 
+export interface PopularPlayerFollow {
+  id: string;
+  name: string;
+  team?: string;
+  position?: string;
+  photo?: string;
+  followCount: number;
+  lastFollowedAt: number;
+}
+
+export interface PopularPlayersPayload {
+  timestamp: number;
+  totalUsers: number;
+  players: PopularPlayerFollow[];
+}
+
 export function getUserApiUrl() {
   const fallbackUrl = getFallbackApiUrl();
 
@@ -118,4 +134,11 @@ export async function userApi<T>(path: string, init?: RequestInit) {
   }
 
   return payload as T;
+}
+
+export async function fetchPopularPlayers(limit = 24) {
+  const params = new URLSearchParams({ limit: String(limit) });
+  return userApi<PopularPlayersPayload>(`/api/popular-players?${params.toString()}`, {
+    method: "GET",
+  });
 }

@@ -26,6 +26,28 @@ def compact(value: str) -> str:
     return normalize(value).replace(" ", "").replace(".", "").replace("-", "")
 
 
+def token_similarity(left: str, right: str) -> float:
+    left_tokens = {token for token in normalize(left).split(" ") if token}
+    right_tokens = {token for token in normalize(right).split(" ") if token}
+    if not left_tokens or not right_tokens:
+        return 0.0
+    overlap = len(left_tokens & right_tokens)
+    return (2 * overlap) / (len(left_tokens) + len(right_tokens))
+
+
+def api_position_matches(official_position: str, api_position: str) -> bool:
+    normalized = normalize(api_position)
+    if official_position == "GK":
+        return "goalkeeper" in normalized
+    if official_position == "DF":
+        return "defender" in normalized
+    if official_position == "MF":
+        return "midfielder" in normalized
+    if official_position == "FW":
+        return "attacker" in normalized or "forward" in normalized
+    return False
+
+
 def title_name(value: str) -> str:
     fixes = {
         "M Artinez": "Martinez",
@@ -179,7 +201,42 @@ TEAM_CODE_TO_API_NAME = {
 
 MANUAL_API_ID_OVERRIDES = {
     ("ALG", "Amine Ferid Ghouiri"): 85041,
+    ("ALG", "Anis Hadj Moussa"): 326067,
+    ("ARG", "Giovani Lo Celso"): 1578,
+    ("AUS", "Aiden Connor O'Neill"): 7050,
     ("BEL", "Amadou Ba Z Mv Om Onana"): 162714,
+    ("BRA", "Neymar Da Silva Santos Júnior"): 276,
+    ("CAN", "Dayne Tristan St. Clair"): 51148,
+    ("CAN", "Luc Rollet De Fougerolles"): 327738,
+    ("CAN", "Moïse Bombito Lumpungu"): 407017,
+    ("COD", "Tshibola Aaron"): 44791,
+    ("COD", "Lionel Nzau Mp Asi"): 24012,
+    ("COD", "Wan Bissaka"): 18846,
+    ("CPV", "Roberto Carlos Lopes"): 69260,
+    ("CPV", "Sidny Lopes Cabral"): 308689,
+    ("CPV", "Carlos Joaquim Antunes Dos Santos"): 163200,
+    ("ESP", "Pau Cubarsi Iparedes"): 396623,
+    ("EGY", "Mahdy Mohamed Soliman Ibrahim"): 16831,
+    ("GHA", "Abdul Fatawu Issahaku"): 303467,
+    ("GHA", "Abdul Mumin Suleman"): 15900,
+    ("GHA", "Christopher Bonsu Baah"): 411800,
+    ("GHA", "Kojo Peprah Oppong"): 404172,
+    ("GHA", "Ernest Nuamah Appiah"): 350856,
+    ("KSA", "Nawaf Meshari M Bu Washl"): 134995,
+    ("KSA", "Hassan Mohammed O Altambakti"): 44362,
+    ("KSA", "Aiman Yahya Y Ahmed"): 147812,
+    ("KSA", "Hassan Kadish Y Mahbub"): 44335,
+    ("KSA", "Ala Mohsen A Alhajji"): 593759,
+    ("KSA", "Abdullah Abdulrahman A Alhamddan"): 44382,
+    ("KSA", "Jehad Abdullatif A Thikri"): 543059,
+    ("MAR", "Zakaria El Ouahdi"): 283252,
+    ("MAR", "Samir El Mourabet"): 415431,
+    ("MAR", "Ayoub El Kaabi"): 2722,
+    ("MAR", "Bilal El Khannouss"): 340573,
+    ("MAR", "Neil Yoni El Aynaoui"): 277003,
+    ("MAR", "Anass Salah Eddine"): 162451,
+    ("MAR", "Monir El Kajoui"): 2702,
+    ("MAR", "Youssef Belamm Ari"): 146772,
     ("CPV", "Laros Michael D'Encarnação Duarte"): 37436,
     ("CPV", "Dailon Rocha Livramento"): 343287,
     ("CAN", "Stephen Antunes Eustáquio"): 35570,
@@ -203,8 +260,14 @@ MANUAL_API_ID_OVERRIDES = {
     ("IRQ", "Ahmed Yahya Mhmood Al-Hajjaj"): 542849,
     ("IRQ", "Ali Jasim Elaibi Al-Tameemi"): 542644,
     ("IRQ", "Marko Jabbar Hussein Hussein"): 265448,
+    ("IRQ", "Ali Yousif Hashim Najatee"): 542842,
+    ("JOR", "Yazeed Mo'Ien Hasan Abulaila"): 140607,
+    ("JOR", "Mohammad Faisal Yousef Abu Zraiq"): 72142,
+    ("JOR", "Odeh Burhan Shehadeh Fakhoury"): 568556,
+    ("JOR", "Abdallah Ra'Ed Mahmoud Alfakhori"): 163884,
     ("PAN", "Cristian Jesus M Artínez"): 554208,
     ("QAT", "Yusuf Abdurisag Yusuf"): 542541,
+    ("QAT", "Alhashmi Alhussein A Mohialdin"): 542542,
     ("SEN", "Sadio M Ané"): 304,
     ("SEN", "Diouf Diouf"): 409303,
     ("SWE", "Victor Jörgen Nilsson Lindelöf"): 889,
@@ -252,6 +315,27 @@ def attach_api_ids(squads: dict, api_squads: dict) -> None:
                 if matched:
                     break
             if matched and isinstance(matched.get("id"), int):
+                player["apiFootballId"] = matched["id"]
+                used_api_ids.add(matched["id"])
+                continue
+
+            candidates = []
+            for candidate in api_players:
+                candidate_id = candidate.get("id")
+                if not isinstance(candidate_id, int) or candidate_id in used_api_ids:
+                    continue
+                if candidate.get("number") != player.get("number"):
+                    continue
+                if not api_position_matches(player.get("position", ""), candidate.get("position", "")):
+                    continue
+                names = [player.get("name", ""), player.get("officialName", ""), *player["aliases"]]
+                name_score = max(token_similarity(name, candidate.get("name", "")) for name in names)
+                if name_score >= 0.5:
+                    candidates.append((name_score, candidate))
+
+            if candidates:
+                candidates.sort(key=lambda item: item[0], reverse=True)
+                matched = candidates[0][1]
                 player["apiFootballId"] = matched["id"]
                 used_api_ids.add(matched["id"])
 

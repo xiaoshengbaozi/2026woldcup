@@ -41,7 +41,7 @@ export function NavBar() {
   const closeTimerRef = useRef<number | null>(null);
   const [home, setHome] = useState<UserHomePayload | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [isSignedIn, setIsSignedIn] = useState(false);
+  const [isSignedIn, setIsSignedIn] = useState<boolean | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -95,6 +95,7 @@ export function NavBar() {
     };
   }, []);
 
+  const checkingSession = isSignedIn === null;
   const meActive = pathname.startsWith("/me");
   const recentNotifications = home?.user.notifications.slice(0, 12) ?? [];
   const upcomingReminders =
@@ -121,7 +122,10 @@ export function NavBar() {
   const logout = async () => {
     await userApi("/api/auth/logout", { method: "POST", body: "{}" }).catch(() => undefined);
     setPopoverOpen(false);
-    refreshHome();
+    setHome(null);
+    setAvatarUrl(null);
+    setIsSignedIn(false);
+    setUnreadCount(0);
   };
 
   const openAvatarSettings = () => {
@@ -132,7 +136,7 @@ export function NavBar() {
   return (
     <>
       <nav className="hero-shell relative z-[300] hidden min-h-20 items-center justify-between gap-4 px-5 py-4 sm:px-7 lg:flex" style={{ borderRadius: "1.2rem" }}>
-        <Link href="/" className="group flex items-center">
+        <Link href="/" className="group flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/logos/world-cup-2026-inverted.svg"
@@ -145,6 +149,32 @@ export function NavBar() {
             alt="FIFA World Cup 2026"
             className="site-logo-light h-12 w-auto object-contain drop-shadow-[0_10px_24px_rgba(0,0,0,.18)] transition duration-300 group-hover:drop-shadow-[0_0_18px_rgba(216,255,62,.24)]"
           />
+          <span className="flex h-12 w-[112px] flex-col justify-center">
+            <span
+              className="cyberball-brand-text block w-full text-center text-[14px] font-normal leading-none tracking-[0.18em] drop-shadow-[0_0_16px_rgba(255,255,255,.18)]"
+              style={{ fontFamily: "CyberballBrand, ScreenMatrix, sans-serif" }}
+            >
+              CYBERBALL
+            </span>
+            <span className="relative mt-1.5 block h-[18px] w-full">
+              <Image
+                src="/logos/world-cup-2026-wordmark-dark.svg"
+                alt="FIFA World Cup 2026"
+                fill
+                sizes="112px"
+                className="site-logo-dark object-contain drop-shadow-[0_8px_18px_rgba(0,0,0,.42)]"
+                priority
+              />
+              <Image
+                src="/logos/world-cup-2026-wordmark-light.svg"
+                alt="FIFA World Cup 2026"
+                fill
+                sizes="112px"
+                className="site-logo-light object-contain drop-shadow-[0_8px_14px_rgba(255,255,255,.14)]"
+                priority
+              />
+            </span>
+          </span>
         </Link>
 
         <div className="hidden items-center gap-8 lg:flex">
@@ -155,9 +185,7 @@ export function NavBar() {
                 key={item.label}
                 href={item.href}
                 className={`flex items-center gap-1.5 text-sm font-medium uppercase tracking-[0.12em] transition ${
-                  isActive
-                    ? "text-volt drop-shadow-[0_0_12px_rgba(216,255,62,.8)]"
-                    : "text-white/45 hover:text-white/82"
+                  isActive ? "text-volt drop-shadow-[0_0_12px_rgba(216,255,62,.8)]" : "text-white/45 hover:text-white/82"
                 }`}
               >
                 <item.icon className="h-4 w-4" strokeWidth={isActive ? 2.5 : 1.75} />
@@ -185,6 +213,7 @@ export function NavBar() {
               ) : (
                 <UserRound className="h-4 w-4 text-volt" />
               )}
+              {checkingSession && <span className="absolute inset-0 animate-pulse bg-white/[0.05]" />}
               {unreadCount > 0 && (
                 <span className="absolute -right-1 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-flare px-1 text-[10px] font-black text-black ring-2 ring-ink-950">
                   {unreadCount > 9 ? "9+" : unreadCount}
@@ -195,7 +224,12 @@ export function NavBar() {
             {popoverOpen && (
               <div className="absolute right-0 top-[calc(100%+0.65rem)] w-[224px] overflow-hidden rounded-[1.6rem] border border-white/[0.18] bg-[#070a11] text-white shadow-[0_30px_90px_rgba(0,0,0,.78),0_0_58px_rgba(216,255,62,.16)]">
                 <div className="divide-y divide-white/[0.08] px-2 py-1 pb-4">
-                  {isSignedIn ? (
+                  {checkingSession ? (
+                    <div className="px-2.5 py-4">
+                      <p className="text-sm font-medium text-white/66">正在同步登录状态</p>
+                      <p className="mt-1 text-[11px] text-white/36">请稍候</p>
+                    </div>
+                  ) : isSignedIn ? (
                     <div>
                       <Link href="/me" onClick={() => setPopoverOpen(false)} className="group flex min-h-12 items-center justify-between px-2.5 py-3 text-sm font-medium text-white/66 transition hover:text-volt">
                         <span className="flex items-center gap-2">
@@ -234,7 +268,7 @@ export function NavBar() {
                         通知消息
                       </div>
                       <span className="inline-flex items-center gap-1 rounded-full bg-white/[0.055] px-2 py-1 text-[10px] font-medium text-white/42">
-                        {isSignedIn ? `${unreadCount} 未读` : "比赛提醒"}
+                        {checkingSession ? "同步中" : isSignedIn ? `${unreadCount} 未读` : "比赛提醒"}
                         <ChevronRight className={`h-3 w-3 transition ${notificationsOpen ? "rotate-90 text-volt" : ""}`} />
                       </span>
                     </button>
@@ -256,11 +290,15 @@ export function NavBar() {
                               </Link>
                             ))
                           : null}
-                        {!isSignedIn || (!recentNotifications.length && !upcomingReminders.length) ? (
-                          <button type="button" onClick={() => (isSignedIn ? setPopoverOpen(false) : openAuth("login"))} className="w-full px-0 py-3 text-left transition hover:text-volt">
+                        {checkingSession || !isSignedIn || (!recentNotifications.length && !upcomingReminders.length) ? (
+                          <button
+                            type="button"
+                            onClick={() => (checkingSession ? undefined : isSignedIn ? setPopoverOpen(false) : openAuth("login"))}
+                            className="w-full px-0 py-3 text-left transition hover:text-volt"
+                          >
                             <p className="text-xs font-medium text-white/66">比赛提醒</p>
                             <p className="mt-1 text-[11px] leading-4 text-white/38">
-                              {isSignedIn ? "暂时没有新的比赛提醒。" : "登录后同步收藏比赛、提醒和站内通知。"}
+                              {checkingSession ? "正在同步你的提醒。" : isSignedIn ? "暂时没有新的比赛提醒。" : "登录后同步收藏比赛、提醒和站内通知。"}
                             </p>
                           </button>
                         ) : null}
@@ -269,7 +307,7 @@ export function NavBar() {
                   </section>
                 </div>
 
-                {isSignedIn ? (
+                {checkingSession ? null : isSignedIn ? (
                   <div className="px-2 pb-4">
                     <button type="button" onClick={logout} className="inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-full bg-white/[0.055] px-3 text-[11px] font-medium text-white/66 ring-1 ring-white/[0.1] transition hover:text-volt">
                       <LogOut className="h-3 w-3" />

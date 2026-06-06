@@ -34,7 +34,8 @@
     "Juventus": "Juventus",
     "Brazil": "Brazil",
     "Fenerbahçe": "Fenerbahçe",
-    "Club America": "Club America"
+    "Club America": "Club America",
+    "Ajax": "Ajax"
   },
   "leagues": {
     "King's Cup": "King's Cup",
@@ -44,15 +45,25 @@
     "Schweizer Pokal": "Schweizer Pokal",
     "CAF Africa Cup of Nations": "CAF Africa Cup of Nations",
     "HNL": "HNL",
-    "Challenge League": "Challenge League"
+    "Challenge League": "Challenge League",
+    "Copa Do Brasil": "Copa Do Brasil",
+    "Paulista - A1": "Paulista - A1",
+    "UEFA Europa Conference League": "UEFA Europa Conference League",
+    "NB I": "NB I"
   },
   "positions": {},
   "countries": {
-    "Algeria": "Algeria"
+    "Algeria": "Algeria",
+    "Hungary": "Hungary"
   },
   "transferTypes": {
     "€ 17M": "€ 17M",
-    "€ 64M": "€ 64M"
+    "€ 64M": "€ 64M",
+    "Free agent": "Free agent",
+    "Free Transfer": "Free Transfer",
+    "€ 88.2M": "€ 88.2M",
+    "€ 222M": "€ 222M",
+    "€ 80M": "€ 80M"
   },
   "trophyPlaces": {},
   "injuryTypes": {
@@ -64,13 +75,16 @@
     "London": "London",
     "Santa Cruz de Tenerife": "Santa Cruz de Tenerife",
     "Hershey": "Hershey",
-    "São Gonçalo": "São Gonçalo"
+    "São Gonçalo": "São Gonçalo",
+    "Mogi das Cruzes": "Mogi das Cruzes"
   },
   "coaches": {
     "H. Regragui": "H. Regragui",
     "V. Montella": "V. Montella",
     "Z. Dalić": "Z. Dalić",
     "T. Tuchel": "T. Tuchel",
-    "J. Nagelsmann": "J. Nagelsmann"
+    "J. Nagelsmann": "J. Nagelsmann",
+    "M. Koubek": "M. Koubek",
+    "D. Advocaat": "D. Advocaat"
   }
 }

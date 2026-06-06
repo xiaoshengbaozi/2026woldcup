@@ -2,7 +2,7 @@
   "source": "star.txt",
   "sourcePath": "C:/Users/caiyu/Desktop/star.txt",
   "generatedAt": "2026-06-04T09:04:38.007Z",
-  "count": 100,
+  "count": 101,
   "teams": {
     "FRA": [
       {
@@ -771,6 +771,20 @@
           "B Guimarães",
           "B. Guimarães",
           "Guimaraes Bruno"
+        ]
+      },
+      {
+        "id": "276",
+        "nameEn": "Neymar Da Silva Santos Júnior",
+        "nameCn": "内马尔",
+        "aliases": [
+          "内马尔",
+          "Neymar",
+          "Neymar Jr",
+          "Neymar Da Silva Santos Júnior",
+          "Neymar da Silva Santos Junior",
+          "Neymar Santos",
+          "N. Neymar"
         ]
       }
     ],

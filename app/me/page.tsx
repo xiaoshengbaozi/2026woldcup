@@ -23,6 +23,7 @@ import {
 import { DashboardShell } from "@/components/dashboard-shell";
 import { MeAuthDialog } from "@/components/me-auth-dialog";
 import { MatchTimelineBanner } from "@/components/match-detail/match-hero";
+import { PlayerXTimeline } from "@/components/player-x-timeline";
 import {
   fallbackUserPreferenceCatalog,
   getPlayerAvatar,
@@ -31,6 +32,7 @@ import {
   type UserPreferenceTeam,
 } from "@/lib/user-preferences";
 import { userApi, type PublicUser, type UserHomePayload } from "@/lib/user-system";
+import { fetchMyPlayerXTimeline, type PlayerXTimelinePayload } from "@/lib/player-x-timeline";
 import { fetchWorldCupTopScorers, type WorldCupTopScorer } from "@/lib/world-cup-top-scorers";
 import { getFlagUrl } from "@/lib/world-cup-2026";
 import { generateMatchSlug } from "@/lib/match-detail";
@@ -49,6 +51,7 @@ type AuthMode = "login" | "register";
 type RegisterStep = "account" | "preferences";
 type ContinentKey = "all" | "asia" | "europe" | "africa" | "americas" | "oceania";
 type MeTab = "players" | "teams" | "matches";
+type TimelineTab = "combined" | "x";
 type TimelineItem = {
   id: string;
   kind: "player" | "team" | "match";
@@ -79,6 +82,7 @@ type PlayerStoryArticle = {
 };
 
 const PLAYER_STORY_ARTICLES = (playerArticles as { players?: PlayerStoryArticle[] }).players ?? [];
+const MOBILE_TOP_MODULE_OFFSET = 66;
 
 const ME_TABS: Array<{ id: MeTab; label: string; icon: ReactNode }> = [
   { id: "players", label: "关注球员", icon: <UsersRound className="h-4 w-4" /> },
@@ -526,6 +530,13 @@ function ProfileBoard({
   scheduleMatches: Match[];
 }) {
   const [activeTab, setActiveTab] = useState<MeTab>("players");
+  const [activeTimelineTab, setActiveTimelineTab] = useState<TimelineTab>("combined");
+  const [xTimeline, setXTimeline] = useState<PlayerXTimelinePayload | null>(null);
+  const [xTimelineLoading, setXTimelineLoading] = useState(false);
+  const timelineTabsSentinelRef = useRef<HTMLDivElement>(null);
+  const timelineTabsRef = useRef<HTMLDivElement>(null);
+  const [timelineTabsPinned, setTimelineTabsPinned] = useState(false);
+  const [timelineTabsHeight, setTimelineTabsHeight] = useState(0);
   const players: PlayerCardItem[] = home?.user.followedPlayers.length
     ? home.user.followedPlayers.map((player) => ({
         id: player.id,
@@ -559,6 +570,72 @@ function ProfileBoard({
     : getRecentScheduleMatches(scheduleMatches, catalog, roundLabels).slice(0, 4);
 
   const timeline = buildTimelineItems(players, teams, matches, Boolean(home));
+  const xItemCount = xTimeline?.items.length ?? 0;
+
+  useEffect(() => {
+    const mobileQuery = window.matchMedia("(max-width: 1023px)");
+
+    const syncPinnedState = () => {
+      if (!mobileQuery.matches) {
+        setTimelineTabsPinned(false);
+        setTimelineTabsHeight(0);
+        return;
+      }
+
+      const sentinel = timelineTabsSentinelRef.current;
+      const tabs = timelineTabsRef.current;
+      if (!sentinel || !tabs) return;
+
+      const nextHeight = tabs.offsetHeight;
+      setTimelineTabsHeight((current) => (current === nextHeight ? current : nextHeight));
+      setTimelineTabsPinned(sentinel.getBoundingClientRect().top <= MOBILE_TOP_MODULE_OFFSET);
+    };
+
+    syncPinnedState();
+    window.addEventListener("scroll", syncPinnedState, { passive: true });
+    window.addEventListener("resize", syncPinnedState);
+    mobileQuery.addEventListener?.("change", syncPinnedState);
+
+    return () => {
+      window.removeEventListener("scroll", syncPinnedState);
+      window.removeEventListener("resize", syncPinnedState);
+      mobileQuery.removeEventListener?.("change", syncPinnedState);
+    };
+  }, []);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("mobile-top-rail-change", { detail: { pinned: timelineTabsPinned } }));
+    return () => {
+      window.dispatchEvent(new CustomEvent("mobile-top-rail-change", { detail: { pinned: false } }));
+    };
+  }, [timelineTabsPinned]);
+
+  useEffect(() => {
+    let active = true;
+    if (!home) {
+      setXTimeline(null);
+      setXTimelineLoading(false);
+      return () => {
+        active = false;
+      };
+    }
+
+    setXTimelineLoading(true);
+    fetchMyPlayerXTimeline()
+      .then((payload) => {
+        if (active) setXTimeline(payload);
+      })
+      .catch(() => {
+        if (active) setXTimeline({ timestamp: Date.now(), configured: false, warning: "x_timeline_failed", players: [], items: [] });
+      })
+      .finally(() => {
+        if (active) setXTimelineLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [home]);
 
   return (
     <div className="grid min-w-0 gap-5">
@@ -625,17 +702,76 @@ function ProfileBoard({
         </AnimatePresence>
       </section>
 
-      <section className="min-w-0 space-y-4 overflow-hidden">
-        <div className="flex items-center justify-between gap-3 border-b border-white/[0.08] pb-3">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-volt/55">Timeline</p>
-            <h2 className="mt-1 text-base font-semibold text-white">综合时间线</h2>
+      <section className="min-w-0 overflow-hidden">
+        <div
+          ref={timelineTabsSentinelRef}
+          className="lg:hidden"
+          style={{ height: timelineTabsPinned ? timelineTabsHeight : 0 }}
+        />
+        <div
+          ref={timelineTabsRef}
+          className={`${
+            timelineTabsPinned
+              ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[65] px-4 py-2"
+              : "relative -mx-4 bg-black/58 px-4 py-2 backdrop-blur-2xl sm:-mx-5 sm:px-5"
+          } lg:static lg:mx-0 lg:bg-transparent lg:px-0 lg:py-0 lg:backdrop-blur-none`}
+        >
+          <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="个人时间线分类">
+            {[
+              { key: "combined" as const, title: "综合时间线", count: timeline.length },
+              { key: "x" as const, title: "X Timeline", count: xItemCount },
+            ].map((item) => {
+              const isActive = activeTimelineTab === item.key;
+
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => setActiveTimelineTab(item.key)}
+                  className={`group relative flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-left text-xs font-bold transition duration-300 ${
+                    isActive
+                      ? "bg-volt text-black shadow-[0_0_24px_rgba(216,255,62,.2)]"
+                      : "bg-white/[0.055] text-white/62 ring-1 ring-white/[0.08] hover:bg-white/[0.09] hover:text-white"
+                  }`}
+                >
+                  <span>{item.title}</span>
+                  <span
+                    className={`rounded-full px-1.5 py-0.5 text-[10px] font-black tabular-nums ${
+                      isActive
+                        ? "bg-black/15 text-black"
+                        : "bg-black/25 text-volt/80 group-hover:bg-volt/[0.12]"
+                    }`}
+                  >
+                    {item.count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
-          <span className="rounded-full bg-white/[0.06] px-3 py-1 text-[11px] font-bold text-white/42">{timeline.length} 条</span>
         </div>
-        {timeline.map((item, index) => (
-          <TimelineCard key={item.id} item={item} index={index} />
-        ))}
+
+        <div className="mt-4 space-y-4">
+          {activeTimelineTab === "combined" ? (
+            timeline.map((item, index) => (
+              <TimelineCard key={item.id} item={item} index={index} />
+            ))
+          ) : home ? (
+            <PlayerXTimeline
+              items={xTimeline?.items ?? []}
+              configured={xTimeline?.configured}
+              warning={xTimeline?.warning}
+              loading={xTimelineLoading}
+              compact
+              showHeader={false}
+            />
+          ) : (
+            <div className="rounded-2xl bg-white/[0.025] px-4 py-8 text-center text-sm font-semibold text-white/42 ring-1 ring-white/[0.06]">
+              登录关注球员的日常动态
+            </div>
+          )}
+        </div>
       </section>
     </div>
   );

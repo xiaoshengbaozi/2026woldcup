@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode, TouchEvent, UIEvent } from "react";
-import { Bell, Bookmark, CalendarDays, ChevronRight, Flag, LogIn, Settings, Star, UserPlus, UserRound, UsersRound, X } from "lucide-react";
+import { Bell, Bookmark, CalendarDays, ChevronRight, Flag, LogIn, LogOut, Settings, Star, UserPlus, UserRound, UsersRound, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { UserHomePayload } from "@/lib/user-system";
 
@@ -18,6 +18,7 @@ type MobileMeDrawerProps = {
   onLogin: () => void;
   onRegister: () => void;
   onOpenAvatarSettings: () => void;
+  onLogout: () => void;
   onClose: () => void;
 };
 
@@ -27,11 +28,11 @@ const emptySummary = {
   favoriteMatchCount: 0,
 };
 
-export function MobileMeDrawer({ open, home, loading, avatarUrl, onLogin, onRegister, onOpenAvatarSettings, onClose }: MobileMeDrawerProps) {
+export function MobileMeDrawer({ open, home, loading, avatarUrl, onLogin, onRegister, onOpenAvatarSettings, onLogout, onClose }: MobileMeDrawerProps) {
   const pathname = usePathname();
   const asideRef = useRef<HTMLElement>(null);
-  const [followOpen, setFollowOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [followOpen, setFollowOpen] = useState(true);
+  const [settingsOpen, setSettingsOpen] = useState(true);
   const summary = home?.summary ?? emptySummary;
   const unreadCount = home?.summary.unreadNotificationCount ?? 0;
   const displayName = home?.user.profile.displayName ?? "赛博世界波";
@@ -74,8 +75,8 @@ export function MobileMeDrawer({ open, home, loading, avatarUrl, onLogin, onRegi
 
   useEffect(() => {
     if (!open) {
-      setFollowOpen(false);
-      setSettingsOpen(false);
+      setFollowOpen(true);
+      setSettingsOpen(true);
     }
   }, [open]);
 
@@ -154,7 +155,7 @@ export function MobileMeDrawer({ open, home, loading, avatarUrl, onLogin, onRegi
               <h2 className="text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-volt/80">
                 赛波 CYBERBALL | 足球 × AI × 数据
               </h2>
-              {!signedIn && (
+              {!signedIn && !loading && (
                 <div className="mt-4 grid grid-cols-2 divide-x divide-black/20 overflow-hidden rounded-full border border-white/[0.08]">
                   <button
                     type="button"
@@ -232,8 +233,22 @@ export function MobileMeDrawer({ open, home, loading, avatarUrl, onLogin, onRegi
                       <UserRound className="h-3.5 w-3.5" />
                       修改头像
                     </span>
-                    <span className="text-[10px] uppercase tracking-[0.14em] text-white/28">{signedIn ? "Profile" : "Login"}</span>
                   </button>
+                  {signedIn ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        onLogout();
+                      }}
+                      className="flex h-10 items-center justify-between px-1 pl-7 text-left text-xs font-semibold text-white/58 transition hover:text-volt"
+                    >
+                      <span className="flex items-center gap-2">
+                        <LogOut className="h-3.5 w-3.5" />
+                        退出登录
+                      </span>
+                    </button>
+                  ) : null}
                 </div>
               ) : null}
             </nav>

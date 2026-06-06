@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>内马尔 - 2026 FIFA世界杯球员档案</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800;900&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --ink-950: #050505;
+            --ink-900: #0B0B0B;
+            --ink-800: #111111;
+            --volt: #D8FF3E;
+            --flare: #FF9A1F;
+            --text-primary: #EAEAEA;
+            --text-secondary: #8899AA;
+            --text-muted: #556677;
+            --glass-bg: rgba(255, 255, 255, 0.04);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: 0 28px 80px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.09), inset 0 -1px 0 rgba(255, 255, 255, 0.025);
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+            background:
+                radial-gradient(circle at 18% 12%, rgba(216, 255, 62, 0.14), transparent 26%),
+                radial-gradient(circle at 78% 8%, rgba(255, 154, 31, 0.11), transparent 28%),
+                radial-gradient(circle at 48% 72%, rgba(255, 255, 255, 0.055), transparent 31%),
+                linear-gradient(135deg, #050505 0%, #0b0b0b 46%, #060606 100%);
+            color: rgba(255, 255, 255, 0.92);
+            font-family: 'Inter Tight', Inter, system-ui, -apple-system, sans-serif;
+            letter-spacing: 0;
+        }
+
+        body::before,
+        body::after {
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+            pointer-events: none;
+            content: "";
+        }
+
+        body::before {
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px);
+            background-size: 72px 72px;
+            mask-image: radial-gradient(circle at 50% 28%, black, transparent 72%);
+        }
+
+        body::after {
+            z-index: -1;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.28'/%3E%3C/svg%3E");
+            opacity: 0.22;
+            mix-blend-mode: soft-light;
+        }
+
+        ::selection {
+            background: rgba(216, 255, 62, 0.28);
+            color: #ffffff;
+        }
+
+        .hero-card {
+            position: relative;
+            border-radius: 1.65rem;
+            background:
+                linear-gradient(135deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015)),
+                rgba(5, 8, 8, 0.88);
+            box-shadow:
+                0 30px 80px rgba(0, 0, 0, 0.48),
+                0 0 60px -10px rgba(216, 255, 62, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.09),
+                inset 0 -1px 0 rgba(216, 255, 62, 0.06);
+            backdrop-filter: blur(32px);
+            transition: box-shadow 0.3s ease;
+        }
+
+        .hero-card::before {
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(216, 255, 62, 0.12), rgba(255, 255, 255, 0.04), rgba(216, 255, 62, 0.03));
+            content: "";
+            pointer-events: none;
+            mask:
+                linear-gradient(#000 0 0) content-box,
+                linear-gradient(#000 0 0);
+            mask-composite: exclude;
+        }
+
+        .hero-card::after {
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            pointer-events: none;
+            background:
+                radial-gradient(ellipse at 20% 10%, rgba(216, 255, 62, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 90%, rgba(216, 255, 62, 0.03) 0%, transparent 50%);
+            content: "";
+        }
+
+        /* ── Hero Section ── */
+        .hero {
+            position: relative;
+            height: 100vh;
+            min-height: 600px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(216, 255, 62, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 154, 31, 0.06) 0%, transparent 50%);
+            z-index: 1;
+        }
+
+        /* Dot-matrix background */
+        .hero-dot-bg {
+            position: absolute;
+            inset: 0;
+            opacity: 0.04;
+            background-image: radial-gradient(circle, rgba(216,255,62,0.9) 0.8px, transparent 0.8px);
+            background-size: 16px 16px;
+            z-index: 0;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            max-width: 1000px;
+            padding: 0 2rem;
+        }
+
+        .player-number {
+            font-size: 16rem;
+            font-weight: 900;
+            line-height: 1;
+            background: radial-gradient(circle, rgba(216,255,62,0.9) 0.8px, transparent 0.8px);
+            background-size: 5px 5px;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: -1;
+            user-select: none;
+            text-shadow: 0 0 60px rgba(216, 255, 62, 0.15);
+        }
+
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2.5rem;
+        }
+
+        .hero-stat {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 1rem;
+            padding: 1rem 1.6rem;
+            text-align: center;
+            min-width: 100px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .hero-stat::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(216, 255, 62, 0.1), rgba(255, 255, 255, 0.03));
+            mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        .hero-stat:hover {
+            transform: translateY(-2px);
+            border-color: rgba(216, 255, 62, 0.15);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 30px -10px rgba(216, 255, 62, 0.1);
+        }
+
+        .hero-stat-value {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--volt);
+            line-height: 1;
+            text-shadow: 0 0 24px rgba(216, 255, 62, 0.2);
+        }
+
+        .hero-stat-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--text-muted);
+            margin-top: 0.4rem;
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2;
+            animation: bounce 2s infinite;
+            cursor: pointer;
+        }
+
+        .scroll-indicator svg {
+            width: 30px;
+            height: 30px;
+            fill: rgba(216, 255, 62, 0.5);
+            filter: drop-shadow(0 0 8px rgba(216, 255, 62, 0.3));
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
+            40% { transform: translateX(-50%) translateY(-10px); }
+            60% { transform: translateX(-50%) translateY(-5px); }
+        }
+
+        /* ── Content Wrapper ── */
+        .content-wrapper {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        /* ── Section Common ── */
+        .section {
+            padding: 5rem 0;
+        }
+
+        .section-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 3rem;
+            position: relative;
+            letter-spacing: -0.02em;
+        }
+
+        .section-title::after {
+            content: '';
+            display: block;
+            width: 48px;
+            height: 3px;
+            background: var(--volt);
+            margin: 1rem auto 0;
+            border-radius: 2px;
+            box-shadow: 0 0 16px rgba(216, 255, 62, 0.4);
+        }
+
+        /* ── Timeline ── */
+        .timeline {
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, transparent, rgba(216, 255, 62, 0.4), transparent);
+            transform: translateX(-50%);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2.5rem;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .timeline-item:nth-child(odd) {
+            flex-direction: row;
+        }
+
+        .timeline-item:nth-child(even) {
+            flex-direction: row-reverse;
+        }
+
+        .timeline-content {
+            width: 45%;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .timeline-content:hover {
+            border-color: rgba(216, 255, 62, 0.12);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 14px;
+            height: 14px;
+            background: var(--volt);
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(216, 255, 62, 0.5), 0 0 40px rgba(216, 255, 62, 0.2);
+            top: 1.5rem;
+        }
+
+        .timeline-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.6rem;
+            color: var(--volt);
+        }
+
+        .timeline-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-bottom: 0.75rem;
+            color: rgba(255, 154, 31, 0.86);
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        .timeline-text {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.65);
+            line-height: 1.8;
+        }
+
+        .timeline-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            color: var(--text-muted);
+            font-size: 0.72rem;
+        }
+
+        .timeline-meta span {
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.045);
+            border: 1px solid rgba(255, 255, 255, 0.075);
+            padding: 0.25rem 0.65rem;
+        }
+
+        .timeline-link {
+            display: inline-block;
+            margin-top: 0.75rem;
+            font-size: 0.8rem;
+            color: var(--flare);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .timeline-link:hover {
+            color: var(--volt);
+            text-shadow: 0 0 12px rgba(216, 255, 62, 0.3);
+        }
+
+        .keyword-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+        }
+
+        .keyword-tag {
+            background: rgba(216, 255, 62, 0.08);
+            border: 1px solid rgba(216, 255, 62, 0.2);
+            padding: 0.2rem 0.65rem;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            color: var(--volt);
+            font-weight: 500;
+        }
+
+        /* ── FIFA Cards ── */
+        .fifa-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+        }
+
+        .fifa-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 1.2rem;
+            padding: 1.8rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .fifa-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(216, 255, 62, 0.06), rgba(255, 154, 31, 0.04));
+            mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        .fifa-card:hover {
+            transform: translateY(-4px);
+            box-shadow:
+                0 20px 60px rgba(0, 0, 0, 0.35),
+                0 0 40px -10px rgba(255, 154, 31, 0.1);
+            border-color: rgba(255, 154, 31, 0.15);
+        }
+
+        .fifa-card-icon {
+            margin-bottom: 0.8rem;
+            width: 2.3rem;
+            height: 2.3rem;
+            color: var(--volt);
+            filter: drop-shadow(0 0 14px rgba(216, 255, 62, 0.22));
+        }
+
+        .fifa-card-icon svg {
+            display: block;
+            width: 100%;
+            height: 100%;
+            stroke: currentColor;
+        }
+
+        .fifa-card-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 0.6rem;
+            color: var(--flare);
+        }
+
+        .fifa-card-text {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.8;
+        }
+
+        /* ── Footer ── */
+        .footer {
+            padding: 3rem 2rem;
+            background: var(--ink-950);
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .footer-text {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .footer-logo {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--volt);
+            margin-bottom: 0.8rem;
+            text-shadow: 0 0 20px rgba(216, 255, 62, 0.2);
+            letter-spacing: 0.05em;
+        }
+
+        .source-badge {
+            display: inline-block;
+            background: rgba(216, 255, 62, 0.06);
+            border: 1px solid rgba(216, 255, 62, 0.15);
+            color: var(--text-secondary);
+            padding: 0.3rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            margin-top: 0.5rem;
+        }
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--ink-950);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(216, 255, 62, 0.2);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(216, 255, 62, 0.35);
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .player-number {
+                font-size: 8rem;
+            }
+
+            .hero-stats {
+                flex-wrap: wrap;
+                gap: 0.6rem;
+            }
+
+            .hero-stat {
+                min-width: 0;
+                flex: 1 1 calc(50% - 0.3rem);
+            }
+
+            .fifa-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .timeline::before {
+                left: 20px;
+            }
+
+            .timeline-item,
+            .timeline-item:nth-child(even) {
+                flex-direction: row;
+                padding-left: 50px;
+            }
+
+            .timeline-content {
+                width: 100%;
+            }
+
+            .timeline-dot {
+                left: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 英雄区域 -->
+    <section class="hero">
+        <div class="hero-dot-bg"></div>
+        <div class="player-number">10</div>
+        <div class="hero-content">
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <div class="hero-stat-value">128</div>
+                    <div class="hero-stat-label">国家队出场</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="hero-stat-value">79</div>
+                    <div class="hero-stat-label">国家队进球</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="hero-stat-value">3</div>
+                    <div class="hero-stat-label">世界杯参赛</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="hero-stat-value">10</div>
+                    <div class="hero-stat-label">球衣号码</div>
+                </div>
+            </div>
+        </div>
+        <div class="scroll-indicator">
+            <svg viewBox="0 0 24 24">
+                <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+            </svg>
+        </div>
+    </section>
+
+    <!-- 一球成名 -->
+    <section class="section" style="padding-top: 0;">
+        <div class="content-wrapper">
+            <h2 class="section-title">一球成名</h2>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <div class="timeline-kicker">FIFA BREAKTHROUGH · BRA · 前锋</div>
+                        <h3 class="timeline-title">Neymar Da Silva Santos Júnior</h3>
+                        <p class="timeline-text">
+                            JSON资料显示，内马尔的突破表现收录在FIFA官网检索数据中：
+                            球队为巴西，球队代码BRA，位置为前锋。该板块以“一球成名”
+                            的方式呈现他的突破线索，重点保留数据中的来源、关键词和检索路径。
+                        </p>
+                        <div class="keyword-tags">
+                            <span class="keyword-tag">球员突破表现</span>
+                            <span class="keyword-tag">巴西</span>
+                            <span class="keyword-tag">前锋</span>
+                        </div>
+                        <div class="timeline-meta">
+                            <span>搜索记录 4 条</span>
+                            <span>突破记录 2 条</span>
+                        </div>
+                    </div>
+                    <div class="timeline-dot"></div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <div class="timeline-kicker">FIFA SOURCE · 22 JUL 2023</div>
+                        <h3 class="timeline-title">Foley专题记录</h3>
+                        <p class="timeline-text">
+                            这条FIFA记录被标记为“包含突破信息”，关键词为“首秀”。
+                            页面将它作为内马尔一球成名板块的第一条资料索引，用来承接
+                            他从国家队亮相走向全球关注的起点。
+                        </p>
+                        <div class="keyword-tags">
+                            <span class="keyword-tag">首秀</span>
+                            <span class="keyword-tag">包含突破信息</span>
+                        </div>
+                        <div class="timeline-meta">
+                            <span>内容长度 926</span>
+                            <span>来源 FIFA.com</span>
+                        </div>
+                        <a href="https://www.fifa.com/en/articles/fifa-fan-fest-dunedin-otepoti-foley" class="timeline-link" target="_blank">在FIFA官网查看 →</a>
+                    </div>
+                    <div class="timeline-dot"></div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <div class="timeline-kicker">FIFA SOURCE · 22 JUL 2023</div>
+                        <h3 class="timeline-title">JessB专题记录</h3>
+                        <p class="timeline-text">
+                            第二条FIFA记录同样包含突破信息，关键词落在“记录”和“新星”。
+                            它补足了球员成名叙事中从初次被看见，到被数据持续记录的部分，
+                            让页面内容与JSON资料保持一致。
+                        </p>
+                        <div class="keyword-tags">
+                            <span class="keyword-tag">记录</span>
+                            <span class="keyword-tag">新星</span>
+                            <span class="keyword-tag">包含突破信息</span>
+                        </div>
+                        <div class="timeline-meta">
+                            <span>内容长度 974</span>
+                            <span>来源 FIFA.com</span>
+                        </div>
+                        <a href="https://www.fifa.com/en/articles/fifa-fan-fest-auckland-tamaki-makaurau-jess-b" class="timeline-link" target="_blank">在FIFA官网查看 →</a>
+                    </div>
+                    <div class="timeline-dot"></div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <div class="timeline-kicker">SEARCH TRACE</div>
+                        <h3 class="timeline-title">检索路径</h3>
+                        <p class="timeline-text">
+                            数据保留了4个检索入口：国际首秀、预选赛战报、世界杯突破和
+                            FIFA世界杯。此处用轻量摘要展示资料来源，既可追溯，也不会
+                            破坏原页面的极简时间轴版式。
+                        </p>
+                        <div class="keyword-tags">
+                            <span class="keyword-tag">国际首秀</span>
+                            <span class="keyword-tag">预选赛战报</span>
+                            <span class="keyword-tag">世界杯突破</span>
+                            <span class="keyword-tag">FIFA世界杯</span>
+                        </div>
+                        <div class="timeline-meta">
+                            <span>每条结果数量 3</span>
+                            <span>数据生成 2026-06-06</span>
+                        </div>
+                    </div>
+                    <div class="timeline-dot"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FIFA赛事历史 -->
+    <section class="section" style="padding-top: 0;">
+        <div class="content-wrapper">
+            <h2 class="section-title">FIFA赛事履历</h2>
+            <div class="fifa-cards">
+                <div class="fifa-card">
+                    <div class="fifa-card-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M8 21h8"/>
+                            <path d="M12 17v4"/>
+                            <path d="M7 4h10v5a5 5 0 0 1-10 0V4Z"/>
+                            <path d="M5 5H3v2a4 4 0 0 0 4 4"/>
+                            <path d="M19 5h2v2a4 4 0 0 1-4 4"/>
+                        </svg>
+                    </div>
+                    <h3 class="fifa-card-title">2013年FIFA联合会杯</h3>
+                    <p class="fifa-card-text">
+                        在本土举行的联合会杯上荣获金球奖，帮助巴西夺冠。
+                        内马尔在决赛对阵西班牙的比赛中进球，功不可没。
+                    </p>
+                </div>
+                <div class="fifa-card">
+                    <div class="fifa-card-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m12 3 2.7 5.55 6.1.88-4.42 4.28 1.04 6.06L12 16.9l-5.42 2.87 1.04-6.06L3.2 9.43l6.1-.88L12 3Z"/>
+                        </svg>
+                    </div>
+                    <h3 class="fifa-card-title">2018年FIFA世界杯</h3>
+                    <p class="fifa-card-text">
+                        带领巴西闯入俄罗斯世界杯四分之一决赛，贡献2粒进球和2次助攻。
+                        他的庆祝动作成为该届赛事的标志性瞬间之一。
+                    </p>
+                </div>
+                <div class="fifa-card">
+                    <div class="fifa-card-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="8"/>
+                            <circle cx="12" cy="12" r="4"/>
+                            <path d="M12 12h8"/>
+                            <path d="m17 7 3-3"/>
+                            <path d="m20 4 .4 3.6L17 7"/>
+                        </svg>
+                    </div>
+                    <h3 class="fifa-card-title">2022年FIFA世界杯</h3>
+                    <p class="fifa-card-text">
+                        在卡塔尔世界杯期间追平贝利保持的巴西国家队进球纪录。
+                        在十六强对阵韩国的比赛中打入一粒精彩进球。
+                    </p>
+                </div>
+                <div class="fifa-card">
+                    <div class="fifa-card-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2v4"/>
+                            <path d="M12 18v4"/>
+                            <path d="m4.93 4.93 2.83 2.83"/>
+                            <path d="m16.24 16.24 2.83 2.83"/>
+                            <path d="M2 12h4"/>
+                            <path d="M18 12h4"/>
+                            <path d="m4.93 19.07 2.83-2.83"/>
+                            <path d="m16.24 7.76 2.83-2.83"/>
+                            <path d="m12 8 1.18 2.82L16 12l-2.82 1.18L12 16l-1.18-2.82L8 12l2.82-1.18L12 8Z"/>
+                        </svg>
+                    </div>
+                    <h3 class="fifa-card-title">2026年FIFA世界杯</h3>
+                    <p class="fifa-card-text">
+                        入选巴西2026年世界杯大名单，目标是赢得这座他辉煌职业生涯中
+                        唯一缺少的奖杯。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="footer-logo">CYBERBALL 2026</div>
+        <p class="footer-text">
+            数据来源：FIFA官网 | 球员档案 - 2026世界杯
+        </p>
+        <div class="source-badge">数据来源：fifa-player-breakthroughs-cn.json</div>
+    </footer>
+
+    <script>
+        document.querySelector('.scroll-indicator').addEventListener('click', () => {
+            document.querySelector('.section').scrollIntoView({
+                behavior: 'smooth'
+            });
+        });
+
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.timeline-item, .fifa-card').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(24px)';
+            el.style.transition = 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>

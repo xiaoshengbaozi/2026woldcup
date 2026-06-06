@@ -299,6 +299,13 @@ const brazil: TeamProfile = {
   },
   "keyPlayers": [
     {
+      "number": 10,
+      "name": "内马尔",
+      "position": "前锋",
+      "club": "巴西国家队",
+      "photo": "https://media.api-sports.io/football/players/276.png"
+    },
+    {
       "number": 15,
       "name": "Ronaldo Nazario",
       "position": "世界杯射手纪录",

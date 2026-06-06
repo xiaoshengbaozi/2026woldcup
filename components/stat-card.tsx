@@ -63,14 +63,10 @@ export function StatCard({ label, value, detail: _detail, icon: Icon, accent = f
       )}
       <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/18 to-transparent" />
 
-      <div className="relative flex min-w-0 flex-col items-center gap-1.5 sm:hidden">
-        <div className="flex min-w-0 items-center gap-1">
-          <div className={`grid h-5 w-5 shrink-0 place-items-center rounded-lg ${iconClassName} transition group-hover:shadow-glow`}>
-            <Icon className="h-2.5 w-2.5" />
-          </div>
-          <p className={`min-w-0 truncate text-[8px] uppercase ${toneStyle ? "text-white/76" : "text-white/38"}`}>{label}</p>
-        </div>
-        <p className="text-[16px] font-semibold leading-none" style={{ fontFamily: "ScreenMatrix, monospace" }}>
+      <div className="relative flex min-w-0 flex-col items-center justify-center gap-1.5 py-1 text-center sm:hidden">
+        <Icon className={`h-4 w-4 ${toneStyle ? "text-white/86" : "text-white/64"} transition group-hover:drop-shadow-[0_0_12px_rgba(255,255,255,0.32)]`} />
+        <p className={`min-w-0 truncate text-[9px] font-semibold uppercase ${toneStyle ? "text-white/80" : "text-white/42"}`}>{label}</p>
+        <p className="text-[18px] font-semibold leading-none" style={{ fontFamily: "ScreenMatrix, monospace" }}>
           {isFraction ? (
             <>
               <span style={{ color: toneStyle?.value ?? "rgb(216 255 62 / 0.9)" }}>{parts[0]}</span>

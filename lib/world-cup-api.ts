@@ -2,6 +2,7 @@ import type { Match } from "@/types/match";
 
 const LOCAL_API_URL = "http://localhost:3001";
 const PRODUCTION_API_URL = "https://api-2026.20250114.xyz";
+const WARMUP_API_URL = "https://api-2026test.20250114.xyz";
 
 export type NormalizedWorldCupFixture = {
   uid: string;
@@ -59,6 +60,10 @@ export function getBackendApiUrl() {
   return (process.env.NEXT_PUBLIC_MARKET_API_URL || fallbackUrl).replace(/\/$/, "");
 }
 
+export function getWarmupBackendApiUrl() {
+  return (process.env.NEXT_PUBLIC_WARMUP_API_URL || WARMUP_API_URL).replace(/\/$/, "");
+}
+
 function isLocalDevHost(hostname: string) {
   return (
     hostname === "localhost" ||
@@ -88,7 +93,7 @@ export async function fetchWorldCupFixtures(options: { season?: number; league?:
 }
 
 export async function fetchWorldCupWarmupFixtures(options: { season?: number; league?: number; from?: string; to?: string } = {}) {
-  const apiUrl = getBackendApiUrl();
+  const apiUrl = getWarmupBackendApiUrl();
   const params = new URLSearchParams({
     season: String(options.season ?? 2026),
   });

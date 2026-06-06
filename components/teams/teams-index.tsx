@@ -78,7 +78,7 @@ export function TeamsIndex() {
   };
 
   return (
-    <main className="relative min-h-screen overflow-hidden py-8 text-white">
+    <main className="relative -mt-3 min-h-screen overflow-hidden pb-8 pt-0 text-white sm:mt-0 sm:py-8">
       <div className="relative">
         <section className="scroll-mt-24">
           <div className="mb-4 flex flex-col gap-3 px-1">

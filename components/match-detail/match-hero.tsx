@@ -193,6 +193,10 @@ function fadeToTransparent(color: string) {
   return color.replace(/rgba\((\s*\d+\s*,\s*\d+\s*,\s*\d+)\s*,\s*[\d.]+\s*\)/, "rgba($1,0)");
 }
 
+function isWarmupStage(stage?: string) {
+  return stage === "热身赛";
+}
+
 export function MatchHero({ detail }: { detail: MatchDetail }) {
   const teams = parseTeams(detail.match.summary);
   const stageLabel = formatStageLabel(detail.match.stage, detail.match.summary);
@@ -202,8 +206,12 @@ export function MatchHero({ detail }: { detail: MatchDetail }) {
   const isLive = detail.status === "live" || detail.status === "halftime";
   const homeAccent = getAccent(detail.homeTeamCode);
   const awayAccent = getAccent(detail.awayTeamCode);
-  const homePlayer = PLAYER_ASSETS[detail.homeTeamCode];
-  const awayPlayer = PLAYER_ASSETS[detail.awayTeamCode];
+  const hidePlayerPosters =
+    detail.slug.startsWith("warmup-") ||
+    detail.match.uid.startsWith("warmup-") ||
+    isWarmupStage(detail.match.stage);
+  const homePlayer = hidePlayerPosters ? undefined : PLAYER_ASSETS[detail.homeTeamCode];
+  const awayPlayer = hidePlayerPosters ? undefined : PLAYER_ASSETS[detail.awayTeamCode];
   const venueBannerImage = getVenueBannerImage(detail.match);
 
   return (
@@ -252,20 +260,24 @@ export function MatchHero({ detail }: { detail: MatchDetail }) {
         </div>
 
         <div className="relative flex flex-1 items-center justify-center py-2 sm:py-6">
-          <PlayerPosterSide
-            side="left"
-            team={teams.home}
-            teamCode={detail.homeTeamCode}
-            player={homePlayer}
-            accent={homeAccent}
-          />
-          <PlayerPosterSide
-            side="right"
-            team={teams.away}
-            teamCode={detail.awayTeamCode}
-            player={awayPlayer}
-            accent={awayAccent}
-          />
+          {!hidePlayerPosters && (
+            <>
+              <PlayerPosterSide
+                side="left"
+                team={teams.home}
+                teamCode={detail.homeTeamCode}
+                player={homePlayer}
+                accent={homeAccent}
+              />
+              <PlayerPosterSide
+                side="right"
+                team={teams.away}
+                teamCode={detail.awayTeamCode}
+                player={awayPlayer}
+                accent={awayAccent}
+              />
+            </>
+          )}
 
           <div className="relative z-20 flex max-w-[580px] -translate-y-1 flex-col items-center text-center sm:-translate-y-5">
             <img
@@ -340,8 +352,9 @@ export function MatchTimelineBanner({
   const awayCode = normalizeTeamCode(away.code);
   const homeAccent = getAccent(homeCode);
   const awayAccent = getAccent(awayCode);
-  const homePlayer = PLAYER_ASSETS[homeCode];
-  const awayPlayer = PLAYER_ASSETS[awayCode];
+  const hidePlayerPosters = isWarmupStage(stage);
+  const homePlayer = hidePlayerPosters ? undefined : PLAYER_ASSETS[homeCode];
+  const awayPlayer = hidePlayerPosters ? undefined : PLAYER_ASSETS[awayCode];
   const startDate = startsAt ? new Date(startsAt) : null;
   const displayTime = startDate && Number.isFinite(startDate.getTime()) ? formatTime(startDate) : "TBD";
 
@@ -355,20 +368,24 @@ export function MatchTimelineBanner({
         <div className="absolute left-1/2 top-7 h-40 w-[360px] -translate-x-1/2 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.13),transparent_68%)] blur-2xl" />
       </div>
 
-      <CompactPosterSide
-        side="left"
-        team={{ badge: homeCode, image: home.image || "", name: home.name }}
-        teamCode={homeCode}
-        player={homePlayer}
-        accent={homeAccent}
-      />
-      <CompactPosterSide
-        side="right"
-        team={{ badge: awayCode, image: away.image || "", name: away.name }}
-        teamCode={awayCode}
-        player={awayPlayer}
-        accent={awayAccent}
-      />
+      {!hidePlayerPosters && (
+        <>
+          <CompactPosterSide
+            side="left"
+            team={{ badge: homeCode, image: home.image || "", name: home.name }}
+            teamCode={homeCode}
+            player={homePlayer}
+            accent={homeAccent}
+          />
+          <CompactPosterSide
+            side="right"
+            team={{ badge: awayCode, image: away.image || "", name: away.name }}
+            teamCode={awayCode}
+            player={awayPlayer}
+            accent={awayAccent}
+          />
+        </>
+      )}
 
       <div className="relative z-20 flex min-h-[15rem] flex-col items-center justify-center px-4 py-7 text-center sm:min-h-[17rem]">
         <span className="glass-chip px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/58">

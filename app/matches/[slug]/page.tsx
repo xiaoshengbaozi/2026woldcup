@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { parseCalendar } from "@/lib/calendar";
 import { generateLegacyMatchSlug, generateMatchSlug, generateStageLegacyMatchSlug } from "@/lib/match-detail";
+import { getWarmupBackendApiUrl } from "@/lib/world-cup-api";
 import { MatchDetailClient } from "./client";
 
 type Props = { params: { slug: string } };
@@ -44,7 +45,7 @@ async function getApiFixtureSlugs(): Promise<string[]> {
 
 async function getWarmupFixtureSlugs(): Promise<string[]> {
   try {
-    const response = await fetch("http://localhost:3001/api/worldcup/warmups", { cache: "no-store" });
+    const response = await fetch(`${getWarmupBackendApiUrl()}/api/worldcup/warmups`, { cache: "no-store" });
     if (!response.ok) return [];
     const payload = (await response.json()) as { fixtures?: Array<{ summary?: string }> };
     const slugs = (payload.fixtures ?? [])

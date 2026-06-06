@@ -42,6 +42,10 @@ export function TeamProfile({ data }: TeamProfileProps) {
   const [squadLoading, setSquadLoading] = useState(false);
   const [squadError, setSquadError] = useState<string | null>(null);
   const targetCode = PROFILE_CODE_ALIASES[data.fifaCode] ?? data.fifaCode;
+  const matchCodes = useMemo(
+    () => new Set([data.fifaCode, targetCode].filter(Boolean)),
+    [data.fifaCode, targetCode]
+  );
 
   const syncNav = useCallback(() => {
     const el = vpRef.current;
@@ -139,30 +143,30 @@ export function TeamProfile({ data }: TeamProfileProps) {
 
         const teams = parseTeams(match.summary);
         const codes = [teams.home.name, teams.away.name].map((name) => getTeamCodeFromName(name));
-        if (codes.includes(targetCode)) return true;
+        if (codes.some((code) => matchCodes.has(code))) return true;
 
         const normalizedSummary = match.summary.replace(/[^\p{L}\p{N}]/gu, "").toLowerCase();
         return nameNeedles.some((needle) => normalizedSummary.includes(needle));
       })
       .slice(0, 3);
-  }, [data.nameCn, data.nameEn, matches, targetCode]);
+  }, [data.nameCn, data.nameEn, matchCodes, matches]);
 
   const teamMeta = useMemo(() => {
     for (const match of groupMatches) {
       const teams = parseTeams(match.summary);
       const homeCode = match.homeTeam?.code || getTeamCodeFromName(teams.home.name);
       const awayCode = match.awayTeam?.code || getTeamCodeFromName(teams.away.name);
-      if (homeCode === targetCode && match.homeTeam?.id) return match.homeTeam;
-      if (awayCode === targetCode && match.awayTeam?.id) return match.awayTeam;
+      if (matchCodes.has(homeCode) && match.homeTeam?.id) return match.homeTeam;
+      if (matchCodes.has(awayCode) && match.awayTeam?.id) return match.awayTeam;
     }
 
     for (const match of matches) {
-      if (match.homeTeam?.code === targetCode && match.homeTeam.id) return match.homeTeam;
-      if (match.awayTeam?.code === targetCode && match.awayTeam.id) return match.awayTeam;
+      if (match.homeTeam?.code && matchCodes.has(match.homeTeam.code) && match.homeTeam.id) return match.homeTeam;
+      if (match.awayTeam?.code && matchCodes.has(match.awayTeam.code) && match.awayTeam.id) return match.awayTeam;
     }
 
     return null;
-  }, [groupMatches, matches, targetCode]);
+  }, [groupMatches, matchCodes, matches]);
 
   useEffect(() => {
     let active = true;

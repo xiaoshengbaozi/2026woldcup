@@ -28,6 +28,7 @@ import { NavBar } from "@/components/nav-bar";
 import { SiteFooter } from "@/components/site-footer";
 import { UserActionButton } from "@/components/user-action-button";
 import { localizeClubName, localizeCountryName } from "@/lib/football-localization-client";
+import type { PlayerBreakthroughProfile } from "@/lib/player-breakthroughs";
 import { getTeamLandscapePathByCode } from "@/lib/team-landscapes";
 import {
   fetchApiFootballPlayerProfileData,
@@ -83,6 +84,7 @@ type Props = {
   nameHint: string;
   row: PlayerRow | null;
   article?: PlayerArticle | null;
+  breakthrough?: PlayerBreakthroughProfile | null;
 };
 
 type ProfilePanelTab = "overview" | "story" | "career";
@@ -120,7 +122,7 @@ const FIFA_CODE_TO_FLAG: Record<string, string> = {
    Main Component
    ──────────────────────────────────────────── */
 
-export function PlayerProfileClient({ playerId, nameHint, row, article }: Props) {
+export function PlayerProfileClient({ playerId, nameHint, row, article, breakthrough }: Props) {
   const [data, setData] = useState<PlayerProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [oneVsOneLoading, setOneVsOneLoading] = useState(false);
@@ -272,7 +274,7 @@ export function PlayerProfileClient({ playerId, nameHint, row, article }: Props)
         <div className="relative z-10 hidden lg:block"><NavBar /></div>
 
         {/* ── Profile Hero Card ── */}
-        <section className="player-profile-hero hero-card relative left-1/2 z-0 -mt-4 w-screen -translate-x-1/2 overflow-visible rounded-b-[2rem] rounded-t-none px-6 pb-6 pt-44 sm:-mt-5 sm:px-8 sm:pb-8 lg:left-auto lg:mx-0 lg:mt-16 lg:w-auto lg:translate-x-0 lg:rounded-[1.65rem] lg:pt-20">
+        <section className="player-profile-hero hero-card relative z-0 mt-14 overflow-hidden rounded-[1.65rem] px-5 pb-6 pt-40 sm:mt-16 sm:px-8 sm:pb-8 sm:pt-44 lg:mt-16 lg:overflow-visible lg:pt-20">
           {heroLandscape && (
             <div className="absolute inset-0 z-0 overflow-hidden rounded-[inherit]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -600,7 +602,21 @@ export function PlayerProfileClient({ playerId, nameHint, row, article }: Props)
                 </div>
 
                 <div className={`${activeMobilePanel === "story" ? "block" : "hidden"} space-y-5 lg:block`}>
-                  {article?.articleCn ? (
+                  {breakthrough ? (
+                    <>
+                      <FamePlaceholder
+                        name={displayName}
+                        photo={photo || row?.photo}
+                        country={row?.countryCn || localizeCountryName(player?.nationality)}
+                        breakthrough={breakthrough}
+                      />
+                      {article?.articleCn ? (
+                        <PlayerArticleTimeline article={article} />
+                      ) : article ? (
+                        <PlayerArticlePreview article={article} />
+                      ) : null}
+                    </>
+                  ) : article?.articleCn ? (
                     <PlayerArticleTimeline article={article} />
                   ) : article ? (
                     <PlayerArticlePreview article={article} />
@@ -665,7 +681,7 @@ function PlayerArticleTimeline({ article }: { article: PlayerArticle }) {
   return (
     <section className="hero-card overflow-hidden p-5 sm:p-6">
       <div>
-        <div className="inline-flex items-center gap-2 rounded-full bg-volt/[0.08] px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-volt ring-1 ring-volt/15">
+        <div className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-volt">
           <Sparkles className="h-3.5 w-3.5" />
           FIFA Story
         </div>
@@ -673,33 +689,38 @@ function PlayerArticleTimeline({ article }: { article: PlayerArticle }) {
         <p className="mt-2 text-xs text-white/38">{article.published}</p>
       </div>
 
-      <div className="mt-6 space-y-4">
+      <div className="mt-6 space-y-7">
         {sections.slice(0, 6).map((section, index) => {
           const image = inlineImages[index % inlineImages.length];
           return (
-            <article key={`${section.heading}-${index}`} className="rounded-[1.35rem] bg-white/[0.03] p-4 ring-1 ring-white/[0.055]">
+            <article key={`${section.heading}-${index}`}>
               {image && index < inlineImages.length && (
-                <div className="mb-4 overflow-hidden rounded-2xl bg-white/[0.035] ring-1 ring-white/[0.06]">
+                <div className="-mx-5 mb-5 sm:-mx-6">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={image}
                     alt={`${article.title} ${index + 1}`}
-                    className="aspect-[16/9] h-full w-full object-cover transition duration-700 hover:scale-105"
+                    className="h-auto w-full transition duration-700 hover:scale-[1.02]"
                   />
                 </div>
               )}
-              <div className="flex items-center gap-3">
-                <span className="grid h-7 w-7 place-items-center rounded-full bg-volt/[0.1] text-[11px] font-black text-volt">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <h3 className="text-sm font-black text-white/82 sm:text-base">{section.heading}</h3>
-              </div>
-              <div className="mt-3 space-y-3">
-                {section.paragraphs.slice(0, 3).map((paragraph) => (
-                  <p key={paragraph} className="text-sm leading-7 text-white/55">
-                    {paragraph}
-                  </p>
-                ))}
+              <div className="grid grid-cols-[2.25rem_1fr] gap-4 sm:grid-cols-[2.75rem_1fr] sm:gap-5">
+                <div className="flex flex-col items-center">
+                  <span className="grid h-7 w-7 place-items-center rounded-full bg-volt/[0.1] text-[11px] font-black text-volt">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <span className="mt-4 min-h-24 flex-1 border-l border-dashed border-white/35" />
+                </div>
+                <div className="pb-6">
+                  <h3 className="text-sm font-black text-white/82 sm:text-base">{section.heading}</h3>
+                  <div className="mt-3 space-y-4">
+                    {section.paragraphs.slice(0, 3).map((paragraph) => (
+                      <p key={paragraph} className="text-sm leading-7 text-white/55">
+                        {paragraph}
+                      </p>
+                    ))}
+                  </div>
+                </div>
               </div>
             </article>
           );
@@ -719,7 +740,7 @@ function PlayerArticlePreview({ article }: { article: PlayerArticle }) {
   return (
     <section className="hero-card overflow-hidden p-5 sm:p-6">
       <div>
-        <div className="inline-flex items-center gap-2 rounded-full bg-volt/[0.08] px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-volt ring-1 ring-volt/15">
+        <div className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-volt">
           <Sparkles className="h-3.5 w-3.5" />
           FIFA Story
         </div>
@@ -728,24 +749,26 @@ function PlayerArticlePreview({ article }: { article: PlayerArticle }) {
       </div>
 
       {storyImages[0] && (
-        <div className="mt-6 overflow-hidden rounded-[1.5rem] bg-white/[0.035] ring-1 ring-white/[0.06]">
+        <div className="-mx-5 mt-6 sm:-mx-6">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={storyImages[0]}
             alt={article.title}
-            className="aspect-[16/10] h-full w-full object-cover transition duration-700 hover:scale-105"
+            className="h-auto w-full transition duration-700 hover:scale-[1.02]"
           />
         </div>
       )}
 
-      <div className="mt-5 rounded-[1.35rem] bg-white/[0.03] p-4 ring-1 ring-white/[0.055]">
-        <div className="flex items-center gap-3">
+      <div className="mt-5 grid grid-cols-[2.25rem_1fr] gap-4 sm:grid-cols-[2.75rem_1fr] sm:gap-5">
+        <div className="flex flex-col items-center">
           <span className="grid h-7 w-7 place-items-center rounded-full bg-volt/[0.1] text-[11px] font-black text-volt">
             01
           </span>
-          <h3 className="text-sm font-black text-white/82 sm:text-base">官方故事已接入</h3>
+          <span className="mt-4 min-h-24 flex-1 border-l border-dashed border-white/35" />
         </div>
-        <p className="mt-3 text-sm leading-7 text-white/55">{article.deck || article.excerpt}</p>
+        <div className="pb-6">
+          <h3 className="text-sm font-black text-white/82 sm:text-base">官方故事已接入</h3>
+          <p className="mt-3 text-sm leading-7 text-white/55">{article.deck || article.excerpt}</p>
         {article.sourceUrl && (
           <a
             href={article.sourceUrl}
@@ -757,17 +780,18 @@ function PlayerArticlePreview({ article }: { article: PlayerArticle }) {
             <ExternalLink className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
           </a>
         )}
+        </div>
       </div>
 
       {storyImages.length > 1 && (
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {storyImages.slice(1, 3).map((image, index) => (
-            <div key={image} className="overflow-hidden rounded-2xl bg-white/[0.035] ring-1 ring-white/[0.06]">
+            <div key={image}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={image}
                 alt={`${article.title} ${index + 2}`}
-                className="aspect-[16/10] h-full w-full object-cover transition duration-700 hover:scale-105"
+                className="h-auto w-full transition duration-700 hover:scale-[1.02]"
               />
             </div>
           ))}
@@ -779,42 +803,117 @@ function PlayerArticlePreview({ article }: { article: PlayerArticle }) {
 
 type RadarStat = { label: string; value: number };
 
-function FamePlaceholder({ name, photo, country }: { name: string; photo?: string; country?: string }) {
+function FamePlaceholder({ name, country, breakthrough }: { name: string; photo?: string; country?: string; breakthrough?: PlayerBreakthroughProfile | null }) {
+  const recordCards = breakthrough?.records.slice(0, 4) ?? [];
+  const generatedDate = breakthrough?.generatedAt ? breakthrough.generatedAt.slice(0, 10) : "";
+  const metaLine = breakthrough
+    ? [breakthrough.team || country, breakthrough.position, breakthrough.source].filter(Boolean).join(" · ")
+    : country
+      ? `${country} · FIFA Story 暂未接入`
+      : "FIFA Story 暂未接入";
+  const searchLabels = breakthrough?.searchRecords
+    .map((record) => record.query.replace(/"/g, "").replace(breakthrough.playerName, "").trim())
+    .filter(Boolean) ?? [];
+  const keywords = breakthrough ? [...new Set(breakthrough.records.flatMap((record) => record.keywords))] : [];
+
   return (
     <section className="hero-card overflow-hidden p-5 sm:p-6">
-      <div className="inline-flex items-center gap-2 rounded-full bg-volt/[0.08] px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-volt ring-1 ring-volt/15">
-        <Sparkles className="h-3.5 w-3.5" />
-        一球成名
-      </div>
-
-      <div className="mt-5 overflow-hidden rounded-[1.5rem] bg-white/[0.035] ring-1 ring-white/[0.06]">
-        <div className="relative aspect-[16/11]">
-          {photo ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={photo} alt={name} className="h-full w-full object-cover opacity-75" />
-          ) : (
-            <div className="grid h-full w-full place-items-center bg-white/[0.035]">
-              <UserRound className="h-12 w-12 text-white/18" />
-            </div>
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/78 via-black/22 to-transparent" />
-          <div className="absolute bottom-5 left-5 right-5">
-            <h2 className="text-2xl font-black text-white sm:text-3xl">{name}</h2>
-            <p className="mt-2 text-sm leading-6 text-white/50">
-              {country ? `${country} · ` : ""}FIFA Story 暂未接入，先保留一张聚焦高光时刻的占位卡。
-            </p>
-          </div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="inline-flex items-center gap-2 rounded-full bg-volt/[0.08] px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-volt ring-1 ring-volt/15">
+          <Sparkles className="h-3.5 w-3.5" />
+          一球成名
         </div>
-      </div>
-
-      <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        {["首秀", "爆点", "舞台"].map((label) => (
-          <div key={label} className="rounded-2xl bg-white/[0.03] p-4 ring-1 ring-white/[0.055]">
-            <p className="text-xs font-black text-volt/70">{label}</p>
-            <p className="mt-2 text-xs leading-5 text-white/38">等待补充关键比赛与人物故事。</p>
+        {breakthrough && (
+          <div className="text-[11px] font-black uppercase tracking-[0.16em] text-white/28">
+            {breakthrough.teamCode || "FIFA"} · {generatedDate || "LIVE DATA"}
           </div>
-        ))}
-      </div>
+          )}
+        </div>
+
+      {breakthrough ? (
+        <>
+          <div className="mt-5 rounded-[1.5rem] bg-white/[0.035] p-5 ring-1 ring-white/[0.06]">
+            <p className="text-[11px] font-black uppercase tracking-[0.16em] text-flare/80">
+              {breakthrough.searchType || "FIFA Breakthrough"}
+            </p>
+            <h2 className="mt-2 text-2xl font-black leading-tight text-white sm:text-3xl">{breakthrough.playerName || name}</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-white/52">
+              {metaLine}。该资料来自 JSON 中的球员突破记录，包含 {breakthrough.searchRecords.length} 条检索线索与 {breakthrough.records.length} 条突破资料。
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {[breakthrough.team || country, breakthrough.position, ...keywords].filter(Boolean).map((tag) => (
+                <span key={tag} className="rounded-full bg-volt/[0.075] px-3 py-1 text-xs font-bold text-volt/82 ring-1 ring-volt/14">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-4 lg:grid-cols-[0.85fr_1.15fr]">
+            <div className="rounded-[1.35rem] bg-white/[0.03] p-4 ring-1 ring-white/[0.055]">
+              <p className="text-xs font-black text-volt/75">检索路径</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {searchLabels.map((label) => (
+                  <span key={label} className="rounded-full bg-white/[0.04] px-3 py-1 text-xs font-bold text-white/58 ring-1 ring-white/[0.07]">
+                    {label}
+                  </span>
+                ))}
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <div className="rounded-2xl bg-black/18 p-3 ring-1 ring-white/[0.045]">
+                  <p className="text-[11px] font-black text-white/32">搜索记录</p>
+                  <p className="mt-1 text-lg font-black text-white/88">{breakthrough.searchRecords.length}</p>
+                </div>
+                <div className="rounded-2xl bg-black/18 p-3 ring-1 ring-white/[0.045]">
+                  <p className="text-[11px] font-black text-white/32">资料记录</p>
+                  <p className="mt-1 text-lg font-black text-white/88">{breakthrough.records.length}</p>
+                </div>
+              </div>
+              <p className="mt-4 text-xs leading-5 text-white/36">
+                数据批次 {generatedDate || "当前"} · 球员库 {breakthrough.playerTotal}
+              </p>
+            </div>
+
+            <div className="relative space-y-4 pl-5">
+              <div className="absolute bottom-4 left-[6px] top-4 w-px bg-gradient-to-b from-transparent via-volt/35 to-transparent" />
+              {recordCards.map((record, index) => (
+                <div key={`${record.url}-${index}`} className="relative rounded-[1.35rem] bg-white/[0.035] p-4 ring-1 ring-white/[0.06] transition hover:bg-white/[0.05] hover:ring-volt/16">
+                  <span className="absolute -left-[23px] top-5 h-3.5 w-3.5 rounded-full bg-volt shadow-[0_0_22px_rgba(216,255,62,0.42)]" />
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[11px] font-black uppercase tracking-[0.14em] text-flare/80">FIFA SOURCE 0{index + 1}</p>
+                      <h3 className="mt-2 text-sm font-black leading-5 text-white/86">{record.title}</h3>
+                    </div>
+                    {record.url && (
+                      <a href={record.url} target="_blank" rel="noreferrer" aria-label="查看 FIFA 来源" className="rounded-full bg-white/[0.045] p-2 text-white/35 ring-1 ring-white/[0.06] transition hover:text-volt hover:ring-volt/20">
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    )}
+                  </div>
+                  <p className="mt-3 text-xs leading-5 text-white/45">
+                    {record.hasBreakthrough ? "包含突破信息" : "FIFA资料索引"} · 内容长度 {record.contentLength || "未标注"}
+                  </p>
+                  {record.keywords.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {record.keywords.map((keyword) => (
+                        <span key={keyword} className="rounded-full bg-volt/[0.07] px-2.5 py-1 text-[11px] font-bold text-volt/75 ring-1 ring-volt/12">
+                          {keyword}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="mt-5 rounded-[1.5rem] bg-white/[0.035] p-5 ring-1 ring-white/[0.06]">
+          <p className="text-[11px] font-black uppercase tracking-[0.16em] text-volt/80">FIFA Breakthrough</p>
+          <h2 className="mt-2 text-2xl font-black text-white sm:text-3xl">{name}</h2>
+          <p className="mt-3 text-sm leading-7 text-white/50">{metaLine}，暂无可写入的一球成名资料。</p>
+        </div>
+      )}
     </section>
   );
 }

@@ -26,6 +26,7 @@ export interface PlayerXTimelineItem {
 export interface PlayerXTimelineMedia {
   type: "photo" | "video" | "animated_gif";
   url?: string;
+  videoUrl?: string;
   previewImageUrl?: string;
   width?: number;
   height?: number;
@@ -376,6 +377,7 @@ interface XMedia {
   media_key: string;
   type: "photo" | "video" | "animated_gif";
   url?: string;
+  video_url?: string;
   preview_image_url?: string;
   duration_ms?: number;
   width?: number;
@@ -386,6 +388,7 @@ function toTimelineMedia(media: XMedia): PlayerXTimelineMedia {
   return {
     type: media.type,
     url: media.url,
+    videoUrl: media.video_url,
     previewImageUrl: media.preview_image_url,
     durationMs: media.duration_ms,
     width: media.width,

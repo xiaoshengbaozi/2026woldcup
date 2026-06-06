@@ -1,11 +1,14 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, ChevronLeft, ChevronRight, Flame, Trophy } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Trophy } from "lucide-react";
 import Link from "next/link";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { PlayerXTimeline } from "@/components/player-x-timeline";
 import playerArticles from "@/data/player-articles.json";
+import { fetchPlayerXTimeline, type PlayerXTimelinePayload } from "@/lib/player-x-timeline";
+import { fetchPopularPlayers, type PopularPlayerFollow } from "@/lib/user-system";
 import { fallbackTopScorerProfiles } from "@/lib/world-cup-top-scorers";
 
 type PlayerArticle = (typeof playerArticles.players)[number];
@@ -41,13 +44,68 @@ const countryNameCn: Record<string, string> = {
 
 export function PlayersClient() {
   const [activeTab, setActiveTab] = useState<PlayerTab>("superstars");
+  const [xTimeline, setXTimeline] = useState<PlayerXTimelinePayload | null>(null);
+  const [xTimelineLoading, setXTimelineLoading] = useState(true);
+  const [popularFollows, setPopularFollows] = useState<PopularPlayerFollow[]>([]);
 
-  const visiblePlayers = useMemo(() => {
-    if (activeTab === "popular") return [];
-    return playerArticles.players.filter((player) => player.category === activeTab);
-  }, [activeTab]);
+  const popularPlayers = useMemo(() => {
+    const articlesByKey = new Map<string, PlayerArticle>();
+    for (const player of playerArticles.players) {
+      [player.slug, player.nameEn, player.nameCn, String(player.apiPlayerId), String(player.id)]
+        .filter(Boolean)
+        .forEach((key) => articlesByKey.set(normalizePlayerLookupKey(key), player));
+    }
 
-  const featuredPlayer = visiblePlayers[0] ?? null;
+    const seen = new Set<string>();
+    return popularFollows
+      .map((player) => articlesByKey.get(normalizePlayerLookupKey(player.id)) ?? articlesByKey.get(normalizePlayerLookupKey(player.name)))
+      .filter((player): player is PlayerArticle => {
+        if (!player || seen.has(player.id)) return false;
+        seen.add(player.id);
+        return true;
+      });
+  }, [popularFollows]);
+
+  const visiblePlayers = useMemo(
+    () => (activeTab === "popular" ? popularPlayers : playerArticles.players.filter((player) => player.category === activeTab)),
+    [activeTab, popularPlayers]
+  );
+
+  const visiblePlayerIds = useMemo(() => visiblePlayers.map((player) => player.apiPlayerId || player.id), [visiblePlayers]);
+
+  useEffect(() => {
+    let active = true;
+    fetchPopularPlayers(24)
+      .then((payload) => {
+        if (active) setPopularFollows(payload.players);
+      })
+      .catch(() => {
+        if (active) setPopularFollows([]);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    setXTimelineLoading(true);
+    fetchPlayerXTimeline(visiblePlayerIds)
+      .then((payload) => {
+        if (active) setXTimeline(payload);
+      })
+      .catch(() => {
+        if (active) setXTimeline({ timestamp: Date.now(), configured: false, warning: "x_timeline_failed", players: [], items: [] });
+      })
+      .finally(() => {
+        if (active) setXTimelineLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [visiblePlayerIds]);
 
   return (
     <DashboardShell>
@@ -77,33 +135,24 @@ export function PlayersClient() {
             </div>
 
             <AnimatePresence mode="wait">
-              {activeTab === "popular" ? (
-                <motion.div
-                  key="popular-empty"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="mt-8 rounded-[1.5rem] bg-white/[0.025] px-5 py-10 text-center ring-1 ring-white/[0.06]"
-                >
-                  <Flame className="mx-auto h-8 w-8 text-volt/45" />
-                  <p className="mt-3 text-sm font-bold text-white/70">{"最受欢迎榜单暂未开放"}</p>
-                  <p className="mt-2 text-xs text-white/35">{"这里先按你的要求留空，后续可接收藏、浏览或搜索热度。"}</p>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key={activeTab}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="mt-6"
-                >
-                  <PlayerRail players={visiblePlayers} />
-                </motion.div>
-              )}
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="mt-6 min-h-[7.5rem] sm:min-h-[8.75rem]"
+              >
+                <PlayerRail players={visiblePlayers} />
+              </motion.div>
             </AnimatePresence>
           </section>
 
-          {featuredPlayer && <FeaturedStrip player={featuredPlayer} />}
+          <PlayerXTimeline
+            items={xTimeline?.items ?? []}
+            configured={xTimeline?.configured}
+            warning={xTimeline?.warning}
+            loading={xTimelineLoading}
+          />
 
           <section className="space-y-4">
             {visiblePlayers.map((player, index) => (
@@ -213,30 +262,6 @@ function PlayerRail({ players }: { players: PlayerArticle[] }) {
   );
 }
 
-function FeaturedStrip({ player }: { player: PlayerArticle }) {
-  return (
-    <Link href={playerProfileHref(player)} className="hero-card group grid overflow-hidden p-4 transition lg:grid-cols-[92px_minmax(0,1fr)_auto] lg:items-center">
-      <div className="flex items-center gap-3">
-        <div className="h-14 w-14 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/[0.08]">
-          <img src={player.photo} alt={player.nameCn} className="h-full w-full object-cover" />
-        </div>
-        <div className="lg:hidden">
-          <p className="font-bold text-white">{player.nameCn}</p>
-          <p className="text-xs text-white/38">{countryLabel(player)}</p>
-        </div>
-      </div>
-      <div className="mt-4 min-w-0 lg:mt-0">
-        <p className="hidden font-bold text-white lg:block">{player.nameCn}</p>
-        <p className="mt-1 line-clamp-2 text-sm leading-6 text-white/52">{player.excerpt}</p>
-      </div>
-      <div className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-volt lg:mt-0">
-        {"进入个人页"}
-        <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
-      </div>
-    </Link>
-  );
-}
-
 const TimelinePost = memo(function TimelinePost({ player, index }: { player: PlayerArticle; index: number }) {
   const sections = player.articleCn?.sections ?? [];
   const coverText = sections[1]?.paragraphs?.[0] || player.excerpt;
@@ -295,6 +320,17 @@ const TimelinePost = memo(function TimelinePost({ player, index }: { player: Pla
 
 function countryLabel(player: PlayerArticle) {
   return countryNameCn[player.countryCn] || countryNameCn[player.countryEn] || player.countryCn;
+}
+
+function normalizePlayerLookupKey(value: string | number | null | undefined) {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/['"]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 function playerProfileHref(player: Pick<PlayerArticle, "apiPlayerId" | "id">) {

@@ -159,6 +159,14 @@ button {
     display: block;
   }
 
+  .cyberball-brand-text {
+    color: rgb(255 255 255 / 0.96);
+  }
+
+  [data-theme="light"] .cyberball-brand-text {
+    color: rgb(0 0 0 / 0.86);
+  }
+
   .hero-shell,
   .hero-card {
     position: relative;
