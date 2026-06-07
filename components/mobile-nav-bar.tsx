@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BarChart3, Calendar, Home, Newspaper, Radio } from "lucide-react";
+import { useEffect, useState } from "react";
 
 const navItems = [
   { label: "首页", href: "/", icon: Home },
@@ -17,18 +18,30 @@ export function MobileNavBar() {
   const pathname = usePathname();
   const normalizedPathname = pathname !== "/" ? pathname.replace(/\/$/, "") : pathname;
   const isLivePage = normalizedPathname === "/live";
-
-  if (HIDE_MOBILE_NAV_PAGES.has(normalizedPathname)) return null;
+  const [liveReturnHref, setLiveReturnHref] = useState("/matches");
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
     return pathname.startsWith(href);
   };
 
-  const openLiveMatches = () => {
-    if (isLivePage) return;
-    window.location.href = "/live";
+  useEffect(() => {
+    if (!isLivePage) return;
+    setLiveReturnHref(window.sessionStorage.getItem("mobile-live-return-url") || "/matches");
+  }, [isLivePage]);
+
+  const handleLiveNavClick = () => {
+    if (isLivePage) {
+      window.sessionStorage.removeItem("mobile-live-return-url");
+      return;
+    }
+    window.sessionStorage.setItem(
+      "mobile-live-return-url",
+      `${window.location.pathname}${window.location.search}${window.location.hash}`
+    );
   };
+
+  if (HIDE_MOBILE_NAV_PAGES.has(normalizedPathname)) return null;
 
   return (
     <nav
@@ -86,16 +99,16 @@ export function MobileNavBar() {
           })}
         </div>
 
-        <button
-          type="button"
-          onClick={openLiveMatches}
+        <Link
+          href={isLivePage ? liveReturnHref : "/live"}
+          onClick={handleLiveNavClick}
           className="pointer-events-auto relative z-[90] flex h-[62px] w-[62px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-full text-black transition-transform hover:scale-[1.02]"
           style={liveNavSurfaceStyle}
           aria-label="直播"
         >
           <Radio className="h-5 w-5" strokeWidth={1.75} />
           <span className="text-[10px] font-semibold uppercase tracking-[0.1em]">直播</span>
-        </button>
+        </Link>
       </div>
     </nav>
   );
