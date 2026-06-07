@@ -4,7 +4,7 @@ import playerArticles from "@/data/player-articles.json";
 import playerNameTranslations from "@/data/localization/players.json";
 import { getOfficialPlayerById, getOfficialPlayerCatalog } from "@/lib/official-player-catalog";
 import { getApiSportsPlayerPhoto } from "@/lib/player-photo-overrides";
-import { findPlayerScoutNote } from "@/lib/player-scout-notes";
+import { findPlayerScoutNoteByIdentity } from "@/lib/player-scout-notes";
 import { PlayerProfileClient } from "./player-profile-client";
 
 type Props = {
@@ -93,7 +93,12 @@ export default function PlayerPage({ params }: Props) {
     : null;
   const nameHint = row?.nameEn || article?.nameEn || officialRow?.nameEn || row?.nameCn || article?.nameCn || officialRow?.nameCn || translatedRow?.nameCn || "";
   const pageRow = mergeOfficialSquadRow(row ?? articleRow ?? translatedRow, officialRow);
-  const scoutNote = findPlayerScoutNote(params.id);
+  const scoutNote = findPlayerScoutNoteByIdentity({
+    id: params.id,
+    name: nameHint,
+    nameEn: pageRow?.nameEn || article?.nameEn || row?.nameEn,
+    nameCn: pageRow?.nameCn || article?.nameCn || row?.nameCn,
+  });
 
   return <PlayerProfileClient playerId={params.id} nameHint={nameHint} row={pageRow} article={article ?? null} scoutNote={scoutNote} />;
 }

@@ -1,31 +1,32 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, ChevronLeft, ChevronRight, Trophy } from "lucide-react";
+import { ArrowDownAZ, ArrowUpAZ, ChevronLeft, ChevronRight, Flag, Globe2, Search, Star, Trophy } from "lucide-react";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import type { ComponentType } from "react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
-import { PlayerXTimeline } from "@/components/player-x-timeline";
+import { FilterDropdown } from "@/components/match-filters";
 import playerArticles from "@/data/player-articles.json";
 import { getOfficialPlayerCatalog, type OfficialPlayerCatalogItem } from "@/lib/official-player-catalog";
-import { fetchPlayerXTimeline, type PlayerXTimelinePayload } from "@/lib/player-x-timeline";
-import { fetchPopularPlayers, type PopularPlayerFollow } from "@/lib/user-system";
 import { fallbackTopScorerProfiles } from "@/lib/world-cup-top-scorers";
 
 type PlayerArticle = (typeof playerArticles.players)[number];
 type PlayerListItem = PlayerArticle | OfficialPlayerCatalogItem;
-type PlayerTab = "superstars" | "wonderkids" | "popular" | "squads";
-type SquadSort = "default" | "age-asc" | "age-desc";
+type PlayerTab = "superstars" | "wonderkids" | "squads";
+type SquadSortRule = "age" | "rating";
+type SortDirection = "asc" | "desc";
 
 const tabs: { id: PlayerTab; label: string }[] = [
   { id: "superstars", label: "超级巨星" },
   { id: "wonderkids", label: "神童" },
-  { id: "popular", label: "最受欢迎" },
-  { id: "squads", label: "本届阵容" },
+  { id: "squads", label: "最佳射手" },
 ];
 
 const officialPlayers = getOfficialPlayerCatalog();
+const scorerPlayers = officialPlayers
+  .filter((player) => player.goals > 0)
+  .sort((a, b) => b.goals - a.goals || (a.age ?? Number.POSITIVE_INFINITY) - (b.age ?? Number.POSITIVE_INFINITY));
 
 const countryNameCn: Record<string, string> = {
   Argentina: "阿根廷",
@@ -51,30 +52,11 @@ const countryNameCn: Record<string, string> = {
 
 export function PlayersClient() {
   const [activeTab, setActiveTab] = useState<PlayerTab>("superstars");
-  const [regionFilter, setRegionFilter] = useState("all");
-  const [countryFilter, setCountryFilter] = useState("all");
-  const [squadSort, setSquadSort] = useState<SquadSort>("default");
-  const [xTimeline, setXTimeline] = useState<PlayerXTimelinePayload | null>(null);
-  const [xTimelineLoading, setXTimelineLoading] = useState(true);
-  const [popularFollows, setPopularFollows] = useState<PopularPlayerFollow[]>([]);
-
-  const popularPlayers = useMemo(() => {
-    const articlesByKey = new Map<string, PlayerArticle>();
-    for (const player of playerArticles.players) {
-      [player.slug, player.nameEn, player.nameCn, String(player.apiPlayerId), String(player.id)]
-        .filter(Boolean)
-        .forEach((key) => articlesByKey.set(normalizePlayerLookupKey(key), player));
-    }
-
-    const seen = new Set<string>();
-    return popularFollows
-      .map((player) => articlesByKey.get(normalizePlayerLookupKey(player.id)) ?? articlesByKey.get(normalizePlayerLookupKey(player.name)))
-      .filter((player): player is PlayerArticle => {
-        if (!player || seen.has(player.id)) return false;
-        seen.add(player.id);
-        return true;
-    });
-  }, [popularFollows]);
+  const [playerQuery, setPlayerQuery] = useState("");
+  const [regionFilter, setRegionFilter] = useState("");
+  const [countryFilter, setCountryFilter] = useState("");
+  const [sortRule, setSortRule] = useState<SquadSortRule>("age");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   const regionOptions = useMemo(() => {
     const options = new Map<string, string>();
@@ -87,74 +69,36 @@ export function PlayersClient() {
   const countryOptions = useMemo(() => {
     const options = new Map<string, string>();
     for (const player of officialPlayers) {
-      if (regionFilter !== "all" && player.region !== regionFilter) continue;
+      if (regionFilter && player.region !== regionFilter) continue;
       options.set(player.teamCode, player.countryCn);
     }
     return Array.from(options, ([value, label]) => ({ value, label })).sort((a, b) => a.label.localeCompare(b.label));
   }, [regionFilter]);
 
   const squadPlayers = useMemo(() => {
+    const query = playerQuery.trim().toLowerCase();
+    const normalizedQuery = normalizePlayerLookupKey(playerQuery);
     const filtered = officialPlayers.filter((player) => {
-      if (regionFilter !== "all" && player.region !== regionFilter) return false;
-      if (countryFilter !== "all" && player.teamCode !== countryFilter) return false;
+      if (regionFilter && player.region !== regionFilter) return false;
+      if (countryFilter && player.teamCode !== countryFilter) return false;
+      if ((query || normalizedQuery) && !officialPlayerMatchesQuery(player, query, normalizedQuery)) return false;
       return true;
     });
 
-    if (squadSort === "default") return filtered;
-
     return [...filtered].sort((a, b) => {
-      if (a.age == null && b.age == null) return 0;
-      if (a.age == null) return 1;
-      if (b.age == null) return -1;
-      return squadSort === "age-asc" ? a.age - b.age : b.age - a.age;
+      const valueA = sortRule === "age" ? a.age : a.rating;
+      const valueB = sortRule === "age" ? b.age : b.rating;
+      if (valueA == null && valueB == null) return 0;
+      if (valueA == null) return 1;
+      if (valueB == null) return -1;
+      return sortDirection === "asc" ? valueA - valueB : valueB - valueA;
     });
-  }, [countryFilter, regionFilter, squadSort]);
+  }, [countryFilter, playerQuery, regionFilter, sortDirection, sortRule]);
 
   const visiblePlayers = useMemo((): PlayerListItem[] => {
-    if (activeTab === "popular") return popularPlayers;
-    if (activeTab === "squads") return squadPlayers;
+    if (activeTab === "squads") return scorerPlayers;
     return playerArticles.players.filter((player) => player.category === activeTab);
-  }, [activeTab, popularPlayers, squadPlayers]);
-
-  const articlePlayers = useMemo(() => visiblePlayers.filter(isArticlePlayer), [visiblePlayers]);
-  const visiblePlayerIds = useMemo(
-    () => (activeTab === "squads" ? [] : articlePlayers.map((player) => player.apiPlayerId || player.id)),
-    [activeTab, articlePlayers]
-  );
-
-  useEffect(() => {
-    let active = true;
-    fetchPopularPlayers(24)
-      .then((payload) => {
-        if (active) setPopularFollows(payload.players);
-      })
-      .catch(() => {
-        if (active) setPopularFollows([]);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    let active = true;
-    setXTimelineLoading(true);
-    fetchPlayerXTimeline(visiblePlayerIds)
-      .then((payload) => {
-        if (active) setXTimeline(payload);
-      })
-      .catch(() => {
-        if (active) setXTimeline({ timestamp: Date.now(), configured: false, warning: "x_timeline_failed", players: [], items: [] });
-      })
-      .finally(() => {
-        if (active) setXTimelineLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [visiblePlayerIds]);
+  }, [activeTab]);
 
   return (
     <DashboardShell>
@@ -196,38 +140,26 @@ export function PlayersClient() {
             </AnimatePresence>
           </section>
 
-          {activeTab !== "squads" && (
-            <PlayerXTimeline
-              items={xTimeline?.items ?? []}
-              configured={xTimeline?.configured}
-              warning={xTimeline?.warning}
-              loading={xTimelineLoading}
-              showHeader={false}
-            />
-          )}
-
           <section className="space-y-4">
-            {activeTab === "squads" ? (
-              <>
-                <SquadFilters
-                  regions={regionOptions}
-                  countries={countryOptions}
-                  region={regionFilter}
-                  country={countryFilter}
-                  sort={squadSort}
-                  resultCount={squadPlayers.length}
-                  onRegionChange={(value) => {
-                    setRegionFilter(value);
-                    setCountryFilter("all");
-                  }}
-                  onCountryChange={setCountryFilter}
-                  onSortChange={setSquadSort}
-                />
-                <SquadPlayerGrid players={squadPlayers} />
-              </>
-            ) : (
-              articlePlayers.map((player, index) => <TimelinePost key={player.id} player={player} index={index} />)
-            )}
+            <SquadFilters
+              query={playerQuery}
+              regions={regionOptions}
+              countries={countryOptions}
+              region={regionFilter}
+              country={countryFilter}
+              sortRule={sortRule}
+              sortDirection={sortDirection}
+              resultCount={squadPlayers.length}
+              onQueryChange={setPlayerQuery}
+              onRegionChange={(value) => {
+                setRegionFilter(value);
+                setCountryFilter("");
+              }}
+              onCountryChange={setCountryFilter}
+              onSortRuleChange={setSortRule}
+              onSortDirectionChange={setSortDirection}
+            />
+            <SquadPlayerGrid players={squadPlayers} />
           </section>
         </main>
 
@@ -251,81 +183,138 @@ export function PlayersClient() {
 }
 
 function SquadFilters({
+  query,
   regions,
   countries,
   region,
   country,
-  sort,
+  sortRule,
+  sortDirection,
   resultCount,
+  onQueryChange,
   onRegionChange,
   onCountryChange,
-  onSortChange,
+  onSortRuleChange,
+  onSortDirectionChange,
 }: {
+  query: string;
   regions: { value: string; label: string }[];
   countries: { value: string; label: string }[];
   region: string;
   country: string;
-  sort: SquadSort;
+  sortRule: SquadSortRule;
+  sortDirection: SortDirection;
   resultCount: number;
+  onQueryChange: (value: string) => void;
   onRegionChange: (value: string) => void;
   onCountryChange: (value: string) => void;
-  onSortChange: (value: SquadSort) => void;
+  onSortRuleChange: (value: SquadSortRule) => void;
+  onSortDirectionChange: (value: SortDirection) => void;
 }) {
   return (
-    <div className="rounded-3xl border border-white/[0.06] bg-white/[0.025] p-3 shadow-[0_18px_60px_rgba(0,0,0,.22)] backdrop-blur-2xl sm:p-4">
-      <div className="grid gap-3 sm:grid-cols-3">
-        <FilterSelect label="地区" value={region} onChange={onRegionChange}>
-          <option value="all">全部地区</option>
-          {regions.map((item) => (
-            <option key={item.value} value={item.value}>
-              {item.label}
-            </option>
-          ))}
-        </FilterSelect>
-        <FilterSelect label="国家" value={country} onChange={onCountryChange}>
-          <option value="all">全部国家</option>
-          {countries.map((item) => (
-            <option key={item.value} value={item.value}>
-              {item.label}
-            </option>
-          ))}
-        </FilterSelect>
-        <FilterSelect label="排序" value={sort} onChange={(value) => onSortChange(value as SquadSort)}>
-          <option value="default">默认排序</option>
-          <option value="age-asc">年龄从小到大</option>
-          <option value="age-desc">年龄从大到小</option>
-        </FilterSelect>
+    <motion.section
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.05, duration: 0.45 }}
+      className="relative z-[10000] flex flex-wrap items-center gap-2 sm:z-20 sm:gap-3"
+    >
+      <label className="glass-chip flex h-10 min-w-0 flex-1 basis-full items-center gap-2 px-4 text-white/70 transition focus-within:text-white sm:min-w-[240px] sm:basis-auto sm:gap-3 sm:px-5">
+        <Search className="h-5 w-5 shrink-0 text-volt/80" />
+        <input
+          value={query}
+          onChange={(event) => onQueryChange(event.target.value)}
+          placeholder="搜索球员、国家或位置"
+          className="w-full bg-transparent text-xs text-white outline-none placeholder:text-white/35"
+        />
+      </label>
+
+      <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+        <FilterDropdown
+          icon={Globe2}
+          value={region}
+          fallbackLabel="地区"
+          allLabel="全部地区"
+          options={regions}
+          onChange={onRegionChange}
+        />
+        <FilterDropdown
+          icon={Flag}
+          value={country}
+          fallbackLabel="国家"
+          allLabel="全部国家"
+          options={countries}
+          onChange={onCountryChange}
+        />
       </div>
-      <div className="mt-3 flex items-center justify-between text-[11px] font-medium text-white/38">
+
+      <SortControls
+        rule={sortRule}
+        direction={sortDirection}
+        onRuleChange={onSortRuleChange}
+        onDirectionChange={onSortDirectionChange}
+      />
+
+      <div className="ml-auto hidden h-10 items-center rounded-full bg-white/[0.035] px-4 text-[11px] font-semibold text-white/42 ring-1 ring-white/[0.06] sm:flex">
         <span>当前阵容</span>
-        <span className="tabular-nums text-volt/80">{resultCount} 人</span>
+        <span className="ml-2 tabular-nums text-volt/80">{resultCount} 人</span>
       </div>
-    </div>
+    </motion.section>
   );
 }
 
-function FilterSelect({
-  label,
-  value,
-  onChange,
-  children,
+function SortControls({
+  rule,
+  direction,
+  onRuleChange,
+  onDirectionChange,
 }: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  children: ReactNode;
+  rule: SquadSortRule;
+  direction: SortDirection;
+  onRuleChange: (value: SquadSortRule) => void;
+  onDirectionChange: (value: SortDirection) => void;
 }) {
+  const rules: { value: SquadSortRule; label: string; icon: ComponentType<{ className?: string }> }[] = [
+    { value: "age", label: "年龄", icon: Trophy },
+    { value: "rating", label: "评分", icon: Star },
+  ];
+  const DirectionIcon = direction === "asc" ? ArrowUpAZ : ArrowDownAZ;
+  const handleSortClick = (nextRule: SquadSortRule) => {
+    if (nextRule === rule) {
+      onDirectionChange(direction === "asc" ? "desc" : "asc");
+      return;
+    }
+    onRuleChange(nextRule);
+    onDirectionChange("asc");
+  };
+
   return (
-    <label className="block min-w-0">
-      <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.16em] text-white/38">{label}</span>
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="h-11 w-full rounded-2xl border border-white/[0.08] bg-black/35 px-3 text-sm font-semibold text-white/78 outline-none backdrop-blur-xl transition focus:border-volt/45 focus:ring-2 focus:ring-volt/10"
-      >
-        {children}
-      </select>
-    </label>
+    <div className="flex min-w-0 flex-1 items-center gap-2 sm:flex-none sm:gap-3">
+      {rules.map((item) => {
+        const Icon = item.icon;
+        const active = rule === item.value;
+        return (
+          <button
+            key={item.value}
+            type="button"
+            aria-label={`${item.label}${active && direction === "desc" ? "倒序" : "正序"}排序`}
+            onClick={() => handleSortClick(item.value)}
+            className={`glass-chip flex h-10 min-w-0 flex-1 items-center justify-center gap-1.5 px-3 text-[11px] font-semibold transition-all duration-150 sm:flex-none sm:px-4 ${
+              active
+                ? "bg-volt/10 text-volt ring-1 ring-volt/25 shadow-[0_0_18px_rgba(216,255,62,.12)]"
+                : "text-white/50 hover:text-white/78"
+            }`}
+          >
+            <Icon className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">{item.label}</span>
+            {active ? (
+              <DirectionIcon className="h-3.5 w-3.5 shrink-0" />
+            ) : (
+              <ArrowUpAZ className="h-3.5 w-3.5 shrink-0 opacity-45" />
+            )}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -381,7 +370,7 @@ function PlayerRail({ players }: { players: PlayerListItem[] }) {
               <span className="mt-2.5 w-full truncate text-[11px] font-medium text-white/60 group-hover:text-volt sm:mt-3 sm:text-xs">
                 {player.nameCn}
               </span>
-              <span className="mt-0.5 w-full truncate text-[10px] text-white/28 sm:text-[11px]">{countryLabel(player)}</span>
+              <span className="mt-0.5 w-full truncate text-[10px] text-white/28 sm:text-[11px]">{railMetaLabel(player)}</span>
             </Link>
           ))}
         </div>
@@ -412,62 +401,6 @@ function PlayerRail({ players }: { players: PlayerListItem[] }) {
   );
 }
 
-const TimelinePost = memo(function TimelinePost({ player, index }: { player: PlayerArticle; index: number }) {
-  const sections = player.articleCn?.sections ?? [];
-  const coverText = sections[1]?.paragraphs?.[0] || player.excerpt;
-  const tag = player.category === "superstars" ? "巨星" : "新星";
-
-  return (
-    <motion.article
-      initial={{ opacity: 0, y: 14 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
-      transition={{ delay: Math.min(index * 0.03, 0.2), duration: 0.45 }}
-      className="group rounded-2xl border border-white/[0.06] bg-white/[0.02] transition-colors duration-300 hover:border-white/[0.1] hover:bg-white/[0.03]"
-    >
-      <div className="flex items-center gap-3 px-4 py-3 sm:px-5">
-        <Link href={playerProfileHref(player)} className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/[0.08] transition hover:ring-volt/45">
-          <img src={player.photo} alt={player.nameCn} className="h-full w-full object-cover" />
-        </Link>
-        <div className="min-w-0 flex-1">
-          <Link href={playerProfileHref(player)} className="text-sm font-bold text-white hover:text-volt transition">
-            {player.nameCn}
-          </Link>
-          <p className="truncate text-xs text-white/36">{countryLabel(player)} {"· "} {player.published || "FIFA"}</p>
-        </div>
-        <span className="shrink-0 rounded-full bg-volt/[0.1] px-2.5 py-1 text-[10px] font-bold text-volt">
-          {tag}
-        </span>
-      </div>
-
-      <Link href={playerProfileHref(player)} className="block">
-        <div className="relative aspect-[16/10] overflow-hidden bg-white/[0.02]">
-          <img
-            src={player.coverImage || player.photo}
-            alt={player.nameCn}
-            className="h-full w-full object-cover opacity-70 transition duration-700 group-hover:scale-105 group-hover:opacity-90"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
-            <h2 className="text-lg font-bold leading-snug text-white sm:text-xl">{player.title}</h2>
-            <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-white/55 sm:text-sm">{coverText}</p>
-          </div>
-        </div>
-      </Link>
-
-      <div className="flex items-center gap-4 border-t border-white/[0.04] px-4 py-2.5 sm:px-5">
-        <Link
-          href={playerProfileHref(player)}
-          className="flex items-center gap-1.5 text-xs font-medium text-white/40 transition hover:text-volt"
-        >
-          <span>{"阅读全文"}</span>
-          <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
-        </Link>
-      </div>
-    </motion.article>
-  );
-});
-
 function SquadPlayerGrid({ players }: { players: OfficialPlayerCatalogItem[] }) {
   return (
     <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -475,7 +408,7 @@ function SquadPlayerGrid({ players }: { players: OfficialPlayerCatalogItem[] }) 
         <Link
           key={player.id}
           href={playerProfileHref(player)}
-          className="group grid min-w-0 grid-cols-[56px_minmax(0,1fr)_16px] items-center gap-3 rounded-3xl border border-white/[0.06] bg-white/[0.025] p-3 shadow-[0_16px_46px_rgba(0,0,0,.18)] backdrop-blur-xl transition duration-300 hover:border-volt/30 hover:bg-white/[0.04] sm:grid-cols-[72px_minmax(0,1fr)_16px]"
+          className="group grid min-w-0 grid-cols-[56px_minmax(0,1fr)] items-center gap-3 rounded-3xl border border-white/[0.06] bg-white/[0.025] p-3 shadow-[0_16px_46px_rgba(0,0,0,.18)] backdrop-blur-xl transition duration-300 hover:border-volt/30 hover:bg-white/[0.04] sm:grid-cols-[72px_minmax(0,1fr)]"
         >
           <div className="relative h-14 w-14 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/[0.08] sm:h-[72px] sm:w-[72px]">
             <img src={player.photo} alt={player.nameCn} className="h-full w-full object-cover" />
@@ -483,22 +416,33 @@ function SquadPlayerGrid({ players }: { players: OfficialPlayerCatalogItem[] }) 
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 items-center gap-2">
               <p className="truncate text-sm font-bold text-white/82 group-hover:text-volt">{player.nameCn}</p>
-              {player.number ? <span className="shrink-0 text-[11px] font-black text-white/30">#{player.number}</span> : null}
             </div>
             <p className="mt-0.5 truncate text-xs text-white/36">{player.nameEn}</p>
-            <p className="mt-1 min-w-0 truncate text-[11px] font-medium text-white/32">
-              {player.countryCn} · {player.positionCn}
-            </p>
-            <div className="mt-2 flex min-w-0 flex-wrap gap-1.5">
-              <span className="max-w-full truncate rounded-full bg-white/[0.045] px-2 py-1 text-[10px] font-bold text-white/42 ring-1 ring-white/[0.05]">
-                {player.regionLabel}
+            <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1.5 text-[11px] font-medium text-white/32">
+              <span className="min-w-0 truncate">
+                {player.countryCn} · {player.positionCn}
+                {player.number ? ` · ${player.number}号` : ""}
               </span>
+              {player.rating ? (
+                <span className="shrink-0 rounded-full bg-volt/[0.1] px-2 py-0.5 text-[10px] font-black text-volt/80 ring-1 ring-volt/[0.12] sm:hidden">
+                  评分 {player.rating}
+                </span>
+              ) : null}
+              <span className="shrink-0 rounded-full bg-volt/[0.1] px-2 py-0.5 text-[10px] font-black text-volt/80 ring-1 ring-volt/[0.12] sm:hidden">
+                {player.age ? `${player.age} 岁` : "年龄待更"}
+              </span>
+            </div>
+            <div className="mt-2 hidden min-w-0 flex-wrap gap-1.5 sm:flex">
+              {player.rating ? (
+                <span className="shrink-0 rounded-full bg-volt/[0.1] px-2 py-1 text-[10px] font-black text-volt/80 ring-1 ring-volt/[0.12]">
+                  评分 {player.rating}
+                </span>
+              ) : null}
               <span className="shrink-0 rounded-full bg-volt/[0.1] px-2 py-1 text-[10px] font-black text-volt/80 ring-1 ring-volt/[0.12]">
                 {player.age ? `${player.age} 岁` : "年龄待更"}
               </span>
             </div>
           </div>
-          <ArrowRight className="h-4 w-4 shrink-0 text-white/22 transition group-hover:translate-x-0.5 group-hover:text-volt" />
         </Link>
       ))}
     </div>
@@ -509,8 +453,36 @@ function countryLabel(player: PlayerListItem) {
   return countryNameCn[player.countryCn] || countryNameCn[player.countryEn] || player.countryCn;
 }
 
-function isArticlePlayer(player: PlayerListItem): player is PlayerArticle {
-  return player.category !== "squads";
+function railMetaLabel(player: PlayerListItem) {
+  if (isOfficialPlayer(player) && player.goals > 0) {
+    return `${countryLabel(player)} · ${player.goals}球`;
+  }
+  return countryLabel(player);
+}
+
+function isOfficialPlayer(player: PlayerListItem): player is OfficialPlayerCatalogItem {
+  return "goals" in player;
+}
+
+function officialPlayerMatchesQuery(player: OfficialPlayerCatalogItem, query: string, normalizedQuery: string) {
+  const rawFields = [
+    player.nameCn,
+    player.nameEn,
+    player.countryCn,
+    player.countryEn,
+    player.positionCn,
+    player.position,
+    player.teamCode,
+    player.number ? `${player.number}号` : "",
+    player.number ? String(player.number) : "",
+  ];
+  const rawMatch = query && rawFields.some((field) => field.toLowerCase().includes(query));
+  if (rawMatch) return true;
+
+  return Boolean(
+    normalizedQuery &&
+      rawFields.some((field) => normalizePlayerLookupKey(field).includes(normalizedQuery))
+  );
 }
 
 function normalizePlayerLookupKey(value: string | number | null | undefined) {

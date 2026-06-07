@@ -1,5 +1,7 @@
 import fifaOfficialSquads from "@/data/fifa-official-squads.json";
 import officialPlayerAges from "@/data/official-player-ages.json";
+import officialPlayerGoals from "@/data/official-player-goals.json";
+import officialPlayerRatings from "@/data/official-player-ratings.json";
 import playerNameTranslations from "@/data/localization/players.json";
 import { qualifiedTeams, teamContinentLabels, type TeamContinent } from "@/data/teams";
 import { getApiSportsPlayerPhoto } from "@/lib/player-photo-overrides";
@@ -26,6 +28,9 @@ export type OfficialPlayerCatalogItem = {
   positionCn: string;
   number: number | null;
   age: number | null;
+  goals: number;
+  rating: number | null;
+  ratingSource: "fm-scout" | "api-football" | null;
   region: TeamContinent | "unknown";
   regionLabel: string;
   photo: string;
@@ -36,6 +41,8 @@ export type OfficialPlayerCatalogItem = {
 
 const PLAYER_NAME_TRANSLATIONS = playerNameTranslations as Record<string, string>;
 const PLAYER_AGES = officialPlayerAges as Record<string, number>;
+const PLAYER_GOALS = officialPlayerGoals as Record<string, number>;
+const PLAYER_RATINGS = officialPlayerRatings as Record<string, { score: number; source: "fm-scout" | "api-football" }>;
 const TEAM_CODE_ALIASES: Record<string, string> = {
   ALG: "DZA",
   KSA: "SAU",
@@ -53,6 +60,7 @@ export function getOfficialPlayerCatalog(): OfficialPlayerCatalogItem[] {
       .map((player) => {
         const apiPlayerId = Number(player.apiFootballId);
         const region = getTeamRegion(teamCode);
+        const rating = PLAYER_RATINGS[String(apiPlayerId)];
         return {
           id: String(apiPlayerId),
           apiPlayerId,
@@ -65,6 +73,9 @@ export function getOfficialPlayerCatalog(): OfficialPlayerCatalogItem[] {
           positionCn: localizeOfficialPosition(player.position),
           number: player.number ?? null,
           age: PLAYER_AGES[String(apiPlayerId)] ?? null,
+          goals: PLAYER_GOALS[String(apiPlayerId)] ?? 0,
+          rating: rating?.score ?? null,
+          ratingSource: rating?.source ?? null,
           region,
           regionLabel: region === "unknown" ? "未知地区" : teamContinentLabels[region].title,
           photo: getApiSportsPlayerPhoto(apiPlayerId),

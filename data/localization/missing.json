@@ -55,7 +55,8 @@
     "Los Angeles FC": "Los Angeles FC",
     "Bayer Leverkusen": "Bayer Leverkusen",
     "Lobos Buap": "Lobos Buap",
-    "Zacatepec 1948": "Zacatepec 1948"
+    "Zacatepec 1948": "Zacatepec 1948",
+    "Leicester": "Leicester"
   },
   "leagues": {
     "King's Cup": "King's Cup",
@@ -75,7 +76,8 @@
     "Chinese Super League": "Chinese Super League",
     "K League 1": "K League 1",
     "FIFA U20 World Cup": "FIFA U20 World Cup",
-    "2. Bundesliga": "2. Bundesliga"
+    "2. Bundesliga": "2. Bundesliga",
+    "Championship": "Championship"
   },
   "positions": {},
   "countries": {
@@ -96,7 +98,8 @@
     "€ 15M": "€ 15M",
     "€ 38M": "€ 38M",
     "€ 14.7M": "€ 14.7M",
-    "€ 10M": "€ 10M"
+    "€ 10M": "€ 10M",
+    "€ 100M": "€ 100M"
   },
   "trophyPlaces": {},
   "injuryTypes": {

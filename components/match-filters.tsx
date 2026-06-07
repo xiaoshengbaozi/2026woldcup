@@ -37,7 +37,7 @@ type MatchFiltersProps = {
   onLayoutChange: (layout: ScheduleLayout) => void;
 };
 
-type FilterOption = {
+export type FilterOption = {
   label: string;
   value: string;
   meta?: string;
@@ -291,7 +291,7 @@ function useDropdownClose(open: boolean, onClose: () => void) {
   return ref;
 }
 
-function FilterDropdown({
+export function FilterDropdown({
   icon: Icon,
   value,
   fallbackLabel,

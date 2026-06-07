@@ -24,6 +24,17 @@ export function MobileNavBar() {
     return pathname.startsWith(href);
   };
 
+  const openLiveMatches = () => {
+    const event = new CustomEvent<{ handled: boolean }>("open-mobile-live-matches", {
+      detail: { handled: false },
+    });
+    window.dispatchEvent(event);
+
+    if (!event.detail.handled) {
+      window.location.href = "/matches?live=1";
+    }
+  };
+
   return (
     <nav
       className="fixed bottom-0 left-0 right-0 z-50 lg:hidden"
@@ -78,15 +89,16 @@ export function MobileNavBar() {
           })}
         </div>
 
-        <Link
-          href="/matches?live=1"
+        <button
+          type="button"
+          onClick={openLiveMatches}
           className="relative flex h-[62px] w-[62px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-full text-black transition-transform hover:scale-[1.02]"
           style={liveNavSurfaceStyle}
           aria-label="直播"
         >
           <Radio className="h-5 w-5" strokeWidth={1.75} />
           <span className="text-[10px] font-semibold uppercase tracking-[0.1em]">直播</span>
-        </Link>
+        </button>
       </div>
     </nav>
   );

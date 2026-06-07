@@ -235,6 +235,7 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, scoutNot
   const currentTeam = localizeClubName(data?.currentTeam?.name || data?.oneVsOne?.player?.teamName) || "暂无俱乐部数据";
   const currentTeamLogo = data?.currentTeam?.logo || "";
   const total = useMemo(() => summarizeStats(data?.seasonStats ?? []), [data?.seasonStats]);
+  const profileRating = getProfileRating(total.rating, scoutNote);
   const latestTransfers = (data?.transfers ?? []).slice(0, 5);
   const trophies = (data?.trophies ?? []).slice(0, 8);
   const sidelined = (data?.sidelined ?? []).slice(0, 4);
@@ -309,14 +310,18 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, scoutNot
           <div className="absolute left-1/2 top-[4.75rem] z-10 -translate-x-1/2 lg:top-0 lg:-translate-y-1/2">
             <div className="relative">
               <div className="absolute -inset-3 rounded-full bg-gradient-to-br from-volt/25 via-volt/10 to-transparent blur-xl" />
-              <div className="relative h-[5.6rem] w-[5.6rem] overflow-hidden rounded-full ring-[3px] ring-volt/30 ring-offset-4 ring-offset-ink-950 sm:h-[6.4rem] sm:w-[6.4rem] sm:ring-[4px] lg:h-32 lg:w-32">
-                {photo ? (
+              <div className="relative grid h-[5.6rem] w-[5.6rem] place-items-center overflow-hidden rounded-full bg-white/[0.06] ring-[3px] ring-volt/30 ring-offset-4 ring-offset-ink-950 sm:h-[6.4rem] sm:w-[6.4rem] sm:ring-[4px] lg:h-32 lg:w-32">
+                <UserRound className="h-12 w-12 text-white/20" />
+                {photo && (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={photo} alt={englishName} className="h-full w-full object-cover" />
-                ) : (
-                  <div className="grid h-full w-full place-items-center bg-white/[0.06]">
-                    <UserRound className="h-12 w-12 text-white/20" />
-                  </div>
+                  <img
+                    src={photo}
+                    alt={englishName}
+                    className="absolute inset-0 h-full w-full object-cover"
+                    onError={(event) => {
+                      event.currentTarget.style.display = "none";
+                    }}
+                  />
                 )}
               </div>
             </div>
@@ -383,23 +388,31 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, scoutNot
                 </>
               )}
             </div>
-            {total.rating && (
+            {profileRating && (
               <div className="flex items-center justify-center gap-1.5">
                 <span className="flex gap-0.5">
                   {[1,2,3,4,5].map((i) => {
-                    const filled = Number(total.rating) / 2 >= i;
-                    const half = !filled && Number(total.rating) / 2 >= i - 0.5;
+                    const starScore = profileRating.score / 20;
+                    const filled = starScore >= i;
+                    const half = !filled && starScore >= i - 0.5;
+                    const halfGradientId = `profile-half-star-${i}`;
                     return (
                       <svg key={i} className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="none">
+                        <defs>
+                          <linearGradient id={halfGradientId} x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="50%" stopColor="rgb(216,255,62)" />
+                            <stop offset="50%" stopColor="rgba(255,255,255,0.1)" />
+                          </linearGradient>
+                        </defs>
                         <path d="M10 1.5l2.47 5.01 5.53.8-4 3.9.94 5.5L10 14.26l-4.94 2.45.94-5.5-4-3.9 5.53-.8L10 1.5z"
-                          fill={filled ? "rgb(216,255,62)" : half ? "url(#half-star)" : "rgba(255,255,255,0.1)"}
+                          fill={filled ? "rgb(216,255,62)" : half ? `url(#${halfGradientId})` : "rgba(255,255,255,0.1)"}
                           stroke={filled || half ? "rgb(216,255,62)" : "rgba(255,255,255,0.15)"}
                           strokeWidth="1" />
                       </svg>
                     );
                   })}
                 </span>
-                <span className="font-mono text-sm font-bold text-volt/80">{total.rating}</span>
+                <span className="font-mono text-sm font-bold text-volt/80">{profileRating.label}</span>
               </div>
             )}
           </div>
@@ -1073,6 +1086,19 @@ function buildCareerTimeline(
   return [...transferItems, ...honorItems]
     .sort((a, b) => String(b.sortKey).localeCompare(String(a.sortKey)))
     .slice(0, 10);
+}
+
+function getProfileRating(rawRating: string, scoutNote?: PlayerScoutNote | null) {
+  if (scoutNote?.gsRating && Number.isFinite(scoutNote.gsRating)) {
+    const score = Math.max(0, Math.min(100, Math.round(scoutNote.gsRating)));
+    return { score, label: String(score), source: "fm-scout" as const };
+  }
+
+  const fallbackRating = Number(rawRating);
+  if (!Number.isFinite(fallbackRating) || fallbackRating <= 0) return null;
+
+  const score = Math.max(0, Math.min(100, Math.round(fallbackRating * 10)));
+  return { score, label: String(score), source: "api-football" as const };
 }
 
 function summarizeStats(stats: NonNullable<PlayerProfileData["seasonStats"]>) {

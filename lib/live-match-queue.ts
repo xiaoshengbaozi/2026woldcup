@@ -23,6 +23,21 @@ export function getLiveMatchQueue(matches: Match[], currentTime: number, limit =
   };
 }
 
+export function getUpcomingMatchesWithinWindow(
+  matches: Match[],
+  currentTime: number,
+  windowHours = 24
+) {
+  const windowEnd = currentTime + windowHours * 60 * 60 * 1000;
+
+  return matches
+    .filter((match) => {
+      const start = match.start.getTime();
+      return start > currentTime && start <= windowEnd;
+    })
+    .sort((a, b) => a.start.getTime() - b.start.getTime());
+}
+
 export function isMatchInLiveWindow(match: Match, currentTime: number) {
   if (match.status === "live" || match.status === "halftime") return true;
   if (match.status === "finished" || match.status === "postponed") return false;

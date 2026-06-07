@@ -9,6 +9,8 @@ type StatCardProps = {
   icon: LucideIcon;
   accent?: boolean;
   href?: string;
+  onClick?: () => void;
+  ariaLabel?: string;
   tone?: "violet" | "emerald" | "amber" | "cyan";
 };
 
@@ -39,7 +41,7 @@ const toneStyles: Record<NonNullable<StatCardProps["tone"]>, { card: string; glo
   },
 };
 
-export function StatCard({ label, value, detail: _detail, icon: Icon, accent = false, href, tone }: StatCardProps) {
+export function StatCard({ label, value, detail: _detail, icon: Icon, accent = false, href, onClick, ariaLabel, tone }: StatCardProps) {
   const parts = typeof value === "string" ? value.split("/") : null;
   const isFraction = parts && parts.length === 2;
   const toneStyle = tone ? toneStyles[tone] : null;
@@ -98,6 +100,19 @@ export function StatCard({ label, value, detail: _detail, icon: Icon, accent = f
       </div>
     </motion.div>
   );
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={ariaLabel}
+        className="block w-full rounded-[1.5rem] text-left outline-none focus-visible:ring-2 focus-visible:ring-volt/60"
+      >
+        {card}
+      </button>
+    );
+  }
 
   if (!href) return card;
 
