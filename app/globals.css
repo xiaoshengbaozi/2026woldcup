@@ -300,6 +300,21 @@ button {
   }
 }
 
+@media (max-width: 768px) {
+  .glass-panel {
+    backdrop-filter: blur(18px);
+  }
+
+  .glass-chip {
+    backdrop-filter: blur(14px);
+  }
+
+  .hero-shell,
+  .hero-card {
+    backdrop-filter: blur(20px);
+  }
+}
+
 @keyframes live-ping {
   0% {
     transform: scale(1);
@@ -412,6 +427,9 @@ button {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .live-ping,
+  .live-dot,
+  .countdown-colon,
   .probability-globe,
   .probability-globe-dots,
   .probability-globe-ring,

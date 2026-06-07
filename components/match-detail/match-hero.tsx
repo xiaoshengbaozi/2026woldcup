@@ -55,6 +55,7 @@ import pulisicImage from "@/assets/players/USA-united-states/headshots/christian
 import wissaImage from "@/assets/players/COD-dr-congo/headshots/yoane-wissa.webp";
 import { formatTime } from "@/lib/format";
 import { localizeLocationText } from "@/lib/calendar";
+import { getMatchPhaseLabel } from "@/lib/match-live-display";
 import { formatStageLabel } from "@/lib/stage";
 import { parseTeams } from "@/lib/teams";
 import { getVenueBannerImage } from "@/lib/venue-assets";
@@ -220,6 +221,8 @@ export function MatchHero({ detail }: { detail: MatchDetail }) {
   const isLive = detail.status === "live" || detail.status === "halftime";
   const isStarted = detail.status !== "not_started";
   const heroStatusText = formatMatchStatus(detail, adjustedStart);
+  const desktopLiveStatusText = detail.status === "finished" ? "已结束" : getMatchPhaseLabel(detail.match);
+  const desktopCornerStatus = detail.status === "finished" ? "已结束" : "直播中";
   const homeAccent = getAccent(detail.homeTeamCode);
   const awayAccent = getAccent(detail.awayTeamCode);
   const hidePlayerPosters =
@@ -235,7 +238,9 @@ export function MatchHero({ detail }: { detail: MatchDetail }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      className="hero-card relative -mx-3 -mt-4 min-h-[280px] overflow-visible rounded-b-[2rem] rounded-t-none shadow-none sm:-mx-6 sm:-mt-5 sm:min-h-[380px] lg:mx-0 lg:mt-14 lg:min-h-[360px] lg:rounded-[2rem]"
+      className={`hero-card relative -mx-3 -mt-4 min-h-[280px] overflow-visible rounded-b-[2rem] rounded-t-none shadow-none sm:-mx-6 sm:-mt-5 sm:min-h-[380px] lg:mx-0 lg:rounded-[2rem] ${
+        isStarted ? "lg:mt-0 lg:min-h-[216px]" : "lg:mt-14 lg:min-h-[360px]"
+      }`}
     >
       <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">
         {venueBannerImage && (
@@ -257,8 +262,12 @@ export function MatchHero({ detail }: { detail: MatchDetail }) {
         <div className="absolute left-1/2 top-12 hidden h-64 w-[520px] -translate-x-1/2 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.13),transparent_68%)] blur-2xl sm:block" />
       </div>
 
-      <div className="relative z-10 flex min-h-[280px] flex-col justify-between pb-0 pt-1 sm:min-h-[380px] sm:pb-0 sm:pt-7 lg:min-h-[360px]">
-        <div className="flex items-center justify-end gap-3">
+      <div
+        className={`relative z-10 flex min-h-[280px] flex-col justify-between pb-0 pt-1 sm:min-h-[380px] sm:pb-0 sm:pt-7 ${
+          isStarted ? "lg:min-h-[216px] lg:justify-center lg:py-5" : "lg:min-h-[360px]"
+        }`}
+      >
+        <div className={`flex items-center justify-end gap-3 ${isStarted ? "lg:hidden" : ""}`}>
           {detail.status !== "not_started" && (
             <div className="flex items-center gap-2">
               {isLive && (
@@ -283,6 +292,7 @@ export function MatchHero({ detail }: { detail: MatchDetail }) {
                 teamCode={detail.homeTeamCode}
                 player={homePlayer}
                 accent={homeAccent}
+                className={isStarted ? "hidden" : ""}
               />
               <PlayerPosterSide
                 side="right"
@@ -290,11 +300,60 @@ export function MatchHero({ detail }: { detail: MatchDetail }) {
                 teamCode={detail.awayTeamCode}
                 player={awayPlayer}
                 accent={awayAccent}
+                className={isStarted ? "hidden" : ""}
               />
             </>
           )}
 
-          <div className="relative z-20 flex max-w-[580px] -translate-y-1 flex-col items-center text-center sm:-translate-y-5">
+          {isStarted && (
+            <div className="relative z-20 hidden w-full max-w-[760px] flex-col items-center text-center lg:flex">
+              <div className="absolute left-0 top-0 inline-flex items-center gap-2 rounded-full bg-white/[0.055] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-volt ring-1 ring-white/[0.08]">
+                {isLive && (
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="live-ping absolute inline-flex h-full w-full rounded-full bg-volt opacity-75" />
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-volt" />
+                  </span>
+                )}
+                {desktopCornerStatus}
+              </div>
+              <div className="absolute right-0 top-0 rounded-full bg-white/[0.055] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/56 ring-1 ring-white/[0.08]">
+                {formatTime(adjustedStart)}
+              </div>
+              <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/56">
+                {stageLabel}
+              </span>
+              <div className="mt-2 text-xl font-semibold text-white/88">
+                {desktopLiveStatusText}
+              </div>
+              <StartedScoreLine
+                home={teams.home}
+                away={teams.away}
+                homeScore={detail.score.home}
+                awayScore={detail.score.away}
+              />
+              <MatchMetaRow
+                start={adjustedStart}
+                location={detail.match.location}
+                stage={detail.match.stage}
+              />
+            </div>
+          )}
+
+          {isStarted && (
+            <StartedMobileBannerContent
+              home={teams.home}
+              away={teams.away}
+              homeScore={detail.score.home}
+              awayScore={detail.score.away}
+              stageLabel={stageLabel}
+              phaseLabel={desktopLiveStatusText}
+              start={adjustedStart}
+              location={detail.match.location}
+              stage={detail.match.stage}
+            />
+          )}
+
+          <div className={`relative z-20 flex max-w-[580px] -translate-y-1 flex-col items-center text-center sm:-translate-y-5 ${isStarted ? "hidden lg:hidden" : ""}`}>
             <img
               src="https://digitalhub.fifa.com/transform/157d23bf-7e13-4d7b-949e-5d27d340987e/WC26_Logo?&io=transform:fill&quality=75"
               alt="FIFA World Cup 2026"
@@ -317,33 +376,160 @@ export function MatchHero({ detail }: { detail: MatchDetail }) {
               </span>
               <MatchupTeam team={teams.away} align="right" score={isStarted ? detail.score.away : null} />
             </div>
-            <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-[10px] font-medium uppercase tracking-[0.12em] text-white/50 sm:mt-4 sm:gap-3 sm:text-[11px]">
-              <span className="inline-flex items-center gap-1.5">
-                <CalendarDays className="h-3.5 w-3.5 text-volt/70" />
-                {adjustedStart.toLocaleDateString("zh-CN", { month: "2-digit", day: "2-digit" })}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5 text-flare/70" />
-                {formatTime(adjustedStart)}
-              </span>
-              {detail.match.location && (
-                <span className="inline-flex min-w-0 items-center gap-1.5">
-                  <MapPin className="h-3.5 w-3.5 shrink-0 text-flare/70" />
-                  <span className="max-w-[230px] truncate">{localizeLocationText(detail.match.location)}</span>
-                </span>
-              )}
-              {detail.match.stage.includes("决赛") && (
-                <span className="inline-flex items-center gap-1.5 text-volt/75">
-                  <Trophy className="h-3.5 w-3.5" />
-                  冠军争夺战
-                </span>
-              )}
-            </div>
+            <MatchMetaRow
+              start={adjustedStart}
+              location={detail.match.location}
+              stage={detail.match.stage}
+            />
           </div>
         </div>
       </div>
     </motion.div>
   );
+}
+
+function MatchMetaRow({
+  start,
+  location,
+  stage,
+}: {
+  start: Date;
+  location: string;
+  stage: string;
+}) {
+  return (
+    <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-[10px] font-medium uppercase tracking-[0.12em] text-white/50 sm:mt-4 sm:gap-3 sm:text-[11px]">
+      <span className="inline-flex items-center gap-1.5">
+        <CalendarDays className="h-3.5 w-3.5 text-volt/70" />
+        {start.toLocaleDateString("zh-CN", { month: "2-digit", day: "2-digit" })}
+      </span>
+      <span className="inline-flex items-center gap-1.5">
+        <Clock className="h-3.5 w-3.5 text-flare/70" />
+        {formatTime(start)}
+      </span>
+      {location && (
+        <span className="inline-flex min-w-0 items-center gap-1.5">
+          <MapPin className="h-3.5 w-3.5 shrink-0 text-flare/70" />
+          <span className="max-w-[230px] truncate">{localizeLocationText(location)}</span>
+        </span>
+      )}
+      {stage.includes("决赛") && (
+        <span className="inline-flex items-center gap-1.5 text-volt/75">
+          <Trophy className="h-3.5 w-3.5" />
+          冠军争夺战
+        </span>
+      )}
+    </div>
+  );
+}
+
+function StartedScoreLine({
+  home,
+  away,
+  homeScore,
+  awayScore,
+}: {
+  home: { badge: string; image: string; name: string };
+  away: { badge: string; image: string; name: string };
+  homeScore: number;
+  awayScore: number;
+}) {
+  return (
+    <div className="mt-3 grid w-full grid-cols-[minmax(0,1fr)_auto_auto_auto_minmax(0,1fr)] items-center gap-2">
+      <span className="min-w-0 truncate text-right text-base font-bold uppercase tracking-[0.08em] text-white/82">
+        {home.name}
+      </span>
+      <MiniFlag team={home} compact />
+      <span
+        className="px-1 text-4xl font-bold leading-none tabular-nums text-white drop-shadow-[0_0_22px_rgba(255,255,255,0.2)]"
+        style={{ fontFamily: "ScreenMatrix, monospace" }}
+      >
+        {homeScore} - {awayScore}
+      </span>
+      <MiniFlag team={away} compact />
+      <span className="min-w-0 truncate text-left text-base font-bold uppercase tracking-[0.08em] text-white/82">
+        {away.name}
+      </span>
+    </div>
+  );
+}
+
+function StartedMobileBannerContent({
+  home,
+  away,
+  homeScore,
+  awayScore,
+  stageLabel,
+  phaseLabel,
+  start,
+  location,
+  stage,
+}: {
+  home: { badge: string; image: string; name: string };
+  away: { badge: string; image: string; name: string };
+  homeScore: number;
+  awayScore: number;
+  stageLabel: string;
+  phaseLabel: string;
+  start: Date;
+  location: string;
+  stage: string;
+}) {
+  const [phase, minute] = splitPhaseLabel(phaseLabel);
+
+  return (
+    <div className="relative z-20 flex w-full max-w-[22rem] flex-col items-center px-3 py-4 text-center lg:hidden">
+      <div className="grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-3">
+        <div className="flex min-w-0 flex-col items-center">
+          <span
+            className="text-5xl font-bold leading-none tabular-nums text-white drop-shadow-[0_0_22px_rgba(255,255,255,0.18)]"
+            style={{ fontFamily: "ScreenMatrix, monospace" }}
+          >
+            {homeScore}
+          </span>
+          <div className="mt-5 flex items-center gap-2 self-start">
+            <span className="min-w-0 max-w-[5.2rem] truncate text-sm font-semibold text-white/82">
+              {home.name}
+            </span>
+            <MiniFlag team={home} compact />
+          </div>
+        </div>
+
+        <div className="flex min-w-[5.25rem] flex-col items-center pt-1">
+          <span className="text-lg font-semibold leading-none text-white/90">
+            {phase}
+          </span>
+          {minute && <span className="mt-1 text-xs font-semibold text-white/68">{minute}</span>}
+          <span className="mt-12 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/62">
+            {stageLabel}
+          </span>
+        </div>
+
+        <div className="flex min-w-0 flex-col items-center">
+          <span
+            className="text-5xl font-bold leading-none tabular-nums text-white drop-shadow-[0_0_22px_rgba(255,255,255,0.18)]"
+            style={{ fontFamily: "ScreenMatrix, monospace" }}
+          >
+            {awayScore}
+          </span>
+          <div className="mt-5 flex items-center gap-2 self-end">
+            <MiniFlag team={away} compact />
+            <span className="min-w-0 max-w-[5.2rem] truncate text-sm font-semibold text-white/82">
+              {away.name}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <MatchMetaRow start={start} location={location} stage={stage} />
+    </div>
+  );
+}
+
+function splitPhaseLabel(label: string) {
+  const match = label.match(/^(.+?)\s+(\d+'(?:\+\d+')?)$/);
+  if (!match) return [label, ""] as const;
+  return [match[1], match[2]] as const;
 }
 
 export function MatchTimelineBanner({
@@ -539,12 +725,14 @@ function PlayerPosterSide({
   teamCode,
   player,
   accent,
+  className = "",
 }: {
   team: { badge: string; image: string; name: string };
   teamCode: string;
   side: "left" | "right";
   player?: { src: string; name: string };
   accent: { primary: string; secondary: string };
+  className?: string;
 }) {
   const isRight = side === "right";
 
@@ -555,7 +743,7 @@ function PlayerPosterSide({
       transition={{ delay: 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       className={`absolute inset-y-0 z-10 w-[30%] sm:w-[42%] ${
         isRight ? "right-0" : "left-0"
-      }`}
+      } ${className}`}
     >
       <div
         className={`absolute top-10 h-28 w-28 rounded-full blur-[60px] sm:h-44 sm:w-44 sm:blur-[80px] ${
@@ -644,14 +832,16 @@ function MatchupTeam({
 function MiniFlag({
   team,
   large = false,
+  compact = false,
 }: {
   team: { badge: string; image: string; name: string };
   large?: boolean;
+  compact?: boolean;
 }) {
   return (
     <div
       className={`grid shrink-0 place-items-center overflow-hidden rounded-xl bg-white/[0.07] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] ring-1 ring-white/[0.1] ${
-        large ? "h-24 w-36" : "h-12 w-16 sm:h-14 sm:w-20"
+        large ? "h-24 w-36" : compact ? "h-10 w-14" : "h-12 w-16 sm:h-14 sm:w-20"
       }`}
     >
       {team.image ? (

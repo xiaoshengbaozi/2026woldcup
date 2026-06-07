@@ -5,6 +5,7 @@ import playerNameTranslations from "@/data/localization/players.json";
 import { getOfficialPlayerById, getOfficialPlayerCatalog } from "@/lib/official-player-catalog";
 import { findPlayerBreakthroughProfile } from "@/lib/player-breakthroughs";
 import { getApiSportsPlayerPhoto } from "@/lib/player-photo-overrides";
+import { findPlayerScoutNote } from "@/lib/player-scout-notes";
 import { PlayerProfileClient } from "./player-profile-client";
 
 type Props = {
@@ -107,8 +108,9 @@ export default function PlayerPage({ params }: Props) {
     ],
     teamCode: pageRow?.teamCode || officialRow?.teamCode || article?.teamCode || row?.teamCode,
   });
+  const scoutNote = findPlayerScoutNote(params.id);
 
-  return <PlayerProfileClient playerId={params.id} nameHint={nameHint} row={pageRow} article={article ?? null} breakthrough={breakthrough} />;
+  return <PlayerProfileClient playerId={params.id} nameHint={nameHint} row={pageRow} article={article ?? null} breakthrough={breakthrough} scoutNote={scoutNote} />;
 }
 
 function mergeOfficialSquadRow(baseRow: PlayerPageRow | null, officialRow: PlayerPageRow | null): PlayerPageRow | null {

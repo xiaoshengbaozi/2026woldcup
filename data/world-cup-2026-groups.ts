@@ -20,23 +20,23 @@ export type Group = {
   matches: [GroupMatch, GroupMatch, GroupMatch, GroupMatch, GroupMatch, GroupMatch];
 };
 
-// 48 teams, 12 groups, distributed by FIFA ranking pots (simplified mock draw)
+// 48 teams, 12 groups, aligned with the local 2026 World Cup fixture calendar.
 const GROUPS_RAW: {
   id: string;
   teams: [string, string, string, string];
 }[] = [
-  { id: "A", teams: ["MEX", "RSA", "NOR", "CPV"] },
-  { id: "B", teams: ["ENG", "SCO", "BIH", "PAN"] },
-  { id: "C", teams: ["BRA", "SUI", "IRQ", "HAI"] },
-  { id: "D", teams: ["FRA", "AUT", "SAU", "CUW"] },
-  { id: "E", teams: ["ESP", "CIV", "PAR", "NZL"] },
-  { id: "F", teams: ["GER", "TUN", "UZB", "SWE"] },
-  { id: "G", teams: ["ARG", "IRN", "ECU", "ALG"] },
-  { id: "H", teams: ["POR", "JPN", "EGY", "COD"] },
-  { id: "I", teams: ["USA", "GHA", "JOR", "QAT"] },
-  { id: "J", teams: ["BEL", "SEN", "CHI", "CZE"] },
-  { id: "K", teams: ["COL", "MAR", "AUS", "ROU"] },
-  { id: "L", teams: ["NED", "KOR", "URU", "CRC"] },
+  { id: "A", teams: ["MEX", "RSA", "KOR", "CZE"] },
+  { id: "B", teams: ["CAN", "BIH", "QAT", "SUI"] },
+  { id: "C", teams: ["BRA", "MAR", "HAI", "SCO"] },
+  { id: "D", teams: ["USA", "PAR", "AUS", "TUR"] },
+  { id: "E", teams: ["GER", "CUW", "CIV", "ECU"] },
+  { id: "F", teams: ["NED", "JPN", "SWE", "TUN"] },
+  { id: "G", teams: ["BEL", "EGY", "IRN", "NZL"] },
+  { id: "H", teams: ["ESP", "CPV", "SAU", "URU"] },
+  { id: "I", teams: ["FRA", "SEN", "IRQ", "NOR"] },
+  { id: "J", teams: ["ARG", "ALG", "AUT", "JOR"] },
+  { id: "K", teams: ["POR", "COD", "UZB", "COL"] },
+  { id: "L", teams: ["ENG", "CRO", "GHA", "PAN"] },
 ];
 
 const TEAM_DB: Record<string, GroupTeam> = {
@@ -89,6 +89,12 @@ const TEAM_DB: Record<string, GroupTeam> = {
   ROU: { code: "ROU", name: "Romania", nameCn: "罗马尼亚", flagEmoji: "🇷🇴", flagCode: "ro", pot: 4 },
   CRC: { code: "CRC", name: "Costa Rica", nameCn: "哥斯达黎加", flagEmoji: "🇨🇷", flagCode: "cr", pot: 4 },
 };
+
+Object.assign(TEAM_DB, {
+  CAN: { code: "CAN", name: "Canada", nameCn: "加拿大", flagEmoji: "🇨🇦", flagCode: "ca", pot: 1 },
+  TUR: { code: "TUR", name: "Turkiye", nameCn: "土耳其", flagEmoji: "🇹🇷", flagCode: "tr", pot: 3 },
+  CRO: { code: "CRO", name: "Croatia", nameCn: "克罗地亚", flagEmoji: "🇭🇷", flagCode: "hr", pot: 3 },
+} satisfies Record<string, GroupTeam>);
 
 function buildGroup(raw: { id: string; teams: [string, string, string, string] }): Group {
   const [a, b, c, d] = raw.teams;

@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { GROUPS, getTeamByCode, type GroupTeam, type GroupMatch } from "@/data/world-cup-2026-groups";
 import { DashboardShell } from "@/components/dashboard-shell";
@@ -9,7 +9,7 @@ import { usePredictionStore } from "@/lib/store/prediction-store";
 import type { StandingRow, KnockoutMatch } from "@/lib/store/prediction";
 import { userApi, type PublicUser, type UserHomePayload } from "@/lib/user-system";
 import { fallbackUserPreferenceCatalog, type UserPreferenceCatalog } from "@/lib/user-preferences";
-import { ChevronLeft, Clock3, FolderOpen, LogIn, Save, ShieldCheck, Shuffle, Trash2, UserPlus, X } from "lucide-react";
+import { ChevronLeft, Clock3, FolderOpen, GitBranch, LogIn, Maximize2, Minus, Plus, RotateCcw, Save, ShieldCheck, Shuffle, Trash2, UserPlus, X } from "lucide-react";
 
 /* ── Helpers ── */
 
@@ -294,6 +294,502 @@ function KnockoutStageView() {
   );
 }
 
+/* ── Prediction Topology Flow ── */
+
+function PredictionTopologyView() {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0.72);
+  const [coords, setCoords] = useState<Record<string, { x: number; y: number; w: number; h: number }>>({});
+  const isDragging = useRef(false);
+  const startX = useRef(0);
+  const scrollLeft = useRef(0);
+  const groupScores = usePredictionStore((s) => s.groupScores);
+  const knockoutPicks = usePredictionStore((s) => s.knockoutPicks);
+  const getGroupStandings = usePredictionStore((s) => s.getGroupStandings);
+  const knockoutMatches = usePredictionStore((s) => s.getKnockoutMatches());
+  const championCode = usePredictionStore((s) => s.getChampion());
+
+  const groupFilled = useMemo(
+    () => GROUPS.reduce((sum, group) => sum + group.matches.filter((match) => groupScores[match.id]).length, 0),
+    [groupScores]
+  );
+  const knockoutFilled = Object.keys(knockoutPicks).length;
+
+  const leftGroups = GROUPS.filter((group) => ["A", "B", "C", "D", "E", "F"].includes(group.id));
+  const rightGroups = GROUPS.filter((group) => ["G", "H", "I", "J", "K", "L"].includes(group.id));
+  const byId = new Map(knockoutMatches.map((match) => [match.id, match]));
+  const canvasWidth = 2940;
+  const canvasHeight = 1060;
+
+  const columns = [
+    { id: "left-groups", label: "小组路径", type: "groups" as const, groups: leftGroups },
+    { id: "r32-left", label: "32 强", matches: pickMatches(byId, ["R32-1", "R32-2", "R32-3", "R32-4", "R32-5", "R32-6", "R32-7", "R32-8"]) },
+    { id: "r16-left", label: "16 强", matches: pickMatches(byId, ["R16-1", "R16-2", "R16-3", "R16-4"]) },
+    { id: "qf-left", label: "8 强", matches: pickMatches(byId, ["QF-1", "QF-2"]) },
+    { id: "sf-left", label: "半决赛", matches: pickMatches(byId, ["SF-1"]) },
+    { id: "final", label: "终局", matches: pickMatches(byId, ["FINAL", "THIRD"]), featured: true },
+    { id: "sf-right", label: "半决赛", matches: pickMatches(byId, ["SF-2"]) },
+    { id: "qf-right", label: "8 强", matches: pickMatches(byId, ["QF-3", "QF-4"]) },
+    { id: "r16-right", label: "16 强", matches: pickMatches(byId, ["R16-5", "R16-6", "R16-7", "R16-8"]) },
+    { id: "r32-right", label: "32 强", matches: pickMatches(byId, ["R32-9", "R32-10", "R32-11", "R32-12", "R32-13", "R32-14", "R32-15", "R32-16"]) },
+    { id: "right-groups", label: "小组路径", type: "groups" as const, groups: rightGroups },
+  ];
+  const nodeIds = useMemo(
+    () => [
+      ...GROUPS.map((group) => `G_${group.id}`),
+      ...knockoutMatches.map((match) => match.id),
+    ],
+    [knockoutMatches]
+  );
+  const connections = useMemo(() => buildPredictionConnections(knockoutMatches), [knockoutMatches]);
+
+  const updateCoords = useCallback(() => {
+    if (!containerRef.current) return;
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const nextCoords: typeof coords = {};
+
+    nodeIds.forEach((id) => {
+      const element = document.getElementById(`prediction-node-${id}`);
+      if (!element) return;
+      const rect = element.getBoundingClientRect();
+      nextCoords[id] = {
+        x: (rect.left - containerRect.left) / scale,
+        y: (rect.top - containerRect.top) / scale,
+        w: rect.width / scale,
+        h: rect.height / scale,
+      };
+    });
+
+    setCoords(nextCoords);
+  }, [nodeIds, scale]);
+
+  const centerFinal = useCallback((behavior: ScrollBehavior = "auto") => {
+    const scroller = scrollContainerRef.current;
+    const finalNode = document.getElementById("prediction-node-FINAL");
+    if (!scroller || !finalNode) return;
+
+    const scrollerRect = scroller.getBoundingClientRect();
+    const finalRect = finalNode.getBoundingClientRect();
+    const finalCenter = finalRect.left + finalRect.width / 2;
+    const viewportCenter = scrollerRect.left + scrollerRect.width / 2;
+
+    scroller.scrollTo({
+      left: Math.max(0, scroller.scrollLeft + finalCenter - viewportCenter),
+      behavior,
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    updateCoords();
+    const timer = window.setTimeout(() => {
+      centerFinal("auto");
+      updateCoords();
+    }, 260);
+    window.addEventListener("resize", updateCoords);
+
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("resize", updateCoords);
+    };
+  }, [centerFinal, updateCoords]);
+
+  const handleZoomIn = () => setScale((value) => Math.min(1.5, Math.round((value + 0.08) * 100) / 100));
+  const handleZoomOut = () => setScale((value) => Math.max(0.35, Math.round((value - 0.08) * 100) / 100));
+  const handleZoomReset = () => {
+    setScale(0.72);
+    window.setTimeout(() => {
+      centerFinal("smooth");
+      updateCoords();
+    }, 120);
+  };
+
+  const handleWheel = useCallback((event: React.WheelEvent) => {
+    if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+    event.preventDefault();
+    event.stopPropagation();
+
+    const scroller = scrollContainerRef.current;
+    const rect = scroller?.getBoundingClientRect();
+    const pointerX = rect ? event.clientX - rect.left : 0;
+    const delta = -event.deltaY * 0.0014;
+
+    setScale((current) => {
+      const next = Math.min(Math.max(current + delta, 0.35), 1.5);
+      const rounded = Math.round(next * 100) / 100;
+
+      if (scroller && rect) {
+        const contentX = (scroller.scrollLeft + pointerX) / current;
+        window.requestAnimationFrame(() => {
+          scroller.scrollLeft = contentX * rounded - pointerX;
+          window.requestAnimationFrame(updateCoords);
+        });
+      }
+
+      return rounded;
+    });
+  }, [updateCoords]);
+
+  const handleMouseDown = (event: React.MouseEvent) => {
+    if ((event.target as HTMLElement).closest("button, a, .zoom-controls-panel")) return;
+    if (!scrollContainerRef.current) return;
+    isDragging.current = true;
+    startX.current = event.clientX;
+    scrollLeft.current = scrollContainerRef.current.scrollLeft;
+  };
+
+  const handleMouseMove = (event: React.MouseEvent) => {
+    if (!isDragging.current || !scrollContainerRef.current) return;
+    event.preventDefault();
+    const delta = event.clientX - startX.current;
+    scrollContainerRef.current.scrollLeft = scrollLeft.current - delta * 1.5;
+  };
+
+  const handleMouseUpOrLeave = () => {
+    isDragging.current = false;
+  };
+
+  const getCurvePath = (fromId: string, toId: string) => {
+    const from = coords[fromId];
+    const to = coords[toId];
+    if (!from || !to) return "";
+
+    const fromCenter = from.x + from.w / 2;
+    const toCenter = to.x + to.w / 2;
+    const leftToRight = toCenter >= fromCenter;
+    const sx = leftToRight ? from.x + from.w : from.x;
+    const sy = from.y + from.h / 2;
+    const ex = leftToRight ? to.x : to.x + to.w;
+    const ey = to.y + to.h / 2;
+    const offset = Math.max(44, Math.abs(ex - sx) * 0.42);
+    const c1x = leftToRight ? sx + offset : sx - offset;
+    const c2x = leftToRight ? ex - offset : ex + offset;
+
+    return `M ${sx} ${sy} C ${c1x} ${sy}, ${c2x} ${ey}, ${ex} ${ey}`;
+  };
+
+  return (
+    <section ref={rootRef} className="hero-card relative flex h-[720px] flex-col overflow-hidden p-5 sm:h-[760px] sm:p-6">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-volt/30 to-transparent" />
+      <div className="absolute left-1/2 top-0 h-28 w-80 -translate-x-1/2 bg-volt/10 blur-[100px]" />
+
+      <div className="relative z-10 mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="flex items-center gap-2.5 text-lg font-semibold text-white">
+            <GitBranch className="h-4 w-4 text-volt" />
+            预测拓扑流程
+            <span className="rounded-full border border-volt/20 bg-volt/[0.08] px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-volt/90">
+              SIM FLOW
+            </span>
+          </h3>
+          <p className="mt-1 text-xs leading-relaxed text-white/35">
+            小组比分生成晋级路径，淘汰赛选择会沿流程图逐轮点亮。
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/36">
+          <span className="rounded-full bg-white/[0.045] px-3 py-1.5 ring-1 ring-white/[0.08]">小组 {groupFilled}/72</span>
+          <span className="rounded-full bg-white/[0.045] px-3 py-1.5 ring-1 ring-white/[0.08]">淘汰赛 {knockoutFilled}/32</span>
+          {championCode && (
+            <span className="rounded-full bg-volt/10 px-3 py-1.5 text-volt ring-1 ring-volt/20">
+              冠军 {team(championCode)?.nameCn ?? championCode}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div
+        ref={scrollContainerRef}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUpOrLeave}
+        onMouseLeave={handleMouseUpOrLeave}
+        onWheel={handleWheel}
+        className="scrollbar-hidden relative z-10 min-h-0 flex-1 cursor-grab select-none overflow-x-auto overflow-y-hidden active:cursor-grabbing"
+      >
+        <div className="relative" style={{ width: `${canvasWidth * scale}px`, height: `${canvasHeight * scale}px` }}>
+          <div
+            ref={containerRef}
+            className="absolute origin-top-left"
+            style={{ width: canvasWidth, height: canvasHeight, transform: `scale(${scale})`, top: 0, left: 0 }}
+          >
+            <svg className="pointer-events-none absolute inset-0 z-0 h-full w-full">
+              <defs>
+                <filter id="prediction-neon-glow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="5" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+              {connections.map((connection) => {
+                const path = getCurvePath(connection.from, connection.to);
+                if (!path) return null;
+
+                return (
+                  <g key={`${connection.from}-${connection.to}`}>
+                    <path d={path} fill="none" stroke="rgba(255,255,255,0.14)" strokeWidth={2} />
+                    <path d={path} fill="none" stroke="rgba(216,255,62,0.055)" strokeWidth={6} />
+                    {connection.active && (
+                      <>
+                        <path d={path} fill="none" stroke="#d8ff3e" strokeWidth={5} strokeOpacity={0.3} filter="url(#prediction-neon-glow)" />
+                        <path
+                          d={path}
+                          fill="none"
+                          stroke="#d8ff3e"
+                          strokeWidth={1.8}
+                          strokeDasharray="8 6"
+                          strokeOpacity={0.82}
+                          style={{ animation: "predictionBracketFlow 14s linear infinite" }}
+                        />
+                      </>
+                    )}
+                  </g>
+                );
+              })}
+            </svg>
+
+            <div className="absolute inset-0 z-10 flex items-center justify-center gap-16 px-14">
+              {columns.map((column, index) => (
+                <div key={column.id} className={`relative flex h-full w-[196px] shrink-0 flex-col justify-center ${column.featured ? "w-[220px]" : ""}`}>
+                  <div className="mb-3 flex items-center justify-between px-1">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-volt/75">{column.label}</span>
+                    <span className="rounded-full bg-white/[0.045] px-2 py-0.5 text-[8px] font-semibold text-white/25 ring-1 ring-white/[0.06]">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                  </div>
+                  <div className={`relative grid gap-3 ${column.featured ? "gap-4" : ""}`}>
+                    {column.type === "groups"
+                      ? column.groups.map((group) => (
+                          <PredictionGroupNode
+                            key={group.id}
+                            group={group}
+                            standings={getGroupStandings(group.id)}
+                            groupScores={groupScores}
+                          />
+                        ))
+                      : column.matches.map((match) => (
+                          <PredictionKnockoutNode
+                            key={match.id}
+                            match={match}
+                            pick={knockoutPicks[match.id]}
+                            featured={column.featured}
+                          />
+                        ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="zoom-controls-panel absolute bottom-4 right-4 z-30 flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-black/70 p-1.5 shadow-xl backdrop-blur-xl">
+        <button type="button" onClick={handleZoomOut} disabled={scale <= 0.35} className="flex h-7 w-7 items-center justify-center rounded-full bg-white/[0.04] text-white/70 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-25" title="缩小">
+          <Minus className="h-3.5 w-3.5" />
+        </button>
+        <span className="w-10 select-none text-center text-[11px] font-semibold tabular-nums text-white/60">{Math.round(scale * 100)}%</span>
+        <button type="button" onClick={handleZoomIn} disabled={scale >= 1.5} className="flex h-7 w-7 items-center justify-center rounded-full bg-white/[0.04] text-white/70 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-25" title="放大">
+          <Plus className="h-3.5 w-3.5" />
+        </button>
+        <button type="button" onClick={handleZoomReset} className="flex h-7 w-7 items-center justify-center rounded-full bg-white/[0.04] text-white/70 transition hover:bg-white/10 hover:text-white" title="重置">
+          <RotateCcw className="h-3 w-3" />
+        </button>
+        <button type="button" onClick={() => centerFinal("smooth")} className="flex h-7 w-7 items-center justify-center rounded-full bg-white/[0.04] text-white/70 transition hover:bg-white/10 hover:text-white" title="居中">
+          <Maximize2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      <style jsx global>{`
+        @keyframes predictionBracketFlow {
+          from { stroke-dashoffset: 200; }
+          to { stroke-dashoffset: 0; }
+        }
+      `}</style>
+    </section>
+  );
+}
+
+function PredictionGroupNode({
+  group,
+  standings,
+  groupScores,
+}: {
+  group: (typeof GROUPS)[number];
+  standings: StandingRow[];
+  groupScores: ReturnType<typeof usePredictionStore.getState>["groupScores"];
+}) {
+  const filled = group.matches.filter((match) => groupScores[match.id]).length;
+
+  return (
+    <div id={`prediction-node-G_${group.id}`} className={`relative overflow-hidden rounded-2xl border p-3 backdrop-blur-xl transition ${
+      filled > 0
+        ? "border-volt/30 bg-volt/[0.035] shadow-[0_0_22px_rgba(216,255,62,.08)]"
+        : "border-white/[0.08] bg-black/50"
+    }`}>
+      <div className="mb-2 flex items-center justify-between border-b border-white/[0.06] pb-2">
+        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-volt/80">{group.id} 组</span>
+        <span className="rounded-full bg-white/[0.04] px-2 py-0.5 text-[8px] font-medium text-white/30">{filled}/6</span>
+      </div>
+      <div className="space-y-1">
+        {standings.slice(0, 2).map((row, index) => {
+          const t = team(row.teamCode);
+          return (
+            <div key={row.teamCode} className="grid grid-cols-[16px_minmax(0,1fr)_24px] items-center gap-1.5 rounded-lg px-1.5 py-1 text-[10px]">
+              <span className={index < 2 ? "font-bold text-volt" : "font-semibold text-white/36"}>{index + 1}</span>
+              <span className="flex min-w-0 items-center gap-1.5">
+                <Flag code={row.teamCode} size={12} />
+                <span className="truncate font-semibold text-white/72">{t?.nameCn ?? row.teamCode}</span>
+              </span>
+              <span className="text-right font-bold tabular-nums text-white/54">{row.points}</span>
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-2 flex items-center justify-between border-t border-white/[0.04] pt-2 text-[9px] font-semibold uppercase tracking-[0.08em] text-white/28">
+        <span>比分 {filled}/6</span>
+        <span className={filled === 6 ? "text-volt/80" : "text-white/24"}>{filled === 6 ? "已完成" : "进行中"}</span>
+      </div>
+    </div>
+  );
+}
+
+function PredictionKnockoutNode({
+  match,
+  pick,
+  featured = false,
+}: {
+  match: KnockoutMatch;
+  pick?: { winnerCode: string; homeScore: number; awayScore: number };
+  featured?: boolean;
+}) {
+  const home = team(match.home.teamCode);
+  const away = team(match.away.teamCode);
+  const ready = Boolean(match.home.teamCode && match.away.teamCode);
+
+  return (
+    <div id={`prediction-node-${match.id}`} className={`relative overflow-hidden rounded-2xl border p-3 backdrop-blur-xl transition ${
+      pick
+        ? "border-volt/35 bg-volt/[0.04] shadow-[0_0_24px_rgba(216,255,62,.09)]"
+        : ready
+        ? "border-white/[0.08] bg-black/50"
+        : "border-white/[0.045] bg-black/30 opacity-55"
+    } ${featured ? "p-4" : ""}`}>
+      <div className="mb-2 flex items-center justify-between">
+        <span className="rounded bg-white/[0.06] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-volt/70">
+          {match.id}
+        </span>
+        <span className="text-[9px] font-semibold uppercase tracking-wider text-white/32">{match.label}</span>
+      </div>
+      <PredictionTeamLine
+        code={match.home.teamCode}
+        fallback={match.home.sourceLabel}
+        score={pick?.homeScore}
+        active={pick?.winnerCode === match.home.teamCode}
+      />
+      <PredictionTeamLine
+        code={match.away.teamCode}
+        fallback={match.away.sourceLabel}
+        score={pick?.awayScore}
+        active={pick?.winnerCode === match.away.teamCode}
+      />
+      {pick ? (
+        <div className="mt-2 border-t border-white/[0.04] pt-1.5 text-right text-[9px] font-semibold text-volt/80">
+          晋级 {team(pick.winnerCode)?.nameCn ?? pick.winnerCode}
+        </div>
+      ) : (
+        <div className="mt-2 border-t border-white/[0.04] pt-1.5 text-right text-[9px] font-medium text-white/24">
+          {ready ? "待选择" : "待定"}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PredictionTeamLine({
+  code,
+  fallback,
+  score,
+  active,
+}: {
+  code: string | null;
+  fallback: string;
+  score?: number;
+  active: boolean;
+}) {
+  const t = team(code);
+
+  return (
+    <div className={`mb-1 flex items-center justify-between gap-2 rounded-lg px-1.5 py-1 transition ${
+      active ? "bg-volt/[0.09] text-volt" : "text-white/72"
+    }`}>
+      <span className="flex min-w-0 items-center gap-1.5">
+        {code ? <Flag code={code} size={14} /> : <span className="h-3.5 w-5 rounded bg-white/[0.05]" />}
+        <span className="truncate text-[11px] font-semibold">{t?.nameCn ?? fallback}</span>
+      </span>
+      <span className={`shrink-0 text-sm font-black tabular-nums ${score == null ? "text-white/20" : active ? "text-volt" : "text-white/70"}`}>
+        {score ?? "-"}
+      </span>
+    </div>
+  );
+}
+
+function pickMatches(map: Map<string, KnockoutMatch>, ids: string[]) {
+  return ids.map((id) => map.get(id)).filter((match): match is KnockoutMatch => Boolean(match));
+}
+
+function buildPredictionConnections(matches: KnockoutMatch[]) {
+  const byId = new Map(matches.map((match) => [match.id, match]));
+  const groupPairs: Array<[string, string]> = [
+    ["A", "R32-1"], ["B", "R32-1"], ["A", "R32-5"], ["B", "R32-5"],
+    ["C", "R32-2"], ["D", "R32-2"], ["C", "R32-6"], ["D", "R32-6"],
+    ["E", "R32-3"], ["F", "R32-3"], ["E", "R32-7"], ["F", "R32-7"],
+    ["G", "R32-4"], ["H", "R32-4"], ["G", "R32-8"], ["H", "R32-8"],
+    ["I", "R32-9"], ["J", "R32-9"], ["K", "R32-10"], ["L", "R32-10"],
+    ["I", "R32-13"], ["J", "R32-13"], ["K", "R32-14"], ["L", "R32-14"],
+  ];
+  const bracketPairs: Array<[string, string]> = [
+    ["R32-1", "R16-1"], ["R32-2", "R16-1"],
+    ["R32-3", "R16-2"], ["R32-4", "R16-2"],
+    ["R32-5", "R16-3"], ["R32-6", "R16-3"],
+    ["R32-7", "R16-4"], ["R32-8", "R16-4"],
+    ["R32-9", "R16-5"], ["R32-10", "R16-5"],
+    ["R32-11", "R16-6"], ["R32-12", "R16-6"],
+    ["R32-13", "R16-7"], ["R32-14", "R16-7"],
+    ["R32-15", "R16-8"], ["R32-16", "R16-8"],
+    ["R16-1", "QF-1"], ["R16-2", "QF-1"],
+    ["R16-3", "QF-2"], ["R16-4", "QF-2"],
+    ["R16-5", "QF-3"], ["R16-6", "QF-3"],
+    ["R16-7", "QF-4"], ["R16-8", "QF-4"],
+    ["QF-1", "SF-1"], ["QF-2", "SF-1"],
+    ["QF-3", "SF-2"], ["QF-4", "SF-2"],
+    ["SF-1", "FINAL"], ["SF-2", "FINAL"],
+    ["SF-1", "THIRD"], ["SF-2", "THIRD"],
+  ];
+
+  return [
+    ...groupPairs.map(([groupId, to]) => ({
+      from: `G_${groupId}`,
+      to,
+      active: Boolean(byId.get(to)?.home.teamCode || byId.get(to)?.away.teamCode),
+    })),
+    ...bracketPairs.map(([from, to]) => ({
+      from,
+      to,
+      active: isPredictedPathActive(byId.get(from), byId.get(to)),
+    })),
+  ];
+}
+
+function isPredictedPathActive(from?: KnockoutMatch, to?: KnockoutMatch) {
+  if (!from || !to) return false;
+  const pick = usePredictionStore.getState().knockoutPicks[from.id];
+  if (!pick?.winnerCode) return false;
+
+  return to.home.teamCode === pick.winnerCode || to.away.teamCode === pick.winnerCode;
+}
+
 /* ── Round Section ── */
 
 function RoundSection({ label, matches }: { label: string; matches: KnockoutMatch[] }) {
@@ -485,7 +981,7 @@ function PredictionProgressTrack({ percent, gradientId }: { percent: number; gra
    MAIN PAGE
    ═══════════════════════════════════════════════════════════ */
 
-type TabId = "groups" | "knockout";
+type TabId = "groups" | "knockout" | "flow";
 type AuthStatus = "checking" | "unauthenticated" | "allowed";
 type AccessMode = "login" | "register";
 type PredictionArchive = PublicUser["predictionArchives"][number];
@@ -1170,8 +1666,10 @@ export default function PredictPage() {
   const [activeTab, setActiveTab] = useState<TabId>("groups");
   const { autoFillRandom, resetAll } = usePredictionStore();
   const groupScores = usePredictionStore((s) => s.groupScores);
+  const knockoutPicks = usePredictionStore((s) => s.knockoutPicks);
   const groupTotal = GROUPS.reduce((s, g) => s + g.matches.length, 0);
   const groupFilled = Object.values(groupScores).filter(Boolean).length;
+  const knockoutFilled = Object.keys(knockoutPicks).length;
 
   useEffect(() => {
     let active = true;
@@ -1230,6 +1728,7 @@ export default function PredictPage() {
             {([
               { id: "groups" as TabId, label: "小组赛", count: 72 },
               { id: "knockout" as TabId, label: "淘汰赛", count: 32 },
+              { id: "flow" as TabId, label: "流程图", count: groupFilled + knockoutFilled },
             ]).map((tab) => {
               const isActive = activeTab === tab.id;
               return (
@@ -1264,9 +1763,13 @@ export default function PredictPage() {
                 </motion.div>
               )}
             </motion.div>
-          ) : (
+          ) : activeTab === "knockout" ? (
             <motion.div key="knockout" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.25 }} className="flex flex-col gap-4">
               <KnockoutStageView />
+            </motion.div>
+          ) : (
+            <motion.div key="flow" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -14 }} transition={{ duration: 0.25 }} className="flex flex-col gap-4">
+              <PredictionTopologyView />
             </motion.div>
           )}
         </AnimatePresence>

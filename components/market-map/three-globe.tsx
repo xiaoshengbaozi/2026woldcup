@@ -61,6 +61,9 @@ export function ThreeGlobe({
   const labelHoverRef = useRef(false);
   const fullscreenScaleRef = useRef(webFullscreen ? 0.85 : 1);
   const pausedRef = useRef(paused);
+  const propPausedRef = useRef(paused);
+  const hiddenPausedRef = useRef(false);
+  const offscreenPausedRef = useRef(false);
   const labelRefs = useRef(new Map<string, HTMLDivElement>());
 
   const [labels, setLabels] = useState<
@@ -102,9 +105,42 @@ export function ThreeGlobe({
     fullscreenScaleRef.current = webFullscreen ? 0.85 : 1;
   }, [webFullscreen]);
 
+  const syncPausedState = useCallback(() => {
+    pausedRef.current =
+      propPausedRef.current || hiddenPausedRef.current || offscreenPausedRef.current;
+  }, []);
+
   useEffect(() => {
-    pausedRef.current = paused;
-  }, [paused]);
+    propPausedRef.current = paused;
+    syncPausedState();
+  }, [paused, syncPausedState]);
+
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+
+    const onVisibilityChange = () => {
+      hiddenPausedRef.current = document.hidden;
+      syncPausedState();
+    };
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        offscreenPausedRef.current = !entry.isIntersecting;
+        syncPausedState();
+      },
+      { threshold: 0.01 }
+    );
+
+    observer.observe(el);
+    onVisibilityChange();
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [syncPausedState]);
 
   useEffect(() => {
     setLabels(

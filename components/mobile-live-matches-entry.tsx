@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Radio, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { LiveMatchCard } from "@/components/world-cup-hero/live-match-card";
+import { getLiveMatchQueue, isMatchInLiveWindow } from "@/lib/live-match-queue";
 import { buildMatchRoundLabels } from "@/lib/stage-rounds";
 import type { Match } from "@/types/match";
 
@@ -20,26 +21,10 @@ export function MobileLiveMatchesEntry({ matches }: MobileLiveMatchesEntryProps)
     return () => window.clearInterval(timer);
   }, []);
 
-  const liveNow = useMemo(() => {
-    return matches
-      .filter((match) => {
-        const start = match.start.getTime();
-        const end = match.end?.getTime() ?? start + 2 * 60 * 60 * 1000;
-        return start <= currentTime && currentTime <= end;
-      })
-      .sort((a, b) => a.start.getTime() - b.start.getTime())
-      .slice(0, 4);
-  }, [currentTime, matches]);
-
-  const upcomingMatches = useMemo(() => {
-    return matches
-      .filter((match) => match.start.getTime() > currentTime)
-      .sort((a, b) => a.start.getTime() - b.start.getTime())
-      .slice(0, 4);
-  }, [currentTime, matches]);
-
-  const displayMatches = liveNow.length ? liveNow : upcomingMatches;
-  const isLive = liveNow.length > 0;
+  const { displayMatches, isLive } = useMemo(
+    () => getLiveMatchQueue(matches, currentTime),
+    [currentTime, matches]
+  );
   const roundLabels = useMemo(() => buildMatchRoundLabels(matches), [matches]);
 
   return (
@@ -112,7 +97,7 @@ export function MobileLiveMatchesEntry({ matches }: MobileLiveMatchesEntryProps)
                       <LiveMatchCard
                         key={match.uid}
                         match={match}
-                        isLive={isLive}
+                        isLive={isMatchInLiveWindow(match, currentTime)}
                         stageLabel={roundLabels.get(match.uid)}
                       />
                     ))}

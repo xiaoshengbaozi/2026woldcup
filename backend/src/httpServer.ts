@@ -29,6 +29,7 @@ const NEWS_SERVICE_DIR = process.env.NEWS_SERVICE_DIR || "/opt/worldcup-news";
 const NEWS_SERVICE_ENV_FILE = process.env.NEWS_SERVICE_ENV_FILE || `${NEWS_SERVICE_DIR}/.env`;
 const DEFAULT_ADMIN_USERNAME = "admin";
 const DEFAULT_ADMIN_PASSWORD = "worldcup2026-admin";
+const MAX_JSON_BODY_BYTES = 256 * 1024;
 const DEFAULT_CORS_ORIGINS = [
   "https://ball.boyzi.fun",
   "https://beta-wzja.world-cup-2026-625.pages.dev",
@@ -397,13 +398,23 @@ function isAdminAuthorized(req: http.IncomingMessage) {
 }
 
 function assertProductionAdminCredentials() {
-  if (process.env.NODE_ENV !== "production") return;
+  if (!isProductionLikeEnvironment()) return;
 
-  if (!process.env.ADMIN_USERNAME || !process.env.ADMIN_PASSWORD) {
+  if (
+    (!process.env.ADMIN_USERNAME || !process.env.ADMIN_PASSWORD) &&
+    process.env.ALLOW_DEFAULT_ADMIN !== "true"
+  ) {
     throw new Error(
-      "ADMIN_USERNAME and ADMIN_PASSWORD must be set when NODE_ENV=production."
+      "ADMIN_USERNAME and ADMIN_PASSWORD must be set for deployment environments."
     );
   }
+}
+
+function isProductionLikeEnvironment() {
+  return (
+    process.env.NODE_ENV === "production" ||
+    Boolean(process.env.VERCEL || process.env.CF_PAGES || process.env.RENDER || process.env.RAILWAY_ENVIRONMENT)
+  );
 }
 
 function safeEqual(value: string, expected: string) {
@@ -568,8 +579,25 @@ async function restartNewsService() {
 function readJsonBody(req: http.IncomingMessage) {
   return new Promise<Record<string, unknown>>((resolve, reject) => {
     const chunks: Buffer[] = [];
-    req.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+    let totalBytes = 0;
+    let rejected = false;
+
+    req.on("data", (chunk) => {
+      if (rejected) return;
+      const buffer = Buffer.from(chunk);
+      totalBytes += buffer.length;
+
+      if (totalBytes > MAX_JSON_BODY_BYTES) {
+        rejected = true;
+        reject(Object.assign(new Error("request_body_too_large"), { statusCode: 413 }));
+        req.destroy();
+        return;
+      }
+
+      chunks.push(buffer);
+    });
     req.on("end", () => {
+      if (rejected) return;
       if (!chunks.length) {
         resolve({});
         return;

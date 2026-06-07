@@ -66,6 +66,7 @@ export async function upsertLiveChannel(input: Partial<LiveChannel>) {
   const now = new Date().toISOString();
   const id = String(input.id || "").trim() || `channel-${Date.now()}`;
   const current = channels.find((channel) => channel.id === id);
+  const streamUrl = normalizeStreamUrl(input.streamUrl);
   const next: LiveChannel = {
     id,
     matchId,
@@ -73,7 +74,7 @@ export async function upsertLiveChannel(input: Partial<LiveChannel>) {
     matchType: input.matchType === "warmup" ? "warmup" : "official",
     name,
     platform: String(input.platform || "HLS").trim() || "HLS",
-    streamUrl: String(input.streamUrl || "").trim(),
+    streamUrl,
     isActive: typeof input.isActive === "boolean" ? input.isActive : current?.isActive ?? true,
     sortOrder: Number.isFinite(Number(input.sortOrder)) ? Number(input.sortOrder) : current?.sortOrder ?? channels.length + 1,
     note: String(input.note || "").trim(),
@@ -93,6 +94,60 @@ export async function deleteLiveChannel(id: string) {
   const next = channels.filter((channel) => channel.id !== id);
   await saveLiveChannels(next);
   return { deleted: next.length !== channels.length };
+}
+
+function normalizeStreamUrl(value: unknown) {
+  const streamUrl = String(value || "").trim();
+  if (!streamUrl) return "";
+
+  let parsed: URL;
+  try {
+    parsed = new URL(streamUrl);
+  } catch {
+    throw Object.assign(new Error("invalid_stream_url"), { statusCode: 400 });
+  }
+
+  if (parsed.protocol !== "https:") {
+    throw Object.assign(new Error("stream_url_must_be_https"), { statusCode: 400 });
+  }
+
+  if (!parsed.pathname.toLowerCase().endsWith(".m3u8")) {
+    throw Object.assign(new Error("stream_url_must_be_hls"), { statusCode: 400 });
+  }
+
+  if (isPrivateHost(parsed.hostname)) {
+    throw Object.assign(new Error("stream_url_host_not_allowed"), { statusCode: 400 });
+  }
+
+  const allowedHosts = getAllowedStreamHosts();
+  if (allowedHosts.size && !allowedHosts.has(parsed.hostname.toLowerCase())) {
+    throw Object.assign(new Error("stream_url_host_not_allowed"), { statusCode: 400 });
+  }
+
+  return parsed.toString();
+}
+
+function getAllowedStreamHosts() {
+  return new Set(
+    (process.env.ALLOWED_STREAM_HOSTS || "")
+      .split(",")
+      .map((host) => host.trim().toLowerCase())
+      .filter(Boolean)
+  );
+}
+
+function isPrivateHost(hostname: string) {
+  const host = hostname.toLowerCase();
+  return (
+    host === "localhost" ||
+    host === "127.0.0.1" ||
+    host === "::1" ||
+    host.endsWith(".local") ||
+    /^10\./.test(host) ||
+    /^192\.168\./.test(host) ||
+    /^172\.(1[6-9]|2\d|3[0-1])\./.test(host) ||
+    /^169\.254\./.test(host)
+  );
 }
 
 async function getPool() {

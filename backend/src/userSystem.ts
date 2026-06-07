@@ -10,6 +10,12 @@ import type { PlayerXTimelineService, XTimelinePlayerInput } from "./playerXTime
 
 const SESSION_COOKIE = "wc_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
+const MAX_JSON_BODY_BYTES = 256 * 1024;
+const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const RATE_LIMIT_MAX_ATTEMPTS = 12;
+const UPLOAD_URL_RATE_LIMIT_MAX_ATTEMPTS = 8;
+
+const rateLimits = new Map<string, { count: number; resetAt: number }>();
 
 interface SessionRecord {
   userId: string;
@@ -53,6 +59,7 @@ export class UserSystem {
       }
 
       if (req.method === "POST" && url.pathname === "/api/auth/register") {
+        enforceRateLimit(req, "register", RATE_LIMIT_MAX_ATTEMPTS);
         const body = await readJsonBody(req);
         const invitationCode = String(body.invitationCode ?? "");
         this.store.validateInvitationCode(invitationCode);
@@ -71,12 +78,16 @@ export class UserSystem {
       }
 
       if (req.method === "POST" && url.pathname === "/api/avatar/upload-url") {
+        const user = this.requireSessionUser(req, res);
+        if (!user) return true;
+        enforceRateLimit(req, "avatar-upload-url", UPLOAD_URL_RATE_LIMIT_MAX_ATTEMPTS);
         const body = await readJsonBody(req);
-        sendJson(res, createAvatarUploadUrl(body));
+        sendJson(res, createAvatarUploadUrl(body, user.id));
         return true;
       }
 
       if (req.method === "POST" && url.pathname === "/api/auth/login") {
+        enforceRateLimit(req, "login", RATE_LIMIT_MAX_ATTEMPTS);
         const body = await readJsonBody(req);
         const user = this.store.getUserByEmail(String(body.email ?? ""));
         if (!user || !this.store.verifyPassword(user, String(body.password ?? ""))) {
@@ -870,14 +881,52 @@ function clampInteger(value: unknown, min: number, max: number, fallback: number
   return Math.min(max, Math.max(min, Math.floor(parsed)));
 }
 
+function enforceRateLimit(req: http.IncomingMessage, bucket: string, maxAttempts: number) {
+  const now = Date.now();
+  const key = `${bucket}:${getClientIp(req)}`;
+  const current = rateLimits.get(key);
+
+  if (!current || current.resetAt <= now) {
+    rateLimits.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return;
+  }
+
+  if (current.count >= maxAttempts) {
+    throw Object.assign(new Error("rate_limit_exceeded"), { statusCode: 429 });
+  }
+
+  current.count += 1;
+}
+
+function getClientIp(req: http.IncomingMessage) {
+  const forwardedFor = req.headers["x-forwarded-for"];
+  if (typeof forwardedFor === "string" && forwardedFor.trim()) {
+    return forwardedFor.split(",")[0].trim();
+  }
+  if (Array.isArray(forwardedFor) && forwardedFor[0]) {
+    return forwardedFor[0].split(",")[0].trim();
+  }
+  return req.socket.remoteAddress ?? "unknown";
+}
+
 async function readJsonBody(req: http.IncomingMessage) {
   const chunks: Buffer[] = [];
-  for await (const chunk of req) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  let totalBytes = 0;
+
+  for await (const chunk of req) {
+    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    totalBytes += buffer.length;
+    if (totalBytes > MAX_JSON_BODY_BYTES) {
+      throw Object.assign(new Error("request_body_too_large"), { statusCode: 413 });
+    }
+    chunks.push(buffer);
+  }
+
   if (!chunks.length) return {};
   return JSON.parse(Buffer.concat(chunks).toString("utf8")) as Record<string, unknown>;
 }
 
-function createAvatarUploadUrl(body: Record<string, unknown>) {
+function createAvatarUploadUrl(body: Record<string, unknown>, userId: string) {
   const accountId = process.env.R2_ACCOUNT_ID;
   const accessKeyId = process.env.R2_ACCESS_KEY_ID;
   const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
@@ -888,7 +937,7 @@ function createAvatarUploadUrl(body: Record<string, unknown>) {
   }
 
   const contentType = String(body.contentType || "application/octet-stream").toLowerCase();
-  if (!/^image\/(png|jpe?g|webp|gif)$/.test(contentType)) {
+  if (!/^image\/(png|jpe?g|webp)$/.test(contentType)) {
     throw Object.assign(new Error("invalid_avatar_type"), { statusCode: 400 });
   }
 
@@ -896,13 +945,12 @@ function createAvatarUploadUrl(body: Record<string, unknown>) {
     ? "png"
     : contentType.includes("webp")
       ? "webp"
-      : contentType.includes("gif")
-        ? "gif"
-        : "jpg";
+      : "jpg";
   const now = new Date();
   const dateStamp = toAmzDate(now).slice(0, 8);
   const amzDate = toAmzDate(now);
-  const key = `avatars/${dateStamp}/${randomBytes(12).toString("hex")}.${extension}`;
+  const safeUserId = userId.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 64) || "user";
+  const key = `avatars/${safeUserId}/${dateStamp}/${randomBytes(12).toString("hex")}.${extension}`;
   const host = `${accountId}.r2.cloudflarestorage.com`;
   const endpoint = `https://${host}/${bucket}/${key}`;
   const credentialScope = `${dateStamp}/auto/s3/aws4_request`;

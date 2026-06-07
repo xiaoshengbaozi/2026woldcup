@@ -38,6 +38,10 @@ export default function MatchesPage() {
   const scheduleMatches = matchSource === "warmups" ? warmupMatches : matches;
   const scheduleLoading = matchSource === "warmups" ? warmupLoading : loading;
   const scheduleError = matchSource === "warmups" ? warmupError : error;
+  const liveQueueMatches = useMemo(
+    () => [...matches, ...warmupMatches].sort((a, b) => a.start.getTime() - b.start.getTime()),
+    [matches, warmupMatches]
+  );
 
   const stages = useMemo(
     () => [...new Set(scheduleMatches.map((match) => match.stage))],
@@ -180,7 +184,7 @@ export default function MatchesPage() {
 
   return (
     <DashboardShell>
-      <LiveMatchesStrip matches={scheduleMatches} />
+      <LiveMatchesStrip matches={liveQueueMatches} />
 
       <MatchStats
         totalMatches={scheduleMatches.length}
@@ -252,7 +256,7 @@ export default function MatchesPage() {
           </div>
         </div>
       </div>
-      <MobileLiveMatchesEntry matches={scheduleMatches} />
+      <MobileLiveMatchesEntry matches={liveQueueMatches} />
 
       <ScheduleList
         grouped={grouped}

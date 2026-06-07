@@ -13,6 +13,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useFifaNews } from "@/lib/fifa-news";
 import { formatCountdown, formatDate } from "@/lib/format";
+import { getLiveMatchQueue, isMatchInLiveWindow } from "@/lib/live-match-queue";
 import { parseTeams } from "@/lib/teams";
 import { fallbackTopScorerProfiles, fetchWorldCupTopScorers, type WorldCupTopScorer } from "@/lib/world-cup-top-scorers";
 import type { Match } from "@/types/match";
@@ -100,23 +101,10 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
   const dateLabel = firstMatch ? formatDate(firstMatch.start) : "等待官方赛程";
   const homeCode = teams?.home.name.slice(0, 3).toUpperCase() || "FIFA";
   const awayCode = teams?.away.name.slice(0, 3).toUpperCase() || "2026";
-  const liveNow = useMemo(() => {
-    return matches
-      .filter((match) => {
-        const start = match.start.getTime();
-        const end = match.end?.getTime() ?? start + 2 * 60 * 60 * 1000;
-        return start <= currentTime && currentTime <= end;
-      })
-      .sort((a, b) => a.start.getTime() - b.start.getTime())
-      .slice(0, 4);
-  }, [currentTime, matches]);
-  const upcomingMatches = useMemo(() => {
-    return matches
-      .filter((match) => match.start.getTime() > currentTime)
-      .sort((a, b) => a.start.getTime() - b.start.getTime())
-      .slice(0, 4);
-  }, [currentTime, matches]);
-  const displayMatches = liveNow.length ? liveNow : upcomingMatches;
+  const { displayMatches, isLive } = useMemo(
+    () => getLiveMatchQueue(matches, currentTime),
+    [currentTime, matches]
+  );
   const progressMarker = Math.min(100, Math.max(0, progress || 0));
 
   return (
@@ -126,24 +114,24 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
           <div className="world-cup-identity-card hero-card relative h-auto min-h-[230px] overflow-hidden p-5">
             <div className="absolute inset-0 opacity-45 [background-image:radial-gradient(circle_at_78%_62%,rgba(216,255,62,.18),transparent_30%),radial-gradient(circle_at_45%_48%,rgba(255,255,255,.07)_1px,transparent_1px)] [background-size:auto,12px_12px]" />
             <div className="relative flex h-full flex-col justify-between gap-4">
-              <div className="grid grid-cols-[minmax(0,1fr)_72px] items-start gap-3 sm:block">
+              <div className="grid grid-cols-[minmax(0,1fr)_72px] items-stretch gap-3 sm:block">
                 <div className="min-w-0">
                   <p className="text-xs uppercase tracking-[0.2em] text-white/45">全球足球盛会</p>
                   <h1 className="mt-2 text-[34px] uppercase leading-[0.95] text-white" style={{ fontFamily: "ScreenMatrix, monospace" }}>FIFA World<span className="block" style={{ color: "rgb(216 255 62 / 0.9)" }}>Cup 2026<span className="text-[0.45em] align-top">TM</span></span></h1>
                   <p className="mt-3 text-xs uppercase tracking-[0.12em] text-white/56">2026 年 6 月 11 日 - 7 月 19 日</p>
                   <p className="mt-1 text-xs uppercase tracking-[0.1em] text-white/48">美国 · 加拿大 · 墨西哥</p>
                 </div>
-                <div className="flex justify-end pt-7 sm:hidden">
+                <div className="flex h-full -translate-x-[15%] items-stretch justify-end sm:hidden">
                   <img
                     src="/logos/world-cup-2026-inverted.svg"
                     alt=""
-                    className="site-logo-dark pointer-events-none h-[88px] w-auto object-contain opacity-90 drop-shadow-[0_12px_34px_rgba(0,0,0,.55)]"
+                    className="site-logo-dark pointer-events-none h-full w-auto object-contain opacity-90 drop-shadow-[0_12px_34px_rgba(0,0,0,.55)]"
                     aria-hidden="true"
                   />
                   <img
                     src="/logos/world-cup-2026-alternate.svg"
                     alt=""
-                    className="site-logo-light pointer-events-none h-[88px] w-auto object-contain opacity-90 drop-shadow-[0_12px_34px_rgba(0,0,0,.18)]"
+                    className="site-logo-light pointer-events-none h-full w-auto object-contain opacity-90 drop-shadow-[0_12px_34px_rgba(0,0,0,.18)]"
                     aria-hidden="true"
                   />
                 </div>
@@ -243,7 +231,7 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
             </div>
             {displayMatches.length ? (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {displayMatches.map((match) => (<LiveMatchCard key={match.uid} match={match} isLive={liveNow.length > 0} />))}
+                {displayMatches.map((match) => (<LiveMatchCard key={match.uid} match={match} isLive={isMatchInLiveWindow(match, currentTime)} />))}
               </div>
             ) : (
               <div className="rounded-3xl bg-white/[0.035] px-5 py-6 text-center ring-1 ring-white/[0.06]">

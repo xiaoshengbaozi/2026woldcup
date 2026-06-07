@@ -7,12 +7,18 @@
     "1578": "G. Lo Celso",
     "1946": "L. Trossard",
     "4569": "M. Tougai",
+    "27550": "J. Benguché",
     "198352": "M. Touré",
     "271539": "J. Hadjam",
     "296645": "T. Yengi",
+    "344514": "E. Arzú",
     "350856": "E. Nuamah",
+    "417104": "A. Vargas",
+    "454964": "D. Moncada",
     "535046": "A. Amaimouni",
-    "593759": "Ala Al Haji"
+    "593759": "Ala Al Haji",
+    "650111": "G. Vandepitte",
+    "652784": "E. Puerto"
   },
   "clubs": {
     "Vasco DA Gama": "Vasco DA Gama",
@@ -35,7 +41,10 @@
     "Brazil": "Brazil",
     "Fenerbahçe": "Fenerbahçe",
     "Club America": "Club America",
-    "Ajax": "Ajax"
+    "Ajax": "Ajax",
+    "San Lorenzo": "San Lorenzo",
+    "Busan I Park": "Busan I Park",
+    "Jeonbuk Motors": "Jeonbuk Motors"
   },
   "leagues": {
     "King's Cup": "King's Cup",
@@ -88,6 +97,9 @@
     "T. Tuchel": "T. Tuchel",
     "J. Nagelsmann": "J. Nagelsmann",
     "M. Koubek": "M. Koubek",
-    "D. Advocaat": "D. Advocaat"
+    "D. Advocaat": "D. Advocaat",
+    "R. Rueda": "R. Rueda",
+    "M. Bermudez": "M. Bermudez",
+    "D. Bazeley": "D. Bazeley"
   }
 }

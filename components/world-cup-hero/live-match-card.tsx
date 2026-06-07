@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { areMatchTeamsConfirmed } from "@/lib/match-availability";
 import { generateMatchRouteSlug } from "@/lib/match-detail";
+import { getMatchPhaseLabel, getMatchScore } from "@/lib/match-live-display";
 import { formatStageLabel } from "@/lib/stage";
 import { parseTeams } from "@/lib/teams";
 import type { Match } from "@/types/match";
@@ -19,10 +20,12 @@ export function LiveMatchCard({
   const teams = parseTeams(match.summary);
   const slug = generateMatchRouteSlug(match);
   const isUnlocked = areMatchTeamsConfirmed(match.summary);
-  const elapsed = Math.max(0, Math.floor((Date.now() - match.start.getTime()) / 60000));
-  const isHT = isLive && elapsed >= 45 && elapsed < 60;
-  const minute = isLive ? (isHT ? "HT" : `${Math.min(elapsed, 90)}'`) : formatKickoff(match.start);
+  const fallbackElapsed = Math.max(0, Math.floor((Date.now() - match.start.getTime()) / 60000));
+  const elapsed = typeof match.elapsed === "number" && match.elapsed > 0 ? match.elapsed : fallbackElapsed;
+  const isHT = match.status === "halftime" || (isLive && elapsed >= 45 && elapsed < 60);
+  const minute = isLive ? getMatchPhaseLabel({ ...match, elapsed }) : formatKickoff(match.start);
   const statusLabel = isLive ? (isHT ? "中场" : "直播中") : "即将开赛";
+  const score = getMatchScore(match);
 
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-2xl transition" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)), rgba(5,8,8,0.7)", boxShadow: isHT ? "0 20px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(251,191,36,0.1), 0 0 40px rgba(251,191,36,0.08)" : "0 20px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(216,255,62,0.08), 0 0 40px rgba(216,255,62,0.06)" }}>
@@ -35,9 +38,9 @@ export function LiveMatchCard({
         </div>
         <div className="flex items-center justify-between gap-2 px-3.5 py-4">
           <div className="flex min-w-0 items-center gap-1.5">{teams.home.image ? <img src={teams.home.image} alt={teams.home.name} className="h-5 w-7 shrink-0 rounded-sm object-cover ring-1 ring-white/10" loading="lazy" /> : <span className="grid h-5 w-7 shrink-0 place-items-center rounded-sm bg-white/10 text-[9px] font-bold text-volt">{teams.home.badge}</span>}<span className="truncate text-sm font-bold text-white/90">{teams.home.name}</span></div>
-          <span className="tabular text-xl font-bold text-white" style={{ fontFamily: "ScreenMatrix, monospace" }}>0</span>
+          <span className="tabular text-xl font-bold text-white" style={{ fontFamily: "ScreenMatrix, monospace" }}>{score.home}</span>
           <span className="text-xs text-white/25">-</span>
-          <span className="tabular text-xl font-bold text-white" style={{ fontFamily: "ScreenMatrix, monospace" }}>0</span>
+          <span className="tabular text-xl font-bold text-white" style={{ fontFamily: "ScreenMatrix, monospace" }}>{score.away}</span>
           <div className="flex min-w-0 items-center gap-1.5"><span className="truncate text-sm font-bold text-white/90">{teams.away.name}</span>{teams.away.image ? <img src={teams.away.image} alt={teams.away.name} className="h-5 w-7 shrink-0 rounded-sm object-cover ring-1 ring-white/10" loading="lazy" /> : <span className="grid h-5 w-7 shrink-0 place-items-center rounded-sm bg-white/10 text-[9px] font-bold text-volt">{teams.away.badge}</span>}</div>
         </div>
         <div className="flex items-center justify-center gap-2 pb-3">

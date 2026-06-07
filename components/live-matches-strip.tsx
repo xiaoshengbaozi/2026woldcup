@@ -5,8 +5,10 @@ import { ChevronDown, Radio } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LiveMatchCard } from "@/components/world-cup-hero/live-match-card";
+import { getLiveMatchQueue, isMatchInLiveWindow } from "@/lib/live-match-queue";
 import { areMatchTeamsConfirmed } from "@/lib/match-availability";
 import { generateMatchRouteSlug } from "@/lib/match-detail";
+import { getMatchPhaseLabel, getMatchScore, hasMatchStarted } from "@/lib/match-live-display";
 import { formatStageLabel } from "@/lib/stage";
 import { buildMatchRoundLabels } from "@/lib/stage-rounds";
 import { parseTeams } from "@/lib/teams";
@@ -33,26 +35,10 @@ export function LiveMatchesStrip({ matches }: LiveMatchesStripProps) {
     return () => window.clearInterval(timer);
   }, []);
 
-  const liveNow = useMemo(() => {
-    return matches
-      .filter((match) => {
-        const start = match.start.getTime();
-        const end = match.end?.getTime() ?? start + 2 * 60 * 60 * 1000;
-        return start <= currentTime && currentTime <= end;
-      })
-      .sort((a, b) => a.start.getTime() - b.start.getTime())
-      .slice(0, 4);
-  }, [currentTime, matches]);
-
-  const upcomingMatches = useMemo(() => {
-    return matches
-      .filter((match) => match.start.getTime() > currentTime)
-      .sort((a, b) => a.start.getTime() - b.start.getTime())
-      .slice(0, 4);
-  }, [currentTime, matches]);
-
-  const displayMatches = liveNow.length ? liveNow : upcomingMatches;
-  const isLive = liveNow.length > 0;
+  const { displayMatches, isLive } = useMemo(
+    () => getLiveMatchQueue(matches, currentTime),
+    [currentTime, matches]
+  );
   const tickerWidth = displayMatches.length * TICKER_ITEM_WIDTH;
   const roundLabels = useMemo(() => buildMatchRoundLabels(matches), [matches]);
 
@@ -127,10 +113,10 @@ export function LiveMatchesStrip({ matches }: LiveMatchesStripProps) {
                 style={{ width: tickerWidth * 2 }}
               >
                 {displayMatches.map((match) => (
-                  <MatchTickerItem key={match.uid} match={match} isLive={isLive} stageLabel={roundLabels.get(match.uid)} />
+                  <MatchTickerItem key={match.uid} match={match} isLive={isMatchInLiveWindow(match, currentTime)} stageLabel={roundLabels.get(match.uid)} />
                 ))}
                 {displayMatches.map((match) => (
-                  <MatchTickerItem key={`dup-${match.uid}`} match={match} isLive={isLive} stageLabel={roundLabels.get(match.uid)} />
+                  <MatchTickerItem key={`dup-${match.uid}`} match={match} isLive={isMatchInLiveWindow(match, currentTime)} stageLabel={roundLabels.get(match.uid)} />
                 ))}
               </div>
             </div>
@@ -169,7 +155,7 @@ export function LiveMatchesStrip({ matches }: LiveMatchesStripProps) {
             {displayMatches.length ? (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {displayMatches.map((match) => (
-                  <LiveMatchCard key={match.uid} match={match} isLive={isLive} stageLabel={roundLabels.get(match.uid)} />
+                  <LiveMatchCard key={match.uid} match={match} isLive={isMatchInLiveWindow(match, currentTime)} stageLabel={roundLabels.get(match.uid)} />
                 ))}
               </div>
             ) : (
@@ -198,20 +184,23 @@ function MatchTickerItem({ match, isLive, stageLabel }: { match: Match; isLive: 
   const teams = parseTeams(match.summary);
   const slug = generateMatchRouteSlug(match);
   const isUnlocked = areMatchTeamsConfirmed(match.summary);
-  const time = match.start.toLocaleTimeString("zh-CN", {
+  const hasStarted = hasMatchStarted(match) || isLive;
+  const time = hasStarted ? getMatchPhaseLabel(match) : match.start.toLocaleTimeString("zh-CN", {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
   });
+  const score = getMatchScore(match);
+  const matchup = hasStarted
+    ? `${teams.home.name}${score.home}:${score.away}${teams.away.name}`
+    : `${teams.home.name} vs ${teams.away.name}`;
 
   const content = (
     <>
-      <span className="truncate font-semibold text-white/72">{teams.home.name}</span>
-      <span className="text-white/26">vs</span>
-      <span className="truncate font-semibold text-white/72">{teams.away.name}</span>
-      <span className="text-white/22">/</span>
       <span className="truncate text-white/36">{stageLabel ?? formatStageLabel(match.stage, match.summary)}</span>
-      <span className={`ml-auto font-semibold ${isLive ? "text-volt" : "text-white/40"}`}>
+      <span className="text-white/22">/</span>
+      <span className="truncate font-semibold text-white/72">{matchup}</span>
+      <span className={`shrink-0 font-semibold ${isLive ? "text-volt" : "text-white/40"}`}>
         {time}
       </span>
     </>

@@ -124,6 +124,8 @@ function StatBar({ row, index }: { row: StatRow; index: number }) {
   const total = homeVal + awayVal;
   const homePct = total > 0 ? (homeVal / total) * 100 : 50;
   const unit = row.unit ?? "";
+  const homeDisplay = formatStatValue(row.home, unit);
+  const awayDisplay = formatStatValue(row.away, unit);
 
   return (
     <motion.div
@@ -131,34 +133,45 @@ function StatBar({ row, index }: { row: StatRow; index: number }) {
       animate={{ opacity: 1 }}
       transition={{ delay: 0.3 + index * 0.03 }}
     >
-      {/* Values */}
-      <div className="mb-1 flex items-center justify-between text-xs">
-        <span className={`tabular font-bold ${row.homeHigher ? "text-volt" : "text-white/60"}`}>
-          {typeof row.home === "number" ? row.home % 1 !== 0 ? row.home.toFixed(1) : row.home : row.home}{unit}
-        </span>
-        <span className="text-[10px] font-medium uppercase tracking-wider text-white/40">
+      <div className="mb-2 flex items-center justify-center">
+        <span className="text-sm font-semibold uppercase tracking-[0.14em] text-white/62 sm:text-base">
           {row.label}
-        </span>
-        <span className={`tabular font-bold ${row.awayHigher ? "text-flare" : "text-white/60"}`}>
-          {typeof row.away === "number" ? row.away % 1 !== 0 ? row.away.toFixed(1) : row.away : row.away}{unit}
         </span>
       </div>
 
-      {/* Bar */}
-      <div className="flex h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${homePct}%` }}
-          transition={{ delay: 0.4 + index * 0.03, duration: 0.6 }}
-          className={`rounded-l-full ${row.homeHigher ? "bg-volt" : "bg-volt/30"}`}
-        />
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${100 - homePct}%` }}
-          transition={{ delay: 0.4 + index * 0.03, duration: 0.6 }}
-          className={`rounded-r-full ${row.awayHigher ? "bg-flare" : "bg-flare/30"}`}
-        />
+      <div className="grid grid-cols-[4.5rem_minmax(0,1fr)_4.5rem] items-center gap-3 sm:grid-cols-[5.5rem_minmax(0,1fr)_5.5rem] sm:gap-4">
+        <span
+          className={`text-right text-2xl font-bold leading-none tabular-nums sm:text-3xl ${row.homeHigher ? "text-volt" : "text-white/60"}`}
+          style={{ fontFamily: "ScreenMatrix, monospace" }}
+        >
+          {homeDisplay}
+        </span>
+        <div className="flex h-2 overflow-hidden rounded-full bg-white/[0.06] shadow-[inset_0_1px_8px_rgba(0,0,0,.32)]">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${homePct}%` }}
+            transition={{ delay: 0.4 + index * 0.03, duration: 0.6 }}
+            className={`rounded-l-full ${row.homeHigher ? "bg-volt shadow-[0_0_14px_rgba(216,255,62,.32)]" : "bg-volt/30"}`}
+          />
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${100 - homePct}%` }}
+            transition={{ delay: 0.4 + index * 0.03, duration: 0.6 }}
+            className={`rounded-r-full ${row.awayHigher ? "bg-flare shadow-[0_0_14px_rgba(255,154,31,.32)]" : "bg-flare/30"}`}
+          />
+        </div>
+        <span
+          className={`text-left text-2xl font-bold leading-none tabular-nums sm:text-3xl ${row.awayHigher ? "text-flare" : "text-white/60"}`}
+          style={{ fontFamily: "ScreenMatrix, monospace" }}
+        >
+          {awayDisplay}
+        </span>
       </div>
     </motion.div>
   );
+}
+
+function formatStatValue(value: number | string, unit: string) {
+  const display = typeof value === "number" ? (value % 1 !== 0 ? value.toFixed(1) : String(value)) : value;
+  return `${display}${unit}`;
 }

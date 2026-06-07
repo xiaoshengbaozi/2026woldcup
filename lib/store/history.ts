@@ -24,6 +24,13 @@ const PRESET_RESOLUTION: Record<TimePreset, TimeResolution> = {
   "7D": "1h",
   "30D": "1d",
 };
+const MAX_CLIENT_HISTORY_POINTS = 2880;
+
+function trimHistory(data: HistoryPoint[]) {
+  return data.length > MAX_CLIENT_HISTORY_POINTS
+    ? data.slice(-MAX_CLIENT_HISTORY_POINTS)
+    : data;
+}
 
 export const createHistorySlice: StateCreator<
   StoreState, [], [], HistorySlice
@@ -35,7 +42,7 @@ export const createHistorySlice: StateCreator<
   setHistory: (countryCode, data) => {
     set((state) => {
       const next = new Map(state.history);
-      next.set(countryCode, data);
+      next.set(countryCode, trimHistory(data));
       return { history: next };
     });
   },
@@ -44,7 +51,7 @@ export const createHistorySlice: StateCreator<
     set(() => {
       const next = new Map<string, HistoryPoint[]>();
       for (const [countryCode, history] of Object.entries(data)) {
-        next.set(countryCode, history);
+        next.set(countryCode, trimHistory(history));
       }
       return { history: next };
     });
@@ -56,7 +63,7 @@ export const createHistorySlice: StateCreator<
     set((state) => {
       const next = new Map(state.history);
       const existing = next.get(countryCode) ?? [];
-      next.set(countryCode, [...existing, point]);
+      next.set(countryCode, trimHistory([...existing, point]));
       return { history: next };
     });
   },
@@ -68,7 +75,7 @@ export const createHistorySlice: StateCreator<
       const next = new Map(state.history);
       for (const update of updates) {
         const existing = next.get(update.countryCode) ?? [];
-        next.set(update.countryCode, [...existing, update.historyPoint]);
+        next.set(update.countryCode, trimHistory([...existing, update.historyPoint]));
       }
       return { history: next };
     });

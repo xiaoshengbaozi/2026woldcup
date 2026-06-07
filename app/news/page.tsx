@@ -58,6 +58,45 @@ type NewsTabId = "headline" | "editor" | "latest";
 const NEWS_API = process.env.NEXT_PUBLIC_NEWS_API_URL || "https://news.20250114.xyz";
 
 const editorTabs = ["体育", "旅游", "文化", "专题"];
+const TRAVEL_EDITOR_TAB = "旅游";
+const travelGuideFeatures: NewsItem[] = [
+  {
+    id: "world-cup-travel-top-cities",
+    title: "世界杯期间最值得旅行的10座城市",
+    summary: "从墨西哥城到纽约，从温哥华到迈阿密，按旅行价值、世界杯氛围和性价比筛出最值得飞去的主办城市。",
+    url: "/guides/2026-world-cup-guides/features/top-10-travel-cities.html",
+    source: "世界杯城市图册",
+    sourceFeed: "Travel Guides",
+    language: "zh-CN",
+    image: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&h=760&fit=crop",
+    tags: ["Travel Cities"],
+    publishedAt: "2026-06-07T00:00:00+08:00",
+  },
+  {
+    id: "world-cup-travel-visa-hotels",
+    title: "球迷签证、机票、酒店完全指南",
+    summary: "把美国、加拿大、墨西哥三国通关顺序，以及航班、住宿和预算拆成可执行的观赛旅行清单。",
+    url: "/guides/2026-world-cup-guides/features/visa-travel-guide.html",
+    source: "世界杯城市图册",
+    sourceFeed: "Travel Guides",
+    language: "zh-CN",
+    image: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1200&h=760&fit=crop",
+    tags: ["Travel Ops"],
+    publishedAt: "2026-06-07T00:00:00+08:00",
+  },
+  {
+    id: "world-cup-travel-route-map",
+    title: "跟着世界杯去旅行：跨城路线规划",
+    summary: "按小组赛、淘汰赛、半决赛和决赛组织跨城路线，把104场比赛变成一条能出发的旅行计划。",
+    url: "/guides/2026-world-cup-guides/features/follow-world-cup.html",
+    source: "世界杯城市图册",
+    sourceFeed: "Travel Guides",
+    language: "zh-CN",
+    image: "https://images.unsplash.com/photo-1524661135-423995f22d0b?w=1200&h=760&fit=crop",
+    tags: ["Routes"],
+    publishedAt: "2026-06-07T00:00:00+08:00",
+  },
+];
 
 const mobileNewsTabs: { id: NewsTabId; title: string; label: string }[] = [
   { id: "headline", title: "头条新闻", label: "头条" },
@@ -437,7 +476,7 @@ export default function NewsPage() {
       </section>
 
       {/* ── EDITOR'S CHOICE ── */}
-      {editorItems.length > 0 && (
+      {(editorItems.length > 0 || travelGuideFeatures.length > 0) && (
         <section ref={editorRef} className="mt-4 scroll-mt-24 sm:mt-8">
           <SectionHeader title="编辑精选" hideOnMobile />
 
@@ -459,38 +498,12 @@ export default function NewsPage() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
-            {editorItems.map((item) => (
-              <a
+            {(activeEditorTab === TRAVEL_EDITOR_TAB ? travelGuideFeatures : editorItems).map((item) => (
+              <EditorChoiceCard
                 key={item.id}
-                href={item.url}
-                target="_blank"
-                rel="noreferrer"
-                onClick={(event) => {
-                  event.preventDefault();
-                  openReader(item);
-                }}
-                className="hero-card group overflow-hidden transition-all duration-300 hover:-translate-y-1"
-              >
-                <div className="relative h-44 overflow-hidden">
-                  <NewsImage
-                    src={item.image}
-                    imageClassName="h-full w-full object-cover opacity-80 transition duration-500 group-hover:scale-105 group-hover:opacity-100"
-                    fallbackClassName="flex h-full items-center justify-center bg-[radial-gradient(circle_at_50%_30%,rgba(216,255,62,0.12),transparent_36%)]"
-                    iconClassName="h-8 w-8 text-volt/40"
-                  />
-                </div>
-                <div className="p-4">
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-volt/70">
-                    {item.tags[0]?.replaceAll("-", " ") || "Feature"}
-                  </span>
-                  <h3 className="mt-1.5 text-[15px] font-semibold leading-snug text-white transition group-hover:text-volt line-clamp-2">
-                    {item.title}
-                  </h3>
-                  <p className="mt-2 text-xs leading-5 text-white/45 line-clamp-2">
-                    {item.summary}
-                  </p>
-                </div>
-              </a>
+                item={item}
+                onOpen={activeEditorTab === TRAVEL_EDITOR_TAB ? undefined : openReader}
+              />
             ))}
           </div>
         </section>
@@ -619,6 +632,42 @@ function SectionHeader({ title, actionLabel, hideOnMobile = false }: { title: st
         </span>
       )}
     </div>
+  );
+}
+
+function EditorChoiceCard({ item, onOpen }: { item: NewsItem; onOpen?: (item: NewsItem) => void }) {
+  return (
+    <a
+      href={item.url}
+      target={onOpen ? "_blank" : undefined}
+      rel={onOpen ? "noreferrer" : undefined}
+      onClick={(event) => {
+        if (!onOpen) return;
+        event.preventDefault();
+        onOpen(item);
+      }}
+      className="hero-card group overflow-hidden transition-all duration-300 hover:-translate-y-1"
+    >
+      <div className="relative h-44 overflow-hidden">
+        <NewsImage
+          src={item.image}
+          imageClassName="h-full w-full object-cover opacity-80 transition duration-500 group-hover:scale-105 group-hover:opacity-100"
+          fallbackClassName="flex h-full items-center justify-center bg-[radial-gradient(circle_at_50%_30%,rgba(216,255,62,0.12),transparent_36%)]"
+          iconClassName="h-8 w-8 text-volt/40"
+        />
+      </div>
+      <div className="p-4">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-volt/70">
+          {item.tags[0]?.replaceAll("-", " ") || "Feature"}
+        </span>
+        <h3 className="mt-1.5 text-[15px] font-semibold leading-snug text-white transition group-hover:text-volt line-clamp-2">
+          {item.title}
+        </h3>
+        <p className="mt-2 text-xs leading-5 text-white/45 line-clamp-2">
+          {item.summary}
+        </p>
+      </div>
+    </a>
   );
 }
 

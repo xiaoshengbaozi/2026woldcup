@@ -542,6 +542,13 @@ function normalizePlayerKey(value: string | null | undefined) {
     .trim();
 }
 
+function getPlayerInitial(player: LineupPlayer) {
+  const name = player.nameCn || player.name || player.nameEn || "";
+  const chineseChar = name.match(/[\u4e00-\u9fff]/u)?.[0];
+  if (chineseChar) return chineseChar;
+  return name.trim().charAt(0).toUpperCase() || "·";
+}
+
 function FeaturedPlayerRow({
   item, accentHex, accentFrom, index,
 }: {
@@ -555,17 +562,24 @@ function FeaturedPlayerRow({
   const content = (
     <>
       <div
-        className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full ring-1"
+        className="relative grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full ring-1"
         style={{
           background: `linear-gradient(135deg, ${accentFrom}0.18), rgba(255,255,255,0.04))`,
           borderColor: `${accentFrom}0.22)`,
         }}
       >
-        {player.photo ? (
+        <span className="text-[11px] font-black tabular-nums text-white">{player.number ?? getPlayerInitial(player)}</span>
+        {player.photo && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={player.photo} alt={player.nameEn || player.name} className="h-full w-full object-cover" loading="lazy" />
-        ) : (
-          <span className="text-[11px] font-black tabular-nums text-white">{player.number ?? "·"}</span>
+          <img
+            src={player.photo}
+            alt={player.nameEn || player.name}
+            className="absolute inset-0 h-full w-full object-cover"
+            loading="lazy"
+            onError={(event) => {
+              event.currentTarget.style.display = "none";
+            }}
+          />
         )}
       </div>
       <div className="min-w-0 flex-1">
@@ -753,7 +767,7 @@ function PlayerCell({
   const content = (
     <>
       <div
-        className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full ring-1 sm:h-11 sm:w-11"
+        className="relative grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full ring-1 sm:h-11 sm:w-11"
         style={{
           background: isGK
             ? "linear-gradient(135deg, rgba(46,204,113,0.2), rgba(26,138,74,0.15))"
@@ -761,13 +775,20 @@ function PlayerCell({
           borderColor: isGK ? "rgba(46,204,113,0.3)" : `${accentFrom}0.2)`,
         }}
       >
-        {player.photo ? (
+        <span className="text-[11px] font-black tabular-nums text-white" style={{ fontFamily: "ScreenMatrix, monospace" }}>
+          {player.number ?? getPlayerInitial(player)}
+        </span>
+        {player.photo && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={player.photo} alt={player.nameEn || player.name} className="h-full w-full object-cover" loading="lazy" />
-        ) : (
-          <span className="text-[11px] font-black tabular-nums text-white" style={{ fontFamily: "ScreenMatrix, monospace" }}>
-            {player.number ?? "—"}
-          </span>
+          <img
+            src={player.photo}
+            alt={player.nameEn || player.name}
+            className="absolute inset-0 h-full w-full object-cover"
+            loading="lazy"
+            onError={(event) => {
+              event.currentTarget.style.display = "none";
+            }}
+          />
         )}
       </div>
 

@@ -10,12 +10,15 @@ const ITEM_WIDTH = 180;
 export function TickerStream() {
   const countries = useStore((s) => s.countries);
   const [isPaused, setIsPaused] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const streamRef = useRef<HTMLDivElement>(null);
   const offsetRef = useRef(0);
   const rafRef = useRef<number>(0);
   const lastTimeRef = useRef<number>(0);
+  const intersectsRef = useRef(true);
+  const shouldAnimate = isVisible && !isPaused;
 
   const sorted = useMemo(
     () => Array.from(countries.values()).sort((a, b) => b.impliedProbability - a.impliedProbability),
@@ -24,8 +27,9 @@ export function TickerStream() {
 
   const animate = useCallback(
     (time: number) => {
-      if (!streamRef.current || isPaused) {
-        rafRef.current = requestAnimationFrame(animate);
+      if (!streamRef.current || !shouldAnimate) {
+        rafRef.current = 0;
+        lastTimeRef.current = 0;
         return;
       }
 
@@ -44,14 +48,49 @@ export function TickerStream() {
       streamRef.current.style.transform = `translateX(${offsetRef.current}px)`;
       rafRef.current = requestAnimationFrame(animate);
     },
-    [isPaused, sorted.length]
+    [shouldAnimate, sorted.length]
   );
 
   useEffect(() => {
+    if (!shouldAnimate) {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = 0;
+      lastTimeRef.current = 0;
+      return;
+    }
+
     lastTimeRef.current = 0;
     rafRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [animate]);
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, [animate, shouldAnimate]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const syncVisibility = () => {
+      setIsVisible(intersectsRef.current && !document.hidden);
+    };
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        intersectsRef.current = entry.isIntersecting;
+        syncVisibility();
+      },
+      { threshold: 0.01 }
+    );
+
+    observer.observe(el);
+    syncVisibility();
+    document.addEventListener("visibilitychange", syncVisibility);
+
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", syncVisibility);
+    };
+  }, []);
 
   return (
     <div

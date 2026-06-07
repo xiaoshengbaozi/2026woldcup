@@ -2,8 +2,8 @@ import { motion } from "framer-motion";
 import { MapPin } from "lucide-react";
 import Link from "next/link";
 import { detailRows, localizeLocationText } from "@/lib/calendar";
-import { formatTime } from "@/lib/format";
 import { areMatchTeamsConfirmed } from "@/lib/match-availability";
+import { getMatchLiveDisplay } from "@/lib/match-live-display";
 import { parseTeams } from "@/lib/teams";
 import { generateMatchRouteSlug } from "@/lib/match-detail";
 import { formatStageLabel } from "@/lib/stage";
@@ -24,6 +24,11 @@ export function MatchCard({
   const adjustedStart = new Date(match.start.getTime() + timezoneOffset * 3600000);
   const slug = generateMatchRouteSlug(match);
   const isUnlocked = areMatchTeamsConfirmed(match.summary);
+  const display = getMatchLiveDisplay({
+    match,
+    kickoff: adjustedStart,
+    scheduledStageLabel: stageLabel ?? formatStageLabel(match.stage, match.summary),
+  });
 
   const card = (
     <motion.article
@@ -37,13 +42,13 @@ export function MatchCard({
         <TeamBlock team={teams.home} align="left" />
         <div className="absolute left-1/2 -translate-x-1/2 flex w-20 shrink-0 flex-col items-center sm:w-auto">
           <div className="max-w-full truncate text-[10px] uppercase tracking-[0.12em] text-white/40 transition group-hover:text-volt/60 sm:text-xs sm:tracking-widest">
-            {stageLabel ?? formatStageLabel(match.stage, match.summary)}
+            {display.topLabel}
           </div>
           <div
             className="mt-1 text-lg font-semibold leading-none text-white transition group-hover:text-volt sm:text-3xl"
             style={{ fontFamily: "ScreenMatrix, monospace" }}
           >
-            {formatTime(adjustedStart)}
+            {display.centerLabel}
           </div>
         </div>
         <TeamBlock team={teams.away} align="right" />

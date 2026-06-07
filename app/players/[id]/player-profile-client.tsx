@@ -34,6 +34,7 @@ import {
   fetchOneVsOnePlayerSummary,
   type PlayerProfileData,
 } from "@/lib/player-profile";
+import type { PlayerScoutNote } from "@/lib/player-scout-notes";
 
 /* ────────────────────────────────────────────
    Types
@@ -84,6 +85,7 @@ type Props = {
   row: PlayerRow | null;
   article?: PlayerArticle | null;
   breakthrough?: PlayerBreakthroughProfile | null;
+  scoutNote?: PlayerScoutNote | null;
 };
 
 type ProfilePanelTab = "overview" | "story" | "career";
@@ -121,7 +123,7 @@ const FIFA_CODE_TO_FLAG: Record<string, string> = {
    Main Component
    ──────────────────────────────────────────── */
 
-export function PlayerProfileClient({ playerId, nameHint, row, article, breakthrough }: Props) {
+export function PlayerProfileClient({ playerId, nameHint, row, article, breakthrough, scoutNote }: Props) {
   const [data, setData] = useState<PlayerProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [oneVsOneLoading, setOneVsOneLoading] = useState(false);
@@ -558,6 +560,8 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, breakthr
                   </DashPanel>
 
                   <DashPanel title="扩展档案" icon={Star}>
+                    {scoutNote && <FmScoutPanel note={scoutNote} />}
+
                     {data?.oneVsOne?.found ? (
                       <a
                         href={data.oneVsOne.url || "https://one-versus-one.com/"}
@@ -800,6 +804,74 @@ function PlayerArticlePreview({ article }: { article: PlayerArticle }) {
 }
 
 type RadarStat = { label: string; value: number };
+
+function FmScoutPanel({ note }: { note: PlayerScoutNote }) {
+  const ratingTone =
+    note.gsRating >= 95
+      ? "text-volt"
+      : note.gsRating >= 90
+        ? "text-flare"
+        : "text-white/84";
+
+  return (
+    <a
+      href={note.sourceUrl}
+      target="_blank"
+      rel="noreferrer"
+      className="group mb-3 block overflow-hidden rounded-[1.35rem] bg-[linear-gradient(145deg,rgba(216,255,62,0.08),rgba(255,255,255,0.035)_48%,rgba(255,123,84,0.07))] p-4 ring-1 ring-volt/12 transition hover:-translate-y-0.5 hover:bg-white/[0.06] hover:ring-volt/28"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-black/20 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-volt/80 ring-1 ring-volt/12">
+            <Sparkles className="h-3 w-3" />
+            FM Scout
+          </div>
+          <p className="mt-2 text-xs font-bold text-white/40">{note.gameVersion} 社区球探</p>
+        </div>
+        <ExternalLink className="h-4 w-4 text-white/30 transition group-hover:translate-x-0.5 group-hover:text-volt" />
+      </div>
+
+      <div className="mt-4 grid grid-cols-[auto_1fr] gap-4">
+        <div className="grid h-20 w-20 place-items-center rounded-3xl bg-black/22 ring-1 ring-white/[0.07]">
+          <div className="text-center">
+            <p className={`text-3xl font-black tabular-nums ${ratingTone}`} style={{ fontFamily: "ScreenMatrix, monospace" }}>
+              {note.gsRating}
+            </p>
+            <p className="mt-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-white/28">GS</p>
+          </div>
+        </div>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-black text-white/88">{note.bestRoleCn}</p>
+          <p className="mt-1 truncate text-xs text-white/36">{note.bestRole}</p>
+          <p className="mt-3 text-xs leading-5 text-white/48">{note.summary}</p>
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-3 gap-2">
+        <ScoutMiniStat label="潜力" value={note.potentialAbility} />
+        <ScoutMiniStat label="惯用脚" value={note.footCn} />
+        <ScoutMiniStat label="投票" value={note.communityVotes} />
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        {note.tags.map((tag) => (
+          <span key={tag} className="rounded-full bg-white/[0.045] px-2.5 py-1 text-[11px] font-bold text-white/52 ring-1 ring-white/[0.055]">
+            {tag}
+          </span>
+        ))}
+      </div>
+    </a>
+  );
+}
+
+function ScoutMiniStat({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="rounded-2xl bg-black/18 px-2.5 py-2 ring-1 ring-white/[0.045]">
+      <p className="text-[10px] font-bold text-white/30">{label}</p>
+      <p className="mt-0.5 truncate text-xs font-black text-white/76">{value}</p>
+    </div>
+  );
+}
 
 function FamePlaceholder({ name, country, breakthrough }: { name: string; photo?: string; country?: string; breakthrough?: PlayerBreakthroughProfile | null }) {
   const recordCards = breakthrough?.records.slice(0, 4) ?? [];

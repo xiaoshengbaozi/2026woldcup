@@ -53,28 +53,29 @@ export function MatchDetailClient({ slug }: { slug: string }) {
     stage: detail.match.stage,
     startsAt: detail.match.start.toISOString(),
   };
+  const isStarted = detail.status !== "not_started";
 
   return (
     <DashboardShell>
       <MobileSecondaryPageActions
         backHref="/matches/"
         backLabel="返回赛程"
-        rightAction={
+        rightAction={!isStarted ? (
           <UserActionButton
             kind="match"
             payload={favoritePayload}
             iconOnly
           />
-        }
+        ) : undefined}
       />
       <MatchHero detail={detail} />
-      <div className="-mt-2 hidden justify-end lg:flex">
+      {!isStarted && <div className="-mt-2 hidden justify-end lg:flex">
         <UserActionButton
           kind="match"
           payload={favoritePayload}
           className="h-9 px-4 text-[11px]"
         />
-      </div>
+      </div>}
       <MatchNav active={activeTab} onTabChange={setActiveTab} />
 
       <div className="space-y-5">

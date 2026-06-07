@@ -4,10 +4,12 @@ import { DashboardShell } from "@/components/dashboard-shell";
 import { GroupStandings } from "@/components/group-standings";
 import { WorldCupHero } from "@/components/world-cup-hero";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
+import { useMemo } from "react";
 
 export default function Home() {
   const {
     matches,
+    warmupMatches,
     activeCity,
     setActiveCity,
     calendarUrl,
@@ -18,11 +20,15 @@ export default function Home() {
     completedCount,
     ongoingCount
   } = useWorldCupData();
+  const liveQueueMatches = useMemo(
+    () => [...matches, ...warmupMatches].sort((a, b) => a.start.getTime() - b.start.getTime()),
+    [matches, warmupMatches]
+  );
 
   return (
     <DashboardShell>
       <WorldCupHero
-        matches={matches}
+        matches={liveQueueMatches}
         firstMatch={firstMatch}
         progress={progress}
         completedCount={completedCount}

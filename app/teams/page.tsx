@@ -10,7 +10,11 @@ import { extractCity } from "@/lib/calendar";
 import { useMemo } from "react";
 
 export default function TeamsPage() {
-  const { matches } = useWorldCupData();
+  const { matches, warmupMatches } = useWorldCupData();
+  const liveQueueMatches = useMemo(
+    () => [...matches, ...warmupMatches].sort((a, b) => a.start.getTime() - b.start.getTime()),
+    [matches, warmupMatches]
+  );
 
   const totalMatchDays = useMemo(
     () => new Set(matches.map((m) => m.start.toDateString())).size,
@@ -24,7 +28,7 @@ export default function TeamsPage() {
 
   return (
     <DashboardShell>
-      <LiveMatchesStrip matches={matches} />
+      <LiveMatchesStrip matches={liveQueueMatches} />
       <MatchStats
         totalMatches={104}
         visible={104}
@@ -35,7 +39,7 @@ export default function TeamsPage() {
         visibleCities={totalCities}
         totalCities={totalCities}
       />
-      <MobileLiveMatchesEntry matches={matches} />
+      <MobileLiveMatchesEntry matches={liveQueueMatches} />
       <TeamsIndex />
     </DashboardShell>
   );

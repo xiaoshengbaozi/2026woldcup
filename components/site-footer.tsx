@@ -8,7 +8,7 @@ export function SiteFooter() {
   const stats = useSiteAnalyticsStats();
 
   return (
-    <footer className="hero-card sticky bottom-0 z-40 hidden overflow-hidden lg:block">
+    <footer className="hero-card z-40 mt-auto hidden overflow-hidden lg:block">
       <div className="relative z-10 flex h-[var(--ticker-height)] items-center justify-between overflow-hidden border-b border-white/[0.04]">
         <FooterBrand />
         <div className="flex h-full items-center">
