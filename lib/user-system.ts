@@ -3,7 +3,7 @@
 import type { UserPreferenceCatalog } from "@/lib/user-preferences";
 
 const LOCAL_API_URL = "http://localhost:3001";
-const PRODUCTION_API_URL = "https://api.boyzi.fun";
+const PRODUCTION_API_URL = "https://api-2026test.20250114.xyz";
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
 
 export interface PublicUser {
