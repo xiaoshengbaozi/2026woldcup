@@ -32,7 +32,7 @@ export function MobileNavBar() {
 
   return (
     <nav
-      className={`fixed bottom-0 left-0 right-0 lg:hidden ${isLivePage ? "pointer-events-none" : "z-50"}`}
+      className={`fixed bottom-0 left-0 right-0 lg:hidden ${isLivePage ? "pointer-events-none z-[80]" : "z-50"}`}
       style={{ paddingBottom: "env(safe-area-inset-bottom, 12px)" }}
     >
       <div className="mx-3 mb-3 flex items-stretch gap-3">
