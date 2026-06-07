@@ -148,7 +148,7 @@ function sortThirdPlace(
 }
 
 // Build the knockout bracket from group qualifiers
-function buildKnockoutMatches(
+export function buildKnockoutMatchesForTopology(
   groupScores: Record<string, Score>,
   knockoutPicks: Record<string, KnockoutPick>,
   bestThirdGroupIds: string[]
@@ -282,7 +282,7 @@ export const createPredictionSlice: StateCreator<PredictionSlice> = (set, get) =
   getKnockoutMatches: () => {
     const bestThirds = get().getBestThirds();
     const bestThirdIds = bestThirds.map((t) => t.groupId);
-    return buildKnockoutMatches(get().groupScores, get().knockoutPicks, bestThirdIds);
+    return buildKnockoutMatchesForTopology(get().groupScores, get().knockoutPicks, bestThirdIds);
   },
 
   getChampion: () => {

@@ -240,7 +240,7 @@ function PlayerRail({ players }: { players: PlayerListItem[] }) {
               href={playerProfileHref(player)}
               className="group flex w-20 shrink-0 flex-col items-center text-center sm:w-24"
             >
-              <div className="relative h-17 w-17 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/[0.1] transition duration-300 group-hover:scale-105 group-hover:ring-volt/45 sm:h-20 sm:w-20">
+              <div className="relative h-[68px] w-[68px] overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/[0.1] transition duration-300 group-hover:scale-105 group-hover:ring-volt/45 sm:h-20 sm:w-20">
                 <img src={player.photo} alt={player.nameCn} className="h-full w-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/35 to-transparent" />
               </div>
@@ -343,7 +343,7 @@ function SquadPlayerGrid({ players }: { players: OfficialPlayerCatalogItem[] }) 
           href={playerProfileHref(player)}
           className="group flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-3 transition duration-300 hover:border-volt/30 hover:bg-white/[0.04]"
         >
-          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-2xl bg-white/[0.06] ring-1 ring-white/[0.08]">
+          <div className="relative h-[68px] w-[68px] shrink-0 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/[0.08] sm:h-20 sm:w-20">
             <img src={player.photo} alt={player.nameCn} className="h-full w-full object-cover" />
           </div>
           <div className="min-w-0 flex-1">

@@ -6,7 +6,7 @@ import { GROUPS, getTeamByCode, type GroupTeam, type GroupMatch } from "@/data/w
 import { DashboardShell } from "@/components/dashboard-shell";
 import { MeAuthDialog } from "@/components/me-auth-dialog";
 import { usePredictionStore } from "@/lib/store/prediction-store";
-import type { StandingRow, KnockoutMatch } from "@/lib/store/prediction";
+import { buildKnockoutMatchesForTopology, type StandingRow, type KnockoutMatch } from "@/lib/store/prediction";
 import { userApi, type PublicUser, type UserHomePayload } from "@/lib/user-system";
 import { fallbackUserPreferenceCatalog, type UserPreferenceCatalog } from "@/lib/user-preferences";
 import { ChevronLeft, Clock3, FolderOpen, GitBranch, LogIn, Maximize2, Minus, Plus, RotateCcw, Save, ShieldCheck, Shuffle, Trash2, UserPlus, X } from "lucide-react";
@@ -15,6 +15,26 @@ import { ChevronLeft, Clock3, FolderOpen, GitBranch, LogIn, Maximize2, Minus, Pl
 
 function team(code: string | null | undefined): GroupTeam | undefined {
   return code ? getTeamByCode(code) : undefined;
+}
+
+type PredictionNodeCoords = Record<string, { x: number; y: number; w: number; h: number }>;
+
+function arePredictionCoordsEqual(a: PredictionNodeCoords, b: PredictionNodeCoords) {
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+  if (aKeys.length !== bKeys.length) return false;
+
+  return aKeys.every((key) => {
+    const current = a[key];
+    const next = b[key];
+    return (
+      Boolean(next) &&
+      Math.abs(current.x - next.x) < 0.5 &&
+      Math.abs(current.y - next.y) < 0.5 &&
+      Math.abs(current.w - next.w) < 0.5 &&
+      Math.abs(current.h - next.h) < 0.5
+    );
+  });
 }
 
 function Flag({ code, size = 20 }: { code: string; size?: number }) {
@@ -296,20 +316,24 @@ function KnockoutStageView() {
 
 /* ── Prediction Topology Flow ── */
 
-function PredictionTopologyView() {
+function PredictionTopologyView({ fullscreen = false }: { fullscreen?: boolean }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.72);
-  const [coords, setCoords] = useState<Record<string, { x: number; y: number; w: number; h: number }>>({});
+  const [coords, setCoords] = useState<PredictionNodeCoords>({});
   const isDragging = useRef(false);
   const startX = useRef(0);
   const scrollLeft = useRef(0);
   const groupScores = usePredictionStore((s) => s.groupScores);
   const knockoutPicks = usePredictionStore((s) => s.knockoutPicks);
   const getGroupStandings = usePredictionStore((s) => s.getGroupStandings);
-  const knockoutMatches = usePredictionStore((s) => s.getKnockoutMatches());
   const championCode = usePredictionStore((s) => s.getChampion());
+  const knockoutMatches = useMemo(() => {
+    const state = usePredictionStore.getState();
+    const bestThirdIds = state.getBestThirds().map((third) => third.groupId);
+    return buildKnockoutMatchesForTopology(groupScores, knockoutPicks, bestThirdIds);
+  }, [groupScores, knockoutPicks]);
 
   const groupFilled = useMemo(
     () => GROUPS.reduce((sum, group) => sum + group.matches.filter((match) => groupScores[match.id]).length, 0),
@@ -362,7 +386,7 @@ function PredictionTopologyView() {
       };
     });
 
-    setCoords(nextCoords);
+    setCoords((current) => (arePredictionCoordsEqual(current, nextCoords) ? current : nextCoords));
   }, [nodeIds, scale]);
 
   const centerFinal = useCallback((behavior: ScrollBehavior = "auto") => {
@@ -470,7 +494,14 @@ function PredictionTopologyView() {
   };
 
   return (
-    <section ref={rootRef} className="hero-card relative flex h-[720px] flex-col overflow-hidden p-5 sm:h-[760px] sm:p-6">
+    <section
+      ref={rootRef}
+      className={`hero-card relative flex flex-col overflow-hidden p-5 sm:p-6 ${
+        fullscreen
+          ? "h-[100dvh] w-screen rounded-none border-0 sm:h-[calc(100dvh-32px)] sm:w-[calc(100vw-32px)] sm:rounded-[2rem]"
+          : "h-[720px] sm:h-[760px]"
+      }`}
+    >
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-volt/30 to-transparent" />
       <div className="absolute left-1/2 top-0 h-28 w-80 -translate-x-1/2 bg-volt/10 blur-[100px]" />
 
@@ -981,7 +1012,7 @@ function PredictionProgressTrack({ percent, gradientId }: { percent: number; gra
    MAIN PAGE
    ═══════════════════════════════════════════════════════════ */
 
-type TabId = "groups" | "knockout" | "flow";
+type TabId = "groups" | "knockout";
 type AuthStatus = "checking" | "unauthenticated" | "allowed";
 type AccessMode = "login" | "register";
 type PredictionArchive = PublicUser["predictionArchives"][number];
@@ -1664,6 +1695,7 @@ function getArchiveProgress(archive: PredictionArchive) {
 export default function PredictPage() {
   const [authStatus, setAuthStatus] = useState<AuthStatus>("checking");
   const [activeTab, setActiveTab] = useState<TabId>("groups");
+  const [topologyOpen, setTopologyOpen] = useState(false);
   const { autoFillRandom, resetAll } = usePredictionStore();
   const groupScores = usePredictionStore((s) => s.groupScores);
   const knockoutPicks = usePredictionStore((s) => s.knockoutPicks);
@@ -1686,6 +1718,17 @@ export default function PredictPage() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!topologyOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [topologyOpen]);
 
   if (authStatus === "checking") {
     return (
@@ -1728,7 +1771,6 @@ export default function PredictPage() {
             {([
               { id: "groups" as TabId, label: "小组赛", count: 72 },
               { id: "knockout" as TabId, label: "淘汰赛", count: 32 },
-              { id: "flow" as TabId, label: "流程图", count: groupFilled + knockoutFilled },
             ]).map((tab) => {
               const isActive = activeTab === tab.id;
               return (
@@ -1745,6 +1787,15 @@ export default function PredictPage() {
             })}
           </div>
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setTopologyOpen(true)}
+              className="flex items-center gap-1.5 rounded-lg bg-volt text-black px-3 py-1.5 text-[10px] font-black uppercase tracking-wider shadow-[0_0_22px_rgba(216,255,62,.16)] transition-all hover:scale-[1.01]"
+            >
+              <GitBranch size={12} />
+              拓扑图
+              <span className="rounded-full bg-black/15 px-1.5 py-0.5 tabular-nums">{groupFilled + knockoutFilled}</span>
+            </button>
             <button onClick={autoFillRandom} className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-white/30 hover:text-flare px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.06] transition-all"><Shuffle size={12} />随机填充</button>
             <button onClick={resetAll} className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-white/30 hover:text-red-400 px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.06] transition-all"><X size={12} />清空</button>
           </div>
@@ -1763,13 +1814,44 @@ export default function PredictPage() {
                 </motion.div>
               )}
             </motion.div>
-          ) : activeTab === "knockout" ? (
+          ) : (
             <motion.div key="knockout" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.25 }} className="flex flex-col gap-4">
               <KnockoutStageView />
             </motion.div>
-          ) : (
-            <motion.div key="flow" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -14 }} transition={{ duration: 0.25 }} className="flex flex-col gap-4">
-              <PredictionTopologyView />
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {topologyOpen && (
+            <motion.div
+              key="topology-modal"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-[120] flex items-stretch justify-center bg-black/82 backdrop-blur-2xl sm:items-center sm:p-4"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Prediction topology"
+            >
+              <motion.div
+                initial={{ opacity: 0, y: 18, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 12, scale: 0.98 }}
+                transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+                className="relative h-[100dvh] w-screen sm:h-[calc(100dvh-32px)] sm:w-[calc(100vw-32px)]"
+              >
+                <PredictionTopologyView fullscreen />
+                <button
+                  type="button"
+                  onClick={() => setTopologyOpen(false)}
+                  className="absolute right-3 top-3 z-50 grid h-10 w-10 place-items-center rounded-full bg-black/70 text-white/70 ring-1 ring-white/[0.12] backdrop-blur-xl transition hover:bg-white/10 hover:text-white sm:right-5 sm:top-5"
+                  aria-label="关闭拓扑图"
+                  title="关闭"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>

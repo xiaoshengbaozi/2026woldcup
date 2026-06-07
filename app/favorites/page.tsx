@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Bell,
+  BarChart3,
   CalendarDays,
   CloudSun,
   ChevronRight,
@@ -14,13 +15,18 @@ import {
   Radio,
   Sparkles,
   Star,
+  Trophy,
+  Users,
+  Zap,
 } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { StatCard } from "@/components/stat-card";
 import { UserActionButton } from "@/components/user-action-button";
+import matchStarPlayers from "@/data/match-star-players.json";
 import { detailRows, extractCity, localizeLocationText } from "@/lib/calendar";
 import { generateMatchRouteSlug, generateMatchSlug } from "@/lib/match-detail";
 import { getMatchLiveDisplay } from "@/lib/match-live-display";
+import { getTeamCodeFromName } from "@/lib/team-localization";
 import { parseTeams } from "@/lib/teams";
 import { userApi, type UserHomePayload } from "@/lib/user-system";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
@@ -202,38 +208,6 @@ export default function FavoritesPage() {
             <PinnedMatchInfo match={activeMatch} position={activeIndex + 1} total={visibleCards.length} />
           </>
         )}
-
-        <section className="grid gap-3">
-          <div className="flex items-center justify-between px-1">
-            <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-white/32">Pinned Queue</p>
-              <h2 className="mt-1 text-lg font-black text-white">全部收藏</h2>
-            </div>
-            <Link href="/me?tab=matches" className="inline-flex items-center gap-1 text-xs font-bold text-volt/82">
-              管理
-              <ChevronRight className="h-4 w-4" />
-            </Link>
-          </div>
-
-          {!homeLoaded || loading ? (
-            <LoadingStack />
-          ) : visibleCards.length ? (
-            visibleCards.map((match, index) => (
-              <CompactFavoriteCard
-                key={`${match.id}-${index}`}
-                match={match}
-                index={index}
-                signedIn={Boolean(home)}
-                active={index === activeIndex}
-                onSelect={() => setActiveIndex(index)}
-              />
-            ))
-          ) : (
-            <div className="rounded-[1.7rem] bg-white/[0.045] p-5 text-sm text-white/52 ring-1 ring-white/[0.08] backdrop-blur-2xl">
-              没有找到匹配的收藏比赛。
-            </div>
-          )}
-        </section>
       </main>
     </DashboardShell>
   );
@@ -255,10 +229,21 @@ function MatchCardStack({
   onRemove: (id: string) => void;
 }) {
   const stack = getStackMatches(matches, activeIndex);
+  const sliderTrackRef = useRef<HTMLDivElement>(null);
+  const safeActiveIndex = Math.min(Math.max(activeIndex, 0), Math.max(matches.length - 1, 0));
+  const activeProgress = matches.length > 1 ? (safeActiveIndex / (matches.length - 1)) * 100 : 0;
+  const selectFromClientX = (clientX: number) => {
+    const track = sliderTrackRef.current;
+    if (!track || matches.length < 2) return;
+
+    const rect = track.getBoundingClientRect();
+    const progress = Math.min(Math.max((clientX - rect.left) / rect.width, 0), 1);
+    onSelect(Math.round(progress * (matches.length - 1)));
+  };
 
   return (
-    <section className="relative h-[390px] overflow-visible pt-1">
-      <div className="absolute inset-x-3 top-10 h-[270px] rounded-[2rem] bg-volt/10 blur-3xl" />
+    <section className="relative h-[382px] overflow-visible pt-1">
+      <div className="absolute inset-x-3 top-10 h-[264px] rounded-[2rem] bg-volt/10 blur-3xl" />
       <AnimatePresence initial={false} mode="popLayout">
         {stack.map(({ match, index, depth }) => (
           <StackCard
@@ -272,20 +257,41 @@ function MatchCardStack({
           />
         ))}
       </AnimatePresence>
-      <div className="absolute bottom-0 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2">
-        {matches.slice(0, 6).map((match, index) => (
-          <button
-            key={`${match.id}-dot`}
-            type="button"
-            aria-label={`切换到第 ${index + 1} 场`}
-            onClick={() => onSelect(index)}
-            className={`h-2 w-2 rounded-full transition ${
-              index === activeIndex
-                ? "bg-volt shadow-[0_0_14px_rgba(216,255,62,.65)]"
-                : "bg-white/[0.055] ring-1 ring-white/[0.14]"
-            }`}
+      <div className="absolute bottom-0 left-1/2 z-40 w-[min(68vw,248px)] -translate-x-1/2">
+        <div
+          ref={sliderTrackRef}
+          role="slider"
+          tabIndex={0}
+          aria-label="切换收藏比赛"
+          aria-valuemin={1}
+          aria-valuemax={matches.length}
+          aria-valuenow={activeIndex + 1}
+          onPointerDown={(event) => {
+            event.currentTarget.setPointerCapture(event.pointerId);
+            selectFromClientX(event.clientX);
+          }}
+          onPointerMove={(event) => {
+            if (event.buttons === 1) selectFromClientX(event.clientX);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowLeft") onSelect(Math.max(activeIndex - 1, 0));
+            if (event.key === "ArrowRight") onSelect(Math.min(activeIndex + 1, matches.length - 1));
+          }}
+          className="relative h-9 cursor-grab touch-none rounded-full outline-none active:cursor-grabbing"
+        >
+          <div className="absolute inset-x-0 top-1/2 h-2 -translate-y-1/2 overflow-hidden rounded-full bg-white/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,.08)] ring-1 ring-white/[0.06]">
+            <motion.div
+              className="h-full rounded-full bg-volt shadow-[0_0_18px_rgba(84,255,64,.72)]"
+              animate={{ width: `${activeProgress}%` }}
+              transition={{ type: "spring", stiffness: 420, damping: 36 }}
+            />
+          </div>
+          <motion.div
+            className="absolute top-1/2 z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/50 bg-white shadow-[0_0_18px_rgba(216,255,62,.85),0_4px_14px_rgba(0,0,0,.45)]"
+            animate={{ left: `${activeProgress}%` }}
+            transition={{ type: "spring", stiffness: 420, damping: 34 }}
           />
-        ))}
+        </div>
       </div>
     </section>
   );
@@ -386,16 +392,27 @@ function StackCard({
   );
 }
 
+type FavoriteInfoTab = "info" | "odds" | "stars";
+
+const FAVORITE_INFO_TABS: { id: FavoriteInfoTab; label: string; icon: React.ReactNode }[] = [
+  { id: "info", label: "比赛信息", icon: <Trophy className="h-3.5 w-3.5" /> },
+  { id: "odds", label: "赔率", icon: <BarChart3 className="h-3.5 w-3.5" /> },
+  { id: "stars", label: "明星球员", icon: <Users className="h-3.5 w-3.5" /> },
+];
+
 function PinnedMatchInfo({ match, position, total }: { match: FavoriteMatchCard; position: number; total: number }) {
+  const [activeTab, setActiveTab] = useState<FavoriteInfoTab>("info");
   const kickoff = match.startsAt ? new Date(match.startsAt) : null;
   const countdown = getCountdown(kickoff);
+  const odds = getFavoriteMatchOdds(match);
+  const starPlayers = getFavoriteStarPlayers(match);
 
   return (
     <motion.section
       key={match.id}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="relative overflow-hidden rounded-[1.9rem] bg-white/[0.055] p-4 shadow-[0_22px_70px_rgba(0,0,0,.34),inset_0_1px_0_rgba(255,255,255,.1)] ring-1 ring-white/[0.08] backdrop-blur-3xl"
+      className="relative overflow-hidden rounded-[1.9rem] bg-white/[0.055] p-3 shadow-[0_22px_70px_rgba(0,0,0,.34),inset_0_1px_0_rgba(255,255,255,.1)] ring-1 ring-white/[0.08] backdrop-blur-3xl sm:p-4"
     >
       <div className="pointer-events-none absolute right-0 top-0 h-24 w-24 rounded-full bg-volt/10 blur-3xl" />
       <div className="relative flex items-start justify-between gap-3">
@@ -403,7 +420,7 @@ function PinnedMatchInfo({ match, position, total }: { match: FavoriteMatchCard;
           <p className="text-[10px] font-black uppercase tracking-[0.18em] text-volt/70">
             Top Match {position}/{total}
           </p>
-          <h3 className="mt-1 text-lg font-black text-white">比赛信息</h3>
+          <h3 className="mt-1 text-lg font-black text-white">{match.home.name} vs {match.away.name}</h3>
         </div>
         <span className="inline-flex items-center gap-1 rounded-full bg-volt px-3 py-1 text-[11px] font-black text-black">
           <Sparkles className="h-3.5 w-3.5" />
@@ -411,16 +428,94 @@ function PinnedMatchInfo({ match, position, total }: { match: FavoriteMatchCard;
         </span>
       </div>
 
-      <div className="relative mt-4 grid grid-cols-2 gap-2">
-        <InfoTile icon={<CalendarDays className="h-4 w-4" />} label="比赛时间" value={formatFullDate(kickoff)} />
-        <InfoTile icon={<MapPin className="h-4 w-4" />} label="比赛城市" value={match.city || "TBD"} />
-        <InfoTile icon={<Clock3 className="h-4 w-4" />} label="比赛阶段" value={compactStage(match.stage)} />
-        <InfoTile icon={<Star className="h-4 w-4" />} label="收藏状态" value={match.tag} />
+      <div className="relative mt-4 grid grid-cols-3 gap-1 rounded-full bg-black/28 p-1 ring-1 ring-white/[0.07]">
+        {FAVORITE_INFO_TABS.map((tab) => {
+          const active = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={`inline-flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-full px-2 text-[11px] font-black transition ${
+                active
+                  ? "bg-volt text-black shadow-[0_0_18px_rgba(216,255,62,.22)]"
+                  : "text-white/48 hover:bg-white/[0.055] hover:text-white/78"
+              }`}
+            >
+              {tab.icon}
+              <span className="truncate">{tab.label}</span>
+            </button>
+          );
+        })}
       </div>
+
+      <AnimatePresence mode="wait">
+        {activeTab === "info" && (
+          <motion.div
+            key="info"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="relative mt-3 grid grid-cols-2 gap-2"
+          >
+            <InfoTile icon={<CalendarDays className="h-4 w-4" />} label="比赛时间" value={formatFullDate(kickoff)} />
+            <InfoTile icon={<MapPin className="h-4 w-4" />} label="比赛城市" value={match.city || "TBD"} />
+            <InfoTile icon={<Clock3 className="h-4 w-4" />} label="比赛阶段" value={compactStage(match.stage)} />
+            <InfoTile icon={<Star className="h-4 w-4" />} label="收藏状态" value={match.tag} />
+          </motion.div>
+        )}
+
+        {activeTab === "odds" && (
+          <motion.div
+            key="odds"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="relative mt-3"
+          >
+            <FavoriteOddsPanel match={match} odds={odds} />
+          </motion.div>
+        )}
+
+        {activeTab === "stars" && (
+          <motion.div
+            key="stars"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="relative mt-3 grid gap-2"
+          >
+            {starPlayers.length ? (
+              starPlayers.map((player) => (
+                <Link
+                  key={`${player.teamCode}-${player.id ?? player.name}`}
+                  href={player.id ? `/players/${player.id}` : `/teams/${player.teamCode.toLowerCase()}`}
+                  className="group grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-[1.25rem] bg-black/24 p-3 ring-1 ring-white/[0.07] transition hover:bg-white/[0.065]"
+                >
+                  <span className="grid h-9 w-9 place-items-center rounded-full bg-volt/12 text-xs font-black text-volt ring-1 ring-volt/20">
+                    {player.teamCode}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-black text-white">{player.name}</span>
+                    <span className="mt-0.5 block text-[10px] font-black uppercase tracking-[0.12em] text-white/34">
+                      核心球星
+                    </span>
+                  </span>
+                  <ChevronRight className="h-4 w-4 text-white/24 transition group-hover:text-volt" />
+                </Link>
+              ))
+            ) : (
+              <div className="rounded-[1.25rem] bg-black/24 p-4 text-sm font-semibold text-white/48 ring-1 ring-white/[0.07]">
+                暂无该场比赛的明星球员数据。
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <Link
         href={match.href}
-        className="relative mt-3 flex h-11 items-center justify-between rounded-full bg-black/32 px-4 text-sm font-black text-white ring-1 ring-white/[0.08] transition hover:bg-volt hover:text-black"
+        className="relative mt-3 flex h-10 items-center justify-between rounded-full bg-black/32 px-4 text-sm font-black text-white ring-1 ring-white/[0.08] transition hover:bg-volt hover:text-black"
       >
         查看完整比赛页
         <ChevronRight className="h-4 w-4" />
@@ -549,6 +644,86 @@ function InfoTile({ icon, label, value }: { icon: React.ReactNode; label: string
       <p className="mt-2 truncate text-sm font-black text-white">{value}</p>
     </div>
   );
+}
+
+function FavoriteOddsPanel({ match, odds }: { match: FavoriteMatchCard; odds: FavoriteOddsItem[] }) {
+  const [homeOdds, drawOdds, awayOdds] = odds;
+
+  return (
+    <div className="relative mx-auto overflow-hidden rounded-[24px] border border-white/[0.08] bg-[#111113]/90 shadow-[0_28px_64px_rgba(0,0,0,0.34)] backdrop-blur-xl">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(216,255,62,0.12),transparent_34%),radial-gradient(circle_at_92%_18%,rgba(255,154,31,0.10),transparent_36%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-volt/30 to-transparent" />
+
+      <div className="relative border-b border-white/[0.05] px-4 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4 text-volt" />
+            <h4 className="text-[11px] font-black uppercase tracking-[0.13em] text-white">Match Odds</h4>
+          </div>
+          <span className="text-[10px] font-black uppercase tracking-[0.12em] text-white/30">Decimal</span>
+        </div>
+      </div>
+
+      <div className="relative px-4 py-4">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+          <FavoriteOddsTeam team={match.home} odds={homeOdds} align="left" />
+
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex items-center gap-1.5 text-white/30">
+              <div className="h-px w-6 bg-white/10" />
+              <div className="grid h-7 w-7 place-items-center rounded-full border border-white/10 bg-white/[0.035] shadow-[0_0_22px_rgba(216,255,62,0.10)]">
+                <Zap className="h-3.5 w-3.5 text-volt/70" />
+              </div>
+              <div className="h-px w-6 bg-white/10" />
+            </div>
+            <div className="flex items-center gap-1 text-[11px]">
+              <span className="font-black tabular-nums text-volt">{getImpliedProbability(homeOdds.value)}%</span>
+              <span className="text-white/20">:</span>
+              <span className="font-black tabular-nums text-flare">{getImpliedProbability(awayOdds.value)}%</span>
+            </div>
+          </div>
+
+          <FavoriteOddsTeam team={match.away} odds={awayOdds} align="right" />
+        </div>
+
+        <div className="relative mt-4 overflow-hidden rounded-2xl border border-white/[0.07] bg-black/26 px-4 py-3">
+          <div
+            className="absolute inset-y-0 left-0 bg-white/[0.045]"
+            style={{ width: `${Math.min(getImpliedProbability(drawOdds.value), 56)}%` }}
+          />
+          <div className="relative flex items-center justify-between gap-3">
+            <span className="text-[10px] font-black uppercase tracking-[0.12em] text-white/34">Draw</span>
+            <span className="text-lg font-black tabular-nums text-white">{drawOdds.value.toFixed(2)}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FavoriteOddsTeam({ team, odds, align }: { team: Team; odds: FavoriteOddsItem; align: "left" | "right" }) {
+  const isRight = align === "right";
+  const probability = getImpliedProbability(odds.value);
+
+  return (
+    <div className={`min-w-0 ${isRight ? "text-right" : "text-left"}`}>
+      <div className={`mb-2 flex items-center gap-2 ${isRight ? "justify-end" : "justify-start"}`}>
+        {!isRight && <TeamMark team={team} muted />}
+        <span className="truncate text-xs font-black text-white/68">{team.name}</span>
+        {isRight && <TeamMark team={team} muted />}
+      </div>
+      <p className={`text-3xl font-black leading-none tabular-nums ${odds.active ? "text-volt" : "text-white"}`}>
+        {odds.value.toFixed(2)}
+      </p>
+      <div className={`mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.08] ${isRight ? "ml-auto" : ""}`}>
+        <div className="h-full rounded-full bg-volt/80" style={{ width: `${Math.min(probability, 72)}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function getImpliedProbability(value: number) {
+  return Math.round((1 / value) * 100);
 }
 
 function WeatherStrip({
@@ -732,6 +907,60 @@ function getTeamCode(team: Team) {
 function getVenueNavigationHref(match: FavoriteMatchCard) {
   const query = [match.location, match.city].filter(Boolean).join(" ");
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query || match.title)}`;
+}
+
+type FavoriteOddsItem = {
+  label: string;
+  value: number;
+  active: boolean;
+};
+
+function getFavoriteMatchOdds(match: FavoriteMatchCard): FavoriteOddsItem[] {
+  const seed = getStableNumber(match.id || match.title);
+  const home = 2.05 + (seed % 42) / 100;
+  const away = 2.18 + ((seed >> 3) % 46) / 100;
+  const draw = 3.05 + ((seed >> 5) % 34) / 100;
+  const strongest = Math.min(home, draw, away);
+
+  return [
+    { label: `${match.home.name} 胜`, value: home, active: home === strongest },
+    { label: "平局", value: draw, active: draw === strongest },
+    { label: `${match.away.name} 胜`, value: away, active: away === strongest },
+  ];
+}
+
+type FavoriteStarPlayer = {
+  id: string | null;
+  name: string;
+  teamCode: string;
+};
+
+type MatchStarPlayer = {
+  id?: string | null;
+  nameCn?: string;
+  nameEn?: string;
+};
+
+const MATCH_STAR_PLAYERS_BY_TEAM = matchStarPlayers.teams as Record<string, MatchStarPlayer[] | undefined>;
+
+function getFavoriteStarPlayers(match: FavoriteMatchCard): FavoriteStarPlayer[] {
+  const teamCodes = [getResolvedTeamCode(match.home), getResolvedTeamCode(match.away)];
+
+  return teamCodes.flatMap((teamCode) =>
+    (MATCH_STAR_PLAYERS_BY_TEAM[teamCode] ?? []).slice(0, 2).map((player) => ({
+      id: player.id ?? null,
+      name: player.nameCn || player.nameEn || "明星球员",
+      teamCode,
+    }))
+  );
+}
+
+function getResolvedTeamCode(team: Team) {
+  return getTeamCodeFromName(team.name) || getTeamCode(team);
+}
+
+function getStableNumber(value: string) {
+  return value.split("").reduce((total, char) => ((total << 5) - total + char.charCodeAt(0)) >>> 0, 0);
 }
 
 function getMatchWeatherSummary(match: FavoriteMatchCard) {

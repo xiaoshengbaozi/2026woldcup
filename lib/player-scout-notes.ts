@@ -17,6 +17,19 @@ export type PlayerScoutNote = {
   injuryProneness: number;
   tags: string[];
   summary: string;
+  contractDetails?: PlayerScoutContractDetails;
+};
+
+export type PlayerScoutContractDetails = {
+  club: string;
+  currency: "CNY";
+  weeklyWageCny: number;
+  marketValueCny: number;
+  transferValueRangeCny: [number, number];
+  contractUntil: string;
+  statusCn: string;
+  exchangeRateNote: string;
+  sourceCn: string;
 };
 
 const PLAYER_SCOUT_NOTES = scoutNotesData.players as PlayerScoutNote[];

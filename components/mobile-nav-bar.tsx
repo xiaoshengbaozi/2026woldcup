@@ -2,13 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Bookmark, Calendar, Home, Newspaper, Radio } from "lucide-react";
+import { BarChart3, Calendar, Home, Newspaper, Radio } from "lucide-react";
 
 const navItems = [
   { label: "首页", href: "/", icon: Home },
   { label: "新闻", href: "/news", icon: Newspaper },
   { label: "赛程", href: "/matches", icon: Calendar },
-  { label: "收藏", href: "/favorites", icon: Bookmark },
   { label: "数据", href: "/data", icon: BarChart3 },
 ];
 

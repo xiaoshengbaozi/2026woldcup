@@ -2,11 +2,14 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { X } from "lucide-react";
 import Link from "next/link";
 import matchStarPlayers from "@/data/match-star-players.json";
 import playerArticles from "@/data/player-articles.json";
 import { localizeCoachName } from "@/lib/coach-localization";
+import { PlayerFmScoutCard } from "@/components/player-fm-scout-card";
 import { getOfficialPlayerCatalog, type OfficialPlayerCatalogItem } from "@/lib/official-player-catalog";
+import { findPlayerScoutNoteByIdentity, type PlayerScoutNote } from "@/lib/player-scout-notes";
 import { parseTeams } from "@/lib/teams";
 import type { MatchDetail, LineupPlayer, PlayerPosition } from "@/types/match";
 
@@ -549,6 +552,82 @@ function getPlayerInitial(player: LineupPlayer) {
   return name.trim().charAt(0).toUpperCase() || "·";
 }
 
+function getLineupPlayerScoutNote(player: LineupPlayer) {
+  return findPlayerScoutNoteByIdentity({
+    id: player.id,
+    name: player.name,
+    nameEn: player.nameEn,
+    nameCn: player.nameCn,
+  });
+}
+
+function ScoutNoteDialog({
+  open,
+  onClose,
+  player,
+  note,
+}: {
+  open: boolean;
+  onClose: () => void;
+  player: LineupPlayer;
+  note: PlayerScoutNote;
+}) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          className="fixed inset-0 z-[120] grid place-items-center bg-black/70 px-4 py-6 backdrop-blur-xl"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+        >
+          <motion.div
+            className="w-full max-w-[27rem]"
+            initial={{ opacity: 0, y: 18, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.98 }}
+            transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center justify-between gap-3 rounded-3xl bg-white/[0.045] p-3 ring-1 ring-white/[0.08]">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="relative grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-2xl bg-volt/[0.12] ring-1 ring-volt/20">
+                  <span className="text-xs font-black text-volt">{player.number ?? getPlayerInitial(player)}</span>
+                  {player.photo && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={player.photo}
+                      alt={player.nameEn || player.name}
+                      className="absolute inset-0 h-full w-full object-cover"
+                      onError={(event) => {
+                        event.currentTarget.style.display = "none";
+                      }}
+                    />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-black text-white">{player.nameCn || player.name}</p>
+                  <p className="mt-0.5 truncate text-xs text-white/38">{player.nameEn || note.nameEn}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/[0.06] text-white/55 ring-1 ring-white/[0.08] transition hover:bg-white/[0.1] hover:text-white"
+                aria-label="关闭 FM Scout 卡片"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <PlayerFmScoutCard note={note} />
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 function FeaturedPlayerRow({
   item, accentHex, accentFrom, index,
 }: {
@@ -559,6 +638,8 @@ function FeaturedPlayerRow({
 }) {
   const { player, category } = item;
   const href = /^\d+$/.test(player.id) ? `/players/${player.id}/` : null;
+  const scoutNote = getLineupPlayerScoutNote(player);
+  const [scoutOpen, setScoutOpen] = useState(false);
   const content = (
     <>
       <div
@@ -605,7 +686,16 @@ function FeaturedPlayerRow({
       transition={{ delay: 0.12 + index * 0.03, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
       className="group flex items-center gap-3 overflow-hidden rounded-2xl bg-white/[0.025] px-3 py-2.5 ring-1 ring-white/[0.055] transition-all duration-200 hover:bg-white/[0.045]"
     >
-      {href ? <Link href={href} className="flex min-w-0 flex-1 items-center gap-3">{content}</Link> : content}
+      {scoutNote ? (
+        <button type="button" onClick={() => setScoutOpen(true)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+          {content}
+        </button>
+      ) : href ? (
+        <Link href={href} className="flex min-w-0 flex-1 items-center gap-3">{content}</Link>
+      ) : (
+        content
+      )}
+      {scoutNote && <ScoutNoteDialog open={scoutOpen} onClose={() => setScoutOpen(false)} player={player} note={scoutNote} />}
     </motion.div>
   );
 }
@@ -764,6 +854,8 @@ function PlayerCell({
   const href = /^\d+$/.test(player.id)
     ? `/players/${player.id}/`
     : null;
+  const scoutNote = getLineupPlayerScoutNote(player);
+  const [scoutOpen, setScoutOpen] = useState(false);
   const content = (
     <>
       <div
@@ -832,7 +924,16 @@ function PlayerCell({
         border: "1px solid rgba(255,255,255,0.04)",
       }}
     >
-      {href ? <Link href={href} className="flex min-w-0 flex-1 items-center gap-2">{content}</Link> : content}
+      {scoutNote ? (
+        <button type="button" onClick={() => setScoutOpen(true)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
+          {content}
+        </button>
+      ) : href ? (
+        <Link href={href} className="flex min-w-0 flex-1 items-center gap-2">{content}</Link>
+      ) : (
+        content
+      )}
+      {scoutNote && <ScoutNoteDialog open={scoutOpen} onClose={() => setScoutOpen(false)} player={player} note={scoutNote} />}
     </motion.div>
   );
 }

@@ -44,7 +44,16 @@
     "Ajax": "Ajax",
     "San Lorenzo": "San Lorenzo",
     "Busan I Park": "Busan I Park",
-    "Jeonbuk Motors": "Jeonbuk Motors"
+    "Jeonbuk Motors": "Jeonbuk Motors",
+    "Middlesbrough": "Middlesbrough",
+    "Valencia": "Valencia",
+    "Shonan Bellmare": "Shonan Bellmare",
+    "FC Tokyo": "FC Tokyo",
+    "Yokohama F. Marinos": "Yokohama F. Marinos",
+    "Getafe": "Getafe",
+    "Atletico Madrid": "Atletico Madrid",
+    "Los Angeles FC": "Los Angeles FC",
+    "Bayer Leverkusen": "Bayer Leverkusen"
   },
   "leagues": {
     "King's Cup": "King's Cup",
@@ -58,12 +67,21 @@
     "Copa Do Brasil": "Copa Do Brasil",
     "Paulista - A1": "Paulista - A1",
     "UEFA Europa Conference League": "UEFA Europa Conference League",
-    "NB I": "NB I"
+    "NB I": "NB I",
+    "Superliga": "Superliga",
+    "Süper Lig": "Süper Lig",
+    "Chinese Super League": "Chinese Super League",
+    "K League 1": "K League 1",
+    "FIFA U20 World Cup": "FIFA U20 World Cup",
+    "2. Bundesliga": "2. Bundesliga"
   },
   "positions": {},
   "countries": {
     "Algeria": "Algeria",
-    "Hungary": "Hungary"
+    "Hungary": "Hungary",
+    "Korea Republic": "Korea Republic",
+    "Türkiye": "Türkiye",
+    "China PR": "China PR"
   },
   "transferTypes": {
     "€ 17M": "€ 17M",
@@ -74,13 +92,17 @@
     "€ 222M": "€ 222M",
     "€ 80M": "€ 80M",
     "€ 15M": "€ 15M",
-    "€ 38M": "€ 38M"
+    "€ 38M": "€ 38M",
+    "€ 14.7M": "€ 14.7M",
+    "€ 10M": "€ 10M"
   },
   "trophyPlaces": {},
   "injuryTypes": {
     "LCL Knee Injury": "LCL Knee Injury",
     "Tired": "Tired",
-    "Appendicitis": "Appendicitis"
+    "Appendicitis": "Appendicitis",
+    "Chest Injury": "Chest Injury",
+    "Abdominal Strain": "Abdominal Strain"
   },
   "birthPlaces": {
     "London": "London",
@@ -88,7 +110,8 @@
     "Hershey": "Hershey",
     "São Gonçalo": "São Gonçalo",
     "Mogi das Cruzes": "Mogi das Cruzes",
-    "Tlalnepantla de Baz": "Tlalnepantla de Baz"
+    "Tlalnepantla de Baz": "Tlalnepantla de Baz",
+    "Cachín": "Cachín"
   },
   "coaches": {
     "H. Regragui": "H. Regragui",
@@ -100,6 +123,8 @@
     "D. Advocaat": "D. Advocaat",
     "R. Rueda": "R. Rueda",
     "M. Bermudez": "M. Bermudez",
-    "D. Bazeley": "D. Bazeley"
+    "D. Bazeley": "D. Bazeley",
+    "S. Lamouchi": "S. Lamouchi",
+    "P. Thiaw": "P. Thiaw"
   }
 }

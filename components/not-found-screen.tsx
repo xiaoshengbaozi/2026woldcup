@@ -2,13 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowLeft, Home, Radar, Search } from "lucide-react";
-
-const scanItems = [
-  ["SIGNAL", "lost"],
-  ["ROUTE", "404"],
-  ["SYSTEM", "reroute ready"]
-];
+import { Home, Radar, Search } from "lucide-react";
 
 export function NotFoundScreen() {
   return (
@@ -25,77 +19,50 @@ export function NotFoundScreen() {
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         className="relative z-10 w-full max-w-5xl"
       >
-        <div className="mx-auto grid gap-6 lg:grid-cols-[1fr_320px]">
-          <div className="relative overflow-hidden rounded-[2rem] bg-white/[0.035] p-8 shadow-[0_30px_100px_rgba(0,0,0,0.58),0_0_80px_rgba(114,255,21,0.13),inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-3xl sm:p-12">
-            <div className="absolute inset-0 rounded-[2rem] ring-1 ring-lime-300/15" />
-            <div className="absolute -right-20 -top-20 h-56 w-56 rounded-full bg-lime-300/12 blur-3xl" />
-            <div className="relative">
-              <div className="mb-10 flex items-center gap-3 text-lime-300/90">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-lime-300/10 shadow-[0_0_32px_rgba(132,255,19,0.28)]">
-                  <Radar className="h-5 w-5" />
-                </span>
-                <span className="font-[ScreenMatrix] text-sm uppercase tracking-[0.42em]">route signal error</span>
-              </div>
+        <div className="mx-auto max-w-3xl">
+          <div className="relative px-2 py-8 sm:px-8 sm:py-12">
+            <div className="mb-10 flex items-center justify-center gap-3 text-lime-300/90">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-lime-300/10 shadow-[0_0_32px_rgba(132,255,19,0.28)]">
+                <Radar className="h-5 w-5" />
+              </span>
+              <span className="font-[ScreenMatrix] text-sm uppercase tracking-[0.42em]">route signal error</span>
+            </div>
 
-              <p className="font-[ScreenMatrix] text-center text-4xl lowercase tracking-[0.28em] text-lime-300 drop-shadow-[0_0_18px_rgba(132,255,19,0.85)] sm:text-5xl">
-                error
+            <p className="font-[ScreenMatrix] text-center text-4xl lowercase tracking-[0.28em] text-lime-300 drop-shadow-[0_0_18px_rgba(132,255,19,0.85)] sm:text-5xl">
+              error
+            </p>
+            <div className="mt-2 flex items-center justify-center font-[ScreenMatrix] text-[7.5rem] leading-none text-lime-300 drop-shadow-[0_0_28px_rgba(132,255,19,0.86)] sm:text-[11rem] md:text-[13rem]">
+              <span className="relative after:absolute after:left-1 after:top-2 after:text-lime-500/30 after:content-['4']">4</span>
+              <span className="mx-1 flex h-[0.72em] w-[0.72em] items-center justify-center rounded-full border-[0.08em] border-lime-300 text-transparent shadow-[0_0_32px_rgba(132,255,19,0.62)]">
+                <span className="h-[0.08em] w-[0.78em] rotate-[-45deg] rounded-full bg-lime-300 shadow-[0_0_18px_rgba(132,255,19,0.95)]" />
+              </span>
+              <span className="relative after:absolute after:left-1 after:top-2 after:text-lime-500/30 after:content-['4']">4</span>
+            </div>
+
+            <div className="mx-auto mt-8 max-w-xl text-center">
+              <h1 className="text-2xl font-semibold text-white sm:text-3xl">这条赛场通道暂时失联</h1>
+              <p className="mt-4 text-base leading-7 text-white/60">
+                你要访问的页面没有进入比赛名单。可以回到控制台，或重新搜索球队、赛程和球员数据。
               </p>
-              <div className="mt-2 flex items-center justify-center font-[ScreenMatrix] text-[7.5rem] leading-none text-lime-300 drop-shadow-[0_0_28px_rgba(132,255,19,0.86)] sm:text-[11rem] md:text-[13rem]">
-                <span className="relative after:absolute after:left-1 after:top-2 after:text-lime-500/30 after:content-['4']">4</span>
-                <span className="mx-1 flex h-[0.72em] w-[0.72em] items-center justify-center rounded-full border-[0.08em] border-lime-300 text-transparent shadow-[0_0_32px_rgba(132,255,19,0.62)]">
-                  <span className="h-[0.08em] w-[0.78em] rotate-[-45deg] rounded-full bg-lime-300 shadow-[0_0_18px_rgba(132,255,19,0.95)]" />
-                </span>
-                <span className="relative after:absolute after:left-1 after:top-2 after:text-lime-500/30 after:content-['4']">4</span>
-              </div>
+            </div>
 
-              <div className="mx-auto mt-8 max-w-xl text-center">
-                <h1 className="text-2xl font-semibold text-white sm:text-3xl">这条赛场通道暂时失联</h1>
-                <p className="mt-4 text-base leading-7 text-white/60">
-                  你要访问的页面没有进入比赛名单。可以回到控制台，或重新搜索球队、赛程和球员数据。
-                </p>
-              </div>
-
-              <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
-                <Link
-                  href="/"
-                  className="group inline-flex items-center justify-center gap-2 rounded-full bg-lime-300 px-6 py-3 text-sm font-semibold text-black shadow-[0_0_34px_rgba(132,255,19,0.38)] transition hover:bg-white"
-                >
-                  <Home className="h-4 w-4" />
-                  返回首页
-                </Link>
-                <Link
-                  href="/search"
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-white/8 px-6 py-3 text-sm font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-2xl transition hover:bg-white/14"
-                >
-                  <Search className="h-4 w-4" />
-                  搜索内容
-                </Link>
-              </div>
+            <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
+              <Link
+                href="/"
+                className="group inline-flex items-center justify-center gap-2 rounded-full bg-lime-300 px-6 py-3 text-sm font-semibold text-black shadow-[0_0_34px_rgba(132,255,19,0.38)] transition hover:bg-white"
+              >
+                <Home className="h-4 w-4" />
+                返回首页
+              </Link>
+              <Link
+                href="/search"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-white/8 px-6 py-3 text-sm font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-2xl transition hover:bg-white/14"
+              >
+                <Search className="h-4 w-4" />
+                搜索内容
+              </Link>
             </div>
           </div>
-
-          <aside className="relative overflow-hidden rounded-[2rem] bg-black/35 p-6 shadow-[0_24px_80px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.1)] ring-1 ring-white/10 backdrop-blur-3xl">
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-lime-300/70 to-transparent" />
-            <div className="flex items-center justify-between">
-              <span className="font-[ScreenMatrix] text-xs uppercase tracking-[0.34em] text-white/45">diagnostics</span>
-              <span className="h-2 w-2 rounded-full bg-lime-300 shadow-[0_0_18px_rgba(132,255,19,0.95)]" />
-            </div>
-            <div className="mt-8 space-y-3">
-              {scanItems.map(([label, value]) => (
-                <div key={label} className="rounded-3xl bg-white/[0.045] px-4 py-4 ring-1 ring-white/8">
-                  <div className="text-xs uppercase tracking-[0.26em] text-white/36">{label}</div>
-                  <div className="mt-2 font-[ScreenMatrix] text-xl text-lime-300">{value}</div>
-                </div>
-              ))}
-            </div>
-            <Link
-              href="/matches"
-              className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full border border-lime-300/20 bg-lime-300/10 px-5 py-3 text-sm font-semibold text-lime-100 transition hover:border-lime-300/50 hover:bg-lime-300/16"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              查看赛程
-            </Link>
-          </aside>
         </div>
       </motion.section>
     </main>
