@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bell, X } from "lucide-react";
-import { userApi, type UserHomePayload } from "@/lib/user-system";
+import { userApi, type UserSessionPayload } from "@/lib/user-system";
 
-type NotificationItem = UserHomePayload["user"]["notifications"][number];
+type NotificationItem = UserSessionPayload["user"]["notifications"][number];
 
 export function UserNotificationToast() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -13,7 +13,7 @@ export function UserNotificationToast() {
 
   useEffect(() => {
     let mounted = true;
-    userApi<UserHomePayload>("/api/me/home", { cache: "no-store" })
+    userApi<UserSessionPayload>("/api/me/session", { cache: "no-store" })
       .then((payload) => {
         if (!mounted) return;
         setNotifications(payload.user.notifications.filter((item) => !item.read && item.type === "match_reminder").slice(0, 3));
@@ -38,7 +38,7 @@ export function UserNotificationToast() {
         body: JSON.stringify({ ids }),
       });
     } catch {
-      // The next /api/me/home read will recover the unread state.
+      // The next session read will recover the unread state.
     }
   }
 

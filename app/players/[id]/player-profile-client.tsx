@@ -24,11 +24,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { BackToTopButton } from "@/components/back-to-top-button";
 import { MobileSecondaryPageActions } from "@/components/mobile-secondary-page-actions";
 import { NavBar } from "@/components/nav-bar";
-import { formatCny, PlayerFmScoutCard } from "@/components/player-fm-scout-card";
+import { PlayerFmScoutCard } from "@/components/player-fm-scout-card";
 import { SiteFooter } from "@/components/site-footer";
 import { UserActionButton } from "@/components/user-action-button";
 import { localizeClubName, localizeCountryName } from "@/lib/football-localization-client";
-import type { PlayerBreakthroughProfile } from "@/lib/player-breakthroughs";
 import { getTeamLandscapePathByCode } from "@/lib/team-landscapes";
 import {
   fetchApiFootballPlayerProfileData,
@@ -85,7 +84,6 @@ type Props = {
   nameHint: string;
   row: PlayerRow | null;
   article?: PlayerArticle | null;
-  breakthrough?: PlayerBreakthroughProfile | null;
   scoutNote?: PlayerScoutNote | null;
 };
 
@@ -124,7 +122,7 @@ const FIFA_CODE_TO_FLAG: Record<string, string> = {
    Main Component
    ──────────────────────────────────────────── */
 
-export function PlayerProfileClient({ playerId, nameHint, row, article, breakthrough, scoutNote }: Props) {
+export function PlayerProfileClient({ playerId, nameHint, row, article, scoutNote }: Props) {
   const [data, setData] = useState<PlayerProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [oneVsOneLoading, setOneVsOneLoading] = useState(false);
@@ -241,7 +239,6 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, breakthr
   const trophies = (data?.trophies ?? []).slice(0, 8);
   const sidelined = (data?.sidelined ?? []).slice(0, 4);
   const heroLandscape = getTeamLandscapePathByCode(row?.teamCode);
-  const contractDetails = scoutNote?.contractDetails;
   const followPayload = {
     id: playerId,
     name: displayName,
@@ -524,38 +521,6 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, breakthr
                           <p className="mt-0.5 text-xs text-white/40">俱乐部</p>
                         </div>
                       </div>
-                      {contractDetails && (
-                        <div className="mt-4 border-t border-white/[0.06] pt-4">
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-volt/60">
-                                Contract Details
-                              </p>
-                              <p className="mt-1 text-sm font-black text-white/84">{contractDetails.statusCn}</p>
-                              <p className="mt-0.5 text-xs text-white/34">
-                                到期：{contractDetails.contractUntil}
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              <p
-                                className="text-lg font-black text-volt tabular-nums"
-                                style={{ fontFamily: "ScreenMatrix, monospace" }}
-                              >
-                                {formatCny(contractDetails.weeklyWageCny)}
-                              </p>
-                              <p className="mt-0.5 text-[10px] font-bold text-white/30">人民币/周</p>
-                            </div>
-                          </div>
-                          <div className="mt-3 grid grid-cols-2 gap-2">
-                            <StatBlock label="估算身价" value={formatCny(contractDetails.marketValueCny)} accent />
-                            <StatBlock
-                              label="转会区间"
-                              value={`${formatCny(contractDetails.transferValueRangeCny[0])}-${formatCny(contractDetails.transferValueRangeCny[1])}`}
-                            />
-                          </div>
-                          <p className="mt-2 text-[10px] leading-4 text-white/28">{contractDetails.sourceCn}</p>
-                        </div>
-                      )}
                     </div>
 
                     <div className="mt-4 grid grid-cols-2 gap-3">
@@ -594,8 +559,6 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, breakthr
                   </DashPanel>
 
                   <DashPanel title="扩展档案" icon={Star}>
-                    {scoutNote && <PlayerFmScoutCard note={scoutNote} className="mb-3" />}
-
                     {data?.oneVsOne?.found ? (
                       <a
                         href={data.oneVsOne.url || "https://one-versus-one.com/"}
@@ -639,31 +602,16 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, breakthr
                 </div>
 
                 <div className={`${activeMobilePanel === "story" ? "block" : "hidden"} space-y-5 lg:block`}>
-                  {breakthrough ? (
-                    <>
-                      <FamePlaceholder
-                        name={displayName}
-                        photo={photo || row?.photo}
-                        country={row?.countryCn || localizeCountryName(player?.nationality)}
-                        breakthrough={breakthrough}
-                      />
-                      {article?.articleCn ? (
-                        <PlayerArticleTimeline article={article} />
-                      ) : article ? (
-                        <PlayerArticlePreview article={article} />
-                      ) : null}
-                    </>
-                  ) : article?.articleCn ? (
+                  {scoutNote && <PlayerFmScoutCard note={scoutNote} />}
+                  {article?.articleCn ? (
                     <PlayerArticleTimeline article={article} />
                   ) : article ? (
                     <PlayerArticlePreview article={article} />
-                  ) : (
-                    <FamePlaceholder
-                      name={displayName}
-                      photo={photo || row?.photo}
-                      country={row?.countryCn || localizeCountryName(player?.nationality)}
-                    />
-                  )}
+                  ) : !scoutNote ? (
+                    <DashPanel title="故事档案" icon={Sparkles}>
+                      <EmptyState text="暂无官方故事档案" />
+                    </DashPanel>
+                  ) : null}
                 </div>
 
                 <div className={`${activeMobilePanel === "career" ? "block" : "hidden"} space-y-5 lg:block`}>
@@ -838,121 +786,6 @@ function PlayerArticlePreview({ article }: { article: PlayerArticle }) {
 }
 
 type RadarStat = { label: string; value: number };
-
-function FamePlaceholder({ name, country, breakthrough }: { name: string; photo?: string; country?: string; breakthrough?: PlayerBreakthroughProfile | null }) {
-  const recordCards = breakthrough?.records.slice(0, 4) ?? [];
-  const generatedDate = breakthrough?.generatedAt ? breakthrough.generatedAt.slice(0, 10) : "";
-  const metaLine = breakthrough
-    ? [breakthrough.team || country, breakthrough.position, breakthrough.source].filter(Boolean).join(" · ")
-    : country
-      ? `${country} · FIFA Story 暂未接入`
-      : "FIFA Story 暂未接入";
-  const searchLabels = breakthrough?.searchRecords
-    .map((record) => record.query.replace(/"/g, "").replace(breakthrough.playerName, "").trim())
-    .filter(Boolean) ?? [];
-  const keywords = breakthrough ? [...new Set(breakthrough.records.flatMap((record) => record.keywords))] : [];
-
-  return (
-    <section className="hero-card overflow-hidden p-5 sm:p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex items-center gap-2 rounded-full bg-volt/[0.08] px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-volt ring-1 ring-volt/15">
-          <Sparkles className="h-3.5 w-3.5" />
-          一球成名
-        </div>
-        {breakthrough && (
-          <div className="text-[11px] font-black uppercase tracking-[0.16em] text-white/28">
-            {breakthrough.teamCode || "FIFA"} · {generatedDate || "LIVE DATA"}
-          </div>
-          )}
-        </div>
-
-      {breakthrough ? (
-        <>
-          <div className="mt-5 rounded-[1.5rem] bg-white/[0.035] p-5 ring-1 ring-white/[0.06]">
-            <p className="text-[11px] font-black uppercase tracking-[0.16em] text-flare/80">
-              {breakthrough.searchType || "FIFA Breakthrough"}
-            </p>
-            <h2 className="mt-2 text-2xl font-black leading-tight text-white sm:text-3xl">{breakthrough.playerName || name}</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-white/52">
-              {metaLine}。该资料来自 JSON 中的球员突破记录，包含 {breakthrough.searchRecords.length} 条检索线索与 {breakthrough.records.length} 条突破资料。
-            </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {[breakthrough.team || country, breakthrough.position, ...keywords].filter(Boolean).map((tag) => (
-                <span key={tag} className="rounded-full bg-volt/[0.075] px-3 py-1 text-xs font-bold text-volt/82 ring-1 ring-volt/14">
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-5 grid gap-4 lg:grid-cols-[0.85fr_1.15fr]">
-            <div className="rounded-[1.35rem] bg-white/[0.03] p-4 ring-1 ring-white/[0.055]">
-              <p className="text-xs font-black text-volt/75">检索路径</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {searchLabels.map((label) => (
-                  <span key={label} className="rounded-full bg-white/[0.04] px-3 py-1 text-xs font-bold text-white/58 ring-1 ring-white/[0.07]">
-                    {label}
-                  </span>
-                ))}
-              </div>
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                <div className="rounded-2xl bg-black/18 p-3 ring-1 ring-white/[0.045]">
-                  <p className="text-[11px] font-black text-white/32">搜索记录</p>
-                  <p className="mt-1 text-lg font-black text-white/88">{breakthrough.searchRecords.length}</p>
-                </div>
-                <div className="rounded-2xl bg-black/18 p-3 ring-1 ring-white/[0.045]">
-                  <p className="text-[11px] font-black text-white/32">资料记录</p>
-                  <p className="mt-1 text-lg font-black text-white/88">{breakthrough.records.length}</p>
-                </div>
-              </div>
-              <p className="mt-4 text-xs leading-5 text-white/36">
-                数据批次 {generatedDate || "当前"} · 球员库 {breakthrough.playerTotal}
-              </p>
-            </div>
-
-            <div className="relative space-y-4 pl-5">
-              <div className="absolute bottom-4 left-[6px] top-4 w-px bg-gradient-to-b from-transparent via-volt/35 to-transparent" />
-              {recordCards.map((record, index) => (
-                <div key={`${record.url}-${index}`} className="relative rounded-[1.35rem] bg-white/[0.035] p-4 ring-1 ring-white/[0.06] transition hover:bg-white/[0.05] hover:ring-volt/16">
-                  <span className="absolute -left-[23px] top-5 h-3.5 w-3.5 rounded-full bg-volt shadow-[0_0_22px_rgba(216,255,62,0.42)]" />
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-[11px] font-black uppercase tracking-[0.14em] text-flare/80">FIFA SOURCE 0{index + 1}</p>
-                      <h3 className="mt-2 text-sm font-black leading-5 text-white/86">{record.title}</h3>
-                    </div>
-                    {record.url && (
-                      <a href={record.url} target="_blank" rel="noreferrer" aria-label="查看 FIFA 来源" className="rounded-full bg-white/[0.045] p-2 text-white/35 ring-1 ring-white/[0.06] transition hover:text-volt hover:ring-volt/20">
-                        <ExternalLink className="h-3.5 w-3.5" />
-                      </a>
-                    )}
-                  </div>
-                  <p className="mt-3 text-xs leading-5 text-white/45">
-                    {record.hasBreakthrough ? "包含突破信息" : "FIFA资料索引"} · 内容长度 {record.contentLength || "未标注"}
-                  </p>
-                  {record.keywords.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-1.5">
-                      {record.keywords.map((keyword) => (
-                        <span key={keyword} className="rounded-full bg-volt/[0.07] px-2.5 py-1 text-[11px] font-bold text-volt/75 ring-1 ring-volt/12">
-                          {keyword}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </>
-      ) : (
-        <div className="mt-5 rounded-[1.5rem] bg-white/[0.035] p-5 ring-1 ring-white/[0.06]">
-          <p className="text-[11px] font-black uppercase tracking-[0.16em] text-volt/80">FIFA Breakthrough</p>
-          <h2 className="mt-2 text-2xl font-black text-white sm:text-3xl">{name}</h2>
-          <p className="mt-3 text-sm leading-7 text-white/50">{metaLine}，暂无可写入的一球成名资料。</p>
-        </div>
-      )}
-    </section>
-  );
-}
 
 function PlayerRadar({ stats }: { stats: RadarStat[] }) {
   const size = 280;

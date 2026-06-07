@@ -5,11 +5,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Save, X } from "lucide-react";
 import { AvatarPicker } from "@/components/avatar-picker";
 import { fallbackUserPreferenceCatalog, type UserPreferenceCatalog } from "@/lib/user-preferences";
-import { userApi, type UserHomePayload } from "@/lib/user-system";
+import { userApi, type PublicUser } from "@/lib/user-system";
 
 type AvatarSettingsDialogProps = {
   open: boolean;
-  home: UserHomePayload | null;
+  home: { user: Pick<PublicUser, "profile"> } | null;
   onClose: () => void;
   onSaved: () => void;
 };

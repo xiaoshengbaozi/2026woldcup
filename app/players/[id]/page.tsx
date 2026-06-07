@@ -3,7 +3,6 @@ import playerRows from "@/data/player-translations.todo.json";
 import playerArticles from "@/data/player-articles.json";
 import playerNameTranslations from "@/data/localization/players.json";
 import { getOfficialPlayerById, getOfficialPlayerCatalog } from "@/lib/official-player-catalog";
-import { findPlayerBreakthroughProfile } from "@/lib/player-breakthroughs";
 import { getApiSportsPlayerPhoto } from "@/lib/player-photo-overrides";
 import { findPlayerScoutNote } from "@/lib/player-scout-notes";
 import { PlayerProfileClient } from "./player-profile-client";
@@ -94,23 +93,9 @@ export default function PlayerPage({ params }: Props) {
     : null;
   const nameHint = row?.nameEn || article?.nameEn || officialRow?.nameEn || row?.nameCn || article?.nameCn || officialRow?.nameCn || translatedRow?.nameCn || "";
   const pageRow = mergeOfficialSquadRow(row ?? articleRow ?? translatedRow, officialRow);
-  const breakthrough = findPlayerBreakthroughProfile({
-    names: [
-      pageRow?.nameEn,
-      officialRow?.nameEn,
-      article?.nameEn,
-      row?.nameEn,
-      nameHint,
-      pageRow?.nameCn,
-      officialRow?.nameCn,
-      article?.nameCn,
-      row?.nameCn,
-    ],
-    teamCode: pageRow?.teamCode || officialRow?.teamCode || article?.teamCode || row?.teamCode,
-  });
   const scoutNote = findPlayerScoutNote(params.id);
 
-  return <PlayerProfileClient playerId={params.id} nameHint={nameHint} row={pageRow} article={article ?? null} breakthrough={breakthrough} scoutNote={scoutNote} />;
+  return <PlayerProfileClient playerId={params.id} nameHint={nameHint} row={pageRow} article={article ?? null} scoutNote={scoutNote} />;
 }
 
 function mergeOfficialSquadRow(baseRow: PlayerPageRow | null, officialRow: PlayerPageRow | null): PlayerPageRow | null {

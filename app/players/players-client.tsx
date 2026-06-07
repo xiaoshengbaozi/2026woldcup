@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, ChevronLeft, ChevronRight, Trophy } from "lucide-react";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { PlayerXTimeline } from "@/components/player-x-timeline";
@@ -15,6 +16,7 @@ import { fallbackTopScorerProfiles } from "@/lib/world-cup-top-scorers";
 type PlayerArticle = (typeof playerArticles.players)[number];
 type PlayerListItem = PlayerArticle | OfficialPlayerCatalogItem;
 type PlayerTab = "superstars" | "wonderkids" | "popular" | "squads";
+type SquadSort = "default" | "age-asc" | "age-desc";
 
 const tabs: { id: PlayerTab; label: string }[] = [
   { id: "superstars", label: "超级巨星" },
@@ -49,6 +51,9 @@ const countryNameCn: Record<string, string> = {
 
 export function PlayersClient() {
   const [activeTab, setActiveTab] = useState<PlayerTab>("superstars");
+  const [regionFilter, setRegionFilter] = useState("all");
+  const [countryFilter, setCountryFilter] = useState("all");
+  const [squadSort, setSquadSort] = useState<SquadSort>("default");
   const [xTimeline, setXTimeline] = useState<PlayerXTimelinePayload | null>(null);
   const [xTimelineLoading, setXTimelineLoading] = useState(true);
   const [popularFollows, setPopularFollows] = useState<PopularPlayerFollow[]>([]);
@@ -68,14 +73,48 @@ export function PlayersClient() {
         if (!player || seen.has(player.id)) return false;
         seen.add(player.id);
         return true;
-      });
+    });
   }, [popularFollows]);
+
+  const regionOptions = useMemo(() => {
+    const options = new Map<string, string>();
+    for (const player of officialPlayers) {
+      options.set(player.region, player.regionLabel);
+    }
+    return Array.from(options, ([value, label]) => ({ value, label })).sort((a, b) => a.label.localeCompare(b.label));
+  }, []);
+
+  const countryOptions = useMemo(() => {
+    const options = new Map<string, string>();
+    for (const player of officialPlayers) {
+      if (regionFilter !== "all" && player.region !== regionFilter) continue;
+      options.set(player.teamCode, player.countryCn);
+    }
+    return Array.from(options, ([value, label]) => ({ value, label })).sort((a, b) => a.label.localeCompare(b.label));
+  }, [regionFilter]);
+
+  const squadPlayers = useMemo(() => {
+    const filtered = officialPlayers.filter((player) => {
+      if (regionFilter !== "all" && player.region !== regionFilter) return false;
+      if (countryFilter !== "all" && player.teamCode !== countryFilter) return false;
+      return true;
+    });
+
+    if (squadSort === "default") return filtered;
+
+    return [...filtered].sort((a, b) => {
+      if (a.age == null && b.age == null) return 0;
+      if (a.age == null) return 1;
+      if (b.age == null) return -1;
+      return squadSort === "age-asc" ? a.age - b.age : b.age - a.age;
+    });
+  }, [countryFilter, regionFilter, squadSort]);
 
   const visiblePlayers = useMemo((): PlayerListItem[] => {
     if (activeTab === "popular") return popularPlayers;
-    if (activeTab === "squads") return officialPlayers;
+    if (activeTab === "squads") return squadPlayers;
     return playerArticles.players.filter((player) => player.category === activeTab);
-  }, [activeTab, popularPlayers]);
+  }, [activeTab, popularPlayers, squadPlayers]);
 
   const articlePlayers = useMemo(() => visiblePlayers.filter(isArticlePlayer), [visiblePlayers]);
   const visiblePlayerIds = useMemo(
@@ -169,7 +208,23 @@ export function PlayersClient() {
 
           <section className="space-y-4">
             {activeTab === "squads" ? (
-              <SquadPlayerGrid players={officialPlayers} />
+              <>
+                <SquadFilters
+                  regions={regionOptions}
+                  countries={countryOptions}
+                  region={regionFilter}
+                  country={countryFilter}
+                  sort={squadSort}
+                  resultCount={squadPlayers.length}
+                  onRegionChange={(value) => {
+                    setRegionFilter(value);
+                    setCountryFilter("all");
+                  }}
+                  onCountryChange={setCountryFilter}
+                  onSortChange={setSquadSort}
+                />
+                <SquadPlayerGrid players={squadPlayers} />
+              </>
             ) : (
               articlePlayers.map((player, index) => <TimelinePost key={player.id} player={player} index={index} />)
             )}
@@ -192,6 +247,85 @@ export function PlayersClient() {
         </aside>
       </div>
     </DashboardShell>
+  );
+}
+
+function SquadFilters({
+  regions,
+  countries,
+  region,
+  country,
+  sort,
+  resultCount,
+  onRegionChange,
+  onCountryChange,
+  onSortChange,
+}: {
+  regions: { value: string; label: string }[];
+  countries: { value: string; label: string }[];
+  region: string;
+  country: string;
+  sort: SquadSort;
+  resultCount: number;
+  onRegionChange: (value: string) => void;
+  onCountryChange: (value: string) => void;
+  onSortChange: (value: SquadSort) => void;
+}) {
+  return (
+    <div className="rounded-3xl border border-white/[0.06] bg-white/[0.025] p-3 shadow-[0_18px_60px_rgba(0,0,0,.22)] backdrop-blur-2xl sm:p-4">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <FilterSelect label="地区" value={region} onChange={onRegionChange}>
+          <option value="all">全部地区</option>
+          {regions.map((item) => (
+            <option key={item.value} value={item.value}>
+              {item.label}
+            </option>
+          ))}
+        </FilterSelect>
+        <FilterSelect label="国家" value={country} onChange={onCountryChange}>
+          <option value="all">全部国家</option>
+          {countries.map((item) => (
+            <option key={item.value} value={item.value}>
+              {item.label}
+            </option>
+          ))}
+        </FilterSelect>
+        <FilterSelect label="排序" value={sort} onChange={(value) => onSortChange(value as SquadSort)}>
+          <option value="default">默认排序</option>
+          <option value="age-asc">年龄从小到大</option>
+          <option value="age-desc">年龄从大到小</option>
+        </FilterSelect>
+      </div>
+      <div className="mt-3 flex items-center justify-between text-[11px] font-medium text-white/38">
+        <span>当前阵容</span>
+        <span className="tabular-nums text-volt/80">{resultCount} 人</span>
+      </div>
+    </div>
+  );
+}
+
+function FilterSelect({
+  label,
+  value,
+  onChange,
+  children,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  children: ReactNode;
+}) {
+  return (
+    <label className="block min-w-0">
+      <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.16em] text-white/38">{label}</span>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="h-11 w-full rounded-2xl border border-white/[0.08] bg-black/35 px-3 text-sm font-semibold text-white/78 outline-none backdrop-blur-xl transition focus:border-volt/45 focus:ring-2 focus:ring-volt/10"
+      >
+        {children}
+      </select>
+    </label>
   );
 }
 
@@ -336,25 +470,33 @@ const TimelinePost = memo(function TimelinePost({ player, index }: { player: Pla
 
 function SquadPlayerGrid({ players }: { players: OfficialPlayerCatalogItem[] }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
       {players.map((player) => (
         <Link
           key={player.id}
           href={playerProfileHref(player)}
-          className="group flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-3 transition duration-300 hover:border-volt/30 hover:bg-white/[0.04]"
+          className="group grid min-w-0 grid-cols-[56px_minmax(0,1fr)_16px] items-center gap-3 rounded-3xl border border-white/[0.06] bg-white/[0.025] p-3 shadow-[0_16px_46px_rgba(0,0,0,.18)] backdrop-blur-xl transition duration-300 hover:border-volt/30 hover:bg-white/[0.04] sm:grid-cols-[72px_minmax(0,1fr)_16px]"
         >
-          <div className="relative h-[68px] w-[68px] shrink-0 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/[0.08] sm:h-20 sm:w-20">
+          <div className="relative h-14 w-14 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/[0.08] sm:h-[72px] sm:w-[72px]">
             <img src={player.photo} alt={player.nameCn} className="h-full w-full object-cover" />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 items-center gap-2">
               <p className="truncate text-sm font-bold text-white/82 group-hover:text-volt">{player.nameCn}</p>
               {player.number ? <span className="shrink-0 text-[11px] font-black text-white/30">#{player.number}</span> : null}
             </div>
             <p className="mt-0.5 truncate text-xs text-white/36">{player.nameEn}</p>
-            <p className="mt-1 truncate text-[11px] font-medium text-white/32">
+            <p className="mt-1 min-w-0 truncate text-[11px] font-medium text-white/32">
               {player.countryCn} · {player.positionCn}
             </p>
+            <div className="mt-2 flex min-w-0 flex-wrap gap-1.5">
+              <span className="max-w-full truncate rounded-full bg-white/[0.045] px-2 py-1 text-[10px] font-bold text-white/42 ring-1 ring-white/[0.05]">
+                {player.regionLabel}
+              </span>
+              <span className="shrink-0 rounded-full bg-volt/[0.1] px-2 py-1 text-[10px] font-black text-volt/80 ring-1 ring-volt/[0.12]">
+                {player.age ? `${player.age} 岁` : "年龄待更"}
+              </span>
+            </div>
           </div>
           <ArrowRight className="h-4 w-4 shrink-0 text-white/22 transition group-hover:translate-x-0.5 group-hover:text-volt" />
         </Link>

@@ -74,16 +74,23 @@ export interface PublicUser {
 export interface UserHomePayload {
   user: PublicUser;
   catalog?: UserPreferenceCatalog;
-  summary: {
-    followedTeamCount: number;
-    followedPlayerCount: number;
-    favoriteMatchCount: number;
-    enabledReminderCount: number;
-    predictionCount: number;
-    watchedMatchCount: number;
-    activeNewsTopicCount: number;
-    unreadNotificationCount: number;
-  };
+  summary: UserSummary;
+}
+
+export interface UserSessionPayload {
+  user: PublicUser;
+  summary: UserSummary;
+}
+
+export interface UserSummary {
+  followedTeamCount: number;
+  followedPlayerCount: number;
+  favoriteMatchCount: number;
+  enabledReminderCount: number;
+  predictionCount: number;
+  watchedMatchCount: number;
+  activeNewsTopicCount: number;
+  unreadNotificationCount: number;
 }
 
 export interface PopularPlayerFollow {

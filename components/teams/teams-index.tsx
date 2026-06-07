@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, ChevronLeft, ChevronRight, Heart } from "lucide-react";
 import {
   continentOrder,
   qualifiedTeams,
@@ -13,9 +13,12 @@ import {
 } from "@/data/teams";
 
 const MOBILE_TOP_MODULE_OFFSET = 66;
+const FOLLOWED_TEAMS_STORAGE_KEY = "worldcup-followed-teams";
 
 export function TeamsIndex() {
   const [activeContinent, setActiveContinent] = useState(continentOrder[0]);
+  const [followedTeamSlugs, setFollowedTeamSlugs] = useState<string[]>([]);
+  const [hasLoadedFollowedTeams, setHasLoadedFollowedTeams] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
   const [isPinned, setIsPinned] = useState(false);
@@ -33,6 +36,31 @@ export function TeamsIndex() {
     []
   );
   const activeTab = tabItems.find((item) => item.continent === activeContinent) ?? tabItems[0];
+  const teamsBySlug = useMemo(() => new Map(qualifiedTeams.map((team) => [team.slug, team])), []);
+  const followedTeams = useMemo(
+    () => followedTeamSlugs.map((slug) => teamsBySlug.get(slug)).filter((team): team is QualifiedTeamCard => Boolean(team)),
+    [followedTeamSlugs, teamsBySlug]
+  );
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(FOLLOWED_TEAMS_STORAGE_KEY);
+      if (!stored) return;
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) {
+        setFollowedTeamSlugs(parsed.filter((slug): slug is string => typeof slug === "string" && teamsBySlug.has(slug)));
+      }
+    } catch {
+      setFollowedTeamSlugs([]);
+    } finally {
+      setHasLoadedFollowedTeams(true);
+    }
+  }, [teamsBySlug]);
+
+  useEffect(() => {
+    if (!hasLoadedFollowedTeams) return;
+    window.localStorage.setItem(FOLLOWED_TEAMS_STORAGE_KEY, JSON.stringify(followedTeamSlugs));
+  }, [followedTeamSlugs, hasLoadedFollowedTeams]);
 
   useEffect(() => {
     const mobileQuery = window.matchMedia("(max-width: 639px)");
@@ -77,11 +105,19 @@ export function TeamsIndex() {
     setActiveContinent(continent);
   };
 
+  const toggleFollowTeam = (slug: string) => {
+    setFollowedTeamSlugs((current) => (current.includes(slug) ? current.filter((item) => item !== slug) : [...current, slug]));
+  };
+
   return (
     <main className="relative -mt-3 min-h-screen overflow-hidden pb-8 pt-0 text-white sm:mt-0 sm:py-8">
       <div className="relative">
         <section className="scroll-mt-24">
           <div className="mb-4 flex flex-col gap-3 px-1">
+            {followedTeams.length > 0 && (
+              <FollowedTeamsRail teams={followedTeams} onToggleFollow={toggleFollowTeam} />
+            )}
+
             <div
               ref={sentinelRef}
               className="sm:hidden"
@@ -141,7 +177,13 @@ export function TeamsIndex() {
           >
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {activeTab.teams.map((team, index) => (
-                <TeamCard key={team.slug} team={team} index={index} />
+                <TeamCard
+                  key={team.slug}
+                  team={team}
+                  index={index}
+                  isFollowed={followedTeamSlugs.includes(team.slug)}
+                  onToggleFollow={toggleFollowTeam}
+                />
               ))}
             </div>
           </motion.div>
@@ -151,9 +193,114 @@ export function TeamsIndex() {
   );
 }
 
-function TeamCard({ team, index }: { team: QualifiedTeamCard; index: number }) {
+function FollowedTeamsRail({
+  teams,
+  onToggleFollow,
+}: {
+  teams: QualifiedTeamCard[];
+  onToggleFollow: (slug: string) => void;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const eps = 2;
+    setCanScrollLeft(el.scrollLeft > eps);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - eps);
+  }, []);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    checkScroll();
+    el.addEventListener("scroll", checkScroll, { passive: true });
+    const ro = new ResizeObserver(checkScroll);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", checkScroll);
+      ro.disconnect();
+    };
+  }, [checkScroll, teams]);
+
+  const scroll = (dir: "left" | "right") => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir === "left" ? -el.clientWidth * 0.6 : el.clientWidth * 0.6, behavior: "smooth" });
+  };
+
+  return (
+    <div className="relative rounded-[1.75rem] border border-white/[0.08] bg-white/[0.035] px-3 py-3 shadow-[0_18px_70px_rgba(0,0,0,.24)] backdrop-blur-2xl">
+      <div
+        ref={scrollRef}
+        className="flex gap-1 overflow-x-auto [scrollbar-width:none] sm:gap-2 [&::-webkit-scrollbar]:hidden"
+        aria-label="Followed teams"
+      >
+        {teams.map((team) => (
+          <div
+            key={team.slug}
+            className="group relative h-9 min-w-0 shrink-0 basis-[calc((100%-2.25rem)/10)] overflow-hidden rounded-full bg-black/30 ring-1 ring-white/[0.08] transition duration-300 hover:ring-volt/45 sm:h-12 sm:basis-[calc((100%-4.5rem)/10)]"
+          >
+            <Link href={team.detailHref} className="block h-full w-full" aria-label={team.nameCn}>
+              <Image src={team.cover} alt={team.nameCn} fill sizes="10vw" className="object-cover opacity-80 transition duration-500 group-hover:scale-110 group-hover:opacity-100" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+              <span className="absolute inset-x-1 bottom-1 hidden truncate text-center text-[10px] font-black text-white drop-shadow sm:block">
+                {team.nameCn}
+              </span>
+            </Link>
+            <button
+              type="button"
+              aria-label={`Unfollow ${team.nameCn}`}
+              onClick={() => onToggleFollow(team.slug)}
+              className="absolute right-0 top-0 grid h-4 w-4 place-items-center rounded-full bg-volt text-black opacity-0 shadow-[0_0_18px_rgba(216,255,62,.35)] transition duration-300 hover:scale-110 group-hover:opacity-100 sm:h-5 sm:w-5"
+            >
+              <Heart className="h-2.5 w-2.5 fill-current sm:h-3 sm:w-3" />
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {canScrollLeft && (
+        <button
+          type="button"
+          aria-label="Scroll followed teams left"
+          onClick={() => scroll("left")}
+          className="absolute left-2 top-1/2 z-10 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full bg-black/60 text-white/70 backdrop-blur-sm ring-1 ring-white/[0.1] transition hover:bg-volt hover:text-black"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+      )}
+
+      {canScrollRight && (
+        <button
+          type="button"
+          aria-label="Scroll followed teams right"
+          onClick={() => scroll("right")}
+          className="absolute right-2 top-1/2 z-10 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full bg-black/60 text-white/70 backdrop-blur-sm ring-1 ring-white/[0.1] transition hover:bg-volt hover:text-black"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function TeamCard({
+  team,
+  index,
+  isFollowed,
+  onToggleFollow,
+}: {
+  team: QualifiedTeamCard;
+  index: number;
+  isFollowed: boolean;
+  onToggleFollow: (slug: string) => void;
+}) {
   return (
     <motion.div
+      className="relative"
       initial={{ opacity: 0, y: 18 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
@@ -185,6 +332,19 @@ function TeamCard({ team, index }: { team: QualifiedTeamCard; index: number }) {
           </div>
         </div>
       </Link>
+      <button
+        type="button"
+        aria-pressed={isFollowed}
+        aria-label={`${isFollowed ? "Unfollow" : "Follow"} ${team.nameCn}`}
+        onClick={() => onToggleFollow(team.slug)}
+        className={`absolute right-4 top-4 z-10 grid h-10 w-10 place-items-center rounded-full border backdrop-blur-xl transition duration-300 ${
+          isFollowed
+            ? "border-volt/50 bg-volt text-black shadow-[0_0_28px_rgba(216,255,62,.24)]"
+            : "border-white/15 bg-black/35 text-white/72 hover:border-volt/45 hover:bg-volt/[0.16] hover:text-volt"
+        }`}
+      >
+        <Heart className={`h-4 w-4 ${isFollowed ? "fill-current" : ""}`} />
+      </button>
     </motion.div>
   );
 }

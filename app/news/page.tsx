@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { ExternalLink, Languages, Loader2, Newspaper, X } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
-import { userApi, type UserHomePayload } from "@/lib/user-system";
+import { userApi, type UserSessionPayload } from "@/lib/user-system";
 
 type NewsItem = {
   id: string;
@@ -147,7 +147,7 @@ export default function NewsPage() {
   useEffect(() => {
     let alive = true;
 
-    userApi<UserHomePayload>("/api/me/home", { cache: "no-store" })
+    userApi<UserSessionPayload>("/api/me/session", { cache: "no-store" })
       .then(() => {
         if (alive) setIsSignedIn(true);
       })

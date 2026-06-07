@@ -8,11 +8,11 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactNode, TouchEvent, UIEvent } from "react";
 import { Bell, Bookmark, CalendarDays, ChevronRight, Flag, LogIn, LogOut, Settings, Star, UserPlus, UserRound, UsersRound, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
-import type { UserHomePayload } from "@/lib/user-system";
+import type { UserSessionPayload } from "@/lib/user-system";
 
 type MobileMeDrawerProps = {
   open: boolean;
-  home: UserHomePayload | null;
+  home: UserSessionPayload | null;
   loading?: boolean;
   avatarUrl?: string | null;
   onLogin: () => void;

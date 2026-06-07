@@ -14,7 +14,7 @@ import {
   type SearchResultItem,
 } from "@/lib/global-search";
 import { UserActionButton } from "@/components/user-action-button";
-import { userApi, type UserHomePayload } from "@/lib/user-system";
+import { userApi, type UserSessionPayload } from "@/lib/user-system";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
 
 type NewsResponse = {
@@ -70,7 +70,7 @@ export function GlobalSearchDrawerCard({ onNavigate }: { onNavigate?: () => void
 
   useEffect(() => {
     let alive = true;
-    userApi<UserHomePayload>("/api/me/home", { cache: "no-store" })
+    userApi<UserSessionPayload>("/api/me/session", { cache: "no-store" })
       .then((home) => {
         if (alive) setSavedItems(buildSavedSearchItems(home));
       })
@@ -194,7 +194,7 @@ export function GlobalSearch() {
   useEffect(() => {
     if (!focused) return;
     let alive = true;
-    userApi<UserHomePayload>("/api/me/home", { cache: "no-store" })
+    userApi<UserSessionPayload>("/api/me/session", { cache: "no-store" })
       .then((home) => {
         if (alive) setSavedItems(buildSavedSearchItems(home));
       })
@@ -392,7 +392,7 @@ function buildSuggestions(results: Record<SearchCategory, SearchResultItem[]>, s
   return picked.slice(0, 8);
 }
 
-function buildSavedSearchItems(home: UserHomePayload): SavedSearchItems {
+function buildSavedSearchItems(home: UserSessionPayload): SavedSearchItems {
   return {
     teamIds: new Set(home.user.followedTeams.map((item) => normalizeSavedKey(item.id))),
     teamNames: new Set(home.user.followedTeams.map((item) => normalizeSavedKey(item.name))),

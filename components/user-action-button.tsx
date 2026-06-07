@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Bell, Check, Star } from "lucide-react";
-import { userApi, type PublicUser, type UserHomePayload } from "@/lib/user-system";
+import { MeAuthDialog, type SharedAuthMode } from "@/components/me-auth-dialog";
+import { userApi, type PublicUser, type UserSessionPayload } from "@/lib/user-system";
 
 type ActionKind = "team" | "player" | "match";
 
@@ -49,11 +50,12 @@ export function UserActionButton({ kind, payload, className = "", iconOnly = fal
   const [busy, setBusy] = useState(false);
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<SharedAuthMode | null>(null);
   const id = String(payload.id || payload.matchId || "");
 
-  useEffect(() => {
+  const refreshSession = useCallback(() => {
     let mounted = true;
-    userApi<UserHomePayload>("/api/me/home", { cache: "no-store" })
+    userApi<UserSessionPayload>("/api/me/session", { cache: "no-store" })
       .then((home) => {
         if (!mounted) return;
         setSignedIn(true);
@@ -68,10 +70,12 @@ export function UserActionButton({ kind, payload, className = "", iconOnly = fal
     };
   }, [kind, id]);
 
+  useEffect(() => refreshSession(), [refreshSession]);
+
   async function runAction() {
     if (busy) return;
     if (!signedIn) {
-      window.location.href = "/me?auth=login";
+      setAuthMode("login");
       return;
     }
     if (active) {
@@ -168,6 +172,7 @@ export function UserActionButton({ kind, payload, className = "", iconOnly = fal
           </div>
         </div>
       )}
+      <MeAuthDialog mode={authMode} onClose={() => setAuthMode(null)} onAuthenticated={refreshSession} />
     </>
   );
 }

@@ -1,7 +1,17 @@
 import { CircleDollarSign, ExternalLink, Sparkles } from "lucide-react";
 import type { PlayerScoutNote } from "@/lib/player-scout-notes";
 
-export function PlayerFmScoutCard({ note, className = "" }: { note: PlayerScoutNote; className?: string }) {
+export function PlayerFmScoutCard({
+  note,
+  className = "",
+  href,
+}: {
+  note: PlayerScoutNote;
+  className?: string;
+  href?: string;
+}) {
+  const cardHref = href || note.sourceUrl;
+  const isExternal = /^https?:\/\//i.test(cardHref);
   const ratingTone =
     note.gsRating >= 95
       ? "text-volt"
@@ -11,9 +21,9 @@ export function PlayerFmScoutCard({ note, className = "" }: { note: PlayerScoutN
 
   return (
     <a
-      href={note.sourceUrl}
-      target="_blank"
-      rel="noreferrer"
+      href={cardHref}
+      target={isExternal ? "_blank" : undefined}
+      rel={isExternal ? "noreferrer" : undefined}
       className={`group block overflow-hidden rounded-[1.35rem] bg-[linear-gradient(145deg,rgba(216,255,62,0.08),rgba(255,255,255,0.035)_48%,rgba(255,123,84,0.07))] p-4 ring-1 ring-volt/12 transition hover:-translate-y-0.5 hover:bg-white/[0.06] hover:ring-volt/28 ${className}`}
     >
       <div className="flex items-start justify-between gap-3">

@@ -1,5 +1,7 @@
 import fifaOfficialSquads from "@/data/fifa-official-squads.json";
+import officialPlayerAges from "@/data/official-player-ages.json";
 import playerNameTranslations from "@/data/localization/players.json";
+import { qualifiedTeams, teamContinentLabels, type TeamContinent } from "@/data/teams";
 import { getApiSportsPlayerPhoto } from "@/lib/player-photo-overrides";
 import { localizeCountryCode } from "@/lib/team-localization";
 
@@ -23,6 +25,9 @@ export type OfficialPlayerCatalogItem = {
   position: string;
   positionCn: string;
   number: number | null;
+  age: number | null;
+  region: TeamContinent | "unknown";
+  regionLabel: string;
   photo: string;
   category: "squads";
   source: "official-squad";
@@ -30,6 +35,15 @@ export type OfficialPlayerCatalogItem = {
 };
 
 const PLAYER_NAME_TRANSLATIONS = playerNameTranslations as Record<string, string>;
+const PLAYER_AGES = officialPlayerAges as Record<string, number>;
+const TEAM_CODE_ALIASES: Record<string, string> = {
+  ALG: "DZA",
+  KSA: "SAU",
+};
+
+const TEAM_REGION_BY_CODE = new Map(
+  qualifiedTeams.map((team) => [team.code, team.continent])
+);
 
 export function getOfficialPlayerCatalog(): OfficialPlayerCatalogItem[] {
   const squads = (fifaOfficialSquads as { squads?: Record<string, { players?: OfficialSquadPlayer[] }> }).squads ?? {};
@@ -38,6 +52,7 @@ export function getOfficialPlayerCatalog(): OfficialPlayerCatalogItem[] {
       .filter((player) => Number.isFinite(player.apiFootballId))
       .map((player) => {
         const apiPlayerId = Number(player.apiFootballId);
+        const region = getTeamRegion(teamCode);
         return {
           id: String(apiPlayerId),
           apiPlayerId,
@@ -49,6 +64,9 @@ export function getOfficialPlayerCatalog(): OfficialPlayerCatalogItem[] {
           position: player.position || "",
           positionCn: localizeOfficialPosition(player.position),
           number: player.number ?? null,
+          age: PLAYER_AGES[String(apiPlayerId)] ?? null,
+          region,
+          regionLabel: region === "unknown" ? "未知地区" : teamContinentLabels[region].title,
           photo: getApiSportsPlayerPhoto(apiPlayerId),
           category: "squads" as const,
           source: "official-squad" as const,
@@ -58,6 +76,11 @@ export function getOfficialPlayerCatalog(): OfficialPlayerCatalogItem[] {
   );
 
   return players.filter((player, index, list) => list.findIndex((item) => item.apiPlayerId === player.apiPlayerId) === index);
+}
+
+function getTeamRegion(teamCode: string): TeamContinent | "unknown" {
+  const normalizedCode = TEAM_CODE_ALIASES[teamCode] ?? teamCode;
+  return TEAM_REGION_BY_CODE.get(normalizedCode) ?? "unknown";
 }
 
 export function getOfficialPlayerById(playerId: string | number) {

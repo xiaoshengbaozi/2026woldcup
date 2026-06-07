@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { Search, UserRound } from "lucide-react";
 import { AvatarSettingsDialog } from "./avatar-settings-dialog";
 import { getPlayerAvatar } from "@/lib/user-preferences";
-import { userApi, type UserHomePayload } from "@/lib/user-system";
+import { userApi, type UserSessionPayload } from "@/lib/user-system";
 import { MeAuthDialog, type SharedAuthMode } from "./me-auth-dialog";
 import { MobileMeDrawer } from "./mobile-me-drawer";
 import { MobileSearchDrawer } from "./mobile-search-drawer";
@@ -31,7 +31,7 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
   const [topRailExpanded, setTopRailExpanded] = useState(false);
   const [topRailHeight, setTopRailHeight] = useState(88);
   const [authMode, setAuthMode] = useState<SharedAuthMode | null>(null);
-  const [home, setHome] = useState<UserHomePayload | null>(null);
+  const [home, setHome] = useState<UserSessionPayload | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const showHomeWordmark = normalizedPathname === "/";
@@ -40,12 +40,12 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
 
   const refreshHome = useCallback(() => {
     setLoading(true);
-    userApi<UserHomePayload>("/api/me/home", { cache: "no-store" })
+    userApi<UserSessionPayload>("/api/me/session", { cache: "no-store" })
       .then((payload) => {
         const playerId = payload.user.profile.avatarPlayerId ?? null;
         const followedPlayer = payload.user.followedPlayers.find((player) => player.id === playerId);
         setHome(payload);
-        setAvatarUrl(payload.user.profile.avatarUrl || followedPlayer?.photo || getPlayerAvatar(playerId, payload.catalog?.players));
+        setAvatarUrl(payload.user.profile.avatarUrl || followedPlayer?.photo || getPlayerAvatar(playerId));
       })
       .catch(() => {
         setHome(null);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -13,7 +13,6 @@ import {
   MapPin,
   Navigation,
   Radio,
-  Sparkles,
   Star,
   Trophy,
   Users,
@@ -28,11 +27,11 @@ import { generateMatchRouteSlug, generateMatchSlug } from "@/lib/match-detail";
 import { getMatchLiveDisplay } from "@/lib/match-live-display";
 import { getTeamCodeFromName } from "@/lib/team-localization";
 import { parseTeams } from "@/lib/teams";
-import { userApi, type UserHomePayload } from "@/lib/user-system";
+import { userApi, type UserSessionPayload } from "@/lib/user-system";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
 import type { Match, Team } from "@/types/match";
 
-type FavoritePreference = UserHomePayload["user"]["favoriteMatches"][number];
+type FavoritePreference = UserSessionPayload["user"]["favoriteMatches"][number];
 
 type FavoriteMatchCard = {
   id: string;
@@ -113,7 +112,7 @@ const FLAG_TO_TEAM_CODE: Record<string, string> = {
 
 export default function FavoritesPage() {
   const { matches, warmupMatches, loading } = useWorldCupData();
-  const [home, setHome] = useState<UserHomePayload | null>(null);
+  const [home, setHome] = useState<UserSessionPayload | null>(null);
   const [homeLoaded, setHomeLoaded] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [dismissedFavoriteIds, setDismissedFavoriteIds] = useState<Set<string>>(() => new Set());
@@ -125,7 +124,7 @@ export default function FavoritesPage() {
 
   useEffect(() => {
     let mounted = true;
-    userApi<UserHomePayload>("/api/me/home", { cache: "no-store" })
+    userApi<UserSessionPayload>("/api/me/session", { cache: "no-store" })
       .then((payload) => {
         if (mounted) setHome(payload);
       })
@@ -205,7 +204,7 @@ export default function FavoritesPage() {
               onSelect={setActiveIndex}
               onRemove={removeFavoriteCard}
             />
-            <PinnedMatchInfo match={activeMatch} position={activeIndex + 1} total={visibleCards.length} />
+            <PinnedMatchInfo match={activeMatch} />
           </>
         )}
       </main>
@@ -229,22 +228,11 @@ function MatchCardStack({
   onRemove: (id: string) => void;
 }) {
   const stack = getStackMatches(matches, activeIndex);
-  const sliderTrackRef = useRef<HTMLDivElement>(null);
-  const safeActiveIndex = Math.min(Math.max(activeIndex, 0), Math.max(matches.length - 1, 0));
-  const activeProgress = matches.length > 1 ? (safeActiveIndex / (matches.length - 1)) * 100 : 0;
-  const selectFromClientX = (clientX: number) => {
-    const track = sliderTrackRef.current;
-    if (!track || matches.length < 2) return;
-
-    const rect = track.getBoundingClientRect();
-    const progress = Math.min(Math.max((clientX - rect.left) / rect.width, 0), 1);
-    onSelect(Math.round(progress * (matches.length - 1)));
-  };
 
   return (
-    <section className="relative h-[382px] overflow-visible pt-1">
-      <div className="absolute inset-x-3 top-10 h-[264px] rounded-[2rem] bg-volt/10 blur-3xl" />
-      <AnimatePresence initial={false} mode="popLayout">
+    <section className="relative h-[326px] overflow-visible pt-1">
+      <div className="absolute inset-x-3 top-10 h-[232px] rounded-[2rem] bg-volt/10 blur-3xl" />
+      <AnimatePresence initial={false}>
         {stack.map(({ match, index, depth }) => (
           <StackCard
             key={`${match.id}-${index}`}
@@ -257,42 +245,6 @@ function MatchCardStack({
           />
         ))}
       </AnimatePresence>
-      <div className="absolute bottom-0 left-1/2 z-40 w-[min(68vw,248px)] -translate-x-1/2">
-        <div
-          ref={sliderTrackRef}
-          role="slider"
-          tabIndex={0}
-          aria-label="切换收藏比赛"
-          aria-valuemin={1}
-          aria-valuemax={matches.length}
-          aria-valuenow={activeIndex + 1}
-          onPointerDown={(event) => {
-            event.currentTarget.setPointerCapture(event.pointerId);
-            selectFromClientX(event.clientX);
-          }}
-          onPointerMove={(event) => {
-            if (event.buttons === 1) selectFromClientX(event.clientX);
-          }}
-          onKeyDown={(event) => {
-            if (event.key === "ArrowLeft") onSelect(Math.max(activeIndex - 1, 0));
-            if (event.key === "ArrowRight") onSelect(Math.min(activeIndex + 1, matches.length - 1));
-          }}
-          className="relative h-9 cursor-grab touch-none rounded-full outline-none active:cursor-grabbing"
-        >
-          <div className="absolute inset-x-0 top-1/2 h-2 -translate-y-1/2 overflow-hidden rounded-full bg-white/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,.08)] ring-1 ring-white/[0.06]">
-            <motion.div
-              className="h-full rounded-full bg-volt shadow-[0_0_18px_rgba(84,255,64,.72)]"
-              animate={{ width: `${activeProgress}%` }}
-              transition={{ type: "spring", stiffness: 420, damping: 36 }}
-            />
-          </div>
-          <motion.div
-            className="absolute top-1/2 z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/50 bg-white shadow-[0_0_18px_rgba(216,255,62,.85),0_4px_14px_rgba(0,0,0,.45)]"
-            animate={{ left: `${activeProgress}%` }}
-            transition={{ type: "spring", stiffness: 420, damping: 34 }}
-          />
-        </div>
-      </div>
     </section>
   );
 }
@@ -320,17 +272,17 @@ function StackCard({
 
   return (
     <motion.article
-      layout
       drag={isTop ? "x" : false}
       dragConstraints={{ left: 0, right: 0 }}
-      dragElastic={0.18}
+      dragElastic={0.12}
+      dragMomentum={false}
       onDragEnd={(_, info) => {
         if (info.offset.x < -76 || info.velocity.x < -520) onAdvance();
       }}
       onClick={() => {
         if (!isTop) onSelect();
       }}
-      initial={{ opacity: 0, y: 36, scale: 0.92 }}
+      initial={{ opacity: 0, y: depth * 78, scale: 1 - depth * 0.035 }}
       animate={{
         opacity: 1 - depth * 0.16,
         x: 0,
@@ -338,8 +290,8 @@ function StackCard({
         scale: 1 - depth * 0.035,
         rotate: 0,
       }}
-      exit={{ opacity: 0, x: -360, rotate: -8, transition: { duration: 0.22 } }}
-      transition={{ type: "spring", stiffness: 360, damping: 34 }}
+      exit={{ opacity: 0, x: -360, rotate: -7, transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } }}
+      transition={{ type: "spring", stiffness: 430, damping: 42, mass: 0.82 }}
       className={`absolute inset-x-0 top-0 overflow-hidden rounded-[2.25rem] p-4 shadow-[0_28px_90px_rgba(0,0,0,.58),0_0_42px_rgba(216,255,62,.16)] ${
         isTop
           ? "z-30 cursor-grab bg-volt text-black active:cursor-grabbing"
@@ -400,10 +352,9 @@ const FAVORITE_INFO_TABS: { id: FavoriteInfoTab; label: string; icon: React.Reac
   { id: "stars", label: "明星球员", icon: <Users className="h-3.5 w-3.5" /> },
 ];
 
-function PinnedMatchInfo({ match, position, total }: { match: FavoriteMatchCard; position: number; total: number }) {
+function PinnedMatchInfo({ match }: { match: FavoriteMatchCard }) {
   const [activeTab, setActiveTab] = useState<FavoriteInfoTab>("info");
   const kickoff = match.startsAt ? new Date(match.startsAt) : null;
-  const countdown = getCountdown(kickoff);
   const odds = getFavoriteMatchOdds(match);
   const starPlayers = getFavoriteStarPlayers(match);
 
@@ -412,23 +363,9 @@ function PinnedMatchInfo({ match, position, total }: { match: FavoriteMatchCard;
       key={match.id}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="relative overflow-hidden rounded-[1.9rem] bg-white/[0.055] p-3 shadow-[0_22px_70px_rgba(0,0,0,.34),inset_0_1px_0_rgba(255,255,255,.1)] ring-1 ring-white/[0.08] backdrop-blur-3xl sm:p-4"
+      className="relative"
     >
-      <div className="pointer-events-none absolute right-0 top-0 h-24 w-24 rounded-full bg-volt/10 blur-3xl" />
-      <div className="relative flex items-start justify-between gap-3">
-        <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-volt/70">
-            Top Match {position}/{total}
-          </p>
-          <h3 className="mt-1 text-lg font-black text-white">{match.home.name} vs {match.away.name}</h3>
-        </div>
-        <span className="inline-flex items-center gap-1 rounded-full bg-volt px-3 py-1 text-[11px] font-black text-black">
-          <Sparkles className="h-3.5 w-3.5" />
-          {countdown}
-        </span>
-      </div>
-
-      <div className="relative mt-4 grid grid-cols-3 gap-1 rounded-full bg-black/28 p-1 ring-1 ring-white/[0.07]">
+      <div className="relative grid grid-cols-3 gap-1 rounded-full bg-black/28 p-1 ring-1 ring-white/[0.07]">
         {FAVORITE_INFO_TABS.map((tab) => {
           const active = activeTab === tab.id;
           return (
@@ -977,15 +914,6 @@ function getSortTime(match: FavoriteMatchCard) {
   if (!match.startsAt) return Number.MAX_SAFE_INTEGER;
   const value = new Date(match.startsAt).getTime();
   return Number.isFinite(value) ? value : Number.MAX_SAFE_INTEGER;
-}
-
-function getCountdown(date: Date | null) {
-  if (!date || !Number.isFinite(date.getTime())) return "待定";
-  const diff = date.getTime() - Date.now();
-  if (diff <= 0) return "进行中";
-  const hours = Math.ceil(diff / 3600000);
-  if (hours < 24) return `${hours}小时`;
-  return `${Math.ceil(hours / 24)}天`;
 }
 
 function formatTime(date: Date | null) {

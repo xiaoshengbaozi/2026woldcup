@@ -116,6 +116,13 @@ export class UserSystem {
         return true;
       }
 
+      if (req.method === "GET" && url.pathname === "/api/me/session") {
+        const user = this.requireSessionUser(req, res);
+        if (!user) return true;
+        sendJson(res, buildSessionPayload(user));
+        return true;
+      }
+
       if (url.pathname === "/api/me/home") {
         const user = this.requireSessionUser(req, res);
         if (!user) return true;
@@ -625,16 +632,27 @@ function buildHomePayload(user: WorldCupUser, catalog: UserPreferenceCatalog) {
   return {
     user: toPublicUser(user),
     catalog,
-    summary: {
-      followedTeamCount: user.followedTeams.length,
-      followedPlayerCount: user.followedPlayers.length,
-      favoriteMatchCount: user.favoriteMatches.length,
-      enabledReminderCount: user.reminders.filter((item) => item.enabled).length,
-      predictionCount: user.predictions.length,
-      watchedMatchCount: user.watchHistory.filter((item) => item.status === "watched").length,
-      activeNewsTopicCount: user.newsSubscriptions.filter((item) => item.enabled).length,
-      unreadNotificationCount: user.notifications.filter((item) => !item.read).length,
-    },
+    summary: buildUserSummary(user),
+  };
+}
+
+function buildSessionPayload(user: WorldCupUser) {
+  return {
+    user: toPublicUser(user),
+    summary: buildUserSummary(user),
+  };
+}
+
+function buildUserSummary(user: WorldCupUser) {
+  return {
+    followedTeamCount: user.followedTeams.length,
+    followedPlayerCount: user.followedPlayers.length,
+    favoriteMatchCount: user.favoriteMatches.length,
+    enabledReminderCount: user.reminders.filter((item) => item.enabled).length,
+    predictionCount: user.predictions.length,
+    watchedMatchCount: user.watchHistory.filter((item) => item.status === "watched").length,
+    activeNewsTopicCount: user.newsSubscriptions.filter((item) => item.enabled).length,
+    unreadNotificationCount: user.notifications.filter((item) => !item.read).length,
   };
 }
 

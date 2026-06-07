@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import Link from "next/link";
@@ -572,7 +573,9 @@ function ScoutNoteDialog({
   player: LineupPlayer;
   note: PlayerScoutNote;
 }) {
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <AnimatePresence>
       {open && (
         <motion.div
@@ -620,11 +623,12 @@ function ScoutNoteDialog({
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <PlayerFmScoutCard note={note} />
+            <PlayerFmScoutCard note={note} href={`/players/${player.id}/`} />
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
 
