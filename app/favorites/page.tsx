@@ -14,18 +14,14 @@ import {
   Navigation,
   Radio,
   Star,
-  Trophy,
-  Users,
   Zap,
 } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { StatCard } from "@/components/stat-card";
 import { UserActionButton } from "@/components/user-action-button";
-import matchStarPlayers from "@/data/match-star-players.json";
 import { detailRows, extractCity, localizeLocationText } from "@/lib/calendar";
 import { generateMatchRouteSlug, generateMatchSlug } from "@/lib/match-detail";
 import { getMatchLiveDisplay } from "@/lib/match-live-display";
-import { getTeamCodeFromName } from "@/lib/team-localization";
 import { parseTeams } from "@/lib/teams";
 import { userApi, type UserSessionPayload } from "@/lib/user-system";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
@@ -299,6 +295,25 @@ function StackCard({
       }`}
       style={{ zIndex: 30 - depth }}
     >
+      {isTop && (
+        <>
+          <div
+            className="pointer-events-none absolute inset-0 rounded-[2.25rem]"
+            style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.28) 0%, transparent 58%)" }}
+          />
+          <div
+            className="pointer-events-none absolute inset-0 rounded-[2.25rem]"
+            style={{
+              padding: "1px",
+              background: "linear-gradient(135deg, rgba(255,255,255,0.62), rgba(0,0,0,0.18), rgba(255,255,255,0.22))",
+              WebkitMask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
+              WebkitMaskComposite: "xor",
+              mask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
+              maskComposite: "exclude",
+            }}
+          />
+        </>
+      )}
       <div className="absolute -right-10 top-10 h-24 w-24 rounded-full bg-black/10 blur-2xl" />
       {!isTop && <div className="absolute inset-0 bg-black/18" />}
       <WeatherStrip match={match} muted={!isTop} signedIn={signedIn} onRemove={onRemove} />
@@ -344,19 +359,8 @@ function StackCard({
   );
 }
 
-type FavoriteInfoTab = "info" | "odds" | "stars";
-
-const FAVORITE_INFO_TABS: { id: FavoriteInfoTab; label: string; icon: React.ReactNode }[] = [
-  { id: "info", label: "比赛信息", icon: <Trophy className="h-3.5 w-3.5" /> },
-  { id: "odds", label: "赔率", icon: <BarChart3 className="h-3.5 w-3.5" /> },
-  { id: "stars", label: "明星球员", icon: <Users className="h-3.5 w-3.5" /> },
-];
-
 function PinnedMatchInfo({ match }: { match: FavoriteMatchCard }) {
-  const [activeTab, setActiveTab] = useState<FavoriteInfoTab>("info");
-  const kickoff = match.startsAt ? new Date(match.startsAt) : null;
   const odds = getFavoriteMatchOdds(match);
-  const starPlayers = getFavoriteStarPlayers(match);
 
   return (
     <motion.section
@@ -365,90 +369,7 @@ function PinnedMatchInfo({ match }: { match: FavoriteMatchCard }) {
       animate={{ opacity: 1, y: 0 }}
       className="relative"
     >
-      <div className="relative grid grid-cols-3 gap-1 rounded-full bg-black/28 p-1 ring-1 ring-white/[0.07]">
-        {FAVORITE_INFO_TABS.map((tab) => {
-          const active = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id)}
-              className={`inline-flex h-9 min-w-0 items-center justify-center gap-1.5 rounded-full px-2 text-[11px] font-black transition ${
-                active
-                  ? "bg-volt text-black shadow-[0_0_18px_rgba(216,255,62,.22)]"
-                  : "text-white/48 hover:bg-white/[0.055] hover:text-white/78"
-              }`}
-            >
-              {tab.icon}
-              <span className="truncate">{tab.label}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      <AnimatePresence mode="wait">
-        {activeTab === "info" && (
-          <motion.div
-            key="info"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            className="relative mt-3 grid grid-cols-2 gap-2"
-          >
-            <InfoTile icon={<CalendarDays className="h-4 w-4" />} label="比赛时间" value={formatFullDate(kickoff)} />
-            <InfoTile icon={<MapPin className="h-4 w-4" />} label="比赛城市" value={match.city || "TBD"} />
-            <InfoTile icon={<Clock3 className="h-4 w-4" />} label="比赛阶段" value={compactStage(match.stage)} />
-            <InfoTile icon={<Star className="h-4 w-4" />} label="收藏状态" value={match.tag} />
-          </motion.div>
-        )}
-
-        {activeTab === "odds" && (
-          <motion.div
-            key="odds"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            className="relative mt-3"
-          >
-            <FavoriteOddsPanel match={match} odds={odds} />
-          </motion.div>
-        )}
-
-        {activeTab === "stars" && (
-          <motion.div
-            key="stars"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            className="relative mt-3 grid gap-2"
-          >
-            {starPlayers.length ? (
-              starPlayers.map((player) => (
-                <Link
-                  key={`${player.teamCode}-${player.id ?? player.name}`}
-                  href={player.id ? `/players/${player.id}` : `/teams/${player.teamCode.toLowerCase()}`}
-                  className="group grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-[1.25rem] bg-black/24 p-3 ring-1 ring-white/[0.07] transition hover:bg-white/[0.065]"
-                >
-                  <span className="grid h-9 w-9 place-items-center rounded-full bg-volt/12 text-xs font-black text-volt ring-1 ring-volt/20">
-                    {player.teamCode}
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm font-black text-white">{player.name}</span>
-                    <span className="mt-0.5 block text-[10px] font-black uppercase tracking-[0.12em] text-white/34">
-                      核心球星
-                    </span>
-                  </span>
-                  <ChevronRight className="h-4 w-4 text-white/24 transition group-hover:text-volt" />
-                </Link>
-              ))
-            ) : (
-              <div className="rounded-[1.25rem] bg-black/24 p-4 text-sm font-semibold text-white/48 ring-1 ring-white/[0.07]">
-                暂无该场比赛的明星球员数据。
-              </div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <FavoriteOddsPanel match={match} odds={odds} />
 
       <Link
         href={match.href}
@@ -595,9 +516,9 @@ function FavoriteOddsPanel({ match, odds }: { match: FavoriteMatchCard; odds: Fa
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-volt" />
-            <h4 className="text-[11px] font-black uppercase tracking-[0.13em] text-white">Match Odds</h4>
+            <h4 className="text-[11px] font-black uppercase tracking-[0.13em] text-white">比赛赔率</h4>
           </div>
-          <span className="text-[10px] font-black uppercase tracking-[0.12em] text-white/30">Decimal</span>
+          <span className="text-[10px] font-black uppercase tracking-[0.12em] text-white/30">十进制</span>
         </div>
       </div>
 
@@ -629,7 +550,7 @@ function FavoriteOddsPanel({ match, odds }: { match: FavoriteMatchCard; odds: Fa
             style={{ width: `${Math.min(getImpliedProbability(drawOdds.value), 56)}%` }}
           />
           <div className="relative flex items-center justify-between gap-3">
-            <span className="text-[10px] font-black uppercase tracking-[0.12em] text-white/34">Draw</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.12em] text-white/34">平局</span>
             <span className="text-lg font-black tabular-nums text-white">{drawOdds.value.toFixed(2)}</span>
           </div>
         </div>
@@ -864,36 +785,6 @@ function getFavoriteMatchOdds(match: FavoriteMatchCard): FavoriteOddsItem[] {
     { label: "平局", value: draw, active: draw === strongest },
     { label: `${match.away.name} 胜`, value: away, active: away === strongest },
   ];
-}
-
-type FavoriteStarPlayer = {
-  id: string | null;
-  name: string;
-  teamCode: string;
-};
-
-type MatchStarPlayer = {
-  id?: string | null;
-  nameCn?: string;
-  nameEn?: string;
-};
-
-const MATCH_STAR_PLAYERS_BY_TEAM = matchStarPlayers.teams as Record<string, MatchStarPlayer[] | undefined>;
-
-function getFavoriteStarPlayers(match: FavoriteMatchCard): FavoriteStarPlayer[] {
-  const teamCodes = [getResolvedTeamCode(match.home), getResolvedTeamCode(match.away)];
-
-  return teamCodes.flatMap((teamCode) =>
-    (MATCH_STAR_PLAYERS_BY_TEAM[teamCode] ?? []).slice(0, 2).map((player) => ({
-      id: player.id ?? null,
-      name: player.nameCn || player.nameEn || "明星球员",
-      teamCode,
-    }))
-  );
-}
-
-function getResolvedTeamCode(team: Team) {
-  return getTeamCodeFromName(team.name) || getTeamCode(team);
 }
 
 function getStableNumber(value: string) {

@@ -9,7 +9,7 @@ import { MobileMeEntry } from "./mobile-me-entry";
 import { SiteFooter } from "./site-footer";
 import { UserNotificationToast } from "./user-notification-toast";
 
-const PRIMARY_PAGES = new Set(["/", "/news", "/data", "/matches", "/favorites", "/players", "/me", "/teams"]);
+const PRIMARY_PAGES = new Set(["/", "/news", "/data", "/matches", "/favorites", "/players", "/me", "/teams", "/live"]);
 
 export function DashboardShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();

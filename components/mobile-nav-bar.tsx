@@ -16,6 +16,7 @@ const HIDE_MOBILE_NAV_PAGES = new Set(["/matches/calendar"]);
 export function MobileNavBar() {
   const pathname = usePathname();
   const normalizedPathname = pathname !== "/" ? pathname.replace(/\/$/, "") : pathname;
+  const isLivePage = normalizedPathname === "/live";
 
   if (HIDE_MOBILE_NAV_PAGES.has(normalizedPathname)) return null;
 
@@ -25,24 +26,20 @@ export function MobileNavBar() {
   };
 
   const openLiveMatches = () => {
-    const event = new CustomEvent<{ handled: boolean }>("open-mobile-live-matches", {
-      detail: { handled: false },
-    });
-    window.dispatchEvent(event);
-
-    if (!event.detail.handled) {
-      window.location.href = "/matches?live=1";
-    }
+    if (isLivePage) return;
+    window.location.href = "/live";
   };
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 lg:hidden"
+      className={`fixed bottom-0 left-0 right-0 lg:hidden ${isLivePage ? "pointer-events-none" : "z-50"}`}
       style={{ paddingBottom: "env(safe-area-inset-bottom, 12px)" }}
     >
       <div className="mx-3 mb-3 flex items-stretch gap-3">
         <div
-          className="mobile-nav-bar relative flex flex-1 items-center justify-around rounded-full px-2 py-2"
+          className={`mobile-nav-bar relative flex flex-1 items-center justify-around rounded-full px-2 py-2 ${
+            isLivePage ? "pointer-events-none z-0 opacity-0" : ""
+          }`}
           style={mobileNavSurfaceStyle}
         >
           <NavTopLine />
@@ -92,7 +89,7 @@ export function MobileNavBar() {
         <button
           type="button"
           onClick={openLiveMatches}
-          className="relative flex h-[62px] w-[62px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-full text-black transition-transform hover:scale-[1.02]"
+          className="pointer-events-auto relative z-[90] flex h-[62px] w-[62px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-full text-black transition-transform hover:scale-[1.02]"
           style={liveNavSurfaceStyle}
           aria-label="直播"
         >

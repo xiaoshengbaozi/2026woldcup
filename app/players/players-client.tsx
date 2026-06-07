@@ -216,7 +216,7 @@ function SquadFilters({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.05, duration: 0.45 }}
-      className="relative z-[10000] flex flex-wrap items-center gap-2 sm:z-20 sm:gap-3"
+      className="relative z-10 flex flex-wrap items-center gap-2 sm:z-20 sm:gap-3"
     >
       <label className="glass-chip flex h-10 min-w-0 flex-1 basis-full items-center gap-2 px-4 text-white/70 transition focus-within:text-white sm:min-w-[240px] sm:basis-auto sm:gap-3 sm:px-5">
         <Search className="h-5 w-5 shrink-0 text-volt/80" />

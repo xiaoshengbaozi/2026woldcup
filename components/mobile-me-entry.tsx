@@ -35,7 +35,7 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const showHomeWordmark = normalizedPathname === "/";
-  const showFifaWordmark = normalizedPathname === "/news" || normalizedPathname === "/matches" || normalizedPathname === "/data";
+  const showFifaWordmark = normalizedPathname === "/news" || normalizedPathname === "/matches" || normalizedPathname === "/data" || normalizedPathname === "/live";
   const showSearchEntry = pathname === "/" || pathname.startsWith("/news");
 
   const refreshHome = useCallback(() => {

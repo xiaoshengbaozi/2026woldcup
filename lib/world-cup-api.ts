@@ -1,8 +1,8 @@
 import type { Match } from "@/types/match";
 
 const LOCAL_API_URL = "http://localhost:3001";
-const PRODUCTION_API_URL = "https://api-2026test.20250114.xyz";
-const WARMUP_API_URL = "https://api-2026test.20250114.xyz";
+const PRODUCTION_API_URL = "https://api.boyzi.fun";
+const WARMUP_API_URL = "https://api.boyzi.fun";
 
 export type NormalizedWorldCupFixture = {
   uid: string;
