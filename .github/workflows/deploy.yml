@@ -28,10 +28,11 @@ jobs:
 
       - name: Build
         env:
-          NEXT_PUBLIC_MARKET_API_URL: ${{ vars.NEXT_PUBLIC_MARKET_API_URL || secrets.NEXT_PUBLIC_MARKET_API_URL }}
-          NEXT_PUBLIC_MARKET_WS_URL: ${{ vars.NEXT_PUBLIC_MARKET_WS_URL || secrets.NEXT_PUBLIC_MARKET_WS_URL }}
+          NEXT_PUBLIC_MARKET_API_URL: https://api.boyzi.fun
+          NEXT_PUBLIC_MARKET_WS_URL: wss://api.boyzi.fun
           NEXT_PUBLIC_NEWS_API_URL: ${{ vars.NEXT_PUBLIC_NEWS_API_URL || secrets.NEXT_PUBLIC_NEWS_API_URL }}
-          NEXT_PUBLIC_USER_API_URL: ${{ vars.NEXT_PUBLIC_USER_API_URL || secrets.NEXT_PUBLIC_USER_API_URL }}
+          NEXT_PUBLIC_USER_API_URL: https://api.boyzi.fun
+          NEXT_PUBLIC_WARMUP_API_URL: https://api.boyzi.fun
         run: npm run build
 
       - name: Deploy to Cloudflare Pages
