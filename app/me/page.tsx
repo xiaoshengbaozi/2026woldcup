@@ -8,12 +8,13 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   Bookmark,
   CalendarDays,
+  Check,
   ChevronLeft,
   ChevronRight,
   Globe2,
   LogIn,
   LogOut,
-  MailCheck,
+  Pencil,
   Send,
   Star,
   Trophy,
@@ -509,6 +510,21 @@ function MePageContent() {
     }
   }
 
+  async function updateSignature(signature: string) {
+    const nextSignature = signature.trim();
+    if (!nextSignature) return;
+    setBusy("signature");
+    try {
+      await userApi<{ user: PublicUser }>("/api/me/profile", {
+        method: "PATCH",
+        body: JSON.stringify({ signature: nextSignature }),
+      });
+      await loadHome();
+    } finally {
+      setBusy("");
+    }
+  }
+
   return (
     <DashboardShell>
       <section className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_310px] xl:grid-cols-[minmax(0,1fr)_340px]">
@@ -527,7 +543,7 @@ function MePageContent() {
           transition={{ duration: 0.45, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
           className="hidden h-fit gap-5 lg:sticky lg:top-5 lg:grid"
         >
-          <section className="hero-card me-account-card grid h-[265px] overflow-hidden p-5 text-black sm:p-6">
+          <section className="hero-card me-account-card grid h-[245px] overflow-hidden p-5 text-black sm:p-6">
             <AccountCard
               home={home}
               catalog={catalog}
@@ -538,6 +554,7 @@ function MePageContent() {
               onRegister={() => openAuth("register")}
               onLogout={logout}
               onResendVerification={resendEmailVerification}
+              onSignatureChange={updateSignature}
             />
           </section>
           <ScorerBoard players={topScorers} />
@@ -1080,6 +1097,7 @@ function AccountCard({
   onRegister,
   onLogout,
   onResendVerification,
+  onSignatureChange,
 }: {
   home: UserHomePayload | null;
   catalog: UserPreferenceCatalog;
@@ -1090,6 +1108,7 @@ function AccountCard({
   onRegister: () => void;
   onLogout: () => void;
   onResendVerification: () => void;
+  onSignatureChange: (signature: string) => Promise<void>;
 }) {
   const avatar = home
     ? home.user.profile.avatarUrl || getPlayerAvatar(home.user.profile.avatarPlayerId, home.catalog?.players ?? catalog.players)
@@ -1100,6 +1119,20 @@ function AccountCard({
         .map((team) => ({ id: team.id, name: team.name, flag: getTeamFlag(team) }))
         .filter((team) => team.flag)
     : [];
+  const signature = home?.user.profile.signature?.trim() || "一脚世界波";
+  const [editingSignature, setEditingSignature] = useState(false);
+  const [signatureDraft, setSignatureDraft] = useState(signature);
+
+  useEffect(() => {
+    setSignatureDraft(signature);
+  }, [signature]);
+
+  async function saveSignature() {
+    const nextSignature = signatureDraft.trim();
+    if (!nextSignature) return;
+    await onSignatureChange(nextSignature);
+    setEditingSignature(false);
+  }
 
   return (
     <div className="relative z-10 grid h-full content-center justify-items-center gap-4">
@@ -1111,7 +1144,55 @@ function AccountCard({
             </div>
             <div className="min-w-0">
               <p className="truncate text-xl font-semibold text-black">{home.user.profile.displayName}</p>
-              <p className="mt-0.5 truncate text-xs font-semibold text-black/54">{home.user.emailVerifiedAt ? "邮箱已验证" : "邮箱待验证"}</p>
+              {home.user.emailVerifiedAt ? (
+                <div className="mt-1 flex min-w-0 items-center gap-1.5">
+                  {editingSignature ? (
+                    <>
+                      <input
+                        value={signatureDraft}
+                        maxLength={36}
+                        onChange={(event) => setSignatureDraft(event.target.value)}
+                        className="h-7 min-w-0 flex-1 rounded-full bg-black/[0.07] px-3 text-xs font-semibold text-black outline-none ring-1 ring-black/10 focus:ring-black/25"
+                      />
+                      <button
+                        type="button"
+                        disabled={busy === "signature"}
+                        onClick={saveSignature}
+                        className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-black text-white transition hover:opacity-85 disabled:opacity-50"
+                        aria-label="保存签名"
+                      >
+                        <Check className="h-3.5 w-3.5" />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <p className="min-w-0 truncate text-xs font-semibold text-black/58">{signature}</p>
+                      <button
+                        type="button"
+                        onClick={() => setEditingSignature(true)}
+                        className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-black/[0.06] text-black/58 transition hover:bg-black/[0.1] hover:text-black"
+                        aria-label="修改签名"
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </button>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <div className="mt-1 flex min-w-0 items-center gap-2">
+                  <span className="shrink-0 text-xs font-semibold text-black/54">邮箱待验证</span>
+                  <button
+                    type="button"
+                    disabled={busy === "resendEmail"}
+                    onClick={onResendVerification}
+                    className="inline-flex h-7 shrink-0 items-center gap-1 rounded-full bg-black px-2.5 text-[11px] font-bold text-white transition hover:opacity-85 disabled:opacity-50"
+                  >
+                    <Send className="h-3 w-3" />
+                    {busy === "resendEmail" ? "发送中" : "重发"}
+                  </button>
+                  {emailNotice && <span className="min-w-0 truncate text-xs font-semibold text-black/58">{emailNotice}</span>}
+                </div>
+              )}
               {followedTeamFlags.length > 0 && (
                 <div className="mt-1.5 flex items-center gap-1.5">
                   {followedTeamFlags.map((team) => (
@@ -1122,25 +1203,6 @@ function AccountCard({
                 </div>
               )}
             </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {home.user.emailVerifiedAt ? (
-              <span className="inline-flex h-8 items-center gap-1.5 rounded-full bg-black/[0.06] px-3 text-xs font-bold text-black/70 ring-1 ring-black/10">
-                <MailCheck className="h-3.5 w-3.5" />
-                邮箱已验证
-              </span>
-            ) : (
-              <button
-                type="button"
-                disabled={busy === "resendEmail"}
-                onClick={onResendVerification}
-                className="inline-flex h-8 items-center gap-1.5 rounded-full bg-black px-3 text-xs font-bold text-white transition hover:opacity-85 disabled:opacity-50"
-              >
-                <Send className="h-3.5 w-3.5" />
-                {busy === "resendEmail" ? "发送中" : "重发验证邮件"}
-              </button>
-            )}
-            {emailNotice && <span className="min-w-0 flex-1 truncate text-xs font-semibold text-black/58">{emailNotice}</span>}
           </div>
           <div className="border-t border-dashed border-[#20242d61] pt-4">
             <div className="grid grid-cols-3 divide-x divide-[#20242d61] text-center">

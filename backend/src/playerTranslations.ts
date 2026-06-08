@@ -5,6 +5,8 @@ export const PLAYER_NAME_CN_BY_ID: Record<number, string> = {
   762: "维尼修斯",
   1100: "埃尔林·哈兰德",
   129718: "裘德·贝林厄姆",
+  509: "阿方索·戴维斯",
+  542536: "加尔贝·莱耶",
 };
 
 export const PLAYER_NAME_CN_BY_NAME: Record<string, string> = {
@@ -69,6 +71,14 @@ export const PLAYER_NAME_CN_BY_NAME: Record<string, string> = {
   "M. Salah": "穆罕默德·萨拉赫",
   "E. Haaland": "埃尔林·哈兰德",
   "J. Bellingham": "裘德·贝林厄姆",
+  "A. Davies": "阿方索·戴维斯",
+  "Alphonso Davies": "阿方索·戴维斯",
+  "Alphonso Boyle Davies": "阿方索·戴维斯",
+  "Davies Alphonso": "阿方索·戴维斯",
+  "Dennis Dargahi": "丹尼斯·达尔加希",
+  "Mohanad Ali": "穆罕纳德·阿里",
+  "Mohanad Ali Kadhim Al-Shamm Ari": "穆罕纳德·阿里",
+  "Gueye Seydinaissalaye": "加尔贝·莱耶",
 };
 
 export function localizePlayerName(playerId: number | null | undefined, name: string) {

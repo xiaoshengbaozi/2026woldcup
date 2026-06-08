@@ -578,7 +578,7 @@ function AuthInput({ label, value, onChange, type = "text", required = false }: 
         value={value}
         required={required}
         onChange={(event) => onChange(event.target.value)}
-        className="h-12 rounded-2xl bg-black/24 px-4 text-white outline-none ring-1 ring-white/10 transition placeholder:text-white/24 focus:ring-volt/45"
+        className="h-10 rounded-full bg-black/24 px-4 text-white outline-none ring-1 ring-white/10 transition placeholder:text-white/24 focus:ring-volt/45"
       />
     </label>
   );
@@ -669,7 +669,7 @@ function PrimaryButton({ children, ...props }: React.ButtonHTMLAttributes<HTMLBu
   return (
     <button
       {...props}
-      className="inline-flex h-12 min-w-32 items-center justify-center gap-2 rounded-full bg-volt px-5 text-sm font-bold text-black shadow-[0_0_30px_rgba(216,255,62,.2)] transition hover:scale-[1.02] disabled:opacity-60"
+      className="inline-flex h-10 min-w-32 items-center justify-center gap-2 rounded-full bg-volt px-4 text-sm font-bold text-black shadow-[0_0_30px_rgba(216,255,62,.2)] transition hover:scale-[1.02] disabled:opacity-60"
     >
       {children}
     </button>
@@ -680,7 +680,7 @@ function SecondaryButton({ children, ...props }: React.ButtonHTMLAttributes<HTML
   return (
     <button
       {...props}
-      className="inline-flex h-12 min-w-28 items-center justify-center gap-2 rounded-full bg-white/[0.06] px-5 text-sm font-semibold text-white/78 ring-1 ring-white/12 transition hover:bg-white/[0.1] hover:text-white disabled:opacity-60"
+      className="inline-flex h-10 min-w-28 items-center justify-center gap-2 rounded-full bg-white/[0.06] px-4 text-sm font-semibold text-white/78 ring-1 ring-white/12 transition hover:bg-white/[0.1] hover:text-white disabled:opacity-60"
     >
       {children}
     </button>

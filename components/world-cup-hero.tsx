@@ -4,6 +4,7 @@ import {
   BarChart3,
   CalendarDays,
   Download,
+  MapPin,
   Newspaper,
   Radio,
   Star,
@@ -14,6 +15,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useFifaNews } from "@/lib/fifa-news";
 import { formatCountdown, formatDate } from "@/lib/format";
 import { getLiveMatchQueue, isMatchInLiveWindow } from "@/lib/live-match-queue";
+import { generateMatchRouteSlug } from "@/lib/match-detail";
 import { parseTeams } from "@/lib/teams";
 import { fallbackTopScorerProfiles, fetchWorldCupTopScorers, type WorldCupTopScorer } from "@/lib/world-cup-top-scorers";
 import type { Match } from "@/types/match";
@@ -99,6 +101,8 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
   const countdown = formatCountdown(firstMatch?.start ?? null);
   const teams = useMemo(() => { if (!firstMatch) return null; return parseTeams(firstMatch.summary); }, [firstMatch]);
   const dateLabel = firstMatch ? formatDate(firstMatch.start) : "等待官方赛程";
+  const nextMatchHref = firstMatch ? `/matches/${generateMatchRouteSlug(firstMatch)}` : "/matches";
+  const venueLabel = firstMatch ? formatVenueLine(firstMatch.location) : "";
   const homeCode = teams?.home.name.slice(0, 3).toUpperCase() || "FIFA";
   const awayCode = teams?.away.name.slice(0, 3).toUpperCase() || "2026";
   const { displayMatches, isLive } = useMemo(
@@ -192,35 +196,41 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
         </motion.aside>
 
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14, duration: 0.78, ease: [0.16, 1, 0.3, 1] }} className="grid gap-5">
-          <div className="hero-card relative h-[288px] overflow-hidden p-0 sm:h-[330px]">
-            <img src="/estadio-azteca-aerial.jpg" alt="Aerial view of Estadio Azteca" className="absolute inset-0 h-full w-full object-cover object-[78%_50%] opacity-[.82] saturate-[1.08]" />
-            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(5,8,8,.98)_0%,rgba(5,8,8,.9)_34%,rgba(5,8,8,.42)_58%,rgba(5,8,8,.08)_100%),linear-gradient(0deg,rgba(5,8,8,.72)_0%,rgba(5,8,8,.08)_32%,rgba(5,8,8,.1)_100%),radial-gradient(circle_at_76%_52%,rgba(216,255,62,.2),transparent_26%)]" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_24%_20%,rgba(216,255,62,.13),transparent_24%),radial-gradient(circle_at_68%_72%,rgba(255,154,31,.1),transparent_34%)]" />
-            <div className="relative z-10 flex h-full flex-col items-center justify-between p-4 sm:p-8">
+          <div className="next-match-card hero-card relative h-[288px] overflow-hidden p-0 sm:h-[330px]">
+            <img src="/estadio-azteca-aerial.jpg" alt="Aerial view of Estadio Azteca" className="next-match-media absolute inset-0 h-full w-full object-cover object-[78%_50%] opacity-[.82] saturate-[1.08]" />
+            <div className="next-match-shade absolute inset-0 bg-[linear-gradient(90deg,rgba(5,8,8,.98)_0%,rgba(5,8,8,.9)_34%,rgba(5,8,8,.42)_58%,rgba(5,8,8,.08)_100%),linear-gradient(0deg,rgba(5,8,8,.72)_0%,rgba(5,8,8,.08)_32%,rgba(5,8,8,.1)_100%),radial-gradient(circle_at_76%_52%,rgba(216,255,62,.2),transparent_26%)]" />
+            <div className="next-match-glow absolute inset-0 bg-[radial-gradient(circle_at_24%_20%,rgba(216,255,62,.13),transparent_24%),radial-gradient(circle_at_68%_72%,rgba(255,154,31,.1),transparent_34%)]" />
+            <div className="relative z-10 flex h-full flex-col items-center p-4 sm:p-8">
               <div className="flex w-full flex-col items-center">
                 <div className="flex w-full items-start justify-between gap-3">
                   <div className="flex shrink-0 items-center gap-3 text-xs uppercase tracking-[0.12em] text-white/52 sm:text-sm sm:tracking-[0.16em]"><span className="h-2 w-2 rounded-full bg-volt shadow-[0_0_16px_rgba(216,255,62,.85)]" />下一场比赛</div>
                   <p className="min-w-0 text-right text-sm font-semibold uppercase leading-5 tracking-[0.06em] text-white/72 sm:text-base sm:tracking-[0.08em]">{dateLabel}</p>
                 </div>
-                <div className="mt-4 flex w-full min-w-0 items-start justify-center gap-3 sm:mt-6 sm:gap-8">
+                <div className="mt-3 flex w-full min-w-0 items-start justify-center gap-3 sm:mt-5 sm:gap-8">
                   <TeamSignal code={homeCode} image={teams?.home.image} name={teams?.home.name || "揭幕战"} />
                   <div className="flex h-12 items-center justify-center sm:h-16"><ArrowRight className="h-6 w-6 shrink-0 text-flare drop-shadow-[0_0_16px_rgba(255,154,31,.55)] sm:h-8 sm:w-8" /></div>
                   <TeamSignal code={awayCode} image={teams?.away.image} name={teams?.away.name || "官方赛程"} />
                 </div>
+                {venueLabel && (
+                  <div className="mt-2 flex max-w-full items-center gap-1.5 text-[11px] font-medium text-white/54 sm:mt-3 sm:text-xs">
+                    <MapPin className="h-3.5 w-3.5 shrink-0 text-volt/70" />
+                    <span className="min-w-0 truncate">{venueLabel}</span>
+                  </div>
+                )}
               </div>
-              <div className="mt-3 grid w-full max-w-sm grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[1.45rem] bg-black/34 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,.08)] backdrop-blur-2xl sm:mt-5 sm:p-4">
+              <div className="next-match-countdown mt-2 grid w-full max-w-sm grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[1.45rem] bg-black/34 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,.08)] backdrop-blur-2xl sm:mt-4 sm:p-4">
                 <div>
                   <p className="text-xs uppercase tracking-[0.18em] text-white/42">距离开赛</p>
                   <p className="mt-1 flex items-baseline text-3xl font-semibold leading-none text-volt sm:text-4xl" style={{ fontFamily: "ScreenMatrix, monospace" }}><span>{countdown.days}</span><span className="countdown-colon text-3xl sm:text-4xl">:</span><span>{countdown.hours}</span><span className="countdown-colon text-3xl sm:text-4xl">:</span><span>{countdown.minutes}</span><span className="countdown-colon text-3xl sm:text-4xl">:</span><span>{countdown.seconds}</span></p>
                 </div>
-                <div className="rounded-full bg-volt/15 p-3 text-volt shadow-[0_0_44px_rgba(216,255,62,.34)] ring-1 ring-volt/25 sm:p-4"><ArrowRight className="h-5 w-5 sm:h-7 sm:w-7" /></div>
+                <Link href={nextMatchHref} aria-label="查看比赛详情" className="rounded-full bg-volt/15 p-3 text-volt shadow-[0_0_44px_rgba(216,255,62,.34)] ring-1 ring-volt/25 transition hover:bg-volt hover:text-black sm:p-4"><ArrowRight className="h-5 w-5 sm:h-7 sm:w-7" /></Link>
               </div>
             </div>
           </div>
 
           <PopularTeamsCard popularTeams={popularTeams} className="lg:hidden" />
 
-          <div className="hero-card p-5">
+          <div className="hero-card hidden p-5 sm:block">
             <div className="mb-5 flex items-center justify-between border-b border-white/[0.04] pb-3">
               <div className="flex items-center gap-2.5">
                 <span className="relative flex h-2.5 w-2.5"><span className="live-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" /><span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,.7)]" /></span>
@@ -293,4 +303,23 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
       </div>
     </section>
   );
+}
+
+function formatVenueLine(location: string) {
+  const trimmed = location.trim();
+  if (!trimmed) return "";
+
+  const parenMatch = trimmed.match(/^(.+?)（(.+?)）$/);
+  const venue = (parenMatch?.[1] || trimmed.split(/[,(（]/)[0] || trimmed).trim();
+  const city = (parenMatch?.[2] || trimmed.match(/\((.+?)\)$/)?.[1] || "").trim();
+  const country = getHostCountry(city);
+
+  return [country, city, venue].filter(Boolean).join(" - ");
+}
+
+function getHostCountry(city: string) {
+  if (["墨西哥城", "瓜达拉哈拉", "蒙特雷"].includes(city)) return "墨西哥";
+  if (["多伦多", "温哥华"].includes(city)) return "加拿大";
+  if (city) return "美国";
+  return "";
 }

@@ -654,8 +654,10 @@ function mergeOfficialPlayerWithApi(
   apiPlayer: NormalizedSquadPlayer
 ): NormalizedSquadPlayer {
   const position = officialPositionToApiPosition(officialPlayer.position);
+  const localizedOfficialName = localizePlayerName(officialPlayer.apiFootballId ?? apiPlayer.id, officialPlayer.name);
   return {
     ...apiPlayer,
+    nameCn: hasCjk(localizedOfficialName) ? localizedOfficialName : apiPlayer.nameCn,
     number: typeof officialPlayer.number === "number" ? officialPlayer.number : apiPlayer.number,
     position,
     positionCn: localizeFootballPosition(position),
@@ -679,6 +681,10 @@ function officialPlayerToNormalized(player: FifaOfficialSquadPlayer): Normalized
 
 function getPlayerPhoto(playerId: number | null | undefined, fallback = "") {
   return typeof playerId === "number" ? PLAYER_PHOTO_OVERRIDES[playerId] ?? fallback : fallback;
+}
+
+function hasCjk(value: string | null | undefined) {
+  return /[\u3400-\u9fff]/.test(value ?? "");
 }
 
 function officialPositionToApiPosition(position: string | null | undefined) {

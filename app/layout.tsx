@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import { Inter_Tight } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import "./light-theme.css";
 import "./light-theme-polish.css";
 import { ThemeInit } from "@/components/theme-init";
 import { MobileNavBar } from "@/components/mobile-nav-bar";
 import { SiteAnalyticsProvider } from "@/components/site-analytics-provider";
+import { SupportCreatorModal } from "@/components/support-creator-modal";
+import { WechatShareBridge } from "@/components/wechat-share-bridge";
 
 const interTight = Inter_Tight({
   subsets: ["latin"],
@@ -63,8 +66,12 @@ export default function RootLayout({
       <body className={interTight.variable}>
         <SiteAnalyticsProvider>
           <ThemeInit />
+          <Suspense fallback={null}>
+            <WechatShareBridge />
+          </Suspense>
           {children}
           <MobileNavBar />
+          <SupportCreatorModal />
         </SiteAnalyticsProvider>
       </body>
     </html>

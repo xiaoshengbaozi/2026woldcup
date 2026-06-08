@@ -1,9 +1,11 @@
 ﻿"use client";
 
+import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { CalendarDays, Check, ChevronDown, Clock, GitFork, Grid3X3, Layers, LayoutList, MapPin, Search } from "lucide-react";
 import { ComponentType, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { openCreatorSupportModal } from "@/components/support-creator-modal";
 import type { ScheduleLayout, ScheduleMatchSource } from "@/app/matches/page";
 import { formatStageLabel, getStageGroupId, rankStage } from "@/lib/stage";
 
@@ -162,8 +164,32 @@ export function MatchFilters({
           onChange={(nextValue) => onCityChange(nextValue || "全部城市")}
           grouped
         />
+        <SupportBeerButton />
       </div>
     </motion.section>
+  );
+}
+
+function SupportBeerButton() {
+  return (
+    <button
+      type="button"
+      aria-label="打赏作者"
+      title="打赏作者"
+      onClick={openCreatorSupportModal}
+      className="glass-chip group relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden px-0 text-white/78 transition hover:text-white hover:ring-1 hover:ring-amber-300/25 sm:w-[150px] sm:justify-start sm:gap-2 sm:px-4"
+    >
+      <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full bg-amber-300/10 shadow-[0_0_20px_rgba(245,158,11,.13)] ring-1 ring-white/[0.1]">
+        <Image
+          src="/support/beer-glass.webp"
+          alt=""
+          fill
+          sizes="32px"
+          className="object-contain p-0.5 transition duration-200 group-hover:scale-110"
+        />
+      </span>
+      <span className="hidden truncate text-xs sm:block">请作者喝杯啤酒</span>
+    </button>
   );
 }
 

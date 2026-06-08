@@ -15,6 +15,7 @@ export interface PublicUser {
   updatedAt: number;
   profile: {
     displayName: string;
+    signature?: string | null;
     homeTeamId: string | null;
     avatarPlayerId?: string | null;
     avatarUrl?: string | null;

@@ -5,6 +5,7 @@ import type { Pool } from "pg";
 
 export interface UserProfile {
   displayName: string;
+  signature?: string | null;
   homeTeamId: string | null;
   avatarPlayerId?: string | null;
   avatarUrl?: string | null;
@@ -141,6 +142,7 @@ interface UserDatabase {
   invitationCodes: InvitationCode[];
 }
 
+const FALLBACK_SIGNATURES = ["一脚世界波", "倒挂金钩", "Tiki-Taka", "长驱直入", "追风逐电"];
 const DEFAULT_TOPICS = ["球队动态", "伤停情报", "赔率波动", "赛前发布会"];
 
 export class UserStore {
@@ -255,6 +257,7 @@ export class UserStore {
       updatedAt: now,
       profile: {
         displayName: input.displayName?.trim() || email.split("@")[0],
+        signature: pickRandomSignature(),
         homeTeamId: null,
         avatarPlayerId: input.avatarPlayerId || "lionel-messi",
         avatarUrl: input.avatarUrl || null,
@@ -321,6 +324,7 @@ export class UserStore {
       ...user.profile,
       ...profile,
       displayName: profile.displayName?.trim() || user.profile.displayName,
+      signature: normalizeSignature(profile.signature, user.profile.signature),
       avatarPlayerId: profile.avatarPlayerId ?? user.profile.avatarPlayerId ?? "lionel-messi",
       avatarUrl: nextAvatarUrl,
       language: profile.language === "en-US" ? "en-US" : "zh-CN",
@@ -643,6 +647,45 @@ function upsertById<T extends { id: string }>(items: T[], item: T) {
   return items.map((current) => (current.id === item.id ? item : current));
 }
 
+function normalizeSignature(value: unknown, fallback?: string | null) {
+  if (typeof value !== "string") return fallback || pickRandomSignature();
+  const signature = value.trim().slice(0, 36);
+  return signature || fallback || pickRandomSignature();
+}
+
+function pickRandomSignature(seed?: string) {
+  const phrases = loadBuiltInSignatures();
+  if (!phrases.length) return FALLBACK_SIGNATURES[0];
+  if (!seed) return phrases[Math.floor(Math.random() * phrases.length)] ?? phrases[0];
+  const hash = seed.split("").reduce((total, char) => total + char.charCodeAt(0), 0);
+  return phrases[hash % phrases.length] ?? phrases[0];
+}
+
+let builtInSignaturesCache: string[] | null = null;
+
+function loadBuiltInSignatures() {
+  if (builtInSignaturesCache) return builtInSignaturesCache;
+  const paths = [
+    resolve(process.cwd(), "data", "football_moves.json"),
+    resolve(process.cwd(), "backend", "data", "football_moves.json"),
+  ];
+
+  for (const filePath of paths) {
+    if (!existsSync(filePath)) continue;
+    try {
+      const payload = JSON.parse(readFileSync(filePath, "utf8")) as { football_moves?: unknown };
+      const moves = Array.isArray(payload.football_moves) ? payload.football_moves : [];
+      builtInSignaturesCache = moves.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
+      if (builtInSignaturesCache.length) return builtInSignaturesCache;
+    } catch {
+      break;
+    }
+  }
+
+  builtInSignaturesCache = FALLBACK_SIGNATURES;
+  return builtInSignaturesCache;
+}
+
 function normalizeStoredUser(user: WorldCupUser) {
   return {
     ...user,
@@ -653,6 +696,7 @@ function normalizeStoredUser(user: WorldCupUser) {
     disabledAt: user.disabledAt ?? null,
     profile: {
       ...user.profile,
+      signature: normalizeSignature(user.profile?.signature, pickRandomSignature(user.id || user.email)),
       avatarPlayerId: user.profile?.avatarPlayerId ?? "lionel-messi",
       avatarUrl: user.profile?.avatarUrl ?? null,
     },

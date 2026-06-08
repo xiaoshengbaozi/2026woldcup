@@ -10,6 +10,7 @@ import {
   Calendar,
   ChevronRight,
   Flag,
+  Heart,
   Home,
   LogIn,
   LogOut,
@@ -22,6 +23,7 @@ import {
 import { AvatarSettingsDialog } from "./avatar-settings-dialog";
 import { GlobalSearch } from "./global-search";
 import { MeAuthDialog, type SharedAuthMode } from "./me-auth-dialog";
+import { openCreatorSupportModal } from "./support-creator-modal";
 import { ThemeToggle } from "./theme-toggle";
 import { getPlayerAvatar } from "@/lib/user-preferences";
 import { userApi, type UserSessionPayload } from "@/lib/user-system";
@@ -133,6 +135,11 @@ export function NavBar() {
     setAvatarSettingsOpen(true);
   };
 
+  const openSupport = () => {
+    setPopoverOpen(false);
+    openCreatorSupportModal();
+  };
+
   return (
     <>
       <nav className="hero-shell relative z-[300] hidden min-h-20 items-center justify-between gap-4 px-5 py-4 sm:px-7 lg:flex" style={{ borderRadius: "1.2rem" }}>
@@ -222,8 +229,8 @@ export function NavBar() {
             </button>
 
             {popoverOpen && (
-              <div className="absolute right-0 top-[calc(100%+0.65rem)] w-[224px] overflow-hidden rounded-[1.6rem] border border-white/[0.18] bg-[#070a11] text-white shadow-[0_30px_90px_rgba(0,0,0,.78),0_0_58px_rgba(216,255,62,.16)]">
-                <div className="divide-y divide-white/[0.08] px-2 py-1 pb-4">
+              <div className="avatar-popover absolute right-0 top-[calc(100%+0.65rem)] w-[224px] overflow-hidden rounded-[1.6rem] border border-white/[0.18] bg-[#070a11] text-white shadow-[0_30px_90px_rgba(0,0,0,.78),0_0_58px_rgba(216,255,62,.16)]">
+                <div className="avatar-popover-inner divide-y divide-white/[0.08] px-2 py-1 pb-4">
                   {checkingSession ? (
                     <div className="px-2.5 py-4">
                       <p className="text-sm font-medium text-white/66">正在同步登录状态</p>
@@ -255,6 +262,14 @@ export function NavBar() {
                       <span className="text-[10px] font-medium uppercase tracking-[0.12em] text-volt/70">登录后进入</span>
                     </button>
                   )}
+
+                  <button type="button" onClick={openSupport} className="group flex min-h-12 w-full items-center justify-between px-2.5 py-3 text-left text-sm font-medium text-white/66 transition hover:text-volt">
+                    <span className="flex items-center gap-2">
+                      <Heart className="h-4 w-4 text-rose-300/85" />
+                      打赏作者
+                    </span>
+                    <span className="text-[10px] font-medium uppercase tracking-[0.12em] text-white/38 transition group-hover:text-volt/80">Buy beer</span>
+                  </button>
 
                   <section className="px-2.5 py-3">
                     <button

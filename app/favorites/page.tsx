@@ -11,7 +11,6 @@ import {
   ChevronRight,
   Clock3,
   MapPin,
-  Navigation,
   Radio,
   Star,
   Zap,
@@ -345,13 +344,12 @@ function StackCard({
         </p>
         {isTop && (
           <Link
-            href={getVenueNavigationHref(match)}
-            target="_blank"
-            rel="noreferrer"
-            aria-label="导航到球场"
-            className="mr-3 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-black/45 bg-transparent text-black"
+            href={match.href}
+            aria-label="查看比赛详情"
+            className="mr-3 inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-black/45 bg-transparent px-3 text-xs font-black text-black transition hover:bg-black/10"
           >
-            <Navigation className="h-3.5 w-3.5" />
+            查看详情
+            <ChevronRight className="h-3.5 w-3.5" />
           </Link>
         )}
       </div>
@@ -504,54 +502,75 @@ function InfoTile({ icon, label, value }: { icon: React.ReactNode; label: string
   );
 }
 
+function buildFavoriteProbabilitySegments(homeOdds: FavoriteOddsItem, drawOdds: FavoriteOddsItem, awayOdds: FavoriteOddsItem) {
+  const items = [
+    { label: "主胜", probability: getImpliedProbability(homeOdds.value), valueClass: "text-volt", barClass: "bg-volt" },
+    { label: "平局", probability: getImpliedProbability(drawOdds.value), valueClass: "text-white/82", barClass: "bg-white/35" },
+    { label: "客胜", probability: getImpliedProbability(awayOdds.value), valueClass: "text-flare", barClass: "bg-flare" },
+  ];
+  const total = items.reduce((sum, item) => sum + item.probability, 0) || 1;
+
+  return items.map((item) => ({
+    ...item,
+    width: (item.probability / total) * 100,
+  }));
+}
+
 function FavoriteOddsPanel({ match, odds }: { match: FavoriteMatchCard; odds: FavoriteOddsItem[] }) {
   const [homeOdds, drawOdds, awayOdds] = odds;
+  const probabilitySegments = buildFavoriteProbabilitySegments(homeOdds, drawOdds, awayOdds);
 
   return (
-    <div className="relative mx-auto overflow-hidden rounded-[24px] border border-white/[0.08] bg-[#111113]/90 shadow-[0_28px_64px_rgba(0,0,0,0.34)] backdrop-blur-xl">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(216,255,62,0.12),transparent_34%),radial-gradient(circle_at_92%_18%,rgba(255,154,31,0.10),transparent_36%)]" />
+    <div className="favorites-odds-panel relative mx-auto overflow-hidden rounded-[24px] border border-white/[0.08] bg-[#111113]/90 shadow-[0_28px_64px_rgba(0,0,0,0.34)] backdrop-blur-xl">
+      <div className="favorites-odds-glow pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(216,255,62,0.12),transparent_34%),radial-gradient(circle_at_92%_18%,rgba(255,154,31,0.10),transparent_36%)]" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-volt/30 to-transparent" />
 
-      <div className="relative border-b border-white/[0.05] px-4 py-3">
+      <div className="favorites-odds-header relative border-b border-white/[0.05] px-4 py-3">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4 text-volt" />
-            <h4 className="text-[11px] font-black uppercase tracking-[0.13em] text-white">比赛赔率</h4>
+            <h4 className="text-[11px] font-black uppercase tracking-[0.13em] text-white">比赛预测</h4>
           </div>
-          <span className="text-[10px] font-black uppercase tracking-[0.12em] text-white/30">十进制</span>
         </div>
       </div>
 
       <div className="relative px-4 py-4">
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-          <FavoriteOddsTeam team={match.home} odds={homeOdds} align="left" />
-
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex items-center gap-1.5 text-white/30">
-              <div className="h-px w-6 bg-white/10" />
-              <div className="grid h-7 w-7 place-items-center rounded-full border border-white/10 bg-white/[0.035] shadow-[0_0_22px_rgba(216,255,62,0.10)]">
-                <Zap className="h-3.5 w-3.5 text-volt/70" />
-              </div>
-              <div className="h-px w-6 bg-white/10" />
+        <div className="mb-4 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+          <FavoritePredictionTeam team={match.home} align="left" />
+          <div className="flex items-center gap-1.5 text-white/30">
+            <div className="h-px w-6 bg-white/10" />
+            <div className="favorite-prediction-bolt grid h-7 w-7 place-items-center rounded-full border border-white/10 bg-white/[0.035] shadow-[0_0_22px_rgba(216,255,62,0.10)]">
+              <Zap className="h-3.5 w-3.5 text-volt/70" />
             </div>
-            <div className="flex items-center gap-1 text-[11px]">
-              <span className="font-black tabular-nums text-volt">{getImpliedProbability(homeOdds.value)}%</span>
-              <span className="text-white/20">:</span>
-              <span className="font-black tabular-nums text-flare">{getImpliedProbability(awayOdds.value)}%</span>
-            </div>
+            <div className="h-px w-6 bg-white/10" />
           </div>
-
-          <FavoriteOddsTeam team={match.away} odds={awayOdds} align="right" />
+          <FavoritePredictionTeam team={match.away} align="right" />
         </div>
 
-        <div className="relative mt-4 overflow-hidden rounded-2xl border border-white/[0.07] bg-black/26 px-4 py-3">
-          <div
-            className="absolute inset-y-0 left-0 bg-white/[0.045]"
-            style={{ width: `${Math.min(getImpliedProbability(drawOdds.value), 56)}%` }}
-          />
-          <div className="relative flex items-center justify-between gap-3">
-            <span className="text-[10px] font-black uppercase tracking-[0.12em] text-white/34">平局</span>
-            <span className="text-lg font-black tabular-nums text-white">{drawOdds.value.toFixed(2)}</span>
+        <div className="favorites-probability-card relative overflow-hidden rounded-2xl border border-white/[0.07] bg-black/26 px-4 py-3">
+          <div className="relative grid grid-cols-3 gap-2">
+            {probabilitySegments.map((segment) => (
+              <div key={segment.label} className="min-w-0">
+                <p
+                  className={`favorites-segment-value text-xl font-black leading-none tabular-nums ${segment.valueClass}`}
+                  style={{ fontFamily: "ScreenMatrix, monospace" }}
+                >
+                  {segment.probability}%
+                </p>
+                <p className="favorites-segment-label mt-1 truncate text-[9px] font-black uppercase tracking-[0.12em] text-white/30">{segment.label}</p>
+              </div>
+            ))}
+          </div>
+          <div className="favorites-probability-track relative mt-3 h-2 overflow-hidden rounded-full bg-white/[0.08]">
+            <div className="flex h-full w-full">
+              {probabilitySegments.map((segment) => (
+                <div
+                  key={`${segment.label}-bar`}
+                  className={`h-full ${segment.barClass}`}
+                  style={{ width: `${segment.width}%` }}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -559,23 +578,14 @@ function FavoriteOddsPanel({ match, odds }: { match: FavoriteMatchCard; odds: Fa
   );
 }
 
-function FavoriteOddsTeam({ team, odds, align }: { team: Team; odds: FavoriteOddsItem; align: "left" | "right" }) {
+function FavoritePredictionTeam({ team, align }: { team: Team; align: "left" | "right" }) {
   const isRight = align === "right";
-  const probability = getImpliedProbability(odds.value);
 
   return (
-    <div className={`min-w-0 ${isRight ? "text-right" : "text-left"}`}>
-      <div className={`mb-2 flex items-center gap-2 ${isRight ? "justify-end" : "justify-start"}`}>
-        {!isRight && <TeamMark team={team} muted />}
-        <span className="truncate text-xs font-black text-white/68">{team.name}</span>
-        {isRight && <TeamMark team={team} muted />}
-      </div>
-      <p className={`text-3xl font-black leading-none tabular-nums ${odds.active ? "text-volt" : "text-white"}`}>
-        {odds.value.toFixed(2)}
-      </p>
-      <div className={`mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.08] ${isRight ? "ml-auto" : ""}`}>
-        <div className="h-full rounded-full bg-volt/80" style={{ width: `${Math.min(probability, 72)}%` }} />
-      </div>
+    <div className={`favorite-prediction-team flex min-w-0 items-center gap-2 ${isRight ? "justify-end text-right" : "justify-start text-left"}`}>
+      {!isRight && <TeamMark team={team} muted />}
+      <span className="truncate text-xs font-black text-white/68">{team.name}</span>
+      {isRight && <TeamMark team={team} muted />}
     </div>
   );
 }
@@ -760,11 +770,6 @@ function getTeamCode(team: Team) {
   if (flagCode && FLAG_TO_TEAM_CODE[flagCode]) return FLAG_TO_TEAM_CODE[flagCode];
   if (/^[A-Z]{2,4}$/.test(team.badge)) return team.badge;
   return team.name.replace(/[^\p{L}\p{N}]/gu, "").slice(0, 3).toUpperCase() || "TBD";
-}
-
-function getVenueNavigationHref(match: FavoriteMatchCard) {
-  const query = [match.location, match.city].filter(Boolean).join(" ");
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query || match.title)}`;
 }
 
 type FavoriteOddsItem = {

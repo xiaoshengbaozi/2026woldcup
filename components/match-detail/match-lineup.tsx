@@ -349,18 +349,20 @@ export function SquadLineupPanel({
   accentHex: string;
   accentFrom: string;
 }) {
+  const displayPlayers = reconcileLineupPlayers(players, teamCode);
+
   return (
     <>
       <FeaturedSquadSummary
         teamName={teamName}
         teamCode={teamCode}
         coach={coach}
-        players={players}
+        players={displayPlayers}
         officialWorldCupSquad={officialWorldCupSquad}
         accentHex={accentHex}
         accentFrom={accentFrom}
       />
-      <PlayerGrid players={players} accentHex={accentHex} accentFrom={accentFrom} />
+      <PlayerGrid players={displayPlayers} accentHex={accentHex} accentFrom={accentFrom} />
     </>
   );
 }

@@ -494,60 +494,34 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, scoutNot
 
               <div className="grid gap-5 lg:grid-cols-[.78fr_1.45fr_.78fr]">
                 <div className={`${activeMobilePanel === "overview" ? "block" : "hidden"} space-y-5 lg:block`}>
-                  <DashPanel title="能力雷达" icon={BarChart3} center>
-                    <div className="flex justify-center py-4">
-                      <PlayerRadar stats={radarStats} />
-                    </div>
-                    <div className="mt-2 flex flex-wrap justify-center gap-2">
-                      {radarStats.map((stat) => (
-                        <div
-                          key={stat.label}
-                          className="rounded-xl bg-white/[0.03] px-3 py-2 text-center ring-1 ring-white/[0.04]"
-                        >
-                          <p
-                            className="text-lg font-bold text-volt tabular-nums"
-                            style={{ fontFamily: "ScreenMatrix, monospace" }}
-                          >
-                            {stat.value}
-                          </p>
-                          <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-white/35">
-                            {stat.label}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </DashPanel>
-
                   <DashPanel title="当前效力" icon={Shield} accent>
-                    <div className="rounded-2xl bg-white/[0.03] p-4 ring-1 ring-white/[0.05]">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-volt/10 ring-1 ring-white/[0.06]">
-                          {currentTeamLogo ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={currentTeamLogo} alt="" className="h-8 w-8 object-contain" />
-                          ) : (
-                            <Shield className="h-6 w-6 text-volt/70" />
-                          )}
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-white/88">{currentTeam}</p>
-                          <p className="mt-0.5 text-xs text-white/40">俱乐部</p>
-                        </div>
+                    <div className="flex items-center gap-3 border-b border-white/[0.05] pb-4">
+                      <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-volt/10 ring-1 ring-white/[0.06]">
+                        {currentTeamLogo ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={currentTeamLogo} alt="" className="h-8 w-8 object-contain" />
+                        ) : (
+                          <Shield className="h-6 w-6 text-volt/70" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-bold text-white/88">{currentTeam}</p>
+                        <p className="mt-0.5 text-xs text-white/40">俱乐部</p>
                       </div>
                     </div>
 
-                    <div className="mt-4 grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-4 divide-x divide-white/[0.05] border-b border-white/[0.05] py-3">
                       <StatBlock label="出场" value={total.appearances} />
                       <StatBlock label="分钟" value={total.minutes} />
                       <StatBlock label="进球" value={total.goals} accent />
                       <StatBlock label="助攻" value={total.assists} accent />
                     </div>
 
-                    <div className="mt-5 space-y-2">
+                    <div className="divide-y divide-white/[0.05]">
                       {(data?.seasonStats ?? []).slice(0, 4).map((item, index) => (
                         <div
                           key={`${item.league?.id}-${index}`}
-                          className="flex items-center justify-between rounded-xl bg-white/[0.035] px-4 py-3 ring-1 ring-white/[0.05] transition-colors hover:bg-white/[0.055]"
+                          className="flex items-center justify-between py-3 transition-colors hover:bg-white/[0.025]"
                         >
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-semibold text-white/78">
@@ -561,13 +535,24 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, scoutNot
                             <span className="text-xs text-white/40">
                               {item.games?.appearences ?? 0}场
                             </span>
-                            <span className="rounded-lg bg-volt/10 px-2.5 py-1 font-mono text-xs font-bold text-volt">
+                            <span className="font-mono text-xs font-bold text-volt">
                               {item.games?.minutes ?? 0}&#x2032;
                             </span>
                           </div>
                         </div>
                       ))}
                       {!(data?.seasonStats ?? []).length && <EmptyState text="暂无赛季统计数据" />}
+                    </div>
+                  </DashPanel>
+
+                  <DashPanel title="能力雷达" icon={BarChart3}>
+                    <div className="flex justify-center py-1">
+                      <PlayerRadar stats={radarStats} />
+                    </div>
+                    <div className="mt-1 grid grid-cols-5 divide-x divide-white/[0.05] border-t border-white/[0.05] pt-3">
+                      {radarStats.map((stat) => (
+                        <StatBlock key={stat.label} label={stat.label} value={stat.value} accent />
+                      ))}
                     </div>
                   </DashPanel>
 
@@ -649,7 +634,15 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, scoutNot
                               {item.kind === "honor" ? "荣誉" : "转会"}
                             </span>
                           </div>
-                          <p className="mt-2 text-xs font-semibold text-white/62">{item.title}</p>
+                          {item.kind === "transfer" && item.outTeam && item.inTeam ? (
+                            <div className="mt-2 flex min-w-0 items-center gap-2 text-xs font-semibold text-white/62">
+                              <TeamLogoName name={item.outTeam.name} logo={item.outTeam.logo} className="flex-1" />
+                              <span className="shrink-0 text-white/28">→</span>
+                              <TeamLogoName name={item.inTeam.name} logo={item.inTeam.logo} className="flex-1" />
+                            </div>
+                          ) : (
+                            <p className="mt-2 text-xs font-semibold text-white/62">{item.title}</p>
+                          )}
                           {item.detail && <p className="mt-1 text-xs text-white/38">{item.detail}</p>}
                         </div>
                       ))}
@@ -801,10 +794,10 @@ function PlayerArticlePreview({ article }: { article: PlayerArticle }) {
 type RadarStat = { label: string; value: number };
 
 function PlayerRadar({ stats }: { stats: RadarStat[] }) {
-  const size = 280;
+  const size = 224;
   const cx = size / 2;
   const cy = size / 2;
-  const maxRadius = 105;
+  const maxRadius = 82;
   const levels = 5;
   const n = stats.length;
 
@@ -841,7 +834,7 @@ function PlayerRadar({ stats }: { stats: RadarStat[] }) {
   });
 
   // Label positions
-  const labelRadius = maxRadius + 22;
+  const labelRadius = maxRadius + 18;
   const labels = stats.map((stat, i) => {
     const p = getPoint(i, labelRadius);
     return { ...stat, x: p.x, y: p.y };
@@ -982,37 +975,21 @@ function DashPanel({
   icon: Icon,
   children,
   accent,
-  center,
 }: {
   title: string;
   icon: LucideIcon;
   children: React.ReactNode;
   accent?: boolean;
-  center?: boolean;
 }) {
   return (
-    <section
-      className="hero-card overflow-hidden p-5"
-    >
-      <div
-        className={`mb-4 flex items-center gap-2.5 ${
-          center ? "justify-center" : ""
-        }`}
-      >
-        <div
-          className={`flex h-7 w-7 items-center justify-center rounded-lg ${
-            accent ? "bg-volt/15 text-volt" : "bg-white/[0.06] text-volt/50"
-          }`}
-        >
-          <Icon className="h-4 w-4" />
+    <section className="hero-card overflow-hidden p-5">
+      <div className="mb-5 flex items-center justify-between border-b border-white/[0.04] pb-3">
+        <div className="flex items-center gap-2">
+          <Icon className={`h-4 w-4 ${accent ? "text-volt" : "text-volt/70"}`} />
+          <h2 className={`text-sm font-semibold uppercase ${accent ? "text-volt/85" : "text-white"}`}>
+            {title}
+          </h2>
         </div>
-        <h2
-          className={`text-sm font-bold uppercase tracking-wider ${
-            accent ? "text-volt/80" : "text-white/70"
-          }`}
-        >
-          {title}
-        </h2>
       </div>
       {children}
     </section>
@@ -1029,15 +1006,9 @@ function StatBlock({
   accent?: boolean;
 }) {
   return (
-    <div
-      className={`rounded-xl p-3 text-center ring-1 ${
-        accent
-          ? "bg-volt/[0.06] ring-volt/12"
-          : "bg-white/[0.03] ring-white/[0.05]"
-      }`}
-    >
+    <div className="min-w-0 px-2 py-2 text-center">
       <p
-        className={`break-words text-xl font-black tabular-nums sm:text-2xl ${
+        className={`break-words text-lg font-black tabular-nums sm:text-2xl ${
           accent ? "text-volt" : "text-white"
         }`}
         style={{ fontFamily: "ScreenMatrix, monospace" }}
@@ -1048,6 +1019,32 @@ function StatBlock({
         {label}
       </p>
     </div>
+  );
+}
+
+function TeamLogoName({
+  name,
+  logo,
+  fallbackIcon: FallbackIcon = Shield,
+  className = "",
+}: {
+  name: string;
+  logo?: string;
+  fallbackIcon?: LucideIcon;
+  className?: string;
+}) {
+  return (
+    <span className={`inline-flex min-w-0 items-center gap-2 ${className}`}>
+      <span className="grid h-6 w-6 shrink-0 place-items-center overflow-hidden rounded-lg bg-white/[0.05] ring-1 ring-white/[0.06]">
+        {logo ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={logo} alt="" className="h-[18px] w-[18px] object-contain" />
+        ) : (
+          <FallbackIcon className="h-3.5 w-3.5 text-volt/55" />
+        )}
+      </span>
+      <span className="min-w-0 truncate">{name}</span>
+    </span>
   );
 }
 
@@ -1071,7 +1068,15 @@ function buildCareerTimeline(
     kind: "transfer" as const,
     date: item.date || "日期待更新",
     sortKey: item.date || "",
-    title: `${item.teams?.out?.name || "未知"} → ${item.teams?.in?.name || "未知"}`,
+    title: `${localizeClubName(item.teams?.out?.name) || "未知"} → ${localizeClubName(item.teams?.in?.name) || "未知"}`,
+    outTeam: {
+      name: localizeClubName(item.teams?.out?.name) || "未知",
+      logo: item.teams?.out?.logo || "",
+    },
+    inTeam: {
+      name: localizeClubName(item.teams?.in?.name) || "未知",
+      logo: item.teams?.in?.logo || "",
+    },
     detail: item.type || "转会",
   }));
 
@@ -1080,6 +1085,8 @@ function buildCareerTimeline(
     date: item.season || "赛季待更新",
     sortKey: item.season || "",
     title: item.league || "赛事荣誉",
+    outTeam: null,
+    inTeam: null,
     detail: [item.place, item.country].filter(Boolean).join(" · "),
   }));
 

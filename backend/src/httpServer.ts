@@ -23,6 +23,7 @@ import {
   getWorldCupStandings,
   getWorldCupWarmupFixtures,
 } from "./worldCupData";
+import { createWechatJsSdkSignature, isWechatJsSdkConfigured } from "./wechatJsSdk";
 
 const execFileAsync = promisify(execFile);
 const NEWS_SERVICE_DIR = process.env.NEWS_SERVICE_DIR || "/opt/worldcup-news";
@@ -124,6 +125,15 @@ export function createHttpServer(options: HttpServerOptions) {
       return;
     }
 
+    if (req.method === "GET" && url.pathname === "/api/wechat/js-sdk-signature") {
+      createWechatJsSdkSignature(url.searchParams.get("url") || "")
+        .then((payload) => sendJson(res, payload))
+        .catch((error: Error & { statusCode?: number }) => {
+          sendJson(res, { error: error.message || "wechat_js_sdk_signature_failed" }, error.statusCode ?? 500);
+        });
+      return;
+    }
+
     if (req.method === "GET" && url.pathname === "/api/health") {
       const state = options.getState();
       sendJson(res, {
@@ -132,6 +142,7 @@ export function createHttpServer(options: HttpServerOptions) {
           polymarketConnected: state.polymarketConnected,
           lastUpdateTimestamp: state.lastPolymarketUpdate,
           apiFootballConfigured: options.apiFootball?.isConfigured() ?? false,
+          wechatJsSdkConfigured: isWechatJsSdkConfigured(),
           xApi: options.playerXTimeline?.getRuntimeStats() ?? null,
         },
         clients: options.wsServer.getClientCount(),
@@ -170,6 +181,7 @@ export function createHttpServer(options: HttpServerOptions) {
           polymarketConnected: state.polymarketConnected,
           lastUpdateTimestamp: state.lastPolymarketUpdate,
           apiFootballConfigured: options.apiFootball?.isConfigured() ?? false,
+          wechatJsSdkConfigured: isWechatJsSdkConfigured(),
           xApi: options.playerXTimeline?.getRuntimeStats() ?? null,
         },
         data: {

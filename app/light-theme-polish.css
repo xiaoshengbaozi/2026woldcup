@@ -165,3 +165,178 @@
 [data-theme="light"] .world-cup-identity-card .text-white\/48 {
   color: var(--lm-text-muted) !important;
 }
+
+[data-theme="light"] .next-match-card {
+  background:
+    linear-gradient(135deg, rgba(255, 254, 250, 0.82), rgba(238, 244, 231, 0.58)),
+    #fffefa !important;
+  box-shadow:
+    0 16px 42px rgba(31, 43, 26, 0.09),
+    0 0 36px -18px rgba(54, 65, 44, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    inset 0 -1px 0 rgba(54, 65, 44, 0.06) !important;
+}
+
+[data-theme="light"] .next-match-card::before {
+  background: linear-gradient(135deg, rgba(54, 65, 44, 0.22), rgba(255, 255, 255, 0.36), rgba(172, 126, 64, 0.14)) !important;
+}
+
+[data-theme="light"] .next-match-card::after {
+  background:
+    radial-gradient(ellipse at 18% 10%, rgba(255, 255, 255, 0.48), transparent 48%),
+    radial-gradient(ellipse at 78% 88%, rgba(54, 65, 44, 0.08), transparent 52%) !important;
+}
+
+[data-theme="light"] .next-match-media {
+  opacity: 0.5 !important;
+  filter: saturate(0.92) contrast(0.88) brightness(1.22);
+}
+
+[data-theme="light"] .next-match-shade {
+  background:
+    linear-gradient(90deg, rgba(255, 254, 250, 0.96) 0%, rgba(248, 250, 242, 0.88) 36%, rgba(248, 250, 242, 0.48) 64%, rgba(248, 250, 242, 0.2) 100%),
+    linear-gradient(0deg, rgba(238, 244, 231, 0.7) 0%, rgba(255, 254, 250, 0.18) 42%, rgba(255, 254, 250, 0.18) 100%) !important;
+}
+
+[data-theme="light"] .next-match-glow {
+  background:
+    radial-gradient(circle at 24% 18%, rgba(54, 65, 44, 0.09), transparent 28%),
+    radial-gradient(circle at 74% 68%, rgba(172, 126, 64, 0.1), transparent 36%) !important;
+}
+
+[data-theme="light"] .next-match-country-code {
+  color: #182014 !important;
+  text-shadow: 0 8px 22px rgba(31, 43, 26, 0.12);
+}
+
+[data-theme="light"] .next-match-countdown {
+  background: rgba(255, 254, 250, 0.72) !important;
+  border: 1px solid rgba(54, 65, 44, 0.1);
+  box-shadow:
+    0 12px 28px rgba(31, 43, 26, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(54, 65, 44, 0.05) !important;
+}
+
+[data-theme="light"] .next-match-countdown .bg-volt\/15 {
+  background-color: rgba(54, 65, 44, 0.09) !important;
+  color: #36412c !important;
+  box-shadow: 0 0 30px rgba(54, 65, 44, 0.12) !important;
+}
+
+[data-theme="light"] .next-match-countdown .bg-volt\/15:hover {
+  background-color: #36412c !important;
+  color: #fffefa !important;
+}
+
+[data-theme="light"] .avatar-popover {
+  background:
+    linear-gradient(135deg, rgba(255, 254, 250, 0.94), rgba(242, 247, 236, 0.82)),
+    rgba(255, 254, 250, 0.96) !important;
+  border-color: rgba(54, 65, 44, 0.14) !important;
+  color: var(--lm-text-primary) !important;
+  box-shadow:
+    0 18px 46px rgba(31, 43, 26, 0.12),
+    0 0 34px -18px rgba(54, 65, 44, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92) !important;
+  backdrop-filter: blur(26px);
+}
+
+[data-theme="light"] .avatar-popover-inner > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--lm-border) !important;
+}
+
+[data-theme="light"] .avatar-popover a,
+[data-theme="light"] .avatar-popover button {
+  color: var(--lm-text-secondary) !important;
+}
+
+[data-theme="light"] .avatar-popover a:hover,
+[data-theme="light"] .avatar-popover button:hover {
+  background-color: rgba(54, 65, 44, 0.06);
+  color: var(--lm-accent-strong) !important;
+}
+
+[data-theme="light"] .avatar-popover .text-white\/66,
+[data-theme="light"] .avatar-popover .text-white\/68 {
+  color: var(--lm-text-secondary) !important;
+}
+
+[data-theme="light"] .avatar-popover .text-white\/42,
+[data-theme="light"] .avatar-popover .text-white\/38,
+[data-theme="light"] .avatar-popover .text-white\/36,
+[data-theme="light"] .avatar-popover .text-white\/34 {
+  color: var(--lm-text-muted) !important;
+}
+
+[data-theme="light"] .avatar-popover .bg-white\/\[0\.055\] {
+  background-color: rgba(54, 65, 44, 0.07) !important;
+}
+
+[data-theme="light"] .avatar-popover .ring-white\/\[0\.1\] {
+  --tw-ring-color: rgba(54, 65, 44, 0.13) !important;
+}
+
+[data-theme="light"] .avatar-popover .bg-volt {
+  background-color: #36412c !important;
+  color: #fffefa !important;
+  box-shadow: 0 10px 24px rgba(54, 65, 44, 0.16) !important;
+}
+
+[data-theme="light"] .avatar-popover .text-volt,
+[data-theme="light"] .avatar-popover .text-volt\/70,
+[data-theme="light"] .avatar-popover .text-volt\/80 {
+  color: #36412c !important;
+}
+
+[data-theme="light"] .avatar-popover .absolute.inset-x-0.bottom-0 {
+  background: rgba(255, 254, 250, 0.66) !important;
+}
+
+[data-theme="light"] .favorites-odds-panel {
+  background:
+    linear-gradient(135deg, rgba(255, 254, 250, 0.94), rgba(243, 247, 237, 0.82)),
+    #fffefa !important;
+  border-color: var(--lm-border-strong) !important;
+  box-shadow:
+    0 16px 34px rgba(31, 43, 26, 0.075),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    inset 0 -1px 0 rgba(54, 65, 44, 0.045) !important;
+}
+
+[data-theme="light"] .favorites-odds-glow {
+  background:
+    radial-gradient(circle at 18% 0%, rgba(54, 65, 44, 0.08), transparent 34%),
+    radial-gradient(circle at 92% 18%, rgba(172, 126, 64, 0.08), transparent 36%) !important;
+}
+
+[data-theme="light"] .favorites-odds-header {
+  border-color: var(--lm-border) !important;
+}
+
+[data-theme="light"] .favorite-prediction-team span {
+  color: var(--lm-text-secondary) !important;
+}
+
+[data-theme="light"] .favorite-prediction-bolt {
+  background: rgba(54, 65, 44, 0.07) !important;
+  border-color: rgba(54, 65, 44, 0.12) !important;
+  box-shadow: 0 0 20px rgba(54, 65, 44, 0.08) !important;
+}
+
+[data-theme="light"] .favorites-probability-card {
+  background: rgba(246, 248, 241, 0.82) !important;
+  border-color: var(--lm-border) !important;
+}
+
+[data-theme="light"] .favorites-probability-track {
+  background: rgba(54, 65, 44, 0.1) !important;
+}
+
+[data-theme="light"] .favorites-segment-label {
+  color: var(--lm-text-faint) !important;
+}
+
+[data-theme="light"] .favorites-segment-value.text-white\/82 {
+  color: var(--lm-text-primary) !important;
+}
