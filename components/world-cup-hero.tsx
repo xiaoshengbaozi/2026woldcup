@@ -71,6 +71,71 @@ function PopularTeamsCard({ popularTeams, className = "" }: { popularTeams: Popu
   );
 }
 
+function ProgressCard({
+  progress,
+  completedCount,
+  ongoingCount,
+  matchCount,
+  progressMarker,
+  gradientId,
+  className = ""
+}: {
+  progress: number;
+  completedCount: number;
+  ongoingCount: number;
+  matchCount: number;
+  progressMarker: number;
+  gradientId: string;
+  className?: string;
+}) {
+  return (
+    <div className={`hero-card p-5 ${className}`}>
+      <div className="mb-5 hidden items-center justify-between border-b border-white/[0.04] pb-3 sm:flex">
+        <div className="flex items-center gap-2"><BarChart3 className="h-4 w-4 text-volt" /><p className="text-sm font-semibold uppercase text-white">赛事进度</p></div>
+        <span className="tabular text-sm text-volt">{progress}%</span>
+      </div>
+      <div className="grid grid-cols-3 gap-2 sm:divide-x sm:divide-white/[0.04]">
+        <Metric label="比赛" value={matchCount || "--"} />
+        <Metric label="完赛" value={completedCount} />
+        <Metric label="进行中" value={ongoingCount} accent />
+      </div>
+      <div className="relative mt-[0.6rem] h-[18px]">
+        <div className="absolute left-0 right-0 top-1/2 h-2 -translate-y-1/2 overflow-hidden rounded-full bg-white/[0.06] shadow-[inset_0_1px_8px_rgba(0,0,0,.42)]">
+          <motion.div initial={{ width: 0 }} animate={{ width: `${progressMarker}%` }} transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }} className="h-full rounded-full bg-gradient-to-r from-volt to-flare shadow-[0_0_22px_rgba(216,255,62,.45)]" />
+        </div>
+        <motion.div
+          initial={{ left: "0%" }}
+          animate={{ left: `${progressMarker}%` }}
+          transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+          className="pointer-events-none absolute top-1/2 grid h-[18px] w-[18px] -translate-x-1/2 -translate-y-1/2 place-items-center"
+          aria-hidden="true"
+        >
+          <motion.span
+            initial={{ opacity: 0, scale: 0.72, rotate: -18 }}
+            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+            transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+            className="grid h-[18px] w-[18px] place-items-center"
+          >
+            <svg viewBox="0 0 32 32" className="h-[18px] w-[18px] drop-shadow-[0_0_10px_rgba(216,255,62,.42)]">
+              <circle cx="16" cy="16" r="14" fill={`url(#${gradientId})`} />
+              <path d="m16 7.4 5.1 3.7-1.95 5.95h-6.3L10.9 11.1 16 7.4Z" fill="#111" />
+              <path d="m6.2 14.3 4.7-3.2 1.95 5.95-3.9 4.7-3.25-2.25c-.22-1.7-.05-3.48.5-5.2Zm19.6 0c.55 1.72.72 3.5.5 5.2l-3.25 2.25-3.9-4.7 1.95-5.95 4.7 3.2ZM11.35 26.85l-2.4-5.1 3.9-4.7h6.3l3.9 4.7-2.4 5.1a13.9 13.9 0 0 1-9.3 0Z" fill="#111" />
+              <path d="M9.2 21.95 5.9 19.7m16.9 2.25 3.3-2.25M12.85 17.05l-1.95-5.95m8.25 5.95 1.95-5.95m-1.95 5.95 3.9 4.7m-10.2-4.7-3.9 4.7" fill="none" stroke="rgba(255,255,255,.7)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" />
+              <defs>
+                <radialGradient id={gradientId} cx="0" cy="0" r="1" gradientTransform="matrix(18 22 -22 18 10 7)">
+                  <stop stopColor="#fff" />
+                  <stop offset=".5" stopColor="#d8ff3e" stopOpacity=".92" />
+                  <stop offset="1" stopColor="#ff9a1f" stopOpacity=".84" />
+                </radialGradient>
+              </defs>
+            </svg>
+          </motion.span>
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
 export function WorldCupHero({ matches, firstMatch, progress, completedCount, ongoingCount, calendarUrl, webcalUrl, matchCount }: WorldCupHeroProps) {
   const [currentTime, setCurrentTime] = useState(() => Date.now());
   const { news: fifaNews, loading: newsLoading } = useFifaNews();
@@ -147,50 +212,15 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
             </div>
           </div>
 
-          <div className="hero-card p-5">
-            <div className="mb-5 hidden items-center justify-between border-b border-white/[0.04] pb-3 sm:flex">
-              <div className="flex items-center gap-2"><BarChart3 className="h-4 w-4 text-volt" /><p className="text-sm font-semibold uppercase text-white">赛事进度</p></div>
-              <span className="tabular text-sm text-volt">{progress}%</span>
-            </div>
-            <div className="grid grid-cols-3 gap-2 sm:divide-x sm:divide-white/[0.04]">
-              <Metric label="比赛" value={matchCount || "--"} />
-              <Metric label="完赛" value={completedCount} />
-              <Metric label="进行中" value={ongoingCount} accent />
-            </div>
-            <div className="relative mt-[0.6rem] h-[18px]">
-              <div className="absolute left-0 right-0 top-1/2 h-2 -translate-y-1/2 overflow-hidden rounded-full bg-white/[0.06] shadow-[inset_0_1px_8px_rgba(0,0,0,.42)]">
-                <motion.div initial={{ width: 0 }} animate={{ width: `${progressMarker}%` }} transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }} className="h-full rounded-full bg-gradient-to-r from-volt to-flare shadow-[0_0_22px_rgba(216,255,62,.45)]" />
-              </div>
-              <motion.div
-                initial={{ left: "0%" }}
-                animate={{ left: `${progressMarker}%` }}
-                transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
-                className="pointer-events-none absolute top-1/2 grid h-[18px] w-[18px] -translate-x-1/2 -translate-y-1/2 place-items-center"
-                aria-hidden="true"
-              >
-                <motion.span
-                  initial={{ opacity: 0, scale: 0.72, rotate: -18 }}
-                  animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                  transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
-                  className="grid h-[18px] w-[18px] place-items-center"
-                >
-                  <svg viewBox="0 0 32 32" className="h-[18px] w-[18px] drop-shadow-[0_0_10px_rgba(216,255,62,.42)]">
-                    <circle cx="16" cy="16" r="14" fill="url(#football-glass)" />
-                    <path d="m16 7.4 5.1 3.7-1.95 5.95h-6.3L10.9 11.1 16 7.4Z" fill="#111" />
-                    <path d="m6.2 14.3 4.7-3.2 1.95 5.95-3.9 4.7-3.25-2.25c-.22-1.7-.05-3.48.5-5.2Zm19.6 0c.55 1.72.72 3.5.5 5.2l-3.25 2.25-3.9-4.7 1.95-5.95 4.7 3.2ZM11.35 26.85l-2.4-5.1 3.9-4.7h6.3l3.9 4.7-2.4 5.1a13.9 13.9 0 0 1-9.3 0Z" fill="#111" />
-                    <path d="M9.2 21.95 5.9 19.7m16.9 2.25 3.3-2.25M12.85 17.05l-1.95-5.95m8.25 5.95 1.95-5.95m-1.95 5.95 3.9 4.7m-10.2-4.7-3.9 4.7" fill="none" stroke="rgba(255,255,255,.7)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" />
-                    <defs>
-                      <radialGradient id="football-glass" cx="0" cy="0" r="1" gradientTransform="matrix(18 22 -22 18 10 7)">
-                        <stop stopColor="#fff" />
-                        <stop offset=".5" stopColor="#d8ff3e" stopOpacity=".92" />
-                        <stop offset="1" stopColor="#ff9a1f" stopOpacity=".84" />
-                      </radialGradient>
-                    </defs>
-                  </svg>
-                </motion.span>
-              </motion.div>
-            </div>
-          </div>
+          <ProgressCard
+            progress={progress}
+            completedCount={completedCount}
+            ongoingCount={ongoingCount}
+            matchCount={matchCount}
+            progressMarker={progressMarker}
+            gradientId="football-glass-desktop"
+            className="hidden lg:block"
+          />
 
           <PopularTeamsCard popularTeams={popularTeams} className="hidden lg:block" />
         </motion.aside>
@@ -227,6 +257,16 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
               </div>
             </div>
           </div>
+
+          <ProgressCard
+            progress={progress}
+            completedCount={completedCount}
+            ongoingCount={ongoingCount}
+            matchCount={matchCount}
+            progressMarker={progressMarker}
+            gradientId="football-glass-mobile"
+            className="lg:hidden"
+          />
 
           <PopularTeamsCard popularTeams={popularTeams} className="lg:hidden" />
 
