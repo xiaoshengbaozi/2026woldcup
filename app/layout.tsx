@@ -14,8 +14,38 @@ const interTight = Inter_Tight({
 });
 
 export const metadata: Metadata = {
-  title: "赛波 | CYBERBALL",
-  description: "赛波（CYBERBALL）源于赛博世界波，将实时赛事、AI 预测、全球新闻与数据可视化融合为足球时代的数字竞技场。"
+  metadataBase: new URL("https://ball.boyzi.fun"),
+  title: "赛波CYBERBALL — 2026世界杯看球伴侣",
+  description:
+    "赛波（CYBERBALL）源于赛博世界波，将实时赛事、AI预测、全球新闻与数据可视化融合为足球时代的数字竞技场。48支参赛队实时赔率、赛程日历、球员档案、小组赛积分榜——一屏尽览。",
+  applicationName: "赛波 | CYBERBALL",
+  alternates: {
+    canonical: "/"
+  },
+  openGraph: {
+    type: "website",
+    locale: "zh_CN",
+    url: "/",
+    siteName: "赛波 | CYBERBALL",
+    title: "赛波CYBERBALL — 2026世界杯看球伴侣",
+    description:
+      "赛波（CYBERBALL）源于赛博世界波，将实时赛事、AI预测、全球新闻与数据可视化融合为足球时代的数字竞技场。48支参赛队实时赔率、赛程日历、球员档案、小组赛积分榜——一屏尽览。",
+    images: [
+      {
+        url: "/og/cyberball-og.jpg",
+        width: 1200,
+        height: 631,
+        alt: "赛波CYBERBALL 2026世界杯看球伴侣"
+      }
+    ]
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "赛波CYBERBALL — 2026世界杯看球伴侣",
+    description:
+      "赛波（CYBERBALL）源于赛博世界波，将实时赛事、AI预测、全球新闻与数据可视化融合为足球时代的数字竞技场。",
+    images: ["/og/cyberball-og.jpg"]
+  }
 };
 
 const themeScript = "(function(){try{var t=localStorage.getItem('wc-theme');if(t!=='light'&&t!=='dark')t='dark';document.documentElement.setAttribute('data-theme',t)}catch(e){document.documentElement.setAttribute('data-theme','dark')}})()";

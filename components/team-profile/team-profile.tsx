@@ -8,6 +8,7 @@ import { useWorldCupData } from "@/lib/use-world-cup-data";
 import Link from "next/link";
 import { formatRoundLabel } from "@/lib/stage";
 import { formatDate, formatTime } from "@/lib/format";
+import { generateMatchRouteSlug } from "@/lib/match-detail";
 import { fetchWorldCupSquadDetails, type WorldCupSquadDetail } from "@/lib/world-cup-squads";
 import { localizeCoachName } from "@/lib/coach-localization";
 import { TeamSquadCard } from "@/components/team-profile/team-squad-card";
@@ -243,7 +244,12 @@ export function TeamProfile({ data }: TeamProfileProps) {
             const matchDate = formatDate(match.start);
             const matchTime = formatTime(match.start);
             return (
-              <div key={match.uid} className="tp-fixture-card">
+              <Link
+                key={match.uid}
+                href={`/matches/${generateMatchRouteSlug(match)}/`}
+                className="tp-fixture-card"
+                aria-label={`${teams.home.name} vs ${teams.away.name}`}
+              >
                 <div className="tp-fixture-teams">
                   <div className="tp-fixture-team">
                     <div className="tp-fixture-flag">
@@ -275,7 +281,7 @@ export function TeamProfile({ data }: TeamProfileProps) {
                 {match.location && (
                   <div className="tp-fixture-venue">{localizeLocationText(match.location)}</div>
                 )}
-              </div>
+              </Link>
             );
           })}
         </div>
@@ -358,7 +364,12 @@ export function TeamProfile({ data }: TeamProfileProps) {
                   const matchDate = formatDate(match.start);
                   const matchTime = formatTime(match.start);
                   return (
-                    <div key={match.uid} className="tp-fixture-card">
+                    <Link
+                      key={match.uid}
+                      href={`/matches/${generateMatchRouteSlug(match)}/`}
+                      className="tp-fixture-card"
+                      aria-label={`${teams.home.name} vs ${teams.away.name}`}
+                    >
                       <div className="tp-fixture-teams">
                         <div className="tp-fixture-team">
                           <div className="tp-fixture-flag">
@@ -390,7 +401,7 @@ export function TeamProfile({ data }: TeamProfileProps) {
                       {match.location && (
                         <div className="tp-fixture-venue">{localizeLocationText(match.location)}</div>
                       )}
-                    </div>
+                    </Link>
                   );
                 })}
               </div>

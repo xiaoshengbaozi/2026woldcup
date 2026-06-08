@@ -1,4 +1,5 @@
 import type { Match } from "@/types/match";
+import { getEffectiveMatchStatus } from "@/lib/match-status";
 
 const LOCAL_API_URL = "http://localhost:3001";
 const PRODUCTION_API_URL = "https://api.boyzi.fun";
@@ -134,7 +135,7 @@ export async function fetchWorldCupStandings(options: { season?: number; league?
 }
 
 function toMatch(fixture: NormalizedWorldCupFixture): Match {
-  return {
+  const match: Match = {
     uid: fixture.uid,
     apiFixtureId: fixture.apiFixtureId,
     summary: fixture.summary,
@@ -153,4 +154,17 @@ function toMatch(fixture: NormalizedWorldCupFixture): Match {
     homeTeam: fixture.homeTeam,
     awayTeam: fixture.awayTeam,
   };
+
+  const effectiveStatus = getEffectiveMatchStatus(match);
+
+  return {
+    ...match,
+    status: effectiveStatus,
+    statusLabel: getEffectiveStatusLabel(match, effectiveStatus),
+  };
+}
+
+function getEffectiveStatusLabel(match: Match, status: Match["status"]) {
+  if (status === "finished") return "已结束";
+  return match.statusLabel;
 }

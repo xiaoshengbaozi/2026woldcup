@@ -13,6 +13,8 @@ import {
   Globe2,
   LogIn,
   LogOut,
+  MailCheck,
+  Send,
   Star,
   Trophy,
   UserPlus,
@@ -297,6 +299,7 @@ function MePageContent() {
   const [playerCountry, setPlayerCountry] = useState("all");
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
+  const [emailNotice, setEmailNotice] = useState("");
   const ignoreAuthParamRef = useRef(false);
   const { matches } = useWorldCupData();
   const popularTeams = usePopularTeams();
@@ -335,6 +338,16 @@ function MePageContent() {
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (searchParams.get("emailVerified") !== "success") return;
+    setEmailNotice("邮箱验证成功");
+    void loadHome();
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.delete("emailVerified");
+    const query = nextParams.toString();
+    router.replace(query ? `/me?${query}` : "/me", { scroll: false });
+  }, [router, searchParams]);
 
   useEffect(() => {
     let active = true;
@@ -473,6 +486,24 @@ function MePageContent() {
     try {
       await userApi("/api/auth/logout", { method: "POST", body: "{}" });
       setHome(null);
+      setEmailNotice("");
+    } finally {
+      setBusy("");
+    }
+  }
+
+  async function resendEmailVerification() {
+    setBusy("resendEmail");
+    setEmailNotice("");
+    try {
+      const result = await userApi<{ user: PublicUser; emailVerificationSent?: boolean; alreadyVerified?: boolean }>("/api/auth/resend-verification", {
+        method: "POST",
+        body: "{}",
+      });
+      await loadHome();
+      setEmailNotice(result.alreadyVerified ? "邮箱已验证" : result.emailVerificationSent ? "验证邮件已发送，请查收邮箱" : "邮件服务暂未配置");
+    } catch (err) {
+      setEmailNotice(readableError(err, "验证邮件发送失败，请稍后再试"));
     } finally {
       setBusy("");
     }
@@ -496,15 +527,17 @@ function MePageContent() {
           transition={{ duration: 0.45, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
           className="hidden h-fit gap-5 lg:sticky lg:top-5 lg:grid"
         >
-          <section className="hero-card me-account-card grid h-[235px] overflow-hidden p-5 text-black sm:p-6">
+          <section className="hero-card me-account-card grid h-[265px] overflow-hidden p-5 text-black sm:p-6">
             <AccountCard
               home={home}
               catalog={catalog}
               avatarPlayerId={avatarPlayerId}
               busy={busy}
+              emailNotice={emailNotice}
               onLogin={() => openAuth("login")}
               onRegister={() => openAuth("register")}
               onLogout={logout}
+              onResendVerification={resendEmailVerification}
             />
           </section>
           <ScorerBoard players={topScorers} />
@@ -1042,17 +1075,21 @@ function AccountCard({
   catalog,
   avatarPlayerId,
   busy,
+  emailNotice,
   onLogin,
   onRegister,
   onLogout,
+  onResendVerification,
 }: {
   home: UserHomePayload | null;
   catalog: UserPreferenceCatalog;
   avatarPlayerId: string;
   busy: string;
+  emailNotice: string;
   onLogin: () => void;
   onRegister: () => void;
   onLogout: () => void;
+  onResendVerification: () => void;
 }) {
   const avatar = home
     ? home.user.profile.avatarUrl || getPlayerAvatar(home.user.profile.avatarPlayerId, home.catalog?.players ?? catalog.players)
@@ -1074,6 +1111,7 @@ function AccountCard({
             </div>
             <div className="min-w-0">
               <p className="truncate text-xl font-semibold text-black">{home.user.profile.displayName}</p>
+              <p className="mt-0.5 truncate text-xs font-semibold text-black/54">{home.user.emailVerifiedAt ? "邮箱已验证" : "邮箱待验证"}</p>
               {followedTeamFlags.length > 0 && (
                 <div className="mt-1.5 flex items-center gap-1.5">
                   {followedTeamFlags.map((team) => (
@@ -1084,6 +1122,25 @@ function AccountCard({
                 </div>
               )}
             </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {home.user.emailVerifiedAt ? (
+              <span className="inline-flex h-8 items-center gap-1.5 rounded-full bg-black/[0.06] px-3 text-xs font-bold text-black/70 ring-1 ring-black/10">
+                <MailCheck className="h-3.5 w-3.5" />
+                邮箱已验证
+              </span>
+            ) : (
+              <button
+                type="button"
+                disabled={busy === "resendEmail"}
+                onClick={onResendVerification}
+                className="inline-flex h-8 items-center gap-1.5 rounded-full bg-black px-3 text-xs font-bold text-white transition hover:opacity-85 disabled:opacity-50"
+              >
+                <Send className="h-3.5 w-3.5" />
+                {busy === "resendEmail" ? "发送中" : "重发验证邮件"}
+              </button>
+            )}
+            {emailNotice && <span className="min-w-0 flex-1 truncate text-xs font-semibold text-black/58">{emailNotice}</span>}
           </div>
           <div className="border-t border-dashed border-[#20242d61] pt-4">
             <div className="grid grid-cols-3 divide-x divide-[#20242d61] text-center">

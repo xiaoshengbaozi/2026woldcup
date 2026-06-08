@@ -11,13 +11,29 @@ import {
   teamContinentLabels,
   type QualifiedTeamCard,
 } from "@/data/teams";
+import { getFlagUrl } from "@/lib/world-cup-2026";
+import { userApi, type PublicUser, type UserSessionPayload } from "@/lib/user-system";
 
 const MOBILE_TOP_MODULE_OFFSET = 66;
 const FOLLOWED_TEAMS_STORAGE_KEY = "worldcup-followed-teams";
+const TEAM_CODE_ALIASES: Record<string, string> = {
+  ALG: "DZA",
+  KSA: "SAU",
+};
+
+type FollowedTeamRailItem = {
+  key: string;
+  savedId: string;
+  name: string;
+  flag: string;
+  detailHref: string;
+};
 
 export function TeamsIndex() {
   const [activeContinent, setActiveContinent] = useState(continentOrder[0]);
   const [followedTeamSlugs, setFollowedTeamSlugs] = useState<string[]>([]);
+  const [sessionUser, setSessionUser] = useState<PublicUser | null>(null);
+  const [signedIn, setSignedIn] = useState(false);
   const [hasLoadedFollowedTeams, setHasLoadedFollowedTeams] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
@@ -37,12 +53,55 @@ export function TeamsIndex() {
   );
   const activeTab = tabItems.find((item) => item.continent === activeContinent) ?? tabItems[0];
   const teamsBySlug = useMemo(() => new Map(qualifiedTeams.map((team) => [team.slug, team])), []);
+  const followedTeamKeys = useMemo(() => {
+    if (signedIn && sessionUser) {
+      return new Set(sessionUser.followedTeams.flatMap((team) => getSavedTeamKeys(team)));
+    }
+
+    return new Set(
+      followedTeamSlugs
+        .map((slug) => teamsBySlug.get(slug))
+        .filter((team): team is QualifiedTeamCard => Boolean(team))
+        .flatMap((team) => getQualifiedTeamKeys(team))
+    );
+  }, [followedTeamSlugs, sessionUser, signedIn, teamsBySlug]);
   const followedTeams = useMemo(
-    () => followedTeamSlugs.map((slug) => teamsBySlug.get(slug)).filter((team): team is QualifiedTeamCard => Boolean(team)),
-    [followedTeamSlugs, teamsBySlug]
+    () =>
+      signedIn && sessionUser
+        ? sessionUser.followedTeams.map((team) => toFollowedRailItem(team)).filter((team): team is FollowedTeamRailItem => Boolean(team))
+        : followedTeamSlugs
+            .map((slug) => teamsBySlug.get(slug))
+            .filter((team): team is QualifiedTeamCard => Boolean(team))
+            .map((team) => toFollowedRailItem(team)),
+    [followedTeamSlugs, sessionUser, signedIn, teamsBySlug]
   );
 
+  const refreshSession = useCallback(() => {
+    let active = true;
+    userApi<UserSessionPayload>("/api/me/session", { cache: "no-store" })
+      .then((payload) => {
+        if (!active) return;
+        setSessionUser(payload.user);
+        setSignedIn(true);
+      })
+      .catch(() => {
+        if (!active) return;
+        setSessionUser(null);
+        setSignedIn(false);
+      })
+      .finally(() => {
+        if (active) setHasLoadedFollowedTeams(true);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => refreshSession(), [refreshSession]);
+
   useEffect(() => {
+    if (signedIn) return;
     try {
       const stored = window.localStorage.getItem(FOLLOWED_TEAMS_STORAGE_KEY);
       if (!stored) return;
@@ -55,12 +114,12 @@ export function TeamsIndex() {
     } finally {
       setHasLoadedFollowedTeams(true);
     }
-  }, [teamsBySlug]);
+  }, [signedIn, teamsBySlug]);
 
   useEffect(() => {
-    if (!hasLoadedFollowedTeams) return;
+    if (!hasLoadedFollowedTeams || signedIn) return;
     window.localStorage.setItem(FOLLOWED_TEAMS_STORAGE_KEY, JSON.stringify(followedTeamSlugs));
-  }, [followedTeamSlugs, hasLoadedFollowedTeams]);
+  }, [followedTeamSlugs, hasLoadedFollowedTeams, signedIn]);
 
   useEffect(() => {
     const mobileQuery = window.matchMedia("(max-width: 639px)");
@@ -105,8 +164,36 @@ export function TeamsIndex() {
     setActiveContinent(continent);
   };
 
-  const toggleFollowTeam = (slug: string) => {
-    setFollowedTeamSlugs((current) => (current.includes(slug) ? current.filter((item) => item !== slug) : [...current, slug]));
+  const toggleFollowTeam = async (team: QualifiedTeamCard | string) => {
+    if (!signedIn) {
+      const target = typeof team === "string" ? teamsBySlug.get(team) : team;
+      if (!target) return;
+      setFollowedTeamSlugs((current) => (current.includes(target.slug) ? current.filter((item) => item !== target.slug) : [...current, target.slug]));
+      return;
+    }
+
+    const target = typeof team === "string" ? teamsBySlug.get(team) : team;
+    const currentSaved = target
+      ? sessionUser?.followedTeams.find((item) => savedTeamMatchesQualified(item, target))
+      : sessionUser?.followedTeams.find((item) => item.id === team);
+    if (currentSaved) {
+      const result = await userApi<{ user: PublicUser }>(`/api/me/follow/team/${encodeURIComponent(currentSaved.id)}`, { method: "DELETE" });
+      setSessionUser(result.user);
+      return;
+    }
+
+    if (!target) return;
+
+    const result = await userApi<{ user: PublicUser }>("/api/me/follow/team", {
+      method: "POST",
+      body: JSON.stringify({
+        id: target.code,
+        name: target.nameCn,
+        region: target.code,
+        logo: getTeamFlagUrl(target),
+      }),
+    });
+    setSessionUser(result.user);
   };
 
   return (
@@ -181,7 +268,7 @@ export function TeamsIndex() {
                   key={team.slug}
                   team={team}
                   index={index}
-                  isFollowed={followedTeamSlugs.includes(team.slug)}
+                  isFollowed={qualifiedTeamIsFollowed(team, followedTeamKeys)}
                   onToggleFollow={toggleFollowTeam}
                 />
               ))}
@@ -197,8 +284,8 @@ function FollowedTeamsRail({
   teams,
   onToggleFollow,
 }: {
-  teams: QualifiedTeamCard[];
-  onToggleFollow: (slug: string) => void;
+  teams: FollowedTeamRailItem[];
+  onToggleFollow: (team: QualifiedTeamCard | string) => void;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -232,7 +319,7 @@ function FollowedTeamsRail({
   };
 
   return (
-    <div className="relative rounded-[1.75rem] border border-white/[0.08] bg-white/[0.035] px-3 py-3 shadow-[0_18px_70px_rgba(0,0,0,.24)] backdrop-blur-2xl">
+    <div className="relative px-1 py-1">
       <div
         ref={scrollRef}
         className="flex gap-1 overflow-x-auto [scrollbar-width:none] sm:gap-2 [&::-webkit-scrollbar]:hidden"
@@ -240,20 +327,26 @@ function FollowedTeamsRail({
       >
         {teams.map((team) => (
           <div
-            key={team.slug}
-            className="group relative h-9 min-w-0 shrink-0 basis-[calc((100%-2.25rem)/10)] overflow-hidden rounded-full bg-black/30 ring-1 ring-white/[0.08] transition duration-300 hover:ring-volt/45 sm:h-12 sm:basis-[calc((100%-4.5rem)/10)]"
+            key={team.key}
+            className="group relative min-w-0 shrink-0 basis-[calc((100%_-_1.25rem)/6)] sm:basis-[calc((100%_-_5.5rem)/12)]"
           >
-            <Link href={team.detailHref} className="block h-full w-full" aria-label={team.nameCn}>
-              <Image src={team.cover} alt={team.nameCn} fill sizes="10vw" className="object-cover opacity-80 transition duration-500 group-hover:scale-110 group-hover:opacity-100" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-              <span className="absolute inset-x-1 bottom-1 hidden truncate text-center text-[10px] font-black text-white drop-shadow sm:block">
-                {team.nameCn}
+            <Link href={team.detailHref} className="flex min-w-0 flex-col items-center gap-1.5 px-1 py-0.5 text-center" aria-label={team.name}>
+              <Image
+                src={team.flag}
+                alt={team.name}
+                width={80}
+                height={54}
+                sizes="80px"
+                className="h-5 w-auto max-w-full rounded-[0.2rem] opacity-90 shadow-[0_0_18px_rgba(255,255,255,.08)] transition duration-500 group-hover:scale-110 group-hover:opacity-100 sm:h-7"
+              />
+              <span className="block w-full truncate text-[10px] font-black leading-none text-white/78 transition group-hover:text-white sm:text-[11px]">
+                {team.name}
               </span>
             </Link>
             <button
               type="button"
-              aria-label={`Unfollow ${team.nameCn}`}
-              onClick={() => onToggleFollow(team.slug)}
+              aria-label={`Unfollow ${team.name}`}
+              onClick={() => onToggleFollow(team.savedId)}
               className="absolute right-0 top-0 grid h-4 w-4 place-items-center rounded-full bg-volt text-black opacity-0 shadow-[0_0_18px_rgba(216,255,62,.35)] transition duration-300 hover:scale-110 group-hover:opacity-100 sm:h-5 sm:w-5"
             >
               <Heart className="h-2.5 w-2.5 fill-current sm:h-3 sm:w-3" />
@@ -296,7 +389,7 @@ function TeamCard({
   team: QualifiedTeamCard;
   index: number;
   isFollowed: boolean;
-  onToggleFollow: (slug: string) => void;
+  onToggleFollow: (team: QualifiedTeamCard | string) => void;
 }) {
   return (
     <motion.div
@@ -336,7 +429,7 @@ function TeamCard({
         type="button"
         aria-pressed={isFollowed}
         aria-label={`${isFollowed ? "Unfollow" : "Follow"} ${team.nameCn}`}
-        onClick={() => onToggleFollow(team.slug)}
+        onClick={() => onToggleFollow(team)}
         className={`absolute right-4 top-4 z-10 grid h-10 w-10 place-items-center rounded-full border backdrop-blur-xl transition duration-300 ${
           isFollowed
             ? "border-volt/50 bg-volt text-black shadow-[0_0_28px_rgba(216,255,62,.24)]"
@@ -347,4 +440,96 @@ function TeamCard({
       </button>
     </motion.div>
   );
+}
+
+function toFollowedRailItem(team: QualifiedTeamCard | PublicUser["followedTeams"][number]): FollowedTeamRailItem {
+  if ("slug" in team) {
+    return {
+      key: team.slug,
+      savedId: team.slug,
+      name: team.nameCn,
+      flag: getTeamFlagUrl(team),
+      detailHref: team.detailHref,
+    };
+  }
+
+  const qualified = findQualifiedTeamForSaved(team);
+  const code = normalizeTeamCode(team.region || team.id);
+
+  return {
+    key: qualified?.slug || normalizeTeamKey(team.id) || team.id,
+    savedId: team.id,
+    name: qualified?.nameCn || team.name,
+    flag: qualified ? getTeamFlagUrl(qualified) : getSavedTeamFlagUrl(team, code),
+    detailHref: qualified?.detailHref || `/teams/${slugifyRoute(team.name)}`,
+  };
+}
+
+function qualifiedTeamIsFollowed(team: QualifiedTeamCard, followedKeys: Set<string>) {
+  return getQualifiedTeamKeys(team).some((key) => followedKeys.has(key));
+}
+
+function savedTeamMatchesQualified(saved: PublicUser["followedTeams"][number], team: QualifiedTeamCard) {
+  const savedKeys = getSavedTeamKeys(saved);
+  return getQualifiedTeamKeys(team).some((key) => savedKeys.includes(key));
+}
+
+function getQualifiedTeamKeys(team: QualifiedTeamCard) {
+  return [
+    normalizeTeamCode(team.code),
+    normalizeTeamKey(team.slug),
+    normalizeTeamKey(team.nameCn),
+    normalizeTeamKey(team.nameEn),
+  ].filter(Boolean);
+}
+
+function getSavedTeamKeys(team: PublicUser["followedTeams"][number]) {
+  return [
+    normalizeTeamCode(team.id),
+    normalizeTeamCode(team.region),
+    normalizeTeamKey(team.id),
+    normalizeTeamKey(team.name),
+  ].filter(Boolean);
+}
+
+function findQualifiedTeamForSaved(team: PublicUser["followedTeams"][number]) {
+  const savedKeys = new Set(getSavedTeamKeys(team));
+  return qualifiedTeams.find((item) => getQualifiedTeamKeys(item).some((key) => savedKeys.has(key)));
+}
+
+function getTeamFlagUrl(team: QualifiedTeamCard) {
+  return getFlagUrl(normalizeTeamCode(team.code), 160);
+}
+
+function getSavedTeamFlagUrl(team: PublicUser["followedTeams"][number], code: string) {
+  if (team.logo?.includes("flagcdn.com/")) return team.logo;
+  if (code) return getFlagUrl(code, 160);
+  return team.logo || getFlagUrl("FIFA", 160);
+}
+
+function normalizeTeamCode(code?: string) {
+  if (!code) return "";
+  const upper = code.trim().toUpperCase();
+  if (!/^[A-Z]{2,4}$/.test(upper)) return "";
+  return TEAM_CODE_ALIASES[upper] ?? upper;
+}
+
+function normalizeTeamKey(value?: string) {
+  return (value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\p{L}\p{N}]+/gu, "");
+}
+
+function slugifyRoute(value: string) {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/&/g, " and ")
+    .replace(/[^\p{L}\p{N}\s-]/gu, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
 }

@@ -117,6 +117,10 @@ export interface WorldCupUser {
   email: string;
   passwordHash: string;
   passwordSalt: string;
+  emailVerifiedAt?: number | null;
+  emailVerificationTokenHash?: string | null;
+  emailVerificationExpiresAt?: number | null;
+  emailVerificationSentAt?: number | null;
   disabledAt?: number | null;
   createdAt: number;
   updatedAt: number;
@@ -242,6 +246,10 @@ export class UserStore {
       email,
       passwordHash: hashPassword(input.password, salt),
       passwordSalt: salt,
+      emailVerifiedAt: null,
+      emailVerificationTokenHash: null,
+      emailVerificationExpiresAt: null,
+      emailVerificationSentAt: null,
       disabledAt: null,
       createdAt: now,
       updatedAt: now,
@@ -279,6 +287,29 @@ export class UserStore {
     const stored = Buffer.from(user.passwordHash, "hex");
     const supplied = Buffer.from(hash, "hex");
     return stored.length === supplied.length && timingSafeEqual(stored, supplied);
+  }
+
+  setEmailVerificationToken(userId: string, tokenHash: string, expiresAt: number) {
+    const user = this.requireUser(userId);
+    user.emailVerificationTokenHash = tokenHash;
+    user.emailVerificationExpiresAt = expiresAt;
+    user.emailVerificationSentAt = Date.now();
+    this.touch(user);
+    return user;
+  }
+
+  verifyEmailToken(tokenHash: string) {
+    const user = this.data.users.find((item) => item.emailVerificationTokenHash === tokenHash) ?? null;
+    if (!user) throw createUserStoreError("invalid_email_verification_token", 403);
+    if (user.emailVerificationExpiresAt && user.emailVerificationExpiresAt <= Date.now()) {
+      throw createUserStoreError("email_verification_token_expired", 403);
+    }
+    user.emailVerifiedAt = Date.now();
+    user.emailVerificationTokenHash = null;
+    user.emailVerificationExpiresAt = null;
+    user.emailVerificationSentAt = null;
+    this.touch(user);
+    return user;
   }
 
   updateProfile(userId: string, profile: Partial<UserProfile>) {
@@ -588,7 +619,7 @@ export class UserStore {
 }
 
 export function toPublicUser(user: WorldCupUser) {
-  const { passwordHash, passwordSalt, ...publicUser } = user;
+  const { passwordHash, passwordSalt, emailVerificationTokenHash, emailVerificationExpiresAt, ...publicUser } = user;
   return publicUser;
 }
 
@@ -615,6 +646,10 @@ function upsertById<T extends { id: string }>(items: T[], item: T) {
 function normalizeStoredUser(user: WorldCupUser) {
   return {
     ...user,
+    emailVerifiedAt: user.emailVerifiedAt ?? null,
+    emailVerificationTokenHash: user.emailVerificationTokenHash ?? null,
+    emailVerificationExpiresAt: user.emailVerificationExpiresAt ?? null,
+    emailVerificationSentAt: user.emailVerificationSentAt ?? null,
     disabledAt: user.disabledAt ?? null,
     profile: {
       ...user.profile,

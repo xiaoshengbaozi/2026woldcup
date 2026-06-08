@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { findMatchBySlug } from "@/lib/match-detail";
 import { localizePlayerDisplayName } from "@/lib/football-localization-client";
+import { getEffectiveMatchStatus } from "@/lib/match-status";
 import { buildMatchRoundLabels } from "@/lib/stage-rounds";
 import { parseTeams } from "@/lib/teams";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
@@ -155,15 +156,20 @@ const EMPTY_STATS: MatchStats = {
 
 function buildRealMatchDetail(match: Match, slug: string, remote: WorldCupMatchDetailPayload | null): MatchDetail {
   const fixture = remote?.fixture;
+  const mergedStatus = getEffectiveMatchStatus(match, fixture?.status ?? match.status);
   const mergedMatch = fixture
     ? {
         ...match,
-        status: fixture.status,
-        statusLabel: fixture.statusLabel,
+        status: mergedStatus,
+        statusLabel: mergedStatus === "finished" ? "已结束" : fixture.statusLabel,
         elapsed: fixture.elapsed,
         score: fixture.score,
       }
-    : match;
+    : {
+        ...match,
+        status: mergedStatus,
+        statusLabel: mergedStatus === "finished" ? "已结束" : match.statusLabel,
+      };
 
   const teams = parseTeams(match.summary);
 
@@ -172,7 +178,7 @@ function buildRealMatchDetail(match: Match, slug: string, remote: WorldCupMatchD
     slug,
     homeTeamCode: match.homeTeam?.code || teams.home.badge || "",
     awayTeamCode: match.awayTeam?.code || teams.away.badge || "",
-    status: toDetailStatus(fixture?.status ?? match.status, match),
+    status: toDetailStatus(mergedStatus, mergedMatch),
     score: {
       home: fixture?.score?.home ?? match.score?.home ?? 0,
       away: fixture?.score?.away ?? match.score?.away ?? 0,

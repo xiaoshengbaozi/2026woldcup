@@ -3,6 +3,7 @@ import { createHash, createHmac, randomBytes } from "crypto";
 import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
 import type { ApiFootballService } from "./apiFootball";
+import { isEmailConfigured, sendEmail } from "./emailService";
 import { getWorldCupFixtures, getWorldCupSquads } from "./worldCupData";
 import { UserStore, toPublicUser } from "./userStore";
 import type { InvitationCode, PredictionArchive, WorldCupUser } from "./userStore";
@@ -14,6 +15,8 @@ const MAX_JSON_BODY_BYTES = 256 * 1024;
 const RATE_LIMIT_WINDOW_MS = 60 * 1000;
 const RATE_LIMIT_MAX_ATTEMPTS = 12;
 const UPLOAD_URL_RATE_LIMIT_MAX_ATTEMPTS = 8;
+const EMAIL_VERIFICATION_EXPIRES_MS = 24 * 60 * 60 * 1000;
+const EMAIL_RESEND_MIN_INTERVAL_MS = 60 * 1000;
 
 const rateLimits = new Map<string, { count: number; resetAt: number }>();
 
@@ -72,8 +75,40 @@ export class UserSystem {
         });
         this.store.consumeInvitationCode(invitationCode, user);
         await applyRegistrationPreferences(this.store, user.id, body, await this.getPreferenceCatalog());
+        const emailVerificationSent = await createAndSendEmailVerification(req, this.store, user).catch(() => false);
         this.issueSession(req, res, user);
-        sendJson(res, { user: toPublicUser(this.store.getUserById(user.id) ?? user) }, 201);
+        sendJson(res, { user: toPublicUser(this.store.getUserById(user.id) ?? user), emailVerificationSent }, 201);
+        return true;
+      }
+
+      if (req.method === "GET" && url.pathname === "/api/auth/verify-email") {
+        const token = String(url.searchParams.get("token") || "");
+        this.store.verifyEmailToken(hashEmailVerificationToken(token));
+        redirect(res, `${getPublicAppUrl()}/me?emailVerified=success`);
+        return true;
+      }
+
+      if (req.method === "POST" && url.pathname === "/api/auth/verify-email") {
+        const body = await readJsonBody(req);
+        const user = this.store.verifyEmailToken(hashEmailVerificationToken(String(body.token || "")));
+        sendJson(res, { user: toPublicUser(user), emailVerified: true });
+        return true;
+      }
+
+      if (req.method === "POST" && url.pathname === "/api/auth/resend-verification") {
+        const user = this.requireSessionUser(req, res);
+        if (!user) return true;
+        enforceRateLimit(req, "resend-email-verification", RATE_LIMIT_MAX_ATTEMPTS);
+        if (user.emailVerifiedAt) {
+          sendJson(res, { user: toPublicUser(user), emailVerificationSent: false, alreadyVerified: true });
+          return true;
+        }
+        if (user.emailVerificationSentAt && Date.now() - user.emailVerificationSentAt < EMAIL_RESEND_MIN_INTERVAL_MS) {
+          sendJson(res, { error: "email_verification_recently_sent" }, 429);
+          return true;
+        }
+        const emailVerificationSent = await createAndSendEmailVerification(req, this.store, user);
+        sendJson(res, { user: toPublicUser(this.store.getUserById(user.id) ?? user), emailVerificationSent });
         return true;
       }
 
@@ -127,7 +162,7 @@ export class UserSystem {
         const user = this.requireSessionUser(req, res);
         if (!user) return true;
         const catalog = await this.getPreferenceCatalog();
-        const syncedUser = syncRelatedMatchesForUser(this.store, user.id, catalog);
+        const syncedUser = syncMutualFollowedMatchesForUser(this.store, user.id, catalog);
         queueDueMatchNotifications(this.store, syncedUser);
         sendJson(res, buildHomePayload(this.store.getUserById(user.id) ?? syncedUser, catalog));
         return true;
@@ -154,7 +189,7 @@ export class UserSystem {
         const body = await readJsonBody(req);
         const team = normalizeNamedEntity(body);
         this.store.upsertTeam(user.id, team);
-        await addRelatedMatchesForEntity(this.store, user.id, team, await this.getPreferenceCatalog());
+        syncMutualFollowedMatchesForUser(this.store, user.id, await this.getPreferenceCatalog());
         sendJson(res, { user: toPublicUser(this.store.getUserById(user.id) ?? user) });
         return true;
       }
@@ -172,7 +207,7 @@ export class UserSystem {
         const body = await readJsonBody(req);
         const player = normalizeNamedEntity(body);
         this.store.upsertPlayer(user.id, player);
-        await addRelatedMatchesForEntity(this.store, user.id, player, await this.getPreferenceCatalog());
+        syncMutualFollowedMatchesForUser(this.store, user.id, await this.getPreferenceCatalog());
         sendJson(res, { user: toPublicUser(this.store.getUserById(user.id) ?? user) });
         return true;
       }
@@ -1011,6 +1046,75 @@ function createAvatarUploadUrl(body: Record<string, unknown>, userId: string) {
   };
 }
 
+async function createAndSendEmailVerification(req: http.IncomingMessage, store: UserStore, user: WorldCupUser) {
+  if (!isEmailConfigured()) return false;
+  const token = randomBytes(32).toString("hex");
+  const tokenHash = hashEmailVerificationToken(token);
+  store.setEmailVerificationToken(user.id, tokenHash, Date.now() + EMAIL_VERIFICATION_EXPIRES_MS);
+  const verifyUrl = `${getRequestBaseUrl(req)}/api/auth/verify-email?token=${encodeURIComponent(token)}`;
+  await sendEmail({
+    to: user.email,
+    subject: "验证你的 Cyberball 账号",
+    text: [
+      `你好，${user.profile.displayName}`,
+      "",
+      "请点击下面的链接完成邮箱验证：",
+      verifyUrl,
+      "",
+      "链接将在 24 小时后失效。如果不是你本人注册，请忽略这封邮件。",
+    ].join("\n"),
+    html: buildVerificationEmailHtml(user.profile.displayName, verifyUrl),
+  });
+  return true;
+}
+
+function buildVerificationEmailHtml(displayName: string, verifyUrl: string) {
+  const safeName = escapeHtml(displayName);
+  const safeUrl = escapeHtml(verifyUrl);
+  return `<!doctype html>
+<html>
+  <body style="margin:0;background:#070a0f;color:#f8fafc;font-family:Arial,'Microsoft YaHei',sans-serif;">
+    <div style="max-width:560px;margin:0 auto;padding:32px 20px;">
+      <div style="border:1px solid rgba(216,255,62,.22);border-radius:28px;background:#0c1117;padding:28px;">
+        <p style="margin:0 0 10px;color:#d8ff3e;font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;">Cyberball</p>
+        <h1 style="margin:0;color:#fff;font-size:28px;line-height:1.25;">验证你的邮箱</h1>
+        <p style="margin:18px 0 0;color:rgba(255,255,255,.72);font-size:15px;line-height:1.8;">你好，${safeName}。点击下面的按钮完成邮箱验证，之后你的账号会更加安全。</p>
+        <a href="${safeUrl}" style="display:inline-block;margin-top:24px;border-radius:999px;background:#d8ff3e;color:#05070a;padding:13px 22px;text-decoration:none;font-size:14px;font-weight:800;">完成邮箱验证</a>
+        <p style="margin:22px 0 0;color:rgba(255,255,255,.42);font-size:12px;line-height:1.7;">链接 24 小时内有效。如果按钮无法打开，请复制下面的链接：</p>
+        <p style="word-break:break-all;color:rgba(255,255,255,.55);font-size:12px;line-height:1.7;">${safeUrl}</p>
+      </div>
+    </div>
+  </body>
+</html>`;
+}
+
+function hashEmailVerificationToken(token: string) {
+  if (!token || token.length < 24) throw Object.assign(new Error("invalid_email_verification_token"), { statusCode: 400 });
+  return createHash("sha256").update(token).digest("hex");
+}
+
+function getRequestBaseUrl(req: http.IncomingMessage) {
+  const proto = getHeaderValue(req.headers["x-forwarded-proto"]) || ((req.socket as { encrypted?: boolean }).encrypted ? "https" : "http");
+  const host = getHeaderValue(req.headers["x-forwarded-host"]) || getHeaderValue(req.headers.host) || "localhost:3001";
+  return `${proto.split(",")[0].trim()}://${host.split(",")[0].trim()}`;
+}
+
+function getPublicAppUrl() {
+  return (process.env.PUBLIC_APP_URL || "https://ball.boyzi.fun").replace(/\/$/, "");
+}
+
+function getHeaderValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 function toAmzDate(date: Date) {
   return date.toISOString().replace(/[:-]|\.\d{3}/g, "");
 }
@@ -1033,20 +1137,15 @@ function normalizeNamedEntity(body: Record<string, unknown>) {
   return { ...body, id, name } as { id: string; name: string };
 }
 
-function syncRelatedMatchesForUser(store: UserStore, userId: string, catalog: UserPreferenceCatalog) {
+function syncMutualFollowedMatchesForUser(store: UserStore, userId: string, catalog: UserPreferenceCatalog) {
   const user = store.getUserById(userId);
   if (!user) throw Object.assign(new Error("user_not_found"), { statusCode: 404 });
 
-  for (const entity of [...user.followedTeams, ...user.followedPlayers]) {
-    addRelatedMatchesForEntity(store, userId, entity, catalog);
-  }
+  const groups = buildFollowedTeamGroups(user, catalog);
+  if (groups.length < 2) return user;
 
-  return store.getUserById(userId) ?? user;
-}
-
-function addRelatedMatchesForEntity(store: UserStore, userId: string, entity: { id: string; name: string; team?: string; region?: string }, catalog: UserPreferenceCatalog) {
-  const existingIds = new Set((store.getUserById(userId)?.favoriteMatches ?? []).map((match) => match.id));
-  const matches = catalog.matches.filter((match) => isMatchRelatedToEntity(match, entity, catalog)).slice(0, 12);
+  const existingIds = new Set(user.favoriteMatches.map((match) => match.id));
+  const matches = catalog.matches.filter((match) => isMatchBetweenFollowedGroups(match, groups)).slice(0, 24);
   for (const match of matches) {
     const normalized = normalizeMatch(match);
     if (existingIds.has(normalized.id)) continue;
@@ -1054,31 +1153,64 @@ function addRelatedMatchesForEntity(store: UserStore, userId: string, entity: { 
     addMatchReminderPair(store, userId, normalized);
     existingIds.add(normalized.id);
   }
+
+  return store.getUserById(userId) ?? user;
 }
 
-function isMatchRelatedToEntity(match: UserPreferenceCatalog["matches"][number], entity: { id: string; name: string; team?: string; region?: string }, catalog: UserPreferenceCatalog) {
+function isMatchBetweenFollowedGroups(match: UserPreferenceCatalog["matches"][number], groups: FollowedTeamGroup[]) {
   const title = normalizeSearchText(match.title);
-  const tokens = buildEntitySearchTokens(entity, catalog).map(normalizeSearchText);
-  return tokens.some((token) => token.length >= 2 && title.includes(token));
-}
-
-function buildEntitySearchTokens(entity: { id: string; name: string; team?: string; region?: string }, catalog: UserPreferenceCatalog) {
-  const raw = [entity.name, entity.team, entity.region, entity.id].filter(Boolean).map(String);
-  const teamTokens = new Set(raw.map((value) => value.trim()).filter(Boolean));
-  const teamIdentifierSource = entity.team ? [entity.team, entity.region] : [entity.id, entity.region, entity.name];
-  const entityCodes = teamIdentifierSource.filter(Boolean).map((value) => String(value).trim().toUpperCase()).filter(Boolean);
-
-  for (const team of catalog.teams) {
-    const identifiers = [team.id, team.region, team.name].filter(Boolean).map((value) => String(value).trim().toUpperCase());
-    if (!identifiers.some((identifier) => entityCodes.includes(identifier))) continue;
-    for (const value of [team.id, team.region, team.name]) {
-      if (value) teamTokens.add(String(value));
+  const matchedTeamKeys = new Set<string>();
+  for (const group of groups) {
+    if (group.tokens.some((token) => title.includes(token))) {
+      matchedTeamKeys.add(group.key);
     }
   }
+  return matchedTeamKeys.size >= 2;
+}
 
-  return [...teamTokens].filter((token) => {
-    const normalized = normalizeSearchText(token);
-    return normalized.length >= 2 && !/^\d+$/.test(normalized);
+type FollowedEntity = { id: string; name: string; team?: string; region?: string };
+type FollowedTeamGroup = { key: string; tokens: string[] };
+
+function buildFollowedTeamGroups(user: WorldCupUser, catalog: UserPreferenceCatalog) {
+  const byKey = new Map<string, Set<string>>();
+  for (const entity of [...user.followedTeams, ...user.followedPlayers]) {
+    const group = buildFollowedTeamGroup(entity, catalog);
+    if (!group) continue;
+    const current = byKey.get(group.key) ?? new Set<string>();
+    for (const token of group.tokens) current.add(token);
+    byKey.set(group.key, current);
+  }
+
+  return [...byKey.entries()].map(([key, tokens]) => ({ key, tokens: [...tokens] }));
+}
+
+function buildFollowedTeamGroup(entity: FollowedEntity, catalog: UserPreferenceCatalog): FollowedTeamGroup | null {
+  const isPlayer = Boolean(entity.team);
+  const catalogTeam = resolveCatalogTeamForEntity(entity, catalog);
+  const rawTokens = isPlayer
+    ? [entity.team, entity.region, catalogTeam?.id, catalogTeam?.region, catalogTeam?.name]
+    : [entity.name, entity.region, entity.id, catalogTeam?.id, catalogTeam?.region, catalogTeam?.name];
+  const tokens = rawTokens
+    .filter(Boolean)
+    .map((value) => normalizeSearchText(String(value)))
+    .filter((token) => token.length >= 2 && !/^\d+$/.test(token));
+  if (!tokens.length) return null;
+
+  const keySource = catalogTeam?.region || catalogTeam?.id || entity.region || entity.team || entity.name || entity.id;
+  const key = normalizeSearchText(String(keySource || tokens[0]));
+  return { key, tokens: [...new Set(tokens)] };
+}
+
+function resolveCatalogTeamForEntity(entity: FollowedEntity, catalog: UserPreferenceCatalog) {
+  const values = [entity.team, entity.region, entity.id, entity.name]
+    .filter(Boolean)
+    .map((value) => String(value).trim());
+  const exact = new Set(values.map((value) => value.toUpperCase()));
+  const normalized = new Set(values.map(normalizeSearchText));
+
+  return catalog.teams.find((team) => {
+    const identifiers = [team.id, team.region, team.name].filter(Boolean).map((value) => String(value).trim());
+    return identifiers.some((identifier) => exact.has(identifier.toUpperCase()) || normalized.has(normalizeSearchText(identifier)));
   });
 }
 
@@ -1155,7 +1287,6 @@ async function applyRegistrationPreferences(store: UserStore, userId: string, bo
     if (item && typeof item === "object") {
       const entity = normalizeNamedEntity(item as Record<string, unknown>);
       store.upsertTeam(userId, entity);
-      addRelatedMatchesForEntity(store, userId, entity, catalog);
     }
   }
 
@@ -1163,9 +1294,10 @@ async function applyRegistrationPreferences(store: UserStore, userId: string, bo
     if (item && typeof item === "object") {
       const entity = normalizeNamedEntity(item as Record<string, unknown>);
       store.upsertPlayer(userId, entity);
-      addRelatedMatchesForEntity(store, userId, entity, catalog);
     }
   }
+
+  syncMutualFollowedMatchesForUser(store, userId, catalog);
 
   for (const item of matches) {
     if (item && typeof item === "object") {
@@ -1332,4 +1464,9 @@ function serializeCookie(
 function sendJson(res: http.ServerResponse, payload: unknown, statusCode = 200) {
   res.writeHead(statusCode, { "Content-Type": "application/json; charset=utf-8" });
   res.end(JSON.stringify(payload));
+}
+
+function redirect(res: http.ServerResponse, location: string, statusCode = 302) {
+  res.writeHead(statusCode, { Location: location });
+  res.end();
 }

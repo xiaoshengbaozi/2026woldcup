@@ -7,7 +7,7 @@ import { DashboardShell } from "@/components/dashboard-shell";
 import { MeAuthDialog } from "@/components/me-auth-dialog";
 import { usePredictionStore } from "@/lib/store/prediction-store";
 import { buildKnockoutMatchesForTopology, type StandingRow, type KnockoutMatch } from "@/lib/store/prediction";
-import { userApi, type PublicUser, type UserHomePayload } from "@/lib/user-system";
+import { userApi, type PublicUser, type UserSessionPayload } from "@/lib/user-system";
 import { fallbackUserPreferenceCatalog, type UserPreferenceCatalog } from "@/lib/user-preferences";
 import { ChevronLeft, Clock3, FolderOpen, GitBranch, LogIn, Maximize2, Minus, Plus, RotateCcw, Save, ShieldCheck, Shuffle, Trash2, UserPlus, X } from "lucide-react";
 
@@ -1016,6 +1016,7 @@ type TabId = "groups" | "knockout";
 type AuthStatus = "checking" | "unauthenticated" | "allowed";
 type AccessMode = "login" | "register";
 type PredictionArchive = PublicUser["predictionArchives"][number];
+const LAST_PREDICTION_ARCHIVE_KEY = "worldcup-last-prediction-archive-id";
 
 function PredictAuthLoading() {
   return (
@@ -1482,7 +1483,11 @@ function PredictionArchivePanel() {
         }),
       });
       setArchives(payload.archives ?? (payload.archive ? [payload.archive] : []));
-      if (payload.archive?.id) setActiveArchiveId(payload.archive.id);
+      if (payload.archive?.id) {
+        setActiveArchiveId(payload.archive.id);
+        window.localStorage.setItem(LAST_PREDICTION_ARCHIVE_KEY, payload.archive.id);
+        window.dispatchEvent(new CustomEvent("prediction-archives-updated", { detail: { archiveId: payload.archive.id } }));
+      }
       setName(payload.archive?.name ?? name);
       setMessage(activeArchiveId ? "已更新当前存档" : "已保存当前预测");
       setShowSaveDialog(false);
@@ -1706,7 +1711,7 @@ export default function PredictPage() {
   useEffect(() => {
     let active = true;
 
-    userApi<UserHomePayload>("/api/me/home", { cache: "no-store" })
+    userApi<UserSessionPayload>("/api/me/session", { cache: "no-store" })
       .then(() => {
         if (active) setAuthStatus("allowed");
       })

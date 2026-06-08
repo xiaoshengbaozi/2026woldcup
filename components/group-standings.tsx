@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { Sparkles, Table } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { GROUPS, getTeamByCode } from "@/data/world-cup-2026-groups";
 import { getStageGroupId } from "@/lib/stage";
 import { getTeamDetailHrefByCode, getTeamDetailHrefByName } from "@/lib/team-links";
@@ -37,6 +37,7 @@ type GroupStanding = {
 };
 
 const preferredGroups = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
+const LAST_PREDICTION_ARCHIVE_KEY = "worldcup-last-prediction-archive-id";
 
 export function GroupStandings({ matches }: GroupStandingsProps) {
   const [remoteStandings, setRemoteStandings] = useState<NormalizedWorldCupStandingRow[]>([]);
@@ -59,21 +60,38 @@ export function GroupStandings({ matches }: GroupStandingsProps) {
     };
   }, []);
 
-  useEffect(() => {
-    let active = true;
+  const loadArchives = useCallback(async (preferredArchiveId?: string | null) => {
+    try {
+      const payload = await userApi<{ archives: PredictionArchive[] }>("/api/me/prediction-archives", { cache: "no-store" });
+      const nextArchives = payload.archives ?? [];
+      setArchives(nextArchives);
 
-    userApi<{ archives: PredictionArchive[] }>("/api/me/prediction-archives", { cache: "no-store" })
-      .then((payload) => {
-        if (active) setArchives(payload.archives ?? []);
-      })
-      .catch(() => {
-        if (active) setArchives([]);
-      });
+      const savedArchiveId = preferredArchiveId ?? window.localStorage.getItem(LAST_PREDICTION_ARCHIVE_KEY);
+      if (savedArchiveId && nextArchives.some((archive) => archive.id === savedArchiveId)) {
+        setActiveArchiveId(savedArchiveId);
+      }
+    } catch {
+      setArchives([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadArchives();
+
+    const handleArchiveUpdate = (event: Event) => {
+      const archiveId = (event as CustomEvent<{ archiveId?: string }>).detail?.archiveId;
+      void loadArchives(archiveId);
+    };
+    const handleWindowFocus = () => void loadArchives();
+
+    window.addEventListener("prediction-archives-updated", handleArchiveUpdate);
+    window.addEventListener("focus", handleWindowFocus);
 
     return () => {
-      active = false;
+      window.removeEventListener("prediction-archives-updated", handleArchiveUpdate);
+      window.removeEventListener("focus", handleWindowFocus);
     };
-  }, []);
+  }, [loadArchives]);
 
   const activeArchive = archives.find((archive) => archive.id === activeArchiveId) ?? null;
   const fallbackGroups = useMemo(() => buildGroupStandings(matches), [matches]);
@@ -113,14 +131,20 @@ export function GroupStandings({ matches }: GroupStandingsProps) {
 
           {archives.length > 0 && (
             <div className="flex max-w-full flex-wrap items-center gap-1.5">
-              <StandingTab active={!activeArchive} onClick={() => setActiveArchiveId("official")}>
+              <StandingTab active={!activeArchive} onClick={() => {
+                window.localStorage.removeItem(LAST_PREDICTION_ARCHIVE_KEY);
+                setActiveArchiveId("official");
+              }}>
                 官方
               </StandingTab>
               {archives.map((archive) => (
                 <StandingTab
                   key={archive.id}
                   active={archive.id === activeArchiveId}
-                  onClick={() => setActiveArchiveId(archive.id)}
+                  onClick={() => {
+                    window.localStorage.setItem(LAST_PREDICTION_ARCHIVE_KEY, archive.id);
+                    setActiveArchiveId(archive.id);
+                  }}
                 >
                   {`预测：${archive.name}`}
                 </StandingTab>

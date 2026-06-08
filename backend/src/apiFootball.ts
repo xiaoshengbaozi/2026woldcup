@@ -104,7 +104,12 @@ export function createApiFootballService(
       const cacheKey = `${endpoint}?${normalizedParams.toString()}`;
       const cached = cache.get(cacheKey);
 
-      if (cached && cached.expiresAt > Date.now() && !hasApiFootballErrors(cached.payload.upstream)) {
+      if (
+        cached &&
+        cached.expiresAt > Date.now() &&
+        isCacheFreshForCurrentTtl(cached, endpoint, normalizedParams, fallbackTtl) &&
+        !hasApiFootballErrors(cached.payload.upstream)
+      ) {
         return { ...cached.payload, cached: true };
       }
 
@@ -162,7 +167,44 @@ export function createApiFootballService(
 
 function getCacheTtl(endpoint: ApiFootballEndpoint, params: URLSearchParams, fallbackTtl: number) {
   if (endpoint === "fixtures" && params.has("live")) return 15_000;
+  if (endpoint === "fixtures" && params.has("id")) return 15_000;
+  if (endpoint === "fixtures" && isNearFixtureWindow(params)) return 60_000;
   return CACHE_TTL_BY_ENDPOINT[endpoint] ?? fallbackTtl;
+}
+
+function isCacheFreshForCurrentTtl(
+  cached: CacheRecord,
+  endpoint: ApiFootballEndpoint,
+  params: URLSearchParams,
+  fallbackTtl: number
+) {
+  return cached.payload.timestamp + getCacheTtl(endpoint, params, fallbackTtl) > Date.now();
+}
+
+function isNearFixtureWindow(params: URLSearchParams) {
+  const from = parseApiDate(params.get("from"));
+  const to = parseApiDate(params.get("to"));
+  if (!from && !to) return false;
+
+  const now = new Date();
+  const yesterday = startOfUtcDay(new Date(now.getTime() - 24 * 60 * 60_000));
+  const tomorrow = endOfUtcDay(new Date(now.getTime() + 24 * 60 * 60_000));
+
+  return (!to || to >= yesterday) && (!from || from <= tomorrow);
+}
+
+function parseApiDate(value: string | null) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return Number.isFinite(date.getTime()) ? date : null;
+}
+
+function startOfUtcDay(date: Date) {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+}
+
+function endOfUtcDay(date: Date) {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 23, 59, 59, 999));
 }
 
 function hasApiFootballErrors(upstream: unknown) {

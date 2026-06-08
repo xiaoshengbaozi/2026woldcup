@@ -9,6 +9,8 @@ const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
 export interface PublicUser {
   id: string;
   email: string;
+  emailVerifiedAt?: number | null;
+  emailVerificationSentAt?: number | null;
   createdAt: number;
   updatedAt: number;
   profile: {
