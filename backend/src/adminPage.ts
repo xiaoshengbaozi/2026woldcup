@@ -32,11 +32,11 @@ export function renderAdminPageHtml() {
       color: var(--text);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
     }
-    main { width: min(1220px, calc(100% - 32px)); margin: 0 auto; padding: 32px 0 44px; }
-    header { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
-    h1 { margin: 0; font-size: clamp(28px, 4vw, 46px); font-weight: 760; letter-spacing: 0; }
-    h2 { margin: 0 0 16px; font-size: 18px; font-weight: 680; letter-spacing: 0; }
-    h3 { margin: 0; font-size: 14px; font-weight: 680; }
+    main { width: min(1380px, calc(100% - 28px)); margin: 0 auto; padding: 24px 0 36px; }
+    header { display: flex; align-items: end; justify-content: space-between; gap: 18px; margin-bottom: 16px; }
+    h1 { margin: 0; font-size: clamp(24px, 3vw, 38px); font-weight: 760; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 16px; font-weight: 700; letter-spacing: 0; }
+    h3 { margin: 0; font-size: 13px; font-weight: 680; }
     p { margin: 0; color: var(--muted); }
     .eyebrow { margin-bottom: 10px; color: var(--cyan); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; }
     .pill, .tab {
@@ -48,35 +48,36 @@ export function renderAdminPageHtml() {
     .dot.ok { background: var(--volt); color: var(--volt); }
     .dot.bad { background: var(--red); color: var(--red); }
     .dot.warn { background: var(--amber); color: var(--amber); }
-    .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+    .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
     .tab {
-      min-height: 42px; padding: 0 16px; color: var(--muted); cursor: pointer; transition: .2s ease;
-      font: inherit; font-size: 13px;
+      min-height: 36px; padding: 0 14px; color: var(--muted); cursor: pointer; transition: .2s ease;
+      font: inherit; font-size: 12px;
     }
     .tab:hover, .tab.active { color: white; border-color: rgba(216,255,62,.34); background: rgba(216,255,62,.1); box-shadow: 0 0 34px rgba(216,255,62,.08); }
     .view { display: none; }
     .view.active { display: block; }
-    .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+    .grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
     .card {
-      border-radius: 30px; padding: 20px; background: linear-gradient(145deg, var(--panel), var(--panel-2));
+      border-radius: 26px; padding: 16px; background: linear-gradient(145deg, var(--panel), var(--panel-2));
       border: 1px solid var(--line); box-shadow: 0 24px 80px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.08);
       backdrop-filter: blur(24px);
     }
-    .metric span { display: block; color: var(--faint); font-size: 12px; }
-    .metric strong { display: block; margin-top: 10px; font-size: 30px; letter-spacing: 0; font-variant-numeric: tabular-nums; }
-    .wide { grid-column: span 2; }
+    .metric { min-height: 94px; }
+    .metric span { display: block; color: var(--faint); font-size: 11px; }
+    .metric strong { display: block; margin-top: 8px; font-size: 24px; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+    .wide { grid-column: span 3; }
     .full { grid-column: 1 / -1; }
-    .stack { display: grid; gap: 12px; }
-    .mini-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .stack { display: grid; gap: 10px; }
+    .mini-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
     .mini {
-      border-radius: 22px; padding: 14px; background: rgba(0,0,0,.22);
+      border-radius: 18px; padding: 12px; background: rgba(0,0,0,.22);
       border: 1px solid rgba(255,255,255,.075);
     }
-    .mini span { display: block; color: var(--faint); font-size: 12px; }
-    .mini strong { display: block; margin-top: 8px; color: white; font-size: 22px; font-variant-numeric: tabular-nums; }
+    .mini span { display: block; color: var(--faint); font-size: 11px; }
+    .mini strong { display: block; margin-top: 6px; color: white; font-size: 20px; font-variant-numeric: tabular-nums; }
     .status-row, .match-row {
-      display: grid; gap: 12px; align-items: center; border-radius: 22px;
-      background: rgba(0,0,0,.22); border: 1px solid rgba(255,255,255,.075); padding: 14px;
+      display: grid; gap: 10px; align-items: center; border-radius: 18px;
+      background: rgba(0,0,0,.22); border: 1px solid rgba(255,255,255,.075); padding: 12px;
     }
     .status-row { grid-template-columns: auto 1fr auto; }
     .match-row { grid-template-columns: 1.4fr auto 1.4fr auto; }
@@ -85,21 +86,21 @@ export function renderAdminPageHtml() {
     .score { min-width: 76px; text-align: center; color: var(--volt); font-size: 24px; font-weight: 760; font-variant-numeric: tabular-nums; }
     .badge {
       display: inline-flex; width: fit-content; align-items: center; gap: 6px; border-radius: 999px;
-      padding: 7px 10px; border: 1px solid rgba(255,255,255,.09); background: rgba(255,255,255,.055);
-      color: rgba(255,255,255,.76); font-size: 12px; white-space: nowrap;
+      padding: 5px 9px; border: 1px solid rgba(255,255,255,.09); background: rgba(255,255,255,.055);
+      color: rgba(255,255,255,.76); font-size: 11px; white-space: nowrap;
     }
     table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 13px 10px; border-bottom: 1px solid rgba(255,255,255,.075); text-align: left; font-size: 13px; }
-    th { color: var(--faint); font-size: 12px; font-weight: 580; }
+    th, td { padding: 10px 9px; border-bottom: 1px solid rgba(255,255,255,.075); text-align: left; font-size: 12px; vertical-align: top; }
+    th { color: var(--faint); font-size: 11px; font-weight: 620; }
     td:nth-child(3), td:nth-child(4), td:nth-child(5) { font-variant-numeric: tabular-nums; }
     .prob { color: var(--volt); font-weight: 720; }
     .muted { color: var(--muted); }
     .endpoints { display: grid; gap: 10px; }
-    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 6px; }
     .action-btn {
-      min-height: 34px; border: 1px solid rgba(255,255,255,.1); border-radius: 999px;
-      background: rgba(255,255,255,.06); color: rgba(255,255,255,.78); padding: 0 12px;
-      font: inherit; font-size: 12px; cursor: pointer; transition: .2s ease;
+      min-height: 30px; border: 1px solid rgba(255,255,255,.1); border-radius: 999px;
+      background: rgba(255,255,255,.06); color: rgba(255,255,255,.78); padding: 0 11px;
+      font: inherit; font-size: 11px; cursor: pointer; transition: .2s ease;
     }
     .action-btn:hover { border-color: rgba(216,255,62,.36); color: white; background: rgba(216,255,62,.1); }
     .action-btn.danger:hover { border-color: rgba(255,91,110,.42); background: rgba(255,91,110,.12); }
@@ -117,10 +118,10 @@ export function renderAdminPageHtml() {
     }
     .switch-row button.active { border-color: rgba(216,255,62,.4); background: rgba(216,255,62,.18); }
     .switch-row button.active::after { left: 30px; background: var(--volt); box-shadow: 0 0 22px rgba(216,255,62,.35); }
-    .split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, .8fr); gap: 14px; }
-    .record-list { max-height: 560px; overflow: auto; padding-right: 4px; }
-    .detail-block { border-radius: 22px; background: rgba(0,0,0,.2); border: 1px solid rgba(255,255,255,.075); padding: 14px; }
-    .detail-block h3 { margin-bottom: 8px; }
+    .split { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(340px, .85fr); gap: 10px; }
+    .record-list { max-height: 460px; overflow: auto; padding-right: 4px; }
+    .detail-block { border-radius: 18px; background: rgba(0,0,0,.2); border: 1px solid rgba(255,255,255,.075); padding: 12px; }
+    .detail-block h3 { margin-bottom: 6px; }
     .detail-block ul { margin: 0; padding-left: 18px; color: var(--muted); }
     .admin-form { display: grid; grid-template-columns: 1.2fr 1fr .7fr auto; gap: 10px; align-items: end; }
     .live-channel-form { display: grid; grid-template-columns: 1fr 1fr 1.4fr .6fr auto; gap: 10px; align-items: end; }
@@ -131,6 +132,17 @@ export function renderAdminPageHtml() {
     }
     .admin-field textarea { min-height: 96px; padding: 10px 12px; resize: vertical; }
     .admin-field input:focus, .admin-field select:focus, .admin-field textarea:focus { border-color: rgba(216,255,62,.42); box-shadow: 0 0 26px rgba(216,255,62,.08); }
+    .section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .section-head h2 { margin: 0; }
+    .section-note { color: var(--faint); font-size: 11px; }
+    .table-card { padding: 12px; }
+    .table-wrap { overflow: auto; border-radius: 18px; background: rgba(0,0,0,.16); border: 1px solid rgba(255,255,255,.055); }
+    .table-wrap table { min-width: 760px; }
+    .admin-cluster { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+    .admin-cluster > .metric { grid-column: span 1; }
+    .admin-activity-card { grid-column: span 2; }
+    .admin-activity-card .mini-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .invite-card { grid-column: span 4; }
     .channel-match-picker { display: grid; gap: 10px; margin-top: 14px; }
     .channel-match-list { display: grid; max-height: 320px; gap: 8px; overflow: auto; padding-right: 4px; }
     .channel-match-row {
@@ -159,6 +171,9 @@ export function renderAdminPageHtml() {
       .split { grid-template-columns: 1fr; }
       .admin-form { grid-template-columns: 1fr; }
       .live-channel-form { grid-template-columns: 1fr; }
+      .admin-cluster { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .admin-cluster > .metric { grid-column: span 1; }
+      .admin-activity-card, .invite-card { grid-column: 1 / -1; }
       .match-row { grid-template-columns: 1fr auto; }
       .match-row .score { order: 3; text-align: left; }
     }
@@ -354,7 +369,7 @@ export function renderAdminPageHtml() {
     </section>
 
     <section id="users" class="view">
-      <div class="grid">
+      <div class="admin-cluster">
         <div class="card metric"><span>用户总数</span><strong id="adminUserCount">--</strong></div>
         <div class="card metric"><span>活跃用户</span><strong id="adminActiveUsers">--</strong></div>
         <div class="card metric"><span>启用提醒</span><strong id="adminEnabledReminders">--</strong></div>
@@ -362,7 +377,7 @@ export function renderAdminPageHtml() {
         <div class="card metric"><span>有效邀请码</span><strong id="adminActiveInvitations">--</strong></div>
         <div class="card metric"><span>邀请码使用</span><strong id="adminInvitationUses">--</strong></div>
 
-        <div class="card full">
+        <div class="card admin-activity-card">
           <h2>用户系统</h2>
           <div class="mini-grid">
             <div class="mini"><span>关注球队</span><strong id="adminFollowedTeams">--</strong></div>
@@ -372,7 +387,7 @@ export function renderAdminPageHtml() {
           </div>
         </div>
 
-        <div class="card full">
+        <div class="card invite-card">
           <h2>邀请码管理</h2>
           <form class="admin-form" id="invitationForm">
             <label class="admin-field">邀请码（留空随机生成）<input id="inviteCodeInput" type="text" placeholder="WC26-VIP-001" /></label>
@@ -380,7 +395,7 @@ export function renderAdminPageHtml() {
             <label class="admin-field">可使用次数<input id="inviteMaxUsesInput" type="number" min="1" value="1" /></label>
             <button class="action-btn" type="submit">生成邀请码</button>
           </form>
-          <div class="record-list" style="margin-top:14px">
+          <div class="record-list table-wrap" style="margin-top:12px">
             <table>
               <thead><tr><th>邀请码</th><th>状态</th><th>次数</th><th>过期时间</th><th>最近使用</th><th>操作</th></tr></thead>
               <tbody id="adminInvitationRows"><tr><td colspan="6" class="muted">正在加载...</td></tr></tbody>
@@ -388,11 +403,11 @@ export function renderAdminPageHtml() {
           </div>
         </div>
 
-        <div class="card full">
+        <div class="card full table-card">
           <div class="split">
             <div>
               <h2>用户列表</h2>
-              <div class="record-list">
+              <div class="record-list table-wrap">
                 <table>
                   <thead><tr><th>用户</th><th>关注</th><th>收藏</th><th>预测</th><th>提醒</th><th>状态</th></tr></thead>
                   <tbody id="adminUserRows"><tr><td colspan="6" class="muted">正在加载...</td></tr></tbody>
@@ -1075,7 +1090,7 @@ export function renderAdminPageHtml() {
           const lastUse = Array.isArray(invite.usedBy) && invite.usedBy[0] ? invite.usedBy[0].email + " · " + adminTime(invite.usedBy[0].usedAt) : "--";
           const action = invite.status === "disabled" ? "enable" : "disable";
           const actionLabel = invite.status === "disabled" ? "启用" : "停用";
-          return "<tr><td><strong>" + escapeHtml(invite.code) + "</strong><br><span class=\\"muted\\">" + escapeHtml(invite.note || invite.id) + "</span></td><td><span class=\\"badge\\">" + invitationStatusLabel(invite.status) + "</span></td><td>" + invite.usedCount + "/" + invite.maxUses + "</td><td>" + adminTime(invite.expiresAt) + "</td><td>" + escapeHtml(lastUse) + "</td><td><button class=\\"action-btn\\" data-invite-action=\\"" + action + "\\" data-invite-id=\\"" + escapeHtml(invite.id) + "\\">" + actionLabel + "</button></td></tr>";
+          return "<tr><td><strong>" + escapeHtml(invite.code) + "</strong><br><span class=\\"muted\\">" + escapeHtml(invite.note || invite.id) + "</span></td><td><span class=\\"badge\\">" + invitationStatusLabel(invite.status) + "</span></td><td>" + invite.usedCount + "/" + invite.maxUses + "</td><td>" + adminTime(invite.expiresAt) + "</td><td>" + escapeHtml(lastUse) + "</td><td><div class=\\"toolbar\\"><button class=\\"action-btn\\" data-invite-action=\\"" + action + "\\" data-invite-id=\\"" + escapeHtml(invite.id) + "\\">" + actionLabel + "</button><button class=\\"action-btn danger\\" data-invite-action=\\"delete\\" data-invite-id=\\"" + escapeHtml(invite.id) + "\\">删除</button></div></td></tr>";
         }).join("") : "<tr><td colspan=\\"6\\" class=\\"muted\\">暂无邀请码，创建一个后用户才能注册。</td></tr>";
 
         document.querySelectorAll("[data-invite-action]").forEach(function (button) {
@@ -1110,6 +1125,7 @@ export function renderAdminPageHtml() {
 
     async function runInvitationAction(invitationId, action) {
       if (!invitationId || !action) return;
+      if (action === "delete" && !window.confirm("确认永久删除这个邀请码？此操作不可恢复。")) return;
       const res = await fetch("/api/admin/invitations/" + encodeURIComponent(invitationId) + "/" + action, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

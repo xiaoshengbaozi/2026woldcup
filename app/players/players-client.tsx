@@ -102,7 +102,7 @@ export function PlayersClient() {
 
   return (
     <DashboardShell>
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px] xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="players-page grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px] xl:grid-cols-[minmax(0,1fr)_320px]">
         <main className="min-w-0 space-y-5">
           <section className="hero-card px-4 py-4 sm:px-5">
             <div className="flex flex-wrap gap-2" role="tablist" aria-label="球员分类">
@@ -408,7 +408,7 @@ function SquadPlayerGrid({ players }: { players: OfficialPlayerCatalogItem[] }) 
         <Link
           key={player.id}
           href={playerProfileHref(player)}
-          className="group grid min-w-0 grid-cols-[56px_minmax(0,1fr)] items-center gap-3 rounded-3xl border border-white/[0.06] bg-white/[0.025] p-3 shadow-[0_16px_46px_rgba(0,0,0,.18)] backdrop-blur-xl transition duration-300 hover:border-volt/30 hover:bg-white/[0.04] sm:grid-cols-[72px_minmax(0,1fr)]"
+          className="squad-player-card group grid min-w-0 grid-cols-[56px_minmax(0,1fr)] items-center gap-3 rounded-3xl border border-white/[0.06] bg-white/[0.025] p-3 shadow-[0_16px_46px_rgba(0,0,0,.18)] backdrop-blur-xl transition duration-300 hover:border-volt/30 hover:bg-white/[0.04] sm:grid-cols-[72px_minmax(0,1fr)]"
         >
           <div className="relative h-14 w-14 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/[0.08] sm:h-[72px] sm:w-[72px]">
             <img src={player.photo} alt={player.nameCn} className="h-full w-full object-cover" />

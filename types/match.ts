@@ -79,6 +79,7 @@ export type LineupPlayer = {
   nameCn?: string;
   number: number | null;
   position: PlayerPosition;
+  grid?: string | null;
   positionCn?: string;
   photo?: string;
   isStarter: boolean;

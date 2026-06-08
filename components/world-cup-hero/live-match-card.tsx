@@ -28,9 +28,9 @@ export function LiveMatchCard({
   const score = getMatchScore(match);
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-2xl transition" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)), rgba(5,8,8,0.7)", boxShadow: isHT ? "0 20px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(251,191,36,0.1), 0 0 40px rgba(251,191,36,0.08)" : "0 20px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(216,255,62,0.08), 0 0 40px rgba(216,255,62,0.06)" }}>
-      <div className="pointer-events-none absolute inset-0 rounded-2xl" style={{ background: isHT ? "radial-gradient(ellipse at 50% 0%, rgba(251,191,36,0.12) 0%, transparent 60%)" : "radial-gradient(ellipse at 50% 0%, rgba(239,68,68,0.12) 0%, transparent 60%)" }} />
-      <div className="pointer-events-none absolute inset-0 rounded-2xl" style={{ padding: "1px", background: isHT ? "linear-gradient(135deg, rgba(251,191,36,0.3), rgba(255,255,255,0.08), rgba(251,191,36,0.1))" : "linear-gradient(135deg, rgba(216,255,62,0.3), rgba(255,255,255,0.08), rgba(216,255,62,0.1))", mask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)", maskComposite: "exclude" }} />
+    <div className="live-match-card group relative flex flex-col overflow-hidden rounded-2xl transition" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)), rgba(5,8,8,0.7)", boxShadow: isHT ? "0 20px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(251,191,36,0.1), 0 0 40px rgba(251,191,36,0.08)" : "0 20px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(216,255,62,0.08), 0 0 40px rgba(216,255,62,0.06)" }}>
+      <div className="live-match-card-glow pointer-events-none absolute inset-0 rounded-2xl" style={{ background: isHT ? "radial-gradient(ellipse at 50% 0%, rgba(251,191,36,0.12) 0%, transparent 60%)" : "radial-gradient(ellipse at 50% 0%, rgba(239,68,68,0.12) 0%, transparent 60%)" }} />
+      <div className="live-match-card-border pointer-events-none absolute inset-0 rounded-2xl" style={{ padding: "1px", background: isHT ? "linear-gradient(135deg, rgba(251,191,36,0.3), rgba(255,255,255,0.08), rgba(251,191,36,0.1))" : "linear-gradient(135deg, rgba(216,255,62,0.3), rgba(255,255,255,0.08), rgba(216,255,62,0.1))", mask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)", maskComposite: "exclude" }} />
       <div className="relative z-10">
         <div className="flex items-center justify-between px-3.5 pt-3">
           <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">{stageLabel ?? formatStageLabel(match.stage, match.summary)}</span>
@@ -48,11 +48,11 @@ export function LiveMatchCard({
             <span className={`h-1.5 w-1.5 rounded-full ${isHT ? "bg-amber-400" : isLive ? "bg-volt live-dot" : "bg-flare"}`} />{statusLabel}
           </span>
           {isUnlocked ? (
-            <Link href={"/matches/" + slug} className="inline-flex items-center gap-1 rounded-full bg-white/[0.055] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white/70 ring-1 ring-white/10 transition hover:bg-volt hover:text-black hover:shadow-[0_0_18px_rgba(216,255,62,.28)]">
+            <Link href={"/matches/" + slug} className="live-match-detail-button inline-flex items-center gap-1 rounded-full bg-white/[0.055] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white/70 ring-1 ring-white/10 transition hover:bg-volt hover:text-black hover:shadow-[0_0_18px_rgba(216,255,62,.28)]">
               详情<ArrowRight className="h-3 w-3" />
             </Link>
           ) : (
-            <span aria-disabled="true" className="inline-flex items-center gap-1 rounded-full bg-white/[0.035] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white/30 ring-1 ring-white/[0.06]">
+            <span aria-disabled="true" className="live-match-detail-button live-match-detail-button-disabled inline-flex items-center gap-1 rounded-full bg-white/[0.035] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white/30 ring-1 ring-white/[0.06]">
               详情<ArrowRight className="h-3 w-3" />
             </span>
           )}

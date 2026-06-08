@@ -155,7 +155,7 @@ export function GroupStandings({ matches }: GroupStandingsProps) {
 
         <Link
           href="/predict"
-          className="group inline-flex items-center gap-1.5 rounded-full bg-volt/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-volt ring-1 ring-volt/20 transition hover:bg-volt hover:text-black hover:shadow-[0_0_24px_rgba(216,255,62,0.24)]"
+          className="predict-cta-button group inline-flex items-center gap-1.5 rounded-full bg-volt/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-volt ring-1 ring-volt/20 transition hover:bg-volt hover:text-black hover:shadow-[0_0_24px_rgba(216,255,62,0.24)]"
         >
           <Sparkles className="h-3.5 w-3.5 transition group-hover:scale-110" />
           我要预测

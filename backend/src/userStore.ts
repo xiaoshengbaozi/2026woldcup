@@ -231,6 +231,14 @@ export class UserStore {
     return invitation;
   }
 
+  deleteInvitationCode(id: string) {
+    const invitation = this.data.invitationCodes.find((item) => item.id === id);
+    if (!invitation) throw createUserStoreError("invitation_code_not_found", 404);
+    this.data.invitationCodes = this.data.invitationCodes.filter((item) => item.id !== id);
+    void this.save();
+    return invitation;
+  }
+
   createUser(input: { email: string; password: string; displayName?: string; avatarPlayerId?: string; avatarUrl?: string }) {
     const email = normalizeEmail(input.email);
     if (!email || !input.password || input.password.length < 8) {

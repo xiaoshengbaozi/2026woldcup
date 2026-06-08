@@ -39,7 +39,7 @@ export function RankingOverflowCard() {
   if (overflowCountries.length === 0) return null;
 
   return (
-    <section className="hero-card overflow-hidden px-5 py-4">
+    <section className="ranking-overflow-card hero-card overflow-hidden px-5 py-4">
       <div className="flex items-center justify-between border-b border-white/[0.04] pb-3 mb-5">
         <div className="flex items-center gap-2">
           <Users className="h-4 w-4 text-volt" />
@@ -57,7 +57,7 @@ export function RankingOverflowCard() {
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
-            className="flex items-center gap-1 text-[10px] text-white/30 transition hover:text-volt/60"
+            className="ranking-overflow-toggle flex items-center gap-1 text-[10px] text-white/30 transition hover:text-volt/60"
           >
             <span>{expanded ? "收起" : "展开"}</span>
             <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${expanded ? "rotate-180" : ""}`} />
@@ -82,10 +82,10 @@ export function RankingOverflowCard() {
                 className="h-3.5 w-5 shrink-0 rounded-sm object-cover"
                 loading="lazy"
               />
-              <span className="text-[11px] font-semibold text-white/70">
+              <span className="ranking-overflow-team text-[11px] font-semibold text-white/70">
                 {teamName}
               </span>
-              <span className="text-[11px] font-bold tabular-nums text-white/45">
+              <span className="ranking-overflow-probability text-[11px] font-bold tabular-nums text-white/45">
                 {probabilityLabel(country.impliedProbability)}
               </span>
             </>
@@ -97,7 +97,7 @@ export function RankingOverflowCard() {
             onMouseLeave: () => hoverCountry(null, "ranking"),
             onFocus: () => hoverCountry(country.countryCode, "ranking"),
             onBlur: () => hoverCountry(null, "ranking"),
-            className: "group flex items-center gap-2 rounded-full border border-white/[0.06] bg-white/[0.03] px-3 py-1.5 transition hover:border-volt/20 hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-volt/50",
+            className: "ranking-overflow-pill group flex items-center gap-2 rounded-full border border-white/[0.06] bg-white/[0.03] px-3 py-1.5 transition hover:border-volt/20 hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-volt/50",
             style: {
               background: isSelected ? "rgba(216,255,62,0.06)" : undefined,
               borderColor: isSelected ? "rgba(216,255,62,0.2)" : undefined,
@@ -127,7 +127,7 @@ export function RankingOverflowCard() {
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="mt-3 flex w-full items-center justify-center gap-1 text-[11px] text-white/30 transition hover:text-volt/60"
+        className="ranking-overflow-toggle mt-3 flex w-full items-center justify-center gap-1 text-[11px] text-white/30 transition hover:text-volt/60"
       >
         <span>{expanded ? "收起" : "展开更多"}</span>
         <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${expanded ? "rotate-180" : ""}`} />

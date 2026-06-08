@@ -91,7 +91,7 @@ export function MobileMeDrawer({ open, home, loading, avatarUrl, onLogin, onRegi
           <motion.button
             type="button"
             aria-label="关闭个人菜单"
-            className="fixed inset-0 z-[80] bg-black/55 backdrop-blur-sm lg:hidden"
+            className="mobile-me-drawer-backdrop fixed inset-0 z-[80] bg-black/55 backdrop-blur-sm lg:hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -104,7 +104,7 @@ export function MobileMeDrawer({ open, home, loading, avatarUrl, onLogin, onRegi
             role="dialog"
             aria-modal="true"
             aria-label="个人中心"
-            className="fixed left-0 top-0 z-[90] flex h-[100dvh] w-[66.666vw] min-w-[250px] max-w-[340px] flex-col overflow-hidden bg-ink-950/88 px-5 pb-5 pt-[calc(1rem+env(safe-area-inset-top))] shadow-[26px_0_90px_rgba(0,0,0,.62)] backdrop-blur-3xl lg:hidden"
+            className="mobile-me-drawer fixed left-0 top-0 z-[90] flex h-[100dvh] w-[66.666vw] min-w-[250px] max-w-[340px] flex-col overflow-hidden bg-ink-950/88 px-5 pb-5 pt-[calc(1rem+env(safe-area-inset-top))] shadow-[26px_0_90px_rgba(0,0,0,.62)] backdrop-blur-3xl lg:hidden"
             initial={{ x: "-104%", opacity: 0.6 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: "-104%", opacity: 0.6 }}

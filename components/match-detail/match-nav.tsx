@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 
-export type MatchTab = "lineup" | "live" | "stats" | "analysis";
+export type MatchTab = "lineup" | "live" | "stats" | "events" | "analysis";
 
 const NAV_ITEMS: { id: MatchTab; label: string }[] = [
   { id: "lineup", label: "阵容" },
   { id: "live", label: "直播" },
   { id: "stats", label: "统计" },
+  { id: "events", label: "事件" },
   { id: "analysis", label: "分析" },
 ];
 

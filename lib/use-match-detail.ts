@@ -245,6 +245,7 @@ function toLineupPlayer(
     name: player.name || "待更新",
     number: player.number,
     position: toPlayerPosition(player.position),
+    grid: player.grid ?? null,
     positionCn: player.position || undefined,
     isStarter,
     country: team.code,

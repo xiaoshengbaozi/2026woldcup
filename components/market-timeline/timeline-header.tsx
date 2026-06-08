@@ -12,11 +12,11 @@ export function TimelineHeader() {
   const setTimePreset = useStore((s) => s.setTimePreset);
 
   return (
-    <div className="mb-2 flex flex-col gap-2 border-b border-white/[0.04] pb-2 lg:flex-row lg:items-center lg:justify-between">
+    <div className="odds-timeline-header mb-2 flex flex-col gap-2 border-b border-white/[0.04] pb-2 lg:flex-row lg:items-center lg:justify-between">
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <div className="flex shrink-0 items-center gap-2">
           <TrendingUp className="h-4 w-4 text-volt" />
-          <p className="text-sm font-semibold uppercase tracking-[0.08em] text-white">
+          <p className="odds-timeline-title text-sm font-semibold uppercase tracking-[0.08em] text-white">
             赔率时间线
           </p>
         </div>

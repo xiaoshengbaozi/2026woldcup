@@ -31,14 +31,14 @@ export function MatchLinesPanel() {
 
   return (
     <>
-    <section ref={panelRef} className="hero-card relative overflow-hidden p-5">
+    <section ref={panelRef} className="match-lines-panel hero-card relative overflow-hidden p-5">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(216,255,62,0.10),transparent_30%),radial-gradient(circle_at_90%_20%,rgba(255,154,31,0.08),transparent_32%)]" />
 
       <div className="relative flex items-center justify-between border-b border-white/[0.04] pb-3 mb-5">
         <div className="flex items-center gap-2">
           <BarChart3 className="h-4 w-4 text-volt" />
-          <p className="text-sm font-semibold uppercase tracking-[0.08em] text-white">
-            比赛盘口
+          <p className="match-lines-title text-sm font-semibold uppercase tracking-[0.08em] text-white">
+            比赛预测
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -52,7 +52,7 @@ export function MatchLinesPanel() {
             <button
               type="button"
               onClick={() => setExpanded((v) => !v)}
-              className="flex items-center gap-1 text-[10px] text-white/30 transition hover:text-volt/60"
+              className="match-lines-toggle flex items-center gap-1 text-[10px] text-white/30 transition hover:text-volt/60"
             >
               <span>{expanded ? "收起" : "展开"}</span>
               <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${expanded ? "rotate-180" : ""}`} />
@@ -64,13 +64,13 @@ export function MatchLinesPanel() {
       <div className="relative">
         {loading && (
           <div className="grid min-h-[220px] place-items-center rounded-3xl border border-white/[0.06] bg-black/20 text-xs uppercase tracking-[0.16em] text-white/35">
-            正在同步比赛盘口...
+            正在同步比赛预测...
           </div>
         )}
 
         {!loading && error && (
           <div className="rounded-3xl border border-flare/20 bg-flare/5 p-6 text-sm text-flare">
-            比赛盘口暂时不可用：{error}
+            比赛预测暂时不可用：{error}
           </div>
         )}
 
@@ -96,7 +96,7 @@ export function MatchLinesPanel() {
               <button
                 type="button"
                 onClick={() => setExpanded((v) => !v)}
-                className="mt-3 flex w-full items-center justify-center gap-1 text-[11px] text-white/30 transition hover:text-volt/60"
+                className="match-lines-toggle mt-3 flex w-full items-center justify-center gap-1 text-[11px] text-white/30 transition hover:text-volt/60"
               >
                 <span>{expanded ? "收起" : "展开更多"}</span>
                 <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${expanded ? "rotate-180" : ""}`} />
@@ -160,7 +160,7 @@ const MatchLineCard = memo(function MatchLineCard({
       onMouseEnter={() => onHover(event.id)}
       onMouseLeave={() => onHover(null)}
       className={`
-        group relative cursor-pointer overflow-hidden rounded-2xl border p-3.5 transition-all duration-200
+        match-line-card group relative cursor-pointer overflow-hidden rounded-2xl border p-3.5 transition-all duration-200
         ${isSelected
           ? "border-volt/20 bg-volt/[0.04]"
           : isHovered

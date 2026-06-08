@@ -55,7 +55,7 @@ export function StatCard({ label, value, detail: _detail, icon: Icon, accent = f
     <motion.div
       whileHover={{ y: -4, scale: 1.01 }}
       transition={{ type: "spring", stiffness: 260, damping: 22 }}
-      className={`glass-panel group relative overflow-hidden p-1.5 sm:p-5 ${toneStyle ? toneStyle.card : ""}`}
+      className={`glass-panel group relative overflow-hidden p-1.5 sm:p-5 ${tone ? `stat-card-tone stat-card-tone-${tone}` : ""} ${toneStyle ? toneStyle.card : ""}`}
     >
       {toneStyle && (
         <>

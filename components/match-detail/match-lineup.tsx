@@ -10,6 +10,7 @@ import playerArticles from "@/data/player-articles.json";
 import { localizeCoachName } from "@/lib/coach-localization";
 import { PlayerFmScoutCard } from "@/components/player-fm-scout-card";
 import { getOfficialPlayerCatalog, type OfficialPlayerCatalogItem } from "@/lib/official-player-catalog";
+import { hasKnownBlankPlayerPhoto } from "@/lib/player-photo-overrides";
 import { findPlayerScoutNoteByIdentity, type PlayerScoutNote } from "@/lib/player-scout-notes";
 import { parseTeams } from "@/lib/teams";
 import type { MatchDetail, LineupPlayer, PlayerPosition } from "@/types/match";
@@ -52,6 +53,43 @@ function getLayout(formation: string) {
   return FORMATION_LAYOUTS[formation] ?? FORMATION_LAYOUTS["4-3-3"];
 }
 
+type PitchCoord = { x: number; y: number };
+
+function getPlayerPitchCoords(starters: LineupPlayer[], formation: string): PitchCoord[] {
+  const gridCoords = starters.map((player) => parsePlayerGrid(player.grid));
+  const usableGridCoords = gridCoords.filter((coord): coord is { row: number; col: number } => Boolean(coord));
+
+  if (usableGridCoords.length >= Math.min(starters.length, 8)) {
+    const maxRow = Math.max(...usableGridCoords.map((coord) => coord.row), 1);
+    const colsByRow = usableGridCoords.reduce((map, coord) => {
+      map.set(coord.row, Math.max(map.get(coord.row) ?? 0, coord.col));
+      return map;
+    }, new Map<number, number>());
+
+    return gridCoords.map((coord, index) => {
+      if (!coord) return getLayout(formation)[index] ?? { x: 50, y: 50 };
+
+      const colsInRow = Math.max(colsByRow.get(coord.row) ?? coord.col, 1);
+      const x = (coord.col / (colsInRow + 1)) * 100;
+      const y = maxRow <= 1 ? 50 : 88 - ((coord.row - 1) / (maxRow - 1)) * 64;
+      return { x, y };
+    });
+  }
+
+  return getLayout(formation);
+}
+
+function parsePlayerGrid(grid: string | null | undefined) {
+  const match = String(grid ?? "").match(/^(\d+):(\d+)$/);
+  if (!match) return null;
+
+  const row = Number(match[1]);
+  const col = Number(match[2]);
+  if (!Number.isFinite(row) || !Number.isFinite(col) || row < 1 || col < 1) return null;
+
+  return { row, col };
+}
+
 const OFFICIAL_PLAYERS = getOfficialPlayerCatalog();
 const OFFICIAL_PLAYERS_BY_TEAM = OFFICIAL_PLAYERS.reduce((map, player) => {
   const code = player.teamCode.toUpperCase();
@@ -92,7 +130,7 @@ function reconcileLineupPlayers(players: LineupPlayer[], teamCode: string): Line
       number: official.number ?? player.number,
       position: reconcilePlayerPosition(player.position, official.position),
       positionCn: official.positionCn || player.positionCn,
-      photo: official.photo || player.photo,
+      photo: hasKnownBlankPlayerPhoto(official.apiPlayerId) ? "" : official.photo || player.photo,
     };
   });
 }
@@ -184,6 +222,7 @@ export function MatchLineup({ detail }: { detail: MatchDetail }) {
             />
           ) : (
             <FormationPitch
+              coach={currentLineup.coach}
               players={currentPlayers}
               formation={currentLineup.formation}
               accentHex={accentHex}
@@ -194,6 +233,7 @@ export function MatchLineup({ detail }: { detail: MatchDetail }) {
           {!isSquadList && (
             <PlayerGrid
               players={currentPlayers}
+              separateSubstitutes={currentLineup.listType === "confirmed_lineup" && currentPlayers.some((player) => player.isStarter)}
               accentHex={accentHex}
               accentFrom={isHome ? "rgba(216,255,62," : "rgba(255,154,31,"}
             />
@@ -209,18 +249,41 @@ export function MatchLineup({ detail }: { detail: MatchDetail }) {
    ═══════════════════════════════════════════════ */
 
 function FormationPitch({
-  players, formation, accentHex, accentDark,
+  coach, players, formation, accentHex, accentDark,
 }: {
-  players: LineupPlayer[]; formation: string; accentHex: string; accentDark: string;
+  coach?: string | null; players: LineupPlayer[]; formation: string; accentHex: string; accentDark: string;
 }) {
-  const layout = getLayout(formation);
   const starters = players.filter((p) => p.isStarter).slice(0, 11);
+  const layout = getPlayerPitchCoords(starters, formation);
   const accentFrom = accentHex === "#D8FF3E" ? "rgba(216,255,62," : "rgba(255,154,31,";
+  const displayCoach = localizeCoachName(coach) || "待更新";
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center pt-1 sm:pt-2">
+      <div
+        className="mb-5 flex w-full max-w-[320px] items-center justify-between gap-3 rounded-2xl px-4 py-3 ring-1 ring-white/[0.07] backdrop-blur-xl sm:mb-6"
+        style={{
+          background: `linear-gradient(135deg, ${accentFrom}0.12), rgba(255,255,255,0.025))`,
+          boxShadow: `0 18px 42px rgba(0,0,0,0.18), 0 0 24px ${accentFrom}0.08)`,
+        }}
+      >
+        <div className="flex min-w-0 items-center gap-3">
+          <span
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-2xl text-[11px] font-black text-black shadow-[inset_0_1px_0_rgba(255,255,255,.35)]"
+            style={{ background: `linear-gradient(135deg, ${accentHex}, ${accentDark})` }}
+          >
+            CO
+          </span>
+          <div className="min-w-0">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/35">主教练</p>
+            <p className="mt-0.5 truncate text-sm font-black text-white sm:text-base">{displayCoach}</p>
+          </div>
+        </div>
+        <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: accentHex, boxShadow: `0 0 18px ${accentHex}` }} />
+      </div>
+
       {/* Formation badge */}
-      <div className="mb-3 flex items-center gap-2">
+      <div className="mb-4 flex items-center gap-2 sm:mb-5">
         <div className="h-5 w-1 rounded-full" style={{ backgroundColor: accentHex }} />
         <span className="text-[10px] font-black uppercase tracking-[0.2em]"
           style={{ color: accentHex }}
@@ -285,20 +348,24 @@ function FormationPitch({
           {/* Players */}
           {starters.map((player, i) => {
             const coord = layout[i] ?? { x: 50, y: 50 };
+            const rowDensity = layout.filter((item) => Math.abs(item.y - coord.y) < 4).length;
+            const labelWidth = rowDensity >= 5 ? 44 : rowDensity === 4 ? 52 : rowDensity === 3 ? 62 : 72;
             const isGK = player.position === "GK";
             const isCapt = player.isCaptain;
-            const x = 4 + (coord.x / 100) * 92;
+            const x = 5.9 + (coord.x / 100) * 88.2;
             const y = 3 + (coord.y / 100) * 94;
 
             return (
-              <motion.div
+              <div
                 key={player.id}
-                initial={{ opacity: 0, scale: 0.3 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.08 + i * 0.04, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                className="absolute z-10 -translate-x-1/2 -translate-y-1/2"
-                style={{ left: `${x}%`, top: `${y}%` }}
+                className="absolute z-10"
+                style={{ left: `${x}%`, top: `${y}%`, transform: "translate(-50%, -50%)" }}
               >
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.3 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.08 + i * 0.04, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                >
                 <div className="flex flex-col items-center">
                   <div className="relative">
                     <div className="flex h-[32px] w-[32px] items-center justify-center sm:h-[38px] sm:w-[38px]"
@@ -323,13 +390,18 @@ function FormationPitch({
                       </div>
                     )}
                   </div>
-                  <p className="mt-0.5 max-w-[60px] truncate text-center text-[8px] font-semibold leading-tight text-white/80 sm:max-w-[70px] sm:text-[9px]"
-                    style={{ textShadow: "0 1px 4px rgba(0,0,0,0.6)" }}
+                  <p
+                    className={`mt-0.5 truncate rounded-full bg-black/18 px-1 text-center font-semibold leading-tight text-white/80 backdrop-blur-sm ${
+                      rowDensity >= 5 ? "text-[7px] sm:text-[8px]" : "text-[8px] sm:text-[9px]"
+                    }`}
+                    style={{ maxWidth: `${labelWidth}px`, textShadow: "0 1px 4px rgba(0,0,0,0.6)" }}
+                    title={player.name}
                   >
                     {player.name}
                   </p>
                 </div>
-              </motion.div>
+                </motion.div>
+              </div>
             );
           })}
         </div>
@@ -802,11 +874,13 @@ function groupPlayersByPosition(players: LineupPlayer[]): Record<string, LineupP
 }
 
 export function PlayerGrid({
-  players, accentHex, accentFrom,
+  players, separateSubstitutes = false, accentHex, accentFrom,
 }: {
-  players: LineupPlayer[]; accentHex: string; accentFrom: string;
+  players: LineupPlayer[]; separateSubstitutes?: boolean; accentHex: string; accentFrom: string;
 }) {
-  const grouped = groupPlayersByPosition(players);
+  const startingPlayers = separateSubstitutes ? players.filter((player) => player.isStarter) : players;
+  const substitutePlayers = separateSubstitutes ? players.filter((player) => !player.isStarter) : [];
+  const grouped = groupPlayersByPosition(startingPlayers);
 
   let globalIndex = 0;
 
@@ -836,6 +910,26 @@ export function PlayerGrid({
           </div>
         );
       })}
+
+      {substitutePlayers.length > 0 && (
+        <div>
+          <div className="mb-2 flex items-center gap-2 pl-0.5">
+            <span className="inline-block h-3 w-1.5 rounded-full" style={{ backgroundColor: accentHex, opacity: 0.35 }} />
+            <span className="text-xs font-black uppercase tracking-[0.12em] text-white/55 sm:text-sm">
+              替补
+            </span>
+            <span className="text-xs text-white/28 sm:text-sm">({substitutePlayers.length})</span>
+          </div>
+          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 sm:gap-2">
+            {substitutePlayers.map((player) => {
+              const idx = globalIndex++;
+              return (
+                <PlayerCell key={player.id} player={player} accentHex={accentHex} accentFrom={accentFrom} index={idx} />
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {players.length === 0 && (
         <div className="rounded-xl bg-white/[0.035] px-4 py-8 text-center ring-1 ring-white/[0.055]">

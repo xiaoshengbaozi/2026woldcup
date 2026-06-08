@@ -43,7 +43,7 @@ function PopularTeamsCard({ popularTeams, className = "" }: { popularTeams: Popu
       <div className="relative mb-4 flex items-center justify-between border-b border-white/[0.04] pb-3">
         <div className="flex items-center gap-2"><Star className="h-4 w-4 text-volt" /><p className="text-sm font-semibold uppercase text-white">热门球队</p></div>
         <a href="/data" className="group inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40 transition hover:text-volt">查看全部<ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" /></a>
-        <span className="absolute bottom-0 right-0 translate-y-1/2 whitespace-nowrap bg-[#0b0b0b] text-[9px] uppercase tracking-[0.12em] text-white/40">赔率</span>
+        <span className="hero-card-corner-label absolute bottom-0 right-0 translate-y-1/2 whitespace-nowrap bg-[#0b0b0b] text-[9px] uppercase tracking-[0.12em] text-white/40">赔率</span>
       </div>
       <div className="divide-y divide-white/[0.04]">
         {popularTeams.map((team, index) => {
@@ -196,17 +196,17 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
         </motion.aside>
 
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14, duration: 0.78, ease: [0.16, 1, 0.3, 1] }} className="grid gap-5">
-          <div className="next-match-card hero-card relative h-[288px] overflow-hidden p-0 sm:h-[330px]">
+          <div className="next-match-card hero-card relative min-h-[312px] overflow-hidden p-0 sm:min-h-[330px]">
             <img src="/estadio-azteca-aerial.jpg" alt="Aerial view of Estadio Azteca" className="next-match-media absolute inset-0 h-full w-full object-cover object-[78%_50%] opacity-[.82] saturate-[1.08]" />
             <div className="next-match-shade absolute inset-0 bg-[linear-gradient(90deg,rgba(5,8,8,.98)_0%,rgba(5,8,8,.9)_34%,rgba(5,8,8,.42)_58%,rgba(5,8,8,.08)_100%),linear-gradient(0deg,rgba(5,8,8,.72)_0%,rgba(5,8,8,.08)_32%,rgba(5,8,8,.1)_100%),radial-gradient(circle_at_76%_52%,rgba(216,255,62,.2),transparent_26%)]" />
             <div className="next-match-glow absolute inset-0 bg-[radial-gradient(circle_at_24%_20%,rgba(216,255,62,.13),transparent_24%),radial-gradient(circle_at_68%_72%,rgba(255,154,31,.1),transparent_34%)]" />
-            <div className="relative z-10 flex h-full flex-col items-center p-4 sm:p-8">
+            <div className="relative z-10 flex min-h-[312px] flex-col items-center justify-between px-5 pb-7 pt-5 sm:min-h-[330px] sm:p-8">
               <div className="flex w-full flex-col items-center">
                 <div className="flex w-full items-start justify-between gap-3">
                   <div className="flex shrink-0 items-center gap-3 text-xs uppercase tracking-[0.12em] text-white/52 sm:text-sm sm:tracking-[0.16em]"><span className="h-2 w-2 rounded-full bg-volt shadow-[0_0_16px_rgba(216,255,62,.85)]" />下一场比赛</div>
                   <p className="min-w-0 text-right text-sm font-semibold uppercase leading-5 tracking-[0.06em] text-white/72 sm:text-base sm:tracking-[0.08em]">{dateLabel}</p>
                 </div>
-                <div className="mt-3 flex w-full min-w-0 items-start justify-center gap-3 sm:mt-5 sm:gap-8">
+                <div className="mt-7 flex w-full min-w-0 items-start justify-center gap-3 sm:mt-5 sm:gap-8">
                   <TeamSignal code={homeCode} image={teams?.home.image} name={teams?.home.name || "揭幕战"} />
                   <div className="flex h-12 items-center justify-center sm:h-16"><ArrowRight className="h-6 w-6 shrink-0 text-flare drop-shadow-[0_0_16px_rgba(255,154,31,.55)] sm:h-8 sm:w-8" /></div>
                   <TeamSignal code={awayCode} image={teams?.away.image} name={teams?.away.name || "官方赛程"} />
@@ -218,7 +218,7 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
                   </div>
                 )}
               </div>
-              <div className="next-match-countdown mt-2 grid w-full max-w-sm grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[1.45rem] bg-black/34 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,.08)] backdrop-blur-2xl sm:mt-4 sm:p-4">
+              <div className="next-match-countdown mt-4 grid w-full max-w-sm grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[1.45rem] bg-black/34 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,.08)] backdrop-blur-2xl sm:mt-4 sm:p-4">
                 <div>
                   <p className="text-xs uppercase tracking-[0.18em] text-white/42">距离开赛</p>
                   <p className="mt-1 flex items-baseline text-3xl font-semibold leading-none text-volt sm:text-4xl" style={{ fontFamily: "ScreenMatrix, monospace" }}><span>{countdown.days}</span><span className="countdown-colon text-3xl sm:text-4xl">:</span><span>{countdown.hours}</span><span className="countdown-colon text-3xl sm:text-4xl">:</span><span>{countdown.minutes}</span><span className="countdown-colon text-3xl sm:text-4xl">:</span><span>{countdown.seconds}</span></p>
@@ -278,7 +278,7 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
             <div className="relative mb-3 flex items-center justify-between border-b border-white/[0.04] pb-3">
               <div className="flex items-center gap-2"><Trophy className="h-4 w-4 text-volt" /><p className="text-sm font-semibold uppercase text-white">射手榜</p></div>
               <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40">实时数据<ArrowRight className="h-3.5 w-3.5" /></span>
-              <span className="absolute bottom-0 right-0 w-5 translate-y-1/2 whitespace-nowrap bg-[#0b0b0b] text-center text-[9px] uppercase tracking-[0.12em] text-white/40">进球</span>
+              <span className="hero-card-corner-label absolute bottom-0 right-0 w-5 translate-y-1/2 whitespace-nowrap bg-[#0b0b0b] text-center text-[9px] uppercase tracking-[0.12em] text-white/40">进球</span>
             </div>
             <div className="divide-y divide-white/[0.04]">
               {topScorers.map((player, index) => (

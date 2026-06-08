@@ -23,7 +23,7 @@ export function ModuleC_OddsTimeline() {
   }, [updateSize]);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="odds-timeline-panel flex flex-col h-full">
       <TimelineHeader />
       <div ref={containerRef} className="flex-1 relative overflow-hidden">
         <TimelineCanvas size={size} />

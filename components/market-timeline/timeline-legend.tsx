@@ -54,7 +54,7 @@ export function TimelineLegend() {
   ).slice(0, 10);
 
   return (
-    <div className="scrollbar-hidden flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto">
+    <div className="timeline-legend-list scrollbar-hidden flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto">
       {display.map((entry) => {
         const colorIdx = entries.findIndex((e) => e.code === entry.code);
         const country = countries(entry.code);
@@ -74,7 +74,7 @@ export function TimelineLegend() {
                 selectCountry(entry.code, "timeline");
               }
             }}
-            className="flex h-7 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-[10px] font-semibold uppercase tracking-[0.08em] transition hover:bg-white/[0.08]"
+            className="timeline-legend-chip flex h-7 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-[10px] font-semibold uppercase tracking-[0.08em] transition hover:bg-white/[0.08]"
             style={{
               background: isSelected ? "rgba(216,255,62,0.12)" : "rgba(255,255,255,0.035)",
               color: isSelected ? "#d8ff3e" : "rgba(255,255,255,0.62)",

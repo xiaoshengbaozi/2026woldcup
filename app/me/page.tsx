@@ -34,7 +34,7 @@ import {
   type UserPreferencePlayer,
   type UserPreferenceTeam,
 } from "@/lib/user-preferences";
-import { userApi, type PublicUser, type UserHomePayload } from "@/lib/user-system";
+import { userApi, type PublicUser, type UserHomePayload, type UserSessionPayload } from "@/lib/user-system";
 import { fetchMyPlayerXTimeline, type PlayerXTimelinePayload } from "@/lib/player-x-timeline";
 import { fetchWorldCupTopScorers, type WorldCupTopScorer } from "@/lib/world-cup-top-scorers";
 import { getFlagUrl } from "@/lib/world-cup-2026";
@@ -317,20 +317,38 @@ function MePageContent() {
 
   async function loadHome() {
     try {
-      setLoading(true);
       const payload = await userApi<UserHomePayload>("/api/me/home", { cache: "no-store" });
       setHome(payload);
       if (payload.catalog) setCatalog(payload.catalog);
       setError("");
     } catch {
       setHome(null);
+    }
+  }
+
+  async function loadSession() {
+    try {
+      setLoading(true);
+      const payload = await userApi<UserSessionPayload>("/api/me/session", { cache: "no-store" });
+      setHome((current) => ({
+        catalog: current?.catalog,
+        user: payload.user,
+        summary: payload.summary,
+      }));
+      setError("");
+      return true;
+    } catch {
+      setHome(null);
+      return false;
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    void loadHome();
+    void loadSession().then((signedIn) => {
+      if (signedIn) void loadHome();
+    });
     userApi<UserPreferenceCatalog>("/api/user-preferences", { cache: "no-store" })
       .then((payload) => {
         setCatalog(payload);
@@ -527,7 +545,7 @@ function MePageContent() {
 
   return (
     <DashboardShell>
-      <section className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_310px] xl:grid-cols-[minmax(0,1fr)_340px]">
+      <section className="me-page grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_310px] xl:grid-cols-[minmax(0,1fr)_340px]">
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
@@ -543,7 +561,7 @@ function MePageContent() {
           transition={{ duration: 0.45, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
           className="hidden h-fit gap-5 lg:sticky lg:top-5 lg:grid"
         >
-          <section className="hero-card me-account-card grid h-[245px] overflow-hidden p-5 text-black sm:p-6">
+          <section className="hero-card me-account-card grid h-[235px] overflow-hidden p-5 text-black sm:p-6">
             <AccountCard
               home={home}
               catalog={catalog}

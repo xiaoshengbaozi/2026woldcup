@@ -452,6 +452,12 @@ export class UserSystem {
       return;
     }
 
+    if (req.method === "POST" && invitationId && action === "delete") {
+      const invitation = this.store.deleteInvitationCode(invitationId);
+      sendJson(res, { deletedInvitationId: invitation.id, ...buildAdminInvitationsPayload(this.store.listInvitationCodes()) });
+      return;
+    }
+
     sendJson(res, { error: "admin_invitation_action_not_found" }, 404);
   }
 

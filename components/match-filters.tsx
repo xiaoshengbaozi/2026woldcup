@@ -177,18 +177,18 @@ function SupportBeerButton() {
       aria-label="打赏作者"
       title="打赏作者"
       onClick={openCreatorSupportModal}
-      className="glass-chip group relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden px-0 text-white/78 transition hover:text-white hover:ring-1 hover:ring-amber-300/25 sm:w-[150px] sm:justify-start sm:gap-2 sm:px-4"
+      className="glass-chip group relative box-border flex h-10 min-h-10 w-10 shrink-0 items-center justify-center overflow-hidden px-0 text-white/78 ring-1 ring-transparent transition hover:text-white hover:ring-amber-300/25 sm:w-auto sm:min-w-[11.5rem] sm:justify-start sm:gap-2.5 sm:px-4"
     >
-      <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full bg-amber-300/10 shadow-[0_0_20px_rgba(245,158,11,.13)] ring-1 ring-white/[0.1]">
+      <span className="relative block h-8 max-h-8 w-8 shrink-0 overflow-hidden">
         <Image
           src="/support/beer-glass.webp"
           alt=""
           fill
           sizes="32px"
-          className="object-contain p-0.5 transition duration-200 group-hover:scale-110"
+          className="block object-contain p-0.5 transition duration-200 group-hover:scale-110"
         />
       </span>
-      <span className="hidden truncate text-xs sm:block">请作者喝杯啤酒</span>
+      <span className="hidden whitespace-nowrap text-xs leading-none sm:block">请作者喝杯啤酒</span>
     </button>
   );
 }

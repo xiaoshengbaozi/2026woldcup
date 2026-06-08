@@ -426,7 +426,7 @@ export function ThreeGlobe({
   }, [webFullscreen]);
 
   return (
-    <section className={`relative h-full min-h-0 overflow-hidden ${className ?? ""}`}>
+    <section className={`market-globe-panel relative h-full min-h-0 overflow-hidden ${className ?? ""}`}>
       <div ref={wrapRef} className="relative h-full min-h-0" style={{ cursor: "grab" }}>
         <div className="globe-label absolute left-3 top-3 z-10 flex items-center gap-2 rounded-full bg-[rgba(8,12,12,0.85)] px-3 py-2 text-sm font-semibold uppercase tracking-[0.08em] text-white/80 ring-1 ring-white/[0.08] backdrop-blur-xl">
           <svg className="h-4 w-4 text-volt" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -442,7 +442,7 @@ export function ThreeGlobe({
             type="button"
             onClick={toggleWebFullscreen}
             title={webFullscreen ? "退出网页全屏" : "网页全屏"}
-            className="grid h-7 w-7 place-items-center rounded-full bg-[rgba(8,12,12,0.85)] text-white/40 ring-1 ring-white/[0.08] backdrop-blur-xl transition hover:bg-white/[0.1] hover:text-volt"
+            className="globe-control-button grid h-7 w-7 place-items-center rounded-full bg-[rgba(8,12,12,0.85)] text-white/40 ring-1 ring-white/[0.08] backdrop-blur-xl transition hover:bg-white/[0.1] hover:text-volt"
           >
             <Maximize2 className="h-3.5 w-3.5" />
           </button>
@@ -450,7 +450,7 @@ export function ThreeGlobe({
             type="button"
             onClick={toggleSystemFullscreen}
             title="系统全屏"
-            className="grid h-7 w-7 place-items-center rounded-full bg-[rgba(8,12,12,0.85)] text-white/40 ring-1 ring-white/[0.08] backdrop-blur-xl transition hover:bg-white/[0.1] hover:text-volt"
+            className="globe-control-button grid h-7 w-7 place-items-center rounded-full bg-[rgba(8,12,12,0.85)] text-white/40 ring-1 ring-white/[0.08] backdrop-blur-xl transition hover:bg-white/[0.1] hover:text-volt"
           >
             <Expand className="h-3.5 w-3.5" />
           </button>

@@ -336,11 +336,12 @@ export default function NewsPage() {
 
   return (
     <DashboardShell>
-      <div
-        ref={mobileTabsSentinelRef}
-        className="lg:hidden"
-        style={{ height: isMobileTabsPinned ? mobileTabsHeight : 0 }}
-      />
+      <div className="news-page">
+        <div
+          ref={mobileTabsSentinelRef}
+          className="lg:hidden"
+          style={{ height: isMobileTabsPinned ? mobileTabsHeight : 0 }}
+        />
       <nav
         ref={mobileTabsRef}
         className={`${
@@ -408,7 +409,7 @@ export default function NewsPage() {
                 event.preventDefault();
                 openReader(heroItem);
               }}
-              className="hero-card group relative min-h-[400px] overflow-hidden bg-white/[0.035] transition-all duration-300 hover:-translate-y-1"
+              className="news-hero-card hero-card group relative min-h-[400px] overflow-hidden bg-white/[0.035] transition-all duration-300 hover:-translate-y-1"
             >
               <NewsImage
                 src={heroItem.image}
@@ -436,7 +437,7 @@ export default function NewsPage() {
             </a>
 
             {/* Side stories */}
-            <div className="flex flex-col">
+            <div className="news-side-list flex flex-col">
               {sideItems.map((item, idx) => (
                 <a
                   key={item.id}
@@ -525,7 +526,7 @@ export default function NewsPage() {
       {/* ── World Cup Updates: Sidebar List ── */}
       <section className="mt-8 grid gap-5 lg:grid-cols-[0.4fr_1fr]">
         {/* Left intro */}
-        <div className="hero-card flex flex-col justify-center p-6">
+        <div className="news-text-card hero-card flex flex-col justify-center p-6">
           <h2 className="text-2xl font-bold tracking-wide text-white uppercase">World Cup</h2>
           <p className="mt-3 text-sm leading-6 text-white/50">
             Stay informed with the latest updates on FIFA World Cup 2026. From match schedules to host city preparations.
@@ -536,7 +537,7 @@ export default function NewsPage() {
         </div>
 
         {/* Right list */}
-        <div className="hero-card divide-y divide-white/[0.04] overflow-hidden">
+        <div className="news-update-list hero-card divide-y divide-white/[0.04] overflow-hidden">
           {(listItems.length > 0 ? listItems : items.slice(0, 7)).map((item) => (
             <a
               key={item.id}
@@ -577,7 +578,7 @@ export default function NewsPage() {
                   event.preventDefault();
                   openReader(item);
                 }}
-                className="hero-card group overflow-hidden transition-all duration-300 hover:-translate-y-1"
+                className="news-text-card hero-card group overflow-hidden transition-all duration-300 hover:-translate-y-1"
               >
                 <div className="relative h-48 overflow-hidden">
                   <NewsImage
@@ -604,16 +605,17 @@ export default function NewsPage() {
           </div>
         </section>
       )}
-      <NewsReader
-        item={readerItem}
-        article={readerArticle}
-        loading={readerLoading}
-        error={readerError}
-        translate={readerTranslate}
-        canTranslate={canTranslateReaderArticle}
-        onTranslate={() => setReaderTranslate(true)}
-        onClose={closeReader}
-      />
+        <NewsReader
+          item={readerItem}
+          article={readerArticle}
+          loading={readerLoading}
+          error={readerError}
+          translate={readerTranslate}
+          canTranslate={canTranslateReaderArticle}
+          onTranslate={() => setReaderTranslate(true)}
+          onClose={closeReader}
+        />
+      </div>
     </DashboardShell>
   );
 }
@@ -646,7 +648,7 @@ function EditorChoiceCard({ item, onOpen }: { item: NewsItem; onOpen?: (item: Ne
         event.preventDefault();
         onOpen(item);
       }}
-      className="hero-card group overflow-hidden transition-all duration-300 hover:-translate-y-1"
+      className="news-text-card hero-card group overflow-hidden transition-all duration-300 hover:-translate-y-1"
     >
       <div className="relative h-44 overflow-hidden">
         <NewsImage
@@ -754,7 +756,7 @@ function NewsCard({ item, index, onOpen }: { item: NewsItem; index: number; onOp
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(index * 0.025, 0.25), duration: 0.36 }}
-      className="hero-card group flex min-h-[240px] flex-col overflow-hidden transition-all duration-300 hover:-translate-y-1"
+      className="news-text-card hero-card group flex min-h-[240px] flex-col overflow-hidden transition-all duration-300 hover:-translate-y-1"
     >
       <div className="relative h-36 overflow-hidden bg-white/[0.035]">
         <NewsImage

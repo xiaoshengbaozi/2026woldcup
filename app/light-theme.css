@@ -579,6 +579,90 @@
   filter: drop-shadow(0 0 5px rgba(54, 65, 44, 0.22)) !important;
 }
 
+/* Mobile left drawer */
+[data-theme="light"] .mobile-me-drawer-backdrop {
+  background:
+    radial-gradient(circle at 0% 20%, rgba(255, 254, 250, 0.34), transparent 34%),
+    rgba(31, 43, 26, 0.24) !important;
+  backdrop-filter: blur(10px) saturate(1.05) !important;
+}
+
+[data-theme="light"] .mobile-me-drawer {
+  background:
+    radial-gradient(circle at 0% 10%, rgba(216, 255, 62, 0.11), transparent 34%),
+    radial-gradient(circle at 100% 84%, rgba(172, 126, 64, 0.08), transparent 38%),
+    linear-gradient(135deg, rgba(255, 254, 250, 0.94), rgba(242, 247, 236, 0.82)),
+    rgba(255, 254, 250, 0.96) !important;
+  color: var(--lm-text-primary) !important;
+  box-shadow:
+    22px 0 58px rgba(31, 43, 26, 0.16),
+    0 0 34px -18px rgba(54, 65, 44, 0.24),
+    inset -1px 0 0 rgba(54, 65, 44, 0.08),
+    inset 1px 0 0 rgba(255, 255, 255, 0.82) !important;
+  backdrop-filter: blur(28px) saturate(1.08) !important;
+}
+
+[data-theme="light"] .mobile-me-drawer .bg-volt\/12,
+[data-theme="light"] .mobile-me-drawer .bg-flare\/10 {
+  opacity: 0.82;
+}
+
+[data-theme="light"] .mobile-me-drawer .border-white\/\[0\.08\],
+[data-theme="light"] .mobile-me-drawer .border-white\/\[0\.07\],
+[data-theme="light"] .mobile-me-drawer .divide-white\/\[0\.08\] > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(54, 65, 44, 0.1) !important;
+}
+
+[data-theme="light"] .mobile-me-drawer .text-white\/90,
+[data-theme="light"] .mobile-me-drawer .text-white\/86,
+[data-theme="light"] .mobile-me-drawer .hover\:text-white:hover {
+  color: var(--lm-text-primary) !important;
+}
+
+[data-theme="light"] .mobile-me-drawer .text-white\/80,
+[data-theme="light"] .mobile-me-drawer .text-white\/72,
+[data-theme="light"] .mobile-me-drawer .text-white\/62,
+[data-theme="light"] .mobile-me-drawer .text-white\/58,
+[data-theme="light"] .mobile-me-drawer .hover\:text-volt:hover {
+  color: var(--lm-text-secondary) !important;
+}
+
+[data-theme="light"] .mobile-me-drawer .text-white\/34 {
+  color: var(--lm-text-muted) !important;
+}
+
+[data-theme="light"] .mobile-me-drawer .text-volt,
+[data-theme="light"] .mobile-me-drawer .text-volt\/80 {
+  color: var(--lm-accent) !important;
+}
+
+[data-theme="light"] .mobile-me-drawer .bg-white\/\[0\.08\],
+[data-theme="light"] .mobile-me-drawer .bg-white\/\[0\.06\],
+[data-theme="light"] .mobile-me-drawer .hover\:bg-white\/\[0\.1\]:hover {
+  background-color: rgba(54, 65, 44, 0.07) !important;
+}
+
+[data-theme="light"] .mobile-me-drawer .ring-white\/\[0\.08\],
+[data-theme="light"] .mobile-me-drawer .ring-ink-950 {
+  --tw-ring-color: rgba(54, 65, 44, 0.12) !important;
+}
+
+[data-theme="light"] .mobile-me-drawer .border-white\/\[0\.08\].divide-x,
+[data-theme="light"] .mobile-me-drawer .divide-black\/20 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(255, 255, 255, 0.78) !important;
+}
+
+[data-theme="light"] .mobile-me-drawer .bg-volt {
+  background-color: #36412c !important;
+  color: #fffefa !important;
+  box-shadow: 0 12px 24px rgba(54, 65, 44, 0.14) !important;
+}
+
+[data-theme="light"] .mobile-me-drawer .bg-flare {
+  color: #182014 !important;
+  box-shadow: 0 8px 18px rgba(172, 126, 64, 0.18) !important;
+}
+
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    11. Animations & Transitions (unchanged)
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */

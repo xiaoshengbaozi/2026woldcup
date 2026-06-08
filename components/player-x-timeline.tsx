@@ -114,8 +114,8 @@ function TimelineMediaGrid({ item }: { item: PlayerXTimelineItem }) {
 
         return (
           <div key={`${item.id}-media-${index}`} className="relative overflow-hidden rounded-2xl bg-white/[0.04] ring-1 ring-white/[0.08]">
-            {media.type === "photo" ? (
-              <img src={media.url} alt="" className={mediaClassName} />
+            {media.type === "photo" || !media.videoUrl ? (
+              <img src={media.url ?? media.previewImageUrl} alt="" className={mediaClassName} />
             ) : media.videoUrl ? (
               <video
                 src={media.videoUrl}
@@ -138,7 +138,7 @@ function TimelineMediaGrid({ item }: { item: PlayerXTimelineItem }) {
 
 function hasRenderableMedia(media: NonNullable<PlayerXTimelineItem["media"]>[number]) {
   if (media.type === "photo") return Boolean(media.url);
-  return Boolean(media.videoUrl);
+  return Boolean(media.videoUrl || media.previewImageUrl);
 }
 
 function linkifyText(text: string, hideMediaLinks = false) {

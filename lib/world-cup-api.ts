@@ -2,6 +2,7 @@ import type { Match } from "@/types/match";
 import { getEffectiveMatchStatus } from "@/lib/match-status";
 
 const LOCAL_API_URL = "http://localhost:3001";
+const LOCAL_FALLBACK_API_PORT = "3004";
 const PRODUCTION_API_URL = "https://api.boyzi.fun";
 const WARMUP_API_URL = "https://api.boyzi.fun";
 
@@ -59,7 +60,9 @@ type StandingsResponse = {
 export function getBackendApiUrl() {
   const fallbackUrl =
     typeof window !== "undefined" && isLocalDevHost(window.location.hostname)
-      ? `${window.location.protocol}//${window.location.hostname}:3001`
+      ? `${window.location.protocol}//${window.location.hostname}:${
+          window.location.port === "3001" ? LOCAL_FALLBACK_API_PORT : "3001"
+        }`
       : PRODUCTION_API_URL;
 
   return (process.env.NEXT_PUBLIC_MARKET_API_URL || fallbackUrl).replace(/\/$/, "");

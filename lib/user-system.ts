@@ -3,6 +3,7 @@
 import type { UserPreferenceCatalog } from "@/lib/user-preferences";
 
 const LOCAL_API_URL = "http://localhost:3001";
+const LOCAL_FALLBACK_API_PORT = "3004";
 const PRODUCTION_API_URL = "https://api.boyzi.fun";
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
 
@@ -121,9 +122,15 @@ export function getUserApiUrl() {
 function getFallbackApiUrl() {
   if (typeof window === "undefined") return PRODUCTION_API_URL;
 
-  const { hostname, protocol } = window.location;
-  if (LOCAL_HOSTS.has(hostname)) return LOCAL_API_URL;
-  if (protocol === "http:") return `http://${hostname}:3001`;
+  const { hostname, port, protocol } = window.location;
+  if (LOCAL_HOSTS.has(hostname)) {
+    if (port === "3001") return `${protocol}//${hostname}:${LOCAL_FALLBACK_API_PORT}`;
+    return LOCAL_API_URL;
+  }
+  if (protocol === "http:") {
+    const apiPort = port === "3001" ? LOCAL_FALLBACK_API_PORT : "3001";
+    return `http://${hostname}:${apiPort}`;
+  }
 
   return PRODUCTION_API_URL;
 }

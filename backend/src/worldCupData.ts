@@ -95,6 +95,16 @@ const FIFA_OFFICIAL_EXPECTED_SQUAD_SIZE = 26;
 const PLAYER_PHOTO_OVERRIDES: Record<number, string> = {
   304229: "https://img.a.transfermarkt.technology/portrait/big/534398-1692797432.jpg?lm=1",
 };
+const BLANK_API_SPORTS_PLAYER_PHOTO_IDS = new Set<number>([
+  163908,
+  542710,
+  542768,
+  542822,
+  568556,
+  575283,
+  651096,
+  664028,
+]);
 
 type FifaOfficialSquadsFile = {
   source?: string;
@@ -680,6 +690,7 @@ function officialPlayerToNormalized(player: FifaOfficialSquadPlayer): Normalized
 }
 
 function getPlayerPhoto(playerId: number | null | undefined, fallback = "") {
+  if (typeof playerId === "number" && BLANK_API_SPORTS_PLAYER_PHOTO_IDS.has(playerId)) return "";
   return typeof playerId === "number" ? PLAYER_PHOTO_OVERRIDES[playerId] ?? fallback : fallback;
 }
 

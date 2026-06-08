@@ -82,10 +82,16 @@ export function MatchDetailClient({ slug }: { slug: string }) {
         {activeTab === "lineup" && <MatchLineup detail={detail} />}
         {activeTab === "live" && <LivePlayer detail={detail} />}
         {activeTab === "stats" && (
-          <>
-            <MatchStatsPanel detail={detail} />
-            {detail.events.length > 0 && <MatchTimeline detail={detail} />}
-          </>
+          <MatchStatsPanel detail={detail} />
+        )}
+        {activeTab === "events" && (
+          detail.events.length > 0 ? (
+            <MatchTimeline detail={detail} />
+          ) : (
+            <div className="hero-card px-5 py-10 text-center text-sm font-semibold text-white/45">
+              暂无比赛事件
+            </div>
+          )
         )}
         {activeTab === "analysis" && (
           <>
