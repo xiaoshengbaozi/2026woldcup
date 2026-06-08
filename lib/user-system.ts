@@ -1,6 +1,7 @@
 "use client";
 
 import type { UserPreferenceCatalog } from "@/lib/user-preferences";
+import { fetchWithTimeout } from "@/lib/request-cache";
 
 const LOCAL_API_URL = "http://localhost:3001";
 const LOCAL_FALLBACK_API_PORT = "3004";
@@ -136,14 +137,14 @@ function getFallbackApiUrl() {
 }
 
 export async function userApi<T>(path: string, init?: RequestInit) {
-  const response = await fetch(`${getUserApiUrl()}${path}`, {
+  const response = await fetchWithTimeout(`${getUserApiUrl()}${path}`, {
     ...init,
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...(init?.headers ?? {}),
     },
-  });
+  }, 8_000);
 
   const payload = await response.json().catch(() => null);
   if (!response.ok) {

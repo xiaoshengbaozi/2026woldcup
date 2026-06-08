@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { BarChart3, Calendar, Home, Newspaper, Radio } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type MouseEvent } from "react";
 
 const navItems = [
   { label: "首页", href: "/", icon: Home },
@@ -16,6 +16,7 @@ const HIDE_MOBILE_NAV_PAGES = new Set(["/matches/calendar"]);
 
 export function MobileNavBar() {
   const pathname = usePathname();
+  const router = useRouter();
   const normalizedPathname = pathname !== "/" ? pathname.replace(/\/$/, "") : pathname;
   const isLivePage = normalizedPathname === "/live";
   const [liveReturnHref, setLiveReturnHref] = useState("/matches");
@@ -30,9 +31,15 @@ export function MobileNavBar() {
     setLiveReturnHref(window.sessionStorage.getItem("mobile-live-return-url") || "/matches");
   }, [isLivePage]);
 
-  const handleLiveNavClick = () => {
+  useEffect(() => {
+    if (isLivePage) return;
+    router.prefetch("/live");
+  }, [isLivePage, router]);
+
+  const handleLiveNavClick = (event: MouseEvent<HTMLAnchorElement>) => {
     if (isLivePage) {
-      window.sessionStorage.removeItem("mobile-live-return-url");
+      event.preventDefault();
+      window.dispatchEvent(new CustomEvent("mobile-live-close"));
       return;
     }
     window.sessionStorage.setItem(

@@ -2,9 +2,10 @@
 
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
-import { CalendarDays, Check, ChevronDown, Clock, GitFork, Grid3X3, Layers, LayoutList, MapPin, Search } from "lucide-react";
+import { CalendarDays, Check, ChevronDown, Clock, Flame, GitFork, Grid3X3, Layers, LayoutList, MapPin, Search } from "lucide-react";
 import { ComponentType, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { MobileSearchDrawer } from "@/components/mobile-search-drawer";
 import { openCreatorSupportModal } from "@/components/support-creator-modal";
 import type { ScheduleLayout, ScheduleMatchSource } from "@/app/matches/page";
 import { formatStageLabel, getStageGroupId, rankStage } from "@/lib/stage";
@@ -31,6 +32,7 @@ type MatchFiltersProps = {
   cities: string[];
   timezoneOffset: number;
   layout: ScheduleLayout;
+  mobileSearchEnabled?: boolean;
   onQueryChange: (value: string) => void;
   onMatchSourceChange: (value: ScheduleMatchSource) => void;
   onStageChange: (value: string) => void;
@@ -84,6 +86,7 @@ export function MatchFilters({
   cities,
   timezoneOffset,
   layout,
+  mobileSearchEnabled = false,
   onQueryChange,
   onMatchSourceChange,
   onStageChange,
@@ -91,6 +94,7 @@ export function MatchFilters({
   onTimezoneChange,
   onLayoutChange
 }: MatchFiltersProps) {
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const sorted = sortStages(stages);
   const stageOptions = useMemo(
     () => sorted.map((item) => ({
@@ -110,63 +114,87 @@ export function MatchFilters({
   );
 
   return (
-    <motion.section
-      data-match-filters="true"
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.08, duration: 0.65 }}
-      className="relative z-[10000] flex items-center gap-2 sm:z-20 sm:flex-wrap sm:gap-3"
-    >
-      <MatchSourceToggle value={matchSource} onChange={onMatchSourceChange} />
+    <>
+      <motion.section
+        data-match-filters="true"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.08, duration: 0.65 }}
+        className="relative z-[10000] flex flex-wrap items-center gap-2 sm:z-20 sm:gap-3"
+      >
+        <div className="hidden sm:block">
+          <MatchSourceToggle value={matchSource} onChange={onMatchSourceChange} />
+        </div>
 
-      <label className="glass-chip flex h-10 min-w-0 flex-1 items-center gap-2 px-4 text-white/70 transition focus-within:text-white sm:gap-3 sm:px-5">
-        <Search className="h-5 w-5 shrink-0 text-volt/80" />
-        <input
-          value={query}
-          onChange={(event) => onQueryChange(event.target.value)}
-          placeholder="搜索球队、场馆、城市或比赛"
-          className="w-full bg-transparent text-xs text-white outline-none placeholder:text-white/35"
-        />
-      </label>
+        <div className="flex shrink-0 items-center gap-2 sm:hidden">
+          <MobileScheduleModeToggle layout={layout} onChange={onLayoutChange} />
+          <WarmupSourcePill value={matchSource} onChange={onMatchSourceChange} />
+        </div>
 
-      <div className="hidden sm:block">
-        <LayoutToggle layout={layout} onChange={onLayoutChange} />
-      </div>
+        {mobileSearchEnabled ? (
+          <button
+            type="button"
+            aria-label="打开全局搜索"
+            title="搜索"
+            onClick={() => setMobileSearchOpen(true)}
+            className={`glass-chip group flex h-10 w-10 shrink-0 items-center justify-center px-0 text-white/78 transition hover:text-white sm:hidden ${
+              mobileSearchOpen ? "text-volt ring-1 ring-volt/25" : ""
+            }`}
+          >
+            <Search className="h-4 w-4 text-volt/80 transition duration-200 group-hover:scale-110 group-hover:text-volt" />
+          </button>
+        ) : null}
 
-      <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-        <FilterDropdown
-          icon={Clock}
-          value={String(timezoneOffset)}
-          fallbackLabel="时区"
-          options={timezones.map((timezone) => ({
-            label: timezone.label,
-            value: String(timezone.offset),
-            meta: timezone.label.split(" ")[0]
-          }))}
-          compactLabel={(option) => option?.meta ?? "时区"}
-          onChange={(nextValue) => onTimezoneChange(Number(nextValue))}
-        />
-        <FilterDropdown
-          icon={Layers}
-          value={stage}
-          fallbackLabel="赛段"
-          allLabel="全部赛段"
-          options={stageOptions}
-          onChange={onStageChange}
-          grouped
-        />
-        <FilterDropdown
-          icon={MapPin}
-          value={activeCity === "全部城市" ? "" : activeCity}
-          fallbackLabel="城市"
-          allLabel="全部城市"
-          options={cityOptions}
-          onChange={(nextValue) => onCityChange(nextValue || "全部城市")}
-          grouped
-        />
-        <SupportBeerButton />
-      </div>
-    </motion.section>
+        <label className="glass-chip hidden h-10 min-w-0 flex-1 items-center gap-2 px-4 text-white/70 transition focus-within:text-white sm:flex sm:gap-3 sm:px-5">
+          <Search className="h-5 w-5 shrink-0 text-volt/80" />
+          <input
+            value={query}
+            onChange={(event) => onQueryChange(event.target.value)}
+            placeholder="搜索球队、场馆、城市或比赛"
+            className="w-full bg-transparent text-xs text-white outline-none placeholder:text-white/35"
+          />
+        </label>
+
+        <div className="hidden sm:block">
+          <LayoutToggle layout={layout} onChange={onLayoutChange} />
+        </div>
+
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <FilterDropdown
+            icon={Clock}
+            value={String(timezoneOffset)}
+            fallbackLabel="时区"
+            options={timezones.map((timezone) => ({
+              label: timezone.label,
+              value: String(timezone.offset),
+              meta: timezone.label.split(" ")[0]
+            }))}
+            compactLabel={(option) => option?.meta ?? "时区"}
+            onChange={(nextValue) => onTimezoneChange(Number(nextValue))}
+          />
+          <FilterDropdown
+            icon={Layers}
+            value={stage}
+            fallbackLabel="赛段"
+            allLabel="全部赛段"
+            options={stageOptions}
+            onChange={onStageChange}
+            grouped
+          />
+          <FilterDropdown
+            icon={MapPin}
+            value={activeCity === "全部城市" ? "" : activeCity}
+            fallbackLabel="城市"
+            allLabel="全部城市"
+            options={cityOptions}
+            onChange={(nextValue) => onCityChange(nextValue || "全部城市")}
+            grouped
+          />
+          <SupportBeerButton />
+        </div>
+      </motion.section>
+      {mobileSearchEnabled ? <MobileSearchDrawer open={mobileSearchOpen} onClose={() => setMobileSearchOpen(false)} /> : null}
+    </>
   );
 }
 
@@ -223,6 +251,70 @@ function MatchSourceToggle({
         </button>
       ))}
     </div>
+  );
+}
+
+function MobileScheduleModeToggle({
+  layout,
+  onChange
+}: {
+  layout: ScheduleLayout;
+  onChange: (layout: ScheduleLayout) => void;
+}) {
+  const activeMode = layout === "waterfall" ? "group" : "date";
+  const options: { value: "date" | "group"; label: string; nextLayout: ScheduleLayout }[] = [
+    { value: "date", label: "日期", nextLayout: "default" },
+    { value: "group", label: "小组", nextLayout: "waterfall" },
+  ];
+
+  return (
+    <div className="glass-chip flex h-10 shrink-0 items-center overflow-hidden p-1">
+      {options.map((option) => {
+        const active = activeMode === option.value;
+
+        return (
+          <button
+            key={option.value}
+            type="button"
+            aria-pressed={active}
+            onClick={() => onChange(option.nextLayout)}
+            className={`h-8 rounded-full px-3 text-[11px] font-semibold transition-all duration-150 ${
+              active
+                ? "bg-volt/10 text-volt ring-1 ring-volt/25 shadow-[0_0_18px_rgba(216,255,62,.12)]"
+                : "text-white/50 hover:text-white/78"
+            }`}
+          >
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function WarmupSourcePill({
+  value,
+  onChange
+}: {
+  value: ScheduleMatchSource;
+  onChange: (value: ScheduleMatchSource) => void;
+}) {
+  const active = value === "warmups";
+
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={() => onChange(active ? "official" : "warmups")}
+      className={`glass-chip flex h-10 shrink-0 items-center gap-1.5 px-3 text-[11px] font-semibold transition-all duration-150 ${
+        active
+          ? "text-flare ring-1 ring-flare/30 shadow-[0_0_18px_rgba(255,154,31,.14)]"
+          : "text-white/56 hover:text-white/80"
+      }`}
+    >
+      <Flame className={`h-3.5 w-3.5 ${active ? "text-flare" : "text-flare/70"}`} />
+      <span>热身赛</span>
+    </button>
   );
 }
 

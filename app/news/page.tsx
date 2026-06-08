@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { ExternalLink, Languages, Loader2, Newspaper, X } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { cachedJson, fetchWithTimeout } from "@/lib/request-cache";
 import { userApi, type UserSessionPayload } from "@/lib/user-system";
 
 type NewsItem = {
@@ -164,9 +165,11 @@ export default function NewsPage() {
     async function loadNews() {
       setLoading(true);
       try {
-        const response = await fetch(endpoint, { cache: "no-store" });
-        if (!response.ok) throw new Error(`News API returned ${response.status}`);
-        const data = await response.json();
+        const data = await cachedJson<NewsResponse>(endpoint, 3 * 60 * 1000, async () => {
+          const response = await fetchWithTimeout(endpoint, { cache: "no-store" }, 5_000);
+          if (!response.ok) throw new Error(`News API returned ${response.status}`);
+          return (await response.json()) as NewsResponse;
+        }, { persist: true, staleTtlMs: 24 * 60 * 60 * 1000 });
         if (alive) setPayload(data);
       } catch {
         if (alive) setPayload({ updatedAt: null, count: 0, total: 0, errors: [], items: [] });
@@ -251,12 +254,16 @@ export default function NewsPage() {
           url: selectedItem.url,
           translate: readerTranslate ? "1" : "0",
         });
-        const response = await fetch(`${NEWS_API}/api/news/article?${params.toString()}`, {
-          cache: "no-store",
-          signal: controller.signal,
-        });
-        const data = await response.json().catch(() => null);
-        if (!response.ok) throw new Error(data?.error || `Article API returned ${response.status}`);
+        const endpoint = `${NEWS_API}/api/news/article?${params.toString()}`;
+        const data = await cachedJson<ArticleResponse & { error?: string }>(endpoint, 10 * 60 * 1000, async () => {
+          const response = await fetchWithTimeout(endpoint, {
+            cache: "no-store",
+            signal: controller.signal,
+          }, 8_000);
+          const data = await response.json().catch(() => null);
+          if (!response.ok) throw new Error(data?.error || `Article API returned ${response.status}`);
+          return data as ArticleResponse & { error?: string };
+        }, { persist: true, staleTtlMs: 24 * 60 * 60 * 1000 });
         if (alive) setReaderArticle(data);
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") return;
@@ -363,10 +370,10 @@ export default function NewsPage() {
                 aria-selected={isActive}
                 aria-label={`${tab.title}：${tab.label}`}
                 onClick={() => scrollToNewsSection(tab.id)}
-                className={`group relative flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-left text-xs font-bold transition duration-300 ${
+                className={`relative rounded-full px-4 py-2 text-sm font-bold transition duration-300 ${
                   isActive
-                    ? "bg-volt text-black shadow-[0_0_24px_rgba(216,255,62,.2)]"
-                    : "bg-white/[0.055] text-white/62 ring-1 ring-white/[0.08] hover:bg-white/[0.09] hover:text-white"
+                    ? "bg-volt text-black shadow-[0_0_26px_rgba(216,255,62,.2)]"
+                    : "bg-white/[0.045] text-white/58 ring-1 ring-white/[0.08] hover:bg-white/[0.08] hover:text-white"
                 }`}
               >
                 <span>{tab.label}</span>

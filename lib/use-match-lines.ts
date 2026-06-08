@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { cachedJson, fetchWithTimeout } from "@/lib/request-cache";
 import { getBackendApiUrl } from "@/lib/world-cup-api";
 import type { MatchLineEvent, MatchLinesResponse } from "@/types/messages";
 
@@ -43,9 +44,12 @@ async function loadMatchLines() {
 
   requestInFlight = (async () => {
     try {
-      const response = await fetch(`${getApiUrl()}/api/match-lines`, { cache: "no-store" });
-      if (!response.ok) throw new Error(`Match lines returned ${response.status}`);
-      const data = (await response.json()) as MatchLinesResponse;
+      const endpoint = `${getApiUrl()}/api/match-lines`;
+      const data = await cachedJson<MatchLinesResponse>(endpoint, REFRESH_INTERVAL_MS, async () => {
+        const response = await fetchWithTimeout(endpoint, { cache: "no-store" }, 5_000);
+        if (!response.ok) throw new Error(`Match lines returned ${response.status}`);
+        return (await response.json()) as MatchLinesResponse;
+      }, { persist: true, staleTtlMs: 6 * 60 * 60 * 1000 });
 
       setMatchLinesState({
         events: data.events,
@@ -73,12 +77,24 @@ function subscribeMatchLines(subscriber: (state: MatchLinesState) => void) {
   if (!timer) {
     void loadMatchLines();
     timer = window.setInterval(() => {
-      void loadMatchLines();
+      if (!document.hidden && navigator.onLine) {
+        void loadMatchLines();
+      }
     }, REFRESH_INTERVAL_MS);
   }
 
+  const refreshWhenVisible = () => {
+    if (!document.hidden && navigator.onLine) {
+      void loadMatchLines();
+    }
+  };
+  document.addEventListener("visibilitychange", refreshWhenVisible);
+  window.addEventListener("online", refreshWhenVisible);
+
   return () => {
     subscribers.delete(subscriber);
+    document.removeEventListener("visibilitychange", refreshWhenVisible);
+    window.removeEventListener("online", refreshWhenVisible);
     if (subscribers.size === 0 && timer) {
       window.clearInterval(timer);
       timer = null;

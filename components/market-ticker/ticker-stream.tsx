@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef, useEffect, useCallback, useMemo, useState } from "react";
+import { useRef, useCallback, useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
+import { useVisibleRaf } from "@/lib/use-visible-raf";
 import { TickerItem } from "./ticker-item";
 
 const BASE_SPEED = 50; // px per second
@@ -10,25 +11,21 @@ const ITEM_WIDTH = 180;
 export function TickerStream() {
   const countries = useStore((s) => s.countries);
   const [isPaused, setIsPaused] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const streamRef = useRef<HTMLDivElement>(null);
   const offsetRef = useRef(0);
-  const rafRef = useRef<number>(0);
   const lastTimeRef = useRef<number>(0);
-  const intersectsRef = useRef(true);
-  const shouldAnimate = isVisible && !isPaused;
 
   const sorted = useMemo(
     () => Array.from(countries.values()).sort((a, b) => b.impliedProbability - a.impliedProbability),
     [countries]
   );
+  const shouldAnimate = !isPaused && sorted.length > 0;
 
   const animate = useCallback(
     (time: number) => {
       if (!streamRef.current || !shouldAnimate) {
-        rafRef.current = 0;
         lastTimeRef.current = 0;
         return;
       }
@@ -46,51 +43,17 @@ export function TickerStream() {
       }
 
       streamRef.current.style.transform = `translateX(${offsetRef.current}px)`;
-      rafRef.current = requestAnimationFrame(animate);
     },
     [shouldAnimate, sorted.length]
   );
 
-  useEffect(() => {
-    if (!shouldAnimate) {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      rafRef.current = 0;
+  useVisibleRaf(animate, {
+    enabled: shouldAnimate,
+    elementRef: containerRef,
+    onStop: () => {
       lastTimeRef.current = 0;
-      return;
-    }
-
-    lastTimeRef.current = 0;
-    rafRef.current = requestAnimationFrame(animate);
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
-  }, [animate, shouldAnimate]);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    const syncVisibility = () => {
-      setIsVisible(intersectsRef.current && !document.hidden);
-    };
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        intersectsRef.current = entry.isIntersecting;
-        syncVisibility();
-      },
-      { threshold: 0.01 }
-    );
-
-    observer.observe(el);
-    syncVisibility();
-    document.addEventListener("visibilitychange", syncVisibility);
-
-    return () => {
-      observer.disconnect();
-      document.removeEventListener("visibilitychange", syncVisibility);
-    };
-  }, []);
+    },
+  });
 
   return (
     <div

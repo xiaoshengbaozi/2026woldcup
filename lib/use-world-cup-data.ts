@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { extractCity, getTournamentProgress, parseCalendar } from "@/lib/calendar";
 import { parseTeams } from "@/lib/teams";
+import { cachedText, fetchWithTimeout } from "@/lib/request-cache";
 import { fetchWorldCupFixtures, fetchWorldCupWarmupFixtures } from "@/lib/world-cup-api";
 import type { Match } from "@/types/match";
 
@@ -25,9 +26,11 @@ export function useWorldCupData() {
       let calendarMatches: Match[] = [];
 
       try {
-        const response = await fetch("/calendar.ics");
-        if (!response.ok) throw new Error("calendar fetch failed");
-        const text = await response.text();
+        const text = await cachedText("calendar.ics", 60 * 60 * 1000, async () => {
+          const response = await fetchWithTimeout("/calendar.ics", {}, 5_000);
+          if (!response.ok) throw new Error("calendar fetch failed");
+          return response.text();
+        }, { persist: true, staleTtlMs: 7 * 24 * 60 * 60 * 1000 });
         calendarMatches = parseCalendar(text);
       } catch {
         if (active) setError("赛程同步失败，请直接下载日历文件。");

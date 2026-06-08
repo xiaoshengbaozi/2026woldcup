@@ -5,6 +5,7 @@ import { DashboardShell } from "@/components/dashboard-shell";
 import { MatchCalendarView } from "@/components/match-calendar-view";
 import { MobileSecondaryPageActions } from "@/components/mobile-secondary-page-actions";
 import { parseCalendar } from "@/lib/calendar";
+import { cachedText, fetchWithTimeout } from "@/lib/request-cache";
 import type { Match } from "@/types/match";
 
 export default function MatchCalendarPage() {
@@ -17,9 +18,11 @@ export default function MatchCalendarPage() {
 
     async function loadCalendar() {
       try {
-        const response = await fetch("/calendar.ics");
-        if (!response.ok) throw new Error("calendar fetch failed");
-        const text = await response.text();
+        const text = await cachedText("calendar.ics", 60 * 60 * 1000, async () => {
+          const response = await fetchWithTimeout("/calendar.ics", {}, 5_000);
+          if (!response.ok) throw new Error("calendar fetch failed");
+          return response.text();
+        }, { persist: true, staleTtlMs: 7 * 24 * 60 * 60 * 1000 });
         if (!active) return;
         setMatches(parseCalendar(text));
         setError("");
@@ -39,9 +42,9 @@ export default function MatchCalendarPage() {
 
   return (
     <DashboardShell>
-      <MobileSecondaryPageActions backHref="/matches" backLabel="返回赛程" reserveSpace />
+      <MobileSecondaryPageActions backHref="/matches" backLabel="返回赛程" title="比赛日历" reserveSpace />
 
-      <main className="space-y-4 pb-6 lg:pb-0">
+      <main className="-mt-4 w-full min-w-0 space-y-4 pb-6 sm:mt-0 lg:pb-0">
         {loading ? (
           <div className="hero-card p-8 text-center">
             <p className="text-white/55">正在同步赛事日历...</p>

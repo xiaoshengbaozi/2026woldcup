@@ -1,13 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode, TouchEvent } from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Search, UserRound } from "lucide-react";
 import { AvatarSettingsDialog } from "./avatar-settings-dialog";
-import { getPlayerAvatar } from "@/lib/user-preferences";
-import { userApi, type UserSessionPayload } from "@/lib/user-system";
+import { useUserSession } from "@/components/user-session-provider";
+import { userApi } from "@/lib/user-system";
 import { MeAuthDialog, type SharedAuthMode } from "./me-auth-dialog";
 import { MobileMeDrawer } from "./mobile-me-drawer";
 import { MobileSearchDrawer } from "./mobile-search-drawer";
@@ -31,34 +31,12 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
   const [topRailExpanded, setTopRailExpanded] = useState(false);
   const [topRailHeight, setTopRailHeight] = useState(88);
   const [authMode, setAuthMode] = useState<SharedAuthMode | null>(null);
-  const [home, setHome] = useState<UserSessionPayload | null>(null);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { home, avatarUrl, loading, refreshSession } = useUserSession();
   const showHomeWordmark = normalizedPathname === "/";
   const showFifaWordmark = normalizedPathname === "/news" || normalizedPathname === "/matches" || normalizedPathname === "/data" || normalizedPathname === "/live";
   const showSearchEntry = pathname === "/" || pathname.startsWith("/news");
 
-  const refreshHome = useCallback(() => {
-    setLoading(true);
-    userApi<UserSessionPayload>("/api/me/session", { cache: "no-store" })
-      .then((payload) => {
-        const playerId = payload.user.profile.avatarPlayerId ?? null;
-        const followedPlayer = payload.user.followedPlayers.find((player) => player.id === playerId);
-        setHome(payload);
-        setAvatarUrl(payload.user.profile.avatarUrl || followedPlayer?.photo || getPlayerAvatar(playerId));
-      })
-      .catch(() => {
-        setHome(null);
-        setAvatarUrl(null);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, []);
-
-  useEffect(() => {
-    refreshHome();
-  }, [pathname, refreshHome]);
+  const refreshHome = refreshSession;
 
   useEffect(() => {
     const handleTopRailChange = (event: Event) => {

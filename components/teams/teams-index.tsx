@@ -197,7 +197,7 @@ export function TeamsIndex() {
   };
 
   return (
-    <main className="relative -mt-3 min-h-screen overflow-hidden pb-8 pt-0 text-white sm:mt-0 sm:py-8">
+    <main className="teams-page relative -mt-3 min-h-screen overflow-hidden pb-8 pt-0 text-white sm:mt-0 sm:py-8">
       <div className="relative">
         <section className="scroll-mt-24">
           <div className="mb-4 flex flex-col gap-3 px-1">
@@ -214,8 +214,8 @@ export function TeamsIndex() {
               ref={tabsRef}
               className={`${
                 isPinned
-                  ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[65] px-3 py-2"
-                  : "relative -mx-3 bg-black/58 px-3 py-2 backdrop-blur-2xl"
+                  ? "teams-tabs-rail fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[65] px-3 py-2"
+                  : "teams-tabs-rail relative -mx-3 bg-black/58 px-3 py-2 backdrop-blur-2xl"
               } sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none`}
             >
             <div
@@ -233,15 +233,15 @@ export function TeamsIndex() {
                     role="tab"
                     aria-selected={isActive}
                     onClick={() => handleContinentChange(item.continent)}
-                    className={`group relative flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-left text-xs font-bold transition duration-300 sm:px-3.5 sm:py-2 sm:text-sm ${
+                    className={`group relative flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-bold transition duration-300 ${
                       isActive
-                        ? "bg-volt text-black shadow-[0_0_24px_rgba(216,255,62,.2)]"
-                        : "bg-white/[0.055] text-white/62 ring-1 ring-white/[0.08] hover:bg-white/[0.09] hover:text-white"
+                        ? "bg-volt text-black shadow-[0_0_26px_rgba(216,255,62,.2)]"
+                        : "bg-white/[0.045] text-white/58 ring-1 ring-white/[0.08] hover:bg-white/[0.08] hover:text-white"
                     }`}
                   >
                     <span>{item.label.title}</span>
                     <span
-                      className={`rounded-full px-1.5 py-0.5 text-[10px] font-black tabular-nums sm:px-2 sm:text-[11px] ${
+                      className={`grid h-5 w-5 place-items-center rounded-full text-[10px] font-black leading-none tabular-nums ${
                         isActive
                           ? "bg-black/15 text-black"
                           : "bg-black/25 text-volt/80 group-hover:bg-volt/[0.12]"
@@ -319,7 +319,7 @@ function FollowedTeamsRail({
   };
 
   return (
-    <div className="relative px-1 py-1">
+    <div className="followed-teams-rail relative px-1 py-1">
       <div
         ref={scrollRef}
         className="flex gap-1 overflow-x-auto [scrollbar-width:none] sm:gap-2 [&::-webkit-scrollbar]:hidden"
@@ -401,7 +401,7 @@ function TeamCard({
     >
       <Link
         href={team.detailHref}
-        className="group relative block aspect-square overflow-hidden rounded-[2rem] border border-white/10 shadow-[0_24px_80px_rgba(0,0,0,.34)] outline-none transition duration-500 hover:-translate-y-1 hover:border-volt/35 hover:shadow-[0_28px_100px_rgba(216,255,62,.10)] focus-visible:border-volt/60"
+        className="team-index-card group relative block aspect-square overflow-hidden rounded-[2rem] border border-white/10 shadow-[0_24px_80px_rgba(0,0,0,.34)] outline-none transition duration-500 hover:-translate-y-1 hover:border-volt/35 hover:shadow-[0_28px_100px_rgba(216,255,62,.10)] focus-visible:border-volt/60"
       >
         <div className="absolute inset-0 overflow-hidden rounded-[2rem]">
           <Image
@@ -413,7 +413,7 @@ function TeamCard({
           />
         </div>
 
-        <div className="absolute inset-x-0 bottom-0 rounded-b-[2rem] bg-gradient-to-t from-black/75 via-black/45 to-transparent px-5 pt-12 pb-5">
+        <div className="team-index-card-overlay absolute inset-x-0 bottom-0 rounded-b-[2rem] bg-gradient-to-t from-black/75 via-black/45 to-transparent px-5 pt-12 pb-5">
           <h3 className="text-2xl font-black tracking-normal text-white drop-shadow-lg">{team.nameCn}</h3>
           <div className="mt-3 flex items-center justify-between">
             <span className="rounded-full border border-white/15 bg-black/30 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-white/75 backdrop-blur-md">

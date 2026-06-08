@@ -106,7 +106,7 @@ export function MarketDashboard() {
         <NavBar />
 
         {/* Ticker strip */}
-        <div className="hero-card overflow-hidden">
+        <div className="hero-card hidden overflow-hidden sm:block">
           <ModuleD_Ticker />
         </div>
 
@@ -154,8 +154,8 @@ export function MarketDashboard() {
           >
             <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="数据分类">
               {[
-                { key: "teams" as const, title: "球队", count: 2 },
-                { key: "matches" as const, title: "比赛", count: 1 },
+                { key: "teams" as const, title: "球队" },
+                { key: "matches" as const, title: "比赛" },
               ].map((item) => {
                 const isActive = mobileDataTab === item.key;
 
@@ -166,22 +166,13 @@ export function MarketDashboard() {
                     role="tab"
                     aria-selected={isActive}
                     onClick={() => setMobileDataTab(item.key)}
-                    className={`group relative flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-left text-xs font-bold transition duration-300 ${
+                    className={`relative rounded-full px-4 py-2 text-sm font-bold transition duration-300 ${
                       isActive
-                        ? "bg-volt text-black shadow-[0_0_24px_rgba(216,255,62,.2)]"
-                        : "bg-white/[0.055] text-white/62 ring-1 ring-white/[0.08] hover:bg-white/[0.09] hover:text-white"
+                        ? "bg-volt text-black shadow-[0_0_26px_rgba(216,255,62,.2)]"
+                        : "bg-white/[0.045] text-white/58 ring-1 ring-white/[0.08] hover:bg-white/[0.08] hover:text-white"
                     }`}
                   >
                     <span>{item.title}</span>
-                    <span
-                      className={`rounded-full px-1.5 py-0.5 text-[10px] font-black tabular-nums ${
-                        isActive
-                          ? "bg-black/15 text-black"
-                          : "bg-black/25 text-volt/80 group-hover:bg-volt/[0.12]"
-                      }`}
-                    >
-                      {item.count}
-                    </span>
                   </button>
                 );
               })}

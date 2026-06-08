@@ -584,7 +584,8 @@
   background:
     radial-gradient(circle at 0% 20%, rgba(255, 254, 250, 0.34), transparent 34%),
     rgba(31, 43, 26, 0.24) !important;
-  backdrop-filter: blur(10px) saturate(1.05) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
 }
 
 [data-theme="light"] .mobile-me-drawer {
@@ -599,7 +600,8 @@
     0 0 34px -18px rgba(54, 65, 44, 0.24),
     inset -1px 0 0 rgba(54, 65, 44, 0.08),
     inset 1px 0 0 rgba(255, 255, 255, 0.82) !important;
-  backdrop-filter: blur(28px) saturate(1.08) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.04) !important;
+  backdrop-filter: blur(16px) saturate(1.04) !important;
 }
 
 [data-theme="light"] .mobile-me-drawer .bg-volt\/12,

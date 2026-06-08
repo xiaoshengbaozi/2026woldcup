@@ -1,17 +1,13 @@
-import { CircleDollarSign, ExternalLink, Sparkles } from "lucide-react";
+import { CircleDollarSign, Sparkles } from "lucide-react";
 import type { PlayerScoutNote } from "@/lib/player-scout-notes";
 
 export function PlayerFmScoutCard({
   note,
   className = "",
-  href,
 }: {
   note: PlayerScoutNote;
   className?: string;
-  href?: string;
 }) {
-  const cardHref = href || note.sourceUrl;
-  const isExternal = /^https?:\/\//i.test(cardHref);
   const ratingTone =
     note.gsRating >= 95
       ? "text-volt"
@@ -20,21 +16,17 @@ export function PlayerFmScoutCard({
         : "text-white/84";
 
   return (
-    <a
-      href={cardHref}
-      target={isExternal ? "_blank" : undefined}
-      rel={isExternal ? "noreferrer" : undefined}
-      className={`group block overflow-hidden rounded-[1.35rem] bg-[linear-gradient(145deg,rgba(216,255,62,0.08),rgba(255,255,255,0.035)_48%,rgba(255,123,84,0.07))] p-4 ring-1 ring-volt/12 transition hover:-translate-y-0.5 hover:bg-white/[0.06] hover:ring-volt/28 ${className}`}
+    <div
+      className={`block overflow-hidden rounded-[1.35rem] bg-[linear-gradient(145deg,rgba(216,255,62,0.08),rgba(255,255,255,0.035)_48%,rgba(255,123,84,0.07))] p-4 ring-1 ring-volt/12 ${className}`}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div>
+      <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           <div className="inline-flex items-center gap-1.5 rounded-full bg-black/20 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-volt/80 ring-1 ring-volt/12">
             <Sparkles className="h-3 w-3" />
             FM Scout
           </div>
-          <p className="mt-2 text-xs font-bold text-white/40">{note.gameVersion} 社区球探</p>
+          <p className="truncate text-xs font-bold text-white/40">{note.gameVersion} 社区球探</p>
         </div>
-        <ExternalLink className="h-4 w-4 text-white/30 transition group-hover:translate-x-0.5 group-hover:text-volt" />
       </div>
 
       <div className="mt-4 grid grid-cols-[auto_1fr] gap-4">
@@ -96,7 +88,7 @@ export function PlayerFmScoutCard({
           </span>
         ))}
       </div>
-    </a>
+    </div>
   );
 }
 

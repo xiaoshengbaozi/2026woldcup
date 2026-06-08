@@ -31,6 +31,9 @@ const NEWS_SERVICE_ENV_FILE = process.env.NEWS_SERVICE_ENV_FILE || `${NEWS_SERVI
 const DEFAULT_ADMIN_USERNAME = "admin";
 const DEFAULT_ADMIN_PASSWORD = "worldcup2026-admin";
 const MAX_JSON_BODY_BYTES = 256 * 1024;
+const CACHE_PUBLIC_SHORT = "public, max-age=15, stale-while-revalidate=60, stale-if-error=300";
+const CACHE_PUBLIC_MEDIUM = "public, max-age=300, stale-while-revalidate=900, stale-if-error=86400";
+const CACHE_PUBLIC_LONG = "public, max-age=3600, stale-while-revalidate=86400, stale-if-error=604800";
 const DEFAULT_CORS_ORIGINS = [
   "https://ball.boyzi.fun",
   "https://beta-wzja.world-cup-2026-625.pages.dev",
@@ -206,15 +209,6 @@ export function createHttpServer(options: HttpServerOptions) {
       return;
     }
 
-    if (req.method === "GET" && url.pathname === "/api/player/one-vs-one") {
-      getOneVsOnePlayerSummary(url)
-        .then((payload) => sendJson(res, payload))
-        .catch((error: Error & { statusCode?: number }) => {
-          sendJson(res, { error: error.message || "one_vs_one_unavailable" }, error.statusCode ?? 500);
-        });
-      return;
-    }
-
     if (req.method === "GET" && url.pathname.startsWith("/api/worldcup/")) {
       handleWorldCupRequest(options.apiFootball, url, res);
       return;
@@ -222,24 +216,24 @@ export function createHttpServer(options: HttpServerOptions) {
 
     if (req.method === "GET" && url.pathname === "/api/snapshot") {
       const snapshot = options.snapshotCache.getLatest();
-      sendJson(res, snapshot ?? { type: "snapshot", timestamp: Date.now(), countries: [], events: [], history: {} });
+      sendCachedJson(res, snapshot ?? { type: "snapshot", timestamp: Date.now(), countries: [], events: [], history: {} }, CACHE_PUBLIC_SHORT);
       return;
     }
 
     if (req.method === "GET" && url.pathname === "/api/markets") {
       const state = options.getState();
-      sendJson(res, {
+      sendCachedJson(res, {
         timestamp: Date.now(),
         count: state.countries.length,
         markets: [...state.countries]
           .sort((a, b) => b.impliedProbability - a.impliedProbability)
           .map(toMarketSummary),
-      });
+      }, CACHE_PUBLIC_SHORT);
       return;
     }
 
     if (req.method === "GET" && url.pathname === "/api/match-lines") {
-      sendJson(res, options.getState().matchLines);
+      sendCachedJson(res, options.getState().matchLines, CACHE_PUBLIC_SHORT);
       return;
     }
 
@@ -248,12 +242,12 @@ export function createHttpServer(options: HttpServerOptions) {
       const now = Date.now();
       const from = Number(url.searchParams.get("from") ?? now - 24 * 60 * 60 * 1000);
       const to = Number(url.searchParams.get("to") ?? now);
-      sendJson(res, {
+      sendCachedJson(res, {
         countryCode,
         from,
         to,
         data: options.historyBuffer.getHistory(countryCode, from, to),
-      });
+      }, CACHE_PUBLIC_SHORT);
       return;
     }
 
@@ -319,7 +313,7 @@ function handleWorldCupRequest(
   }
 
   handler(apiFootball, url)
-    .then((payload) => sendJson(res, payload))
+    .then((payload) => sendCachedJson(res, payload, getWorldCupCacheHeader(url.pathname)))
     .catch((error: Error & { statusCode?: number; details?: unknown }) => {
       sendJson(
         res,
@@ -350,7 +344,7 @@ function handleApiFootballRequest(
 
   apiFootball
     .request(endpoint, url.searchParams)
-    .then((payload) => sendJson(res, payload))
+    .then((payload) => sendCachedJson(res, payload, getApiFootballCacheHeader(endpoint)))
     .catch((error: Error & { statusCode?: number; details?: unknown }) => {
       sendJson(
         res,
@@ -394,6 +388,27 @@ function parseApiFootballEndpoint(pathname: string): ApiFootballEndpoint | null 
   ]);
 
   return allowed.has(endpoint as ApiFootballEndpoint) ? (endpoint as ApiFootballEndpoint) : null;
+}
+
+function getWorldCupCacheHeader(pathname: string) {
+  if (pathname.endsWith("/live")) return CACHE_PUBLIC_SHORT;
+  if (pathname.endsWith("/match-detail")) return CACHE_PUBLIC_SHORT;
+  if (pathname.endsWith("/rounds") || pathname.endsWith("/squads")) return CACHE_PUBLIC_LONG;
+  return CACHE_PUBLIC_MEDIUM;
+}
+
+function getApiFootballCacheHeader(endpoint: ApiFootballEndpoint) {
+  if (endpoint === "odds/live" || endpoint === "fixtures/events") return CACHE_PUBLIC_SHORT;
+  if (
+    endpoint === "players/squads" ||
+    endpoint === "players/profiles" ||
+    endpoint === "teams" ||
+    endpoint === "leagues" ||
+    endpoint === "coachs"
+  ) {
+    return CACHE_PUBLIC_LONG;
+  }
+  return CACHE_PUBLIC_MEDIUM;
 }
 
 function isAdminAuthorized(req: http.IncomingMessage) {
@@ -456,12 +471,12 @@ function handleNewsRequest(url: URL, res: http.ServerResponse) {
         sendJson(res, { error: "news_api_request_failed", status: response.status, details: payload }, response.status);
         return;
       }
-      sendJson(res, {
+      sendCachedJson(res, {
         source: "news-api",
         endpoint: newsApi,
         timestamp: Date.now(),
         ...payload,
-      });
+      }, CACHE_PUBLIC_MEDIUM);
     })
     .catch((error: Error) => {
       sendJson(res, { error: error.message || "news_api_unavailable" }, 502);
@@ -481,7 +496,7 @@ async function handleLiveChannelsRequest(req: http.IncomingMessage, url: URL, re
       sendJson(res, { error: "missing_match_id" }, 400);
       return;
     }
-    sendJson(res, { channels: await getPublicLiveChannels(matchId) });
+    sendCachedJson(res, { channels: await getPublicLiveChannels(matchId) }, CACHE_PUBLIC_MEDIUM);
     return;
   }
 
@@ -624,101 +639,6 @@ function readJsonBody(req: http.IncomingMessage) {
   });
 }
 
-async function getOneVsOnePlayerSummary(url: URL) {
-  const name = url.searchParams.get("name")?.trim();
-  if (!name) {
-    const error = new Error("missing_name") as Error & { statusCode?: number };
-    error.statusCode = 400;
-    throw error;
-  }
-
-  const candidates = buildOneVsOneSlugCandidates(name);
-  for (const slug of candidates) {
-    const profileUrl = `https://one-versus-one.com/en/players/${slug}`;
-    const response = await fetch(profileUrl, {
-      headers: {
-        "user-agent": "Mozilla/5.0 compatible; WorldCupDashboard/1.0",
-      },
-    });
-
-    if (!response.ok) continue;
-
-    const html = await response.text();
-    const jsonLd = parseOneVsOnePersonJsonLd(html);
-    return {
-      source: "one-versus-one",
-      url: profileUrl,
-      found: true,
-      player: {
-        name: [jsonLd?.givenName, jsonLd?.familyName].filter(Boolean).join(" ") || name,
-        birthDate: jsonLd?.birthDate ?? null,
-        nationality: jsonLd?.nationality ?? null,
-        image: toOneVsOneAbsoluteUrl(jsonLd?.image),
-        teamName: extractOneVsOneTeamName(jsonLd?.affiliation?.["@id"]),
-        teamUrl: jsonLd?.affiliation?.["@id"] ?? null,
-      },
-    };
-  }
-
-  return {
-    source: "one-versus-one",
-    found: false,
-    url: null,
-    player: null,
-  };
-}
-
-function buildOneVsOneSlugCandidates(name: string) {
-  const cleaned = name
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^\w\s-]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  const parts = cleaned.split(" ").filter(Boolean);
-  const candidates = new Set<string>();
-
-  if (parts.length >= 2) {
-    candidates.add(parts.join("-"));
-    candidates.add([parts[0], parts[parts.length - 1]].join("-"));
-    candidates.add(parts.slice(0, 3).join("-"));
-  }
-  candidates.add(cleaned.replace(/\s+/g, "-"));
-
-  return [...candidates].filter(Boolean);
-}
-
-function parseOneVsOnePersonJsonLd(html: string) {
-  const blocks = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi) ?? [];
-  for (const block of blocks) {
-    const raw = block
-      .replace(/^<script type="application\/ld\+json">/i, "")
-      .replace(/<\/script>$/i, "")
-      .replace(/,\s*}/g, "}")
-      .trim();
-
-    try {
-      const parsed = JSON.parse(raw);
-      if (parsed?.["@type"] === "Person") return parsed;
-    } catch {
-      // Some 1vs1 pages include permissive JSON-LD. Ignore malformed blocks.
-    }
-  }
-  return null;
-}
-
-function toOneVsOneAbsoluteUrl(value: string | null | undefined) {
-  if (!value) return null;
-  if (value.startsWith("http")) return value;
-  return `https://one-versus-one.com${value.startsWith("/") ? "" : "/"}${value}`;
-}
-
-function extractOneVsOneTeamName(value: string | null | undefined) {
-  if (!value) return null;
-  const slug = value.split("/").filter(Boolean).pop();
-  return slug ? decodeURIComponent(slug).replace(/-/g, " ") : null;
-}
-
 function toMarketSummary(country: CountryData) {
   return {
     countryCode: country.countryCode,
@@ -787,9 +707,13 @@ function redirect(res: http.ServerResponse, location: string) {
   res.end();
 }
 
-function sendJson(res: http.ServerResponse, payload: unknown, statusCode = 200) {
-  res.writeHead(statusCode, { "Content-Type": "application/json; charset=utf-8" });
+function sendJson(res: http.ServerResponse, payload: unknown, statusCode = 200, headers: http.OutgoingHttpHeaders = {}) {
+  res.writeHead(statusCode, { "Content-Type": "application/json; charset=utf-8", ...headers });
   res.end(JSON.stringify(payload));
+}
+
+function sendCachedJson(res: http.ServerResponse, payload: unknown, cacheControl: string, statusCode = 200) {
+  sendJson(res, payload, statusCode, { "Cache-Control": cacheControl });
 }
 
 function sendHtml(res: http.ServerResponse, html: string) {

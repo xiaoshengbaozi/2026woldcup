@@ -1,4 +1,5 @@
 import { getBackendApiUrl, type NormalizedWorldCupFixture } from "@/lib/world-cup-api";
+import { cachedJson, fetchWithTimeout } from "@/lib/request-cache";
 import type { MatchTeamMeta } from "@/types/match";
 
 export type WorldCupFixtureStatistic = {
@@ -47,12 +48,15 @@ export type WorldCupMatchDetailPayload = {
 };
 
 export async function fetchWorldCupMatchDetail(fixtureId: number) {
-  const response = await fetch(`${getBackendApiUrl()}/api/worldcup/match-detail?fixture=${fixtureId}`, { cache: "no-store" });
-  const payload = (await response.json()) as WorldCupMatchDetailPayload & { error?: string };
+  const url = `${getBackendApiUrl()}/api/worldcup/match-detail?fixture=${fixtureId}`;
+  return cachedJson<WorldCupMatchDetailPayload & { error?: string }>(url, 60 * 1000, async () => {
+    const response = await fetchWithTimeout(url, { cache: "no-store" }, 5_000);
+    const payload = (await response.json()) as WorldCupMatchDetailPayload & { error?: string };
 
-  if (!response.ok) {
-    throw new Error(payload.error || `World Cup match detail returned ${response.status}`);
-  }
+    if (!response.ok) {
+      throw new Error(payload.error || `World Cup match detail returned ${response.status}`);
+    }
 
-  return payload;
+    return payload;
+  }, { persist: true, staleTtlMs: 6 * 60 * 60 * 1000 });
 }

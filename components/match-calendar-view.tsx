@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, MapPin, CalendarDays } from "lucide-react";
+import { ChevronLeft, ChevronRight, MapPin } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { detailRows, localizeLocationText } from "@/lib/calendar";
@@ -86,22 +86,16 @@ export function MatchCalendarView({ matches, timezoneOffset, frameless = false }
       initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className={frameless ? "overflow-visible" : "hero-card overflow-hidden"}
+      className={frameless ? "w-full min-w-0 overflow-hidden" : "hero-card w-full min-w-0 overflow-hidden"}
     >
-      <div className="relative z-10 flex flex-col lg:flex-row">
+      <div className="relative z-10 flex min-w-0 flex-col lg:flex-row">
         {/* ── Left Panel ── */}
         <div className="flex w-full flex-col gap-4 p-5 sm:p-6 lg:w-[22rem] lg:border-r lg:border-white/[0.06]">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-volt/[0.1] text-volt">
-                <CalendarDays className="h-5 w-5" />
-              </div>
               <div>
-                <h2 className="text-lg font-semibold text-white">My Calendar</h2>
-                <p className="text-[10px] uppercase tracking-[0.16em] text-white/36">
-                  {totalMatchesToday} 场比赛今天
-                </p>
+                <h2 className="text-base font-semibold text-white sm:text-lg">今日{totalMatchesToday}场比赛</h2>
               </div>
             </div>
           </div>
@@ -153,14 +147,14 @@ export function MatchCalendarView({ matches, timezoneOffset, frameless = false }
                     key={key}
                     type="button"
                     onClick={() => setCursor(startOfDay(date))}
-                    className={`group relative flex h-9 items-center justify-center text-xs font-medium transition ${
+                    className={`group relative mx-auto flex h-9 w-9 items-center justify-center rounded-full text-xs font-medium transition ${
                       !sameMonth
                         ? "text-white/18"
                         : isSelected
-                          ? "bg-volt text-black rounded-full shadow-[0_0_16px_rgba(216,255,62,.3)]"
+                          ? "bg-volt text-black shadow-[0_0_16px_rgba(216,255,62,.3)]"
                           : isToday
-                            ? "bg-volt/[0.12] text-volt rounded-full ring-1 ring-volt/30"
-                            : "text-white/70 rounded-xl hover:bg-white/[0.08] hover:text-white"
+                            ? "bg-volt/[0.12] text-volt ring-1 ring-volt/30"
+                            : "text-white/70 hover:bg-white/[0.08] hover:text-white"
                     }`}
                   >
                     <span>{date.getDate()}</span>
@@ -200,7 +194,7 @@ export function MatchCalendarView({ matches, timezoneOffset, frameless = false }
           </div>
 
           {/* Selected Day Info */}
-          <div className="rounded-[1.4rem] bg-white/[0.03] p-4">
+          <div className="hidden rounded-[1.4rem] bg-white/[0.03] p-4 sm:block">
             <div className="mb-3 flex items-center justify-between">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/32">Date Detail</p>
@@ -225,7 +219,7 @@ export function MatchCalendarView({ matches, timezoneOffset, frameless = false }
         </div>
 
         {/* ── Right Panel: Time Grid ── */}
-        <div className="min-h-[36rem] flex-1 p-5 sm:p-6">
+        <div className="min-w-0 flex-1 p-5 sm:p-6 lg:min-h-[36rem]">
           <div className="mb-4 flex items-center justify-between">
             <div>
               <h3 className="text-base font-semibold text-white">

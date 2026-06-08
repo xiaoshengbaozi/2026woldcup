@@ -12,6 +12,7 @@ import { getMatchPhaseLabel, getMatchScore, hasMatchStarted } from "@/lib/match-
 import { formatStageLabel } from "@/lib/stage";
 import { buildMatchRoundLabels } from "@/lib/stage-rounds";
 import { parseTeams } from "@/lib/teams";
+import { useVisibleRaf } from "@/lib/use-visible-raf";
 import type { Match } from "@/types/match";
 
 type LiveMatchesStripProps = {
@@ -25,9 +26,9 @@ export function LiveMatchesStrip({ matches }: LiveMatchesStripProps) {
   const [currentTime, setCurrentTime] = useState(() => Date.now());
   const [expanded, setExpanded] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const tickerContainerRef = useRef<HTMLDivElement>(null);
   const streamRef = useRef<HTMLDivElement>(null);
   const offsetRef = useRef(0);
-  const rafRef = useRef<number>(0);
   const lastTimeRef = useRef<number>(0);
 
   useEffect(() => {
@@ -46,7 +47,6 @@ export function LiveMatchesStrip({ matches }: LiveMatchesStripProps) {
     (time: number) => {
       if (!streamRef.current || isPaused || tickerWidth === 0) {
         lastTimeRef.current = time;
-        rafRef.current = requestAnimationFrame(animateTicker);
         return;
       }
 
@@ -60,7 +60,6 @@ export function LiveMatchesStrip({ matches }: LiveMatchesStripProps) {
       }
 
       streamRef.current.style.transform = `translateX(${offsetRef.current}px)`;
-      rafRef.current = requestAnimationFrame(animateTicker);
     },
     [isPaused, tickerWidth]
   );
@@ -71,10 +70,13 @@ export function LiveMatchesStrip({ matches }: LiveMatchesStripProps) {
     if (streamRef.current) streamRef.current.style.transform = "translateX(0px)";
   }, [tickerWidth]);
 
-  useEffect(() => {
-    rafRef.current = requestAnimationFrame(animateTicker);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [animateTicker]);
+  useVisibleRaf(animateTicker, {
+    enabled: !isPaused && tickerWidth > 0,
+    elementRef: tickerContainerRef,
+    onStop: () => {
+      lastTimeRef.current = 0;
+    },
+  });
 
   return (
     <motion.section
@@ -106,7 +108,7 @@ export function LiveMatchesStrip({ matches }: LiveMatchesStripProps) {
           </button>
 
           {displayMatches.length > 0 && (
-            <div className="relative h-full min-w-0 flex-1 overflow-hidden">
+            <div ref={tickerContainerRef} className="relative h-full min-w-0 flex-1 overflow-hidden">
               <div
                 ref={streamRef}
                 className="flex h-full whitespace-nowrap will-change-transform"

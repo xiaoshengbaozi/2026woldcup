@@ -14,7 +14,9 @@ import {
   type SearchResultItem,
 } from "@/lib/global-search";
 import { UserActionButton } from "@/components/user-action-button";
-import { userApi, type UserSessionPayload } from "@/lib/user-system";
+import { useUserSession } from "@/components/user-session-provider";
+import { cachedJson, fetchWithTimeout } from "@/lib/request-cache";
+import type { UserSessionPayload } from "@/lib/user-system";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
 
 type NewsResponse = {
@@ -22,6 +24,7 @@ type NewsResponse = {
 };
 
 const NEWS_API = process.env.NEXT_PUBLIC_NEWS_API_URL || "https://news.20250114.xyz";
+const SEARCH_NEWS_CACHE_TTL_MS = 3 * 60 * 1000;
 
 type SavedSearchItems = {
   teamIds: Set<string>;
@@ -41,9 +44,9 @@ export function GlobalSearchDrawerCard({ onNavigate }: { onNavigate?: () => void
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const { matches } = useWorldCupData();
+  const { home } = useUserSession();
   const [query, setQuery] = useState("");
   const [news, setNews] = useState<SearchNewsItem[]>([]);
-  const [savedItems, setSavedItems] = useState<SavedSearchItems>(() => emptySavedItems());
 
   useEffect(() => {
     window.requestAnimationFrame(() => inputRef.current?.focus());
@@ -54,8 +57,10 @@ export function GlobalSearchDrawerCard({ onNavigate }: { onNavigate?: () => void
     let alive = true;
     const endpoint = `${NEWS_API}/api/news?${new URLSearchParams({ limit: "48" }).toString()}`;
 
-    fetch(endpoint, { cache: "no-store" })
-      .then((response) => (response.ok ? response.json() : null))
+    cachedJson<NewsResponse | null>(endpoint, SEARCH_NEWS_CACHE_TTL_MS, async () => {
+      const response = await fetchWithTimeout(endpoint, { cache: "no-store" }, 5_000);
+      return response.ok ? response.json() : null;
+    }, { persist: true, staleTtlMs: 24 * 60 * 60 * 1000 })
       .then((payload: NewsResponse | null) => {
         if (alive) setNews(payload?.items ?? []);
       })
@@ -68,21 +73,8 @@ export function GlobalSearchDrawerCard({ onNavigate }: { onNavigate?: () => void
     };
   }, [news.length]);
 
-  useEffect(() => {
-    let alive = true;
-    userApi<UserSessionPayload>("/api/me/session", { cache: "no-store" })
-      .then((home) => {
-        if (alive) setSavedItems(buildSavedSearchItems(home));
-      })
-      .catch(() => {
-        if (alive) setSavedItems(emptySavedItems());
-      });
-    return () => {
-      alive = false;
-    };
-  }, []);
-
   const results = useMemo(() => buildGlobalSearchResults(query, matches, news), [matches, news, query]);
+  const savedItems = useMemo(() => (home ? buildSavedSearchItems(home) : emptySavedItems()), [home]);
   const suggestions = useMemo(() => buildSuggestions(results, savedItems), [results, savedItems]);
 
   const submitSearch = (event?: FormEvent) => {
@@ -161,11 +153,11 @@ export function GlobalSearch() {
   const inputRef = useRef<HTMLInputElement>(null);
   const closeTimerRef = useRef<number | null>(null);
   const { matches } = useWorldCupData();
+  const { home } = useUserSession();
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [news, setNews] = useState<SearchNewsItem[]>([]);
-  const [savedItems, setSavedItems] = useState<SavedSearchItems>(() => emptySavedItems());
 
   useEffect(() => {
     setFocused(false);
@@ -177,8 +169,10 @@ export function GlobalSearch() {
     let alive = true;
     const endpoint = `${NEWS_API}/api/news?${new URLSearchParams({ limit: "48" }).toString()}`;
 
-    fetch(endpoint, { cache: "no-store" })
-      .then((response) => (response.ok ? response.json() : null))
+    cachedJson<NewsResponse | null>(endpoint, SEARCH_NEWS_CACHE_TTL_MS, async () => {
+      const response = await fetchWithTimeout(endpoint, { cache: "no-store" }, 5_000);
+      return response.ok ? response.json() : null;
+    }, { persist: true, staleTtlMs: 24 * 60 * 60 * 1000 })
       .then((payload: NewsResponse | null) => {
         if (alive) setNews(payload?.items ?? []);
       })
@@ -191,22 +185,8 @@ export function GlobalSearch() {
     };
   }, [focused, news.length]);
 
-  useEffect(() => {
-    if (!focused) return;
-    let alive = true;
-    userApi<UserSessionPayload>("/api/me/session", { cache: "no-store" })
-      .then((home) => {
-        if (alive) setSavedItems(buildSavedSearchItems(home));
-      })
-      .catch(() => {
-        if (alive) setSavedItems(emptySavedItems());
-      });
-    return () => {
-      alive = false;
-    };
-  }, [focused]);
-
   const results = useMemo(() => buildGlobalSearchResults(query, matches, news), [matches, news, query]);
+  const savedItems = useMemo(() => (home ? buildSavedSearchItems(home) : emptySavedItems()), [home]);
   const suggestions = useMemo(() => buildSuggestions(results, savedItems), [results, savedItems]);
   const showSuggestions = focused && (query.trim().length > 0 || suggestions.length > 0);
 

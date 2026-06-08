@@ -1,4 +1,5 @@
 import { getBackendApiUrl } from "@/lib/world-cup-api";
+import { cachedJson, fetchWithTimeout } from "@/lib/request-cache";
 
 type ApiFootballPayload<T> = {
   upstream?: {
@@ -109,19 +110,6 @@ type SidelinedItem = {
   end?: string;
 };
 
-type OneVsOnePayload = {
-  found?: boolean;
-  url?: string | null;
-  player?: {
-    name?: string | null;
-    birthDate?: string | null;
-    nationality?: string | null;
-    image?: string | null;
-    teamName?: string | null;
-    teamUrl?: string | null;
-  } | null;
-};
-
 export type PlayerProfileData = {
   player: ApiPlayer | null;
   currentTeam: PlayerStatistics["team"] | null;
@@ -130,52 +118,37 @@ export type PlayerProfileData = {
   transfers: TransferItem[];
   trophies: TrophyItem[];
   sidelined: SidelinedItem[];
-  oneVsOne: OneVsOnePayload | null;
 };
 
 export async function fetchApiFootballPlayerProfileData(playerId: string): Promise<PlayerProfileData> {
   const apiUrl = getBackendApiUrl();
-  const response = await fetch(`${apiUrl}/api/worldcup/player-profile?player=${playerId}&season=2025`, {
-    cache: "no-store",
-  });
-  const payload = (await response.json()) as PlayerProfileData & { error?: string };
+  const url = `${apiUrl}/api/worldcup/player-profile?player=${playerId}&season=2025`;
+  const payload = await cachedJson<PlayerProfileData & { error?: string }>(url, 24 * 60 * 60 * 1000, async () => {
+    const response = await fetchWithTimeout(url, { cache: "no-store" }, 6_000);
+    const payload = (await response.json()) as PlayerProfileData & { error?: string };
 
-  if (!response.ok) {
-    throw new Error(payload.error || `World Cup player profile returned ${response.status}`);
-  }
+    if (!response.ok) {
+      throw new Error(payload.error || `World Cup player profile returned ${response.status}`);
+    }
 
-  return { ...payload, oneVsOne: null };
+    return payload;
+  }, { persist: true, staleTtlMs: 7 * 24 * 60 * 60 * 1000 });
+
+  return payload;
 }
 
-export async function fetchOneVsOnePlayerSummary(name: string) {
-  if (!name.trim()) return null;
-  return getOneVsOne(`${getBackendApiUrl()}/api/player/one-vs-one?name=${encodeURIComponent(name)}`);
-}
-
-export async function fetchPlayerProfileData(playerId: string, nameHint?: string): Promise<PlayerProfileData> {
-  const data = await fetchApiFootballPlayerProfileData(playerId);
-  const player = data.player;
-  const fullName = [player?.firstname, player?.lastname].filter(Boolean).join(" ") || player?.name || nameHint || "";
-  const oneVsOne = await fetchOneVsOnePlayerSummary(fullName);
-
-  return { ...data, oneVsOne };
+export async function fetchPlayerProfileData(playerId: string): Promise<PlayerProfileData> {
+  return fetchApiFootballPlayerProfileData(playerId);
 }
 
 async function getApiFootball<T>(url: string) {
-  const response = await fetch(url, { cache: "no-store" });
-  const payload = (await response.json()) as ApiFootballPayload<T>;
-  if (!response.ok) throw new Error(payload.error || `Request failed: ${response.status}`);
+  const payload = await cachedJson<ApiFootballPayload<T>>(url, 24 * 60 * 60 * 1000, async () => {
+    const response = await fetchWithTimeout(url, { cache: "no-store" }, 6_000);
+    const payload = (await response.json()) as ApiFootballPayload<T>;
+    if (!response.ok) throw new Error(payload.error || `Request failed: ${response.status}`);
+    return payload;
+  }, { persist: true, staleTtlMs: 7 * 24 * 60 * 60 * 1000 });
   return payload.upstream?.response ?? ([] as T);
-}
-
-async function getOneVsOne(url: string) {
-  try {
-    const response = await fetch(url, { cache: "no-store" });
-    if (!response.ok) return null;
-    return (await response.json()) as OneVsOnePayload;
-  } catch {
-    return null;
-  }
 }
 
 function valueOr<T>(result: PromiseSettledResult<T>) {

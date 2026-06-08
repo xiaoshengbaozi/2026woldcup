@@ -24,6 +24,7 @@ export function SiteAnalyticsProvider({ children }: { children: ReactNode }) {
     }
 
     const syncStats = (action: "view" | "heartbeat") => {
+      if (action === "heartbeat" && (document.hidden || !navigator.onLine)) return;
       sendSiteAnalytics(action, sessionId)
         .then((nextStats) => {
           if (active) setStats(nextStats);
@@ -35,10 +36,15 @@ export function SiteAnalyticsProvider({ children }: { children: ReactNode }) {
 
     syncStats("view");
     const interval = window.setInterval(() => syncStats("heartbeat"), 30_000);
+    const syncVisibleHeartbeat = () => syncStats("heartbeat");
+    document.addEventListener("visibilitychange", syncVisibleHeartbeat);
+    window.addEventListener("online", syncVisibleHeartbeat);
 
     return () => {
       active = false;
       window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", syncVisibleHeartbeat);
+      window.removeEventListener("online", syncVisibleHeartbeat);
     };
   }, [pathname]);
 

@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { unstable_batchedUpdates } from "react-dom";
+import { fetchWithTimeout } from "@/lib/request-cache";
 import { useStore } from "@/lib/store";
 import { getBackendApiUrl } from "@/lib/world-cup-api";
 import type {
@@ -14,6 +15,8 @@ import type {
 const STALE_AFTER_MS = 15_000;
 const RECONNECT_BASE_MS = 1_000;
 const RECONNECT_MAX_MS = 30_000;
+const SNAPSHOT_STORAGE_KEY = "wc-market-last-snapshot";
+const SNAPSHOT_STALE_TTL_MS = 6 * 60 * 60 * 1000;
 
 function getApiUrl() {
   return getBackendApiUrl();
@@ -36,6 +39,7 @@ function applySnapshot(message: SnapshotMessage) {
     store.recordUpdate(message.timestamp, Math.max(0, Date.now() - message.timestamp));
     store.setStatus("connected");
   });
+  saveLastSnapshot(message);
 }
 
 function applyDelta(message: DeltaMessage) {
@@ -57,6 +61,13 @@ function applyDelta(message: DeltaMessage) {
     }
     store.recordUpdate(message.timestamp, Math.max(0, Date.now() - message.timestamp));
     store.setStatus("connected");
+  });
+  saveLastSnapshot({
+    type: "snapshot",
+    timestamp: message.timestamp,
+    countries: useStore.getState().getAllCountries(),
+    events: useStore.getState().events,
+    history: {},
   });
 }
 
@@ -87,11 +98,21 @@ export function useLiveMarketData() {
 
     async function loadSnapshot() {
       try {
-        const response = await fetch(`${apiUrl}/api/snapshot`, { cache: "no-store" });
+        const response = await fetchWithTimeout(`${apiUrl}/api/snapshot`, { cache: "no-store" }, 5_000);
         if (!response.ok) throw new Error(`Snapshot returned ${response.status}`);
         applySnapshot((await response.json()) as SnapshotMessage);
       } catch (err) {
         console.warn("[MarketData] Snapshot request failed:", err);
+        const lastSnapshot = readLastSnapshot();
+        if (lastSnapshot) {
+          applySnapshot(lastSnapshot);
+          useStore.getState().setStatus("stale");
+          return;
+        }
+        if (useStore.getState().countries.size) {
+          useStore.getState().setStatus("stale");
+          return;
+        }
         useStore.getState().setStatus("disconnected");
       }
     }
@@ -131,7 +152,7 @@ export function useLiveMarketData() {
 
       ws.onclose = () => {
         if (stopped) return;
-        useStore.getState().setStatus("disconnected");
+        useStore.getState().setStatus(useStore.getState().countries.size ? "stale" : "disconnected");
         scheduleReconnect();
       };
     }
@@ -158,4 +179,35 @@ export function useLiveMarketData() {
       ws?.close();
     };
   }, []);
+}
+
+function saveLastSnapshot(message: SnapshotMessage) {
+  if (typeof window === "undefined" || !message.countries.length) return;
+
+  try {
+    const compact: SnapshotMessage = {
+      type: "snapshot",
+      timestamp: message.timestamp,
+      countries: message.countries,
+      events: message.events,
+      history: {},
+    };
+    window.localStorage.setItem(SNAPSHOT_STORAGE_KEY, JSON.stringify({ savedAt: Date.now(), snapshot: compact }));
+  } catch {
+    // If storage is unavailable, the in-memory store still preserves the current frame.
+  }
+}
+
+function readLastSnapshot() {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = window.localStorage.getItem(SNAPSHOT_STORAGE_KEY);
+    if (!raw) return null;
+    const payload = JSON.parse(raw) as { savedAt?: number; snapshot?: SnapshotMessage };
+    if (!payload.snapshot || !payload.savedAt || Date.now() - payload.savedAt > SNAPSHOT_STALE_TTL_MS) return null;
+    return payload.snapshot;
+  } catch {
+    return null;
+  }
 }

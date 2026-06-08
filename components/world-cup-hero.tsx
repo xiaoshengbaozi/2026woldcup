@@ -227,7 +227,7 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
 
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14, duration: 0.78, ease: [0.16, 1, 0.3, 1] }} className="grid gap-5">
           <div className="next-match-card hero-card relative min-h-[312px] overflow-hidden p-0 sm:min-h-[330px]">
-            <img src="/estadio-azteca-aerial.jpg" alt="Aerial view of Estadio Azteca" className="next-match-media absolute inset-0 h-full w-full object-cover object-[78%_50%] opacity-[.82] saturate-[1.08]" />
+            <img src="/estadio-azteca-aerial.webp" alt="Aerial view of Estadio Azteca" className="next-match-media absolute inset-0 h-full w-full object-cover object-[78%_50%] opacity-[.82] saturate-[1.08]" />
             <div className="next-match-shade absolute inset-0 bg-[linear-gradient(90deg,rgba(5,8,8,.98)_0%,rgba(5,8,8,.9)_34%,rgba(5,8,8,.42)_58%,rgba(5,8,8,.08)_100%),linear-gradient(0deg,rgba(5,8,8,.72)_0%,rgba(5,8,8,.08)_32%,rgba(5,8,8,.1)_100%),radial-gradient(circle_at_76%_52%,rgba(216,255,62,.2),transparent_26%)]" />
             <div className="next-match-glow absolute inset-0 bg-[radial-gradient(circle_at_24%_20%,rgba(216,255,62,.13),transparent_24%),radial-gradient(circle_at_68%_72%,rgba(255,154,31,.1),transparent_34%)]" />
             <div className="relative z-10 flex min-h-[312px] flex-col items-center justify-between px-5 pb-7 pt-5 sm:min-h-[330px] sm:p-8">

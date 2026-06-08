@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Bell, Check, Star } from "lucide-react";
 import { MeAuthDialog, type SharedAuthMode } from "@/components/me-auth-dialog";
-import { userApi, type PublicUser, type UserSessionPayload } from "@/lib/user-system";
+import { useUserSession } from "@/components/user-session-provider";
+import { userApi, type PublicUser } from "@/lib/user-system";
 
 type ActionKind = "team" | "player" | "match";
 
@@ -48,29 +49,14 @@ const topIconButtonClass =
 export function UserActionButton({ kind, payload, className = "", iconOnly = false, onChanged }: UserActionButtonProps) {
   const [active, setActive] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [authMode, setAuthMode] = useState<SharedAuthMode | null>(null);
+  const { home, signedIn, refreshSession } = useUserSession();
   const id = String(payload.id || payload.matchId || "");
 
-  const refreshSession = useCallback(() => {
-    let mounted = true;
-    userApi<UserSessionPayload>("/api/me/session", { cache: "no-store" })
-      .then((home) => {
-        if (!mounted) return;
-        setSignedIn(true);
-        setActive(isAlreadySaved(kind, id, home.user));
-      })
-      .catch(() => {
-        if (!mounted) return;
-        setSignedIn(false);
-      });
-    return () => {
-      mounted = false;
-    };
-  }, [kind, id]);
-
-  useEffect(() => refreshSession(), [refreshSession]);
+  useEffect(() => {
+    setActive(Boolean(home && isAlreadySaved(kind, id, home.user)));
+  }, [home, id, kind]);
 
   async function runAction() {
     if (busy) return;
@@ -93,6 +79,7 @@ export function UserActionButton({ kind, payload, className = "", iconOnly = fal
       const nextActive = isAlreadySaved(kind, id, result.user);
       setActive(nextActive);
       onChanged?.(nextActive);
+      void refreshSession();
     } finally {
       setBusy(false);
     }
@@ -112,6 +99,7 @@ export function UserActionButton({ kind, payload, className = "", iconOnly = fal
       const nextActive = isAlreadySaved(kind, id, result.user);
       setActive(nextActive);
       onChanged?.(nextActive);
+      void refreshSession();
       setConfirmOpen(false);
     } finally {
       setBusy(false);

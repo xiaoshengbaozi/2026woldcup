@@ -73,7 +73,7 @@ export function SupportCreatorModal() {
         aria-label="打赏作者"
         title="打赏作者"
         onClick={() => setOpen(true)}
-        className="support-floating-button fixed bottom-[6.25rem] right-4 z-[75] grid h-14 w-14 place-items-center rounded-full bg-white/[0.08] text-rose-200 shadow-[0_18px_52px_rgba(0,0,0,.45),0_0_28px_rgba(255,94,148,.18),inset_0_1px_0_rgba(255,255,255,.16)] ring-1 ring-white/15 backdrop-blur-2xl transition duration-300 hover:-translate-y-1 hover:bg-rose-300/15 hover:text-white hover:shadow-[0_24px_64px_rgba(0,0,0,.5),0_0_40px_rgba(255,94,148,.25),inset_0_1px_0_rgba(255,255,255,.2)] sm:bottom-24 sm:right-8"
+        className="support-floating-button fixed bottom-[6.25rem] right-4 z-[75] hidden h-14 w-14 place-items-center rounded-full bg-white/[0.08] text-rose-200 shadow-[0_18px_52px_rgba(0,0,0,.45),0_0_28px_rgba(255,94,148,.18),inset_0_1px_0_rgba(255,255,255,.16)] ring-1 ring-white/15 backdrop-blur-2xl transition duration-300 hover:-translate-y-1 hover:bg-rose-300/15 hover:text-white hover:shadow-[0_24px_64px_rgba(0,0,0,.5),0_0_40px_rgba(255,94,148,.25),inset_0_1px_0_rgba(255,255,255,.2)] sm:bottom-24 sm:right-8 lg:grid"
       >
         <span className="pointer-events-none absolute inset-0 rounded-full bg-rose-300/10 blur-md" />
         <Heart className="relative h-6 w-6 fill-current" />

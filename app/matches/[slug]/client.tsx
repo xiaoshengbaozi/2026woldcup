@@ -10,7 +10,6 @@ import { MatchTimeline } from "@/components/match-detail/match-timeline";
 import { MatchStatsPanel } from "@/components/match-detail/match-stats-panel";
 import { MatchNews } from "@/components/match-detail/match-news";
 import { MatchHeadToHead } from "@/components/match-detail/match-head-to-head";
-import { MatchSeoContent } from "@/components/match-detail/match-seo-content";
 import { LivePlayer } from "@/components/match-detail/live-player";
 import { MatchNav, type MatchTab } from "@/components/match-detail/match-nav";
 import { MobileSecondaryPageActions } from "@/components/mobile-secondary-page-actions";
@@ -102,7 +101,6 @@ export function MatchDetailClient({ slug }: { slug: string }) {
         )}
       </div>
 
-      <MatchSeoContent detail={detail} />
     </DashboardShell>
   );
 }

@@ -71,10 +71,10 @@ export default function MatchesPage() {
         (!normalizedQuery || haystack.includes(normalizedQuery)) &&
         (!stage || (stageGroup ? getStageFilterGroup(match.stage) === stageGroup : match.stage === stage)) &&
         (activeCity === "全部城市" || (cityGroup ? getCityFilterGroup(city) === cityGroup : city === activeCity)) &&
-        (!selectedDay || getMatchDayKey(match.start, timezoneOffset) === selectedDay)
+        (layout !== "default" || !selectedDay || getMatchDayKey(match.start, timezoneOffset) === selectedDay)
       );
     });
-  }, [activeCity, query, scheduleMatches, selectedDay, stage, timezoneOffset]);
+  }, [activeCity, layout, query, scheduleMatches, selectedDay, stage, timezoneOffset]);
 
   const grouped = useMemo(() => groupMatchesByDay(filteredMatches), [filteredMatches]);
   const matchDays = useMemo(
@@ -95,6 +95,10 @@ export default function MatchesPage() {
   useEffect(() => {
     if (!cities.includes(activeCity)) setActiveCity("全部城市");
   }, [activeCity, cities, setActiveCity]);
+
+  useEffect(() => {
+    if (layout !== "default" && selectedDay) setSelectedDay("");
+  }, [layout, selectedDay]);
 
   useEffect(() => {
     const mobileQuery = window.matchMedia("(max-width: 639px)");
@@ -241,6 +245,7 @@ export default function MatchesPage() {
               cities={cities}
               timezoneOffset={timezoneOffset}
               layout={layout}
+              mobileSearchEnabled
               onQueryChange={setQuery}
               onMatchSourceChange={setMatchSource}
               onStageChange={setStage}
@@ -248,11 +253,13 @@ export default function MatchesPage() {
               onTimezoneChange={setTimezoneOffset}
               onLayoutChange={setLayout}
             />
-            <MobileMatchDayStrip
-              days={matchDays}
-              selectedDay={selectedDay}
-              onSelectDay={setSelectedDay}
-            />
+            {layout === "default" ? (
+              <MobileMatchDayStrip
+                days={matchDays}
+                selectedDay={selectedDay}
+                onSelectDay={setSelectedDay}
+              />
+            ) : null}
           </div>
         </div>
       </div>

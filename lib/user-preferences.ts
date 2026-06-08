@@ -148,7 +148,7 @@ function buildOfficialPreferenceCatalog() {
       id: teamCode,
       name: teamName,
       region: teamCode,
-      logo: `/team-covers/fifa/${slugifyTeam(teamName)}.png`,
+      logo: `/team-covers/fifa/${slugifyTeam(teamName)}.webp`,
     });
 
     for (const player of squad.players ?? []) {

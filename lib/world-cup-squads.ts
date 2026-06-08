@@ -1,4 +1,5 @@
 import { getBackendApiUrl } from "@/lib/world-cup-api";
+import { cachedJson, fetchWithTimeout } from "@/lib/request-cache";
 import type { LineupPlayer, MatchTeamMeta, PlayerPosition } from "@/types/match";
 
 type SquadPlayerResponse = {
@@ -62,12 +63,17 @@ export async function fetchWorldCupSquadDetails(teamIds: number[]) {
   const params = new URLSearchParams();
   ids.forEach((id) => params.append("team", String(id)));
 
-  const response = await fetch(`${getBackendApiUrl()}/api/worldcup/squads?${params}`, { cache: "no-store" });
-  const payload = (await response.json()) as SquadsPayload & { error?: string };
+  const url = `${getBackendApiUrl()}/api/worldcup/squads?${params}`;
+  const payload = await cachedJson<SquadsPayload & { error?: string }>(url, 10 * 60 * 1000, async () => {
+    const response = await fetchWithTimeout(url, { cache: "no-store" }, 6_000);
+    const payload = (await response.json()) as SquadsPayload & { error?: string };
 
-  if (!response.ok) {
-    throw new Error(payload.error || `World Cup squads returned ${response.status}`);
-  }
+    if (!response.ok) {
+      throw new Error(payload.error || `World Cup squads returned ${response.status}`);
+    }
+
+    return payload;
+  }, { persist: true, staleTtlMs: 7 * 24 * 60 * 60 * 1000 });
 
   const squads = new Map<number, WorldCupSquadDetail>();
   for (const squad of payload.squads ?? []) {

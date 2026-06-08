@@ -6,8 +6,9 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode, TouchEvent, UIEvent } from "react";
-import { Bell, Bookmark, CalendarDays, ChevronRight, Flag, LogIn, LogOut, Settings, Star, UserPlus, UserRound, UsersRound, X } from "lucide-react";
+import { Bell, Bookmark, CalendarDays, ChevronRight, Coffee, Flag, LogIn, LogOut, Settings, Star, UserPlus, UserRound, UsersRound, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { openCreatorSupportModal } from "@/components/support-creator-modal";
 import type { UserSessionPayload } from "@/lib/user-system";
 
 type MobileMeDrawerProps = {
@@ -41,23 +42,11 @@ export function MobileMeDrawer({ open, home, loading, avatarUrl, onLogin, onRegi
   useEffect(() => {
     if (!open) return;
 
-    const previousHtmlOverflow = document.documentElement.style.overflow;
-    const previousHtmlOverscrollBehavior = document.documentElement.style.overscrollBehavior;
-    const previousOverflow = document.body.style.overflow;
-    const previousTouchAction = document.body.style.touchAction;
-    const previousOverscrollBehavior = document.body.style.overscrollBehavior;
-
     const preventScroll = (event: Event) => {
       const target = event.target;
       if (target instanceof Node && asideRef.current?.contains(target)) return;
       event.preventDefault();
     };
-
-    document.documentElement.style.overflow = "hidden";
-    document.documentElement.style.overscrollBehavior = "none";
-    document.body.style.overflow = "hidden";
-    document.body.style.touchAction = "none";
-    document.body.style.overscrollBehavior = "none";
 
     window.addEventListener("wheel", preventScroll, { passive: false, capture: true });
     window.addEventListener("touchmove", preventScroll, { passive: false, capture: true });
@@ -65,11 +54,6 @@ export function MobileMeDrawer({ open, home, loading, avatarUrl, onLogin, onRegi
     return () => {
       window.removeEventListener("wheel", preventScroll, { capture: true });
       window.removeEventListener("touchmove", preventScroll, { capture: true });
-      document.documentElement.style.overflow = previousHtmlOverflow;
-      document.documentElement.style.overscrollBehavior = previousHtmlOverscrollBehavior;
-      document.body.style.overflow = previousOverflow;
-      document.body.style.touchAction = previousTouchAction;
-      document.body.style.overscrollBehavior = previousOverscrollBehavior;
     };
   }, [open]);
 
@@ -84,6 +68,11 @@ export function MobileMeDrawer({ open, home, loading, avatarUrl, onLogin, onRegi
     event.preventDefault();
   };
 
+  const handleOpenSupport = () => {
+    onClose();
+    window.requestAnimationFrame(() => openCreatorSupportModal());
+  };
+
   return (
     <AnimatePresence>
       {open && (
@@ -91,10 +80,11 @@ export function MobileMeDrawer({ open, home, loading, avatarUrl, onLogin, onRegi
           <motion.button
             type="button"
             aria-label="关闭个人菜单"
-            className="mobile-me-drawer-backdrop fixed inset-0 z-[80] bg-black/55 backdrop-blur-sm lg:hidden"
+            className="mobile-me-drawer-backdrop fixed inset-0 z-[80] bg-black/58 will-change-opacity lg:hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.16, ease: "easeOut" }}
             onClick={onClose}
             onWheel={stopBackgroundScroll}
             onTouchMove={stopBackgroundScroll}
@@ -104,11 +94,12 @@ export function MobileMeDrawer({ open, home, loading, avatarUrl, onLogin, onRegi
             role="dialog"
             aria-modal="true"
             aria-label="个人中心"
-            className="mobile-me-drawer fixed left-0 top-0 z-[90] flex h-[100dvh] w-[66.666vw] min-w-[250px] max-w-[340px] flex-col overflow-hidden bg-ink-950/88 px-5 pb-5 pt-[calc(1rem+env(safe-area-inset-top))] shadow-[26px_0_90px_rgba(0,0,0,.62)] backdrop-blur-3xl lg:hidden"
-            initial={{ x: "-104%", opacity: 0.6 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: "-104%", opacity: 0.6 }}
-            transition={{ type: "spring", damping: 28, stiffness: 270 }}
+            className="mobile-me-drawer fixed left-0 top-0 z-[90] flex h-[100dvh] w-[66.666vw] min-w-[250px] max-w-[340px] transform-gpu flex-col overflow-hidden bg-ink-950/94 px-5 pb-5 pt-[calc(1rem+env(safe-area-inset-top))] shadow-[26px_0_90px_rgba(0,0,0,.62)] backdrop-blur-xl will-change-transform lg:hidden"
+            initial={{ x: "-100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "-100%" }}
+            transition={{ type: "spring", damping: 34, stiffness: 320, mass: 0.9 }}
+            style={{ touchAction: "auto" }}
           >
             <div className="pointer-events-none absolute -left-20 top-16 h-44 w-44 rounded-full bg-volt/12 blur-[70px]" />
             <div className="pointer-events-none absolute bottom-16 right-0 h-40 w-24 rounded-full bg-flare/10 blur-[56px]" />
@@ -206,6 +197,11 @@ export function MobileMeDrawer({ open, home, loading, avatarUrl, onLogin, onRegi
                 icon={<CalendarDays className="h-4 w-4" />}
                 label="比赛日历"
                 onClose={onClose}
+              />
+              <DrawerAction
+                icon={<Coffee className="h-4 w-4" />}
+                label="打赏作者"
+                onClick={handleOpenSupport}
               />
               <button type="button" onClick={() => setSettingsOpen((value) => !value)} className="flex h-[3.25rem] items-center justify-between px-1 text-left text-white/62 transition hover:text-white">
                 <span className="flex items-center gap-3 text-sm font-semibold">
@@ -327,5 +323,29 @@ function DrawerLink({
       </span>
       <ChevronRight className="h-4 w-4 text-white/34" />
     </Link>
+  );
+}
+
+function DrawerAction({
+  icon,
+  label,
+  onClick,
+}: {
+  icon: ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex h-[3.25rem] items-center justify-between px-1 text-left text-sm font-semibold text-white/72 transition hover:text-white"
+    >
+      <span className="flex items-center gap-3">
+        {icon}
+        {label}
+      </span>
+      <ChevronRight className="h-4 w-4 text-white/34" />
+    </button>
   );
 }

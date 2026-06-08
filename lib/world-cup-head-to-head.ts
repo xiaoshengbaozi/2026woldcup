@@ -1,4 +1,5 @@
 import { getBackendApiUrl } from "@/lib/world-cup-api";
+import { cachedJson, fetchWithTimeout } from "@/lib/request-cache";
 import type { HeadToHeadMatch, MatchTeamMeta } from "@/types/match";
 
 type HeadToHeadFixture = {
@@ -31,14 +32,17 @@ export async function fetchWorldCupHeadToHead(homeTeam: MatchTeamMeta, awayTeam:
   if (!homeTeam.id || !awayTeam.id) return [];
 
   const params = new URLSearchParams({ h2h: `${homeTeam.id}-${awayTeam.id}` });
-  const response = await fetch(`${getBackendApiUrl()}/api/football/fixtures/headtohead?${params}`, {
-    cache: "no-store",
-  });
-  const payload = (await response.json()) as HeadToHeadPayload & { error?: string };
+  const url = `${getBackendApiUrl()}/api/football/fixtures/headtohead?${params}`;
+  const payload = await cachedJson<HeadToHeadPayload & { error?: string }>(url, 24 * 60 * 60 * 1000, async () => {
+    const response = await fetchWithTimeout(url, { cache: "no-store" }, 5_000);
+    const payload = (await response.json()) as HeadToHeadPayload & { error?: string };
 
-  if (!response.ok) {
-    throw new Error(payload.error || `Head-to-head returned ${response.status}`);
-  }
+    if (!response.ok) {
+      throw new Error(payload.error || `Head-to-head returned ${response.status}`);
+    }
+
+    return payload;
+  }, { persist: true, staleTtlMs: 7 * 24 * 60 * 60 * 1000 });
 
   return (payload.upstream?.response ?? [])
     .filter((fixture) => typeof fixture.goals?.home === "number" && typeof fixture.goals?.away === "number")

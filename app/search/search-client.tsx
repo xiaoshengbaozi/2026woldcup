@@ -15,6 +15,7 @@ import {
   type SearchNewsItem,
   type SearchResultItem,
 } from "@/lib/global-search";
+import { cachedJson, fetchWithTimeout } from "@/lib/request-cache";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
 
 type NewsResponse = {
@@ -45,8 +46,10 @@ export function SearchClient() {
     const endpoint = `${NEWS_API}/api/news?${new URLSearchParams({ limit: "96" }).toString()}`;
     setNewsLoading(true);
 
-    fetch(endpoint, { cache: "no-store" })
-      .then((response) => (response.ok ? response.json() : null))
+    cachedJson<NewsResponse | null>(endpoint, 3 * 60 * 1000, async () => {
+      const response = await fetchWithTimeout(endpoint, { cache: "no-store" }, 5_000);
+      return response.ok ? ((await response.json()) as NewsResponse) : null;
+    }, { persist: true, staleTtlMs: 24 * 60 * 60 * 1000 })
       .then((payload: NewsResponse | null) => {
         if (alive) setNews(payload?.items ?? []);
       })

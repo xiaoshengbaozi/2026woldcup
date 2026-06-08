@@ -3,27 +3,22 @@
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bell, X } from "lucide-react";
+import { useUserSession } from "@/components/user-session-provider";
 import { userApi, type UserSessionPayload } from "@/lib/user-system";
 
 type NotificationItem = UserSessionPayload["user"]["notifications"][number];
 
 export function UserNotificationToast() {
+  const { home, refreshSession } = useUserSession();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    let mounted = true;
-    userApi<UserSessionPayload>("/api/me/session", { cache: "no-store" })
-      .then((payload) => {
-        if (!mounted) return;
-        setNotifications(payload.user.notifications.filter((item) => !item.read && item.type === "match_reminder").slice(0, 3));
-        setVisible(true);
-      })
-      .catch(() => undefined);
-    return () => {
-      mounted = false;
-    };
-  }, []);
+    setNotifications(
+      home?.user.notifications.filter((item) => !item.read && item.type === "match_reminder").slice(0, 3) ?? []
+    );
+    setVisible(true);
+  }, [home]);
 
   const active = useMemo(() => notifications[0] ?? null, [notifications]);
   if (!active) return null;
@@ -37,6 +32,7 @@ export function UserNotificationToast() {
         method: "POST",
         body: JSON.stringify({ ids }),
       });
+      void refreshSession();
     } catch {
       // The next session read will recover the unread state.
     }

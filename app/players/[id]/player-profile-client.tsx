@@ -31,7 +31,6 @@ import { localizeClubName, localizeCountryName } from "@/lib/football-localizati
 import { getTeamLandscapePathByCode } from "@/lib/team-landscapes";
 import {
   fetchApiFootballPlayerProfileData,
-  fetchOneVsOnePlayerSummary,
   type PlayerProfileData,
 } from "@/lib/player-profile";
 import type { PlayerScoutNote } from "@/lib/player-scout-notes";
@@ -125,39 +124,26 @@ const FIFA_CODE_TO_FLAG: Record<string, string> = {
 export function PlayerProfileClient({ playerId, nameHint, row, article, scoutNote }: Props) {
   const [data, setData] = useState<PlayerProfileData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [oneVsOneLoading, setOneVsOneLoading] = useState(false);
   const [activeMobilePanel, setActiveMobilePanel] = useState<ProfilePanelTab>("overview");
   const panelTabsSentinelRef = useRef<HTMLDivElement>(null);
   const panelTabsRef = useRef<HTMLDivElement>(null);
   const [panelTabsPinned, setPanelTabsPinned] = useState(false);
   const [panelTabsHeight, setPanelTabsHeight] = useState(0);
+  const hasFifaStory = Boolean(article);
+  const visibleProfilePanelTabs = useMemo(
+    () => profilePanelTabs.filter((tab) => tab.id !== "story" || hasFifaStory),
+    [hasFifaStory]
+  );
 
   useEffect(() => {
     let active = true;
     setLoading(true);
-    setOneVsOneLoading(false);
     fetchApiFootballPlayerProfileData(playerId)
       .then((payload) => {
         if (!active) return;
 
         setData(payload);
         setLoading(false);
-
-        const player = payload.player;
-        const fullName = [player?.firstname, player?.lastname].filter(Boolean).join(" ") || player?.name || nameHint;
-        if (!fullName) return;
-
-        setOneVsOneLoading(true);
-        fetchOneVsOnePlayerSummary(fullName)
-          .then((oneVsOne) => {
-            if (active) setData((current) => current ? { ...current, oneVsOne } : current);
-          })
-          .catch((error) => {
-            console.warn("[PlayerProfile] 1vs1 unavailable:", error);
-          })
-          .finally(() => {
-            if (active) setOneVsOneLoading(false);
-          });
       })
       .catch((error) => {
         console.warn("[PlayerProfile] unavailable:", error);
@@ -208,6 +194,10 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, scoutNot
     };
   }, [panelTabsPinned]);
 
+  useEffect(() => {
+    if (!hasFifaStory && activeMobilePanel === "story") setActiveMobilePanel("overview");
+  }, [activeMobilePanel, hasFifaStory]);
+
   const scrollToPanelHead = () => {
     if (!window.matchMedia("(max-width: 1023px)").matches) return;
 
@@ -231,8 +221,8 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, scoutNot
   const displayName = row?.nameCn || player?.name || nameHint || `#${playerId}`;
   const englishName = player?.name || row?.nameEn || nameHint;
   const fullName = [player?.firstname, player?.lastname].filter(Boolean).join(" ");
-  const photo = player?.photo || row?.photo || data?.oneVsOne?.player?.image || "";
-  const currentTeam = localizeClubName(data?.currentTeam?.name || data?.oneVsOne?.player?.teamName) || "暂无俱乐部数据";
+  const photo = player?.photo || row?.photo || "";
+  const currentTeam = localizeClubName(data?.currentTeam?.name) || "暂无俱乐部数据";
   const currentTeamLogo = data?.currentTeam?.logo || "";
   const total = useMemo(() => summarizeStats(data?.seasonStats ?? []), [data?.seasonStats]);
   const profileRating = getProfileRating(total.rating, scoutNote);
@@ -471,8 +461,8 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, scoutNot
                     : "relative -mx-3 bg-black/58 backdrop-blur-2xl"
                 } px-3 py-1.5 lg:static lg:mx-0 lg:bg-transparent lg:px-0 lg:py-0 lg:backdrop-blur-none`}
               >
-              <div className="hero-card grid grid-cols-3 gap-1 p-1 lg:hidden">
-                {profilePanelTabs.map((tab) => {
+              <div className={`hero-card grid gap-1 p-1 lg:hidden ${visibleProfilePanelTabs.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
+                {visibleProfilePanelTabs.map((tab) => {
                   const active = activeMobilePanel === tab.id;
                   return (
                     <button
@@ -494,6 +484,8 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, scoutNot
 
               <div className="grid gap-5 lg:grid-cols-[.78fr_1.45fr_.78fr]">
                 <div className={`${activeMobilePanel === "overview" ? "block" : "hidden"} space-y-5 lg:block`}>
+                  {scoutNote && <PlayerFmScoutCard note={scoutNote} className="lg:hidden" />}
+
                   <DashPanel title="当前效力" icon={Shield} accent>
                     <div className="flex items-center gap-3 border-b border-white/[0.05] pb-4">
                       <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-volt/10 ring-1 ring-white/[0.06]">
@@ -549,7 +541,7 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, scoutNot
                     <div className="flex justify-center py-1">
                       <PlayerRadar stats={radarStats} />
                     </div>
-                    <div className="mt-1 grid grid-cols-5 divide-x divide-white/[0.05] border-t border-white/[0.05] pt-3">
+                    <div className="player-radar-stats mt-1 grid grid-cols-5 divide-x divide-white/[0.05] border-t border-white/[0.05] pt-3">
                       {radarStats.map((stat) => (
                         <StatBlock key={stat.label} label={stat.label} value={stat.value} accent />
                       ))}
@@ -557,28 +549,6 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, scoutNot
                   </DashPanel>
 
                   <DashPanel title="扩展档案" icon={Star}>
-                    {data?.oneVsOne?.found ? (
-                      <a
-                        href={data.oneVsOne.url || "https://one-versus-one.com/"}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="group mb-3 flex items-center justify-between rounded-xl bg-volt/[0.06] p-3.5 ring-1 ring-volt/12 transition-all hover:bg-volt/[0.1] hover:ring-volt/20"
-                      >
-                        <div>
-                          <p className="text-sm font-bold text-white/80">1vs1 档案</p>
-                          <p className="mt-0.5 text-xs text-white/38">
-                            {localizeCountryName(data.oneVsOne.player?.nationality || player?.nationality) || ""}
-                            {data.oneVsOne.player?.teamName ? ` · ${localizeClubName(data.oneVsOne.player.teamName)}` : ""}
-                          </p>
-                        </div>
-                        <ExternalLink className="h-4 w-4 text-volt/50 transition-transform group-hover:translate-x-0.5 group-hover:text-volt" />
-                      </a>
-                    ) : oneVsOneLoading ? (
-                      <EmptyState text="正在同步 1vs1 扩展档案" />
-                    ) : (
-                      <EmptyState text="暂无 1vs1 扩展档案" />
-                    )}
-
                     <div className="rounded-xl bg-white/[0.03] p-3.5 ring-1 ring-white/[0.05]">
                       <div className="mb-2 flex items-center gap-2 text-sm font-bold text-white/68">
                         <BadgeAlert className="h-4 w-4 text-rose-300/60" />
@@ -599,18 +569,16 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, scoutNot
                   </DashPanel>
                 </div>
 
-                <div className={`${activeMobilePanel === "story" ? "block" : "hidden"} space-y-5 lg:block`}>
-                  {scoutNote && <PlayerFmScoutCard note={scoutNote} />}
-                  {article?.articleCn ? (
-                    <PlayerArticleTimeline article={article} />
-                  ) : article ? (
-                    <PlayerArticlePreview article={article} />
-                  ) : !scoutNote ? (
-                    <DashPanel title="故事档案" icon={Sparkles}>
-                      <EmptyState text="暂无官方故事档案" />
-                    </DashPanel>
-                  ) : null}
-                </div>
+                {(hasFifaStory || scoutNote) ? (
+                  <div className={`${hasFifaStory && activeMobilePanel === "story" ? "block" : "hidden"} space-y-5 lg:block`}>
+                    {scoutNote && <PlayerFmScoutCard note={scoutNote} className="hidden lg:block" />}
+                    {article?.articleCn ? (
+                      <PlayerArticleTimeline article={article} />
+                    ) : article ? (
+                      <PlayerArticlePreview article={article} />
+                    ) : null}
+                  </div>
+                ) : null}
 
                 <div className={`${activeMobilePanel === "career" ? "block" : "hidden"} space-y-5 lg:block`}>
                   <DashPanel title="职业轨迹" icon={CalendarClock}>
@@ -841,7 +809,7 @@ function PlayerRadar({ stats }: { stats: RadarStat[] }) {
   });
 
   return (
-    <div className="relative">
+    <div className="player-radar relative">
       <svg
         width={size}
         height={size}
@@ -858,8 +826,8 @@ function PlayerRadar({ stats }: { stats: RadarStat[] }) {
             </feMerge>
           </filter>
           <linearGradient id="radar-fill" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="rgb(216, 255, 62)" stopOpacity="0.25" />
-            <stop offset="100%" stopColor="rgb(216, 255, 62)" stopOpacity="0.05" />
+            <stop offset="0%" stopColor="var(--player-radar-accent, rgb(216, 255, 62))" stopOpacity="var(--player-radar-fill-start, 0.25)" />
+            <stop offset="100%" stopColor="var(--player-radar-accent, rgb(216, 255, 62))" stopOpacity="var(--player-radar-fill-end, 0.05)" />
           </linearGradient>
         </defs>
 
@@ -869,7 +837,7 @@ function PlayerRadar({ stats }: { stats: RadarStat[] }) {
             key={i}
             points={points}
             fill="none"
-            stroke="rgba(255,255,255,0.06)"
+            stroke="var(--player-radar-grid, rgba(255,255,255,0.06))"
             strokeWidth="1"
           />
         ))}
@@ -882,7 +850,7 @@ function PlayerRadar({ stats }: { stats: RadarStat[] }) {
             y1={line.y1}
             x2={line.x2}
             y2={line.y2}
-            stroke="rgba(255,255,255,0.06)"
+            stroke="var(--player-radar-grid, rgba(255,255,255,0.06))"
             strokeWidth="1"
           />
         ))}
@@ -891,7 +859,7 @@ function PlayerRadar({ stats }: { stats: RadarStat[] }) {
         <polygon
           points={dataPath}
           fill="url(#radar-fill)"
-          stroke="rgb(216, 255, 62)"
+          stroke="var(--player-radar-accent, rgb(216, 255, 62))"
           strokeWidth="2"
           filter="url(#radar-glow)"
           opacity="0.6"
@@ -901,7 +869,7 @@ function PlayerRadar({ stats }: { stats: RadarStat[] }) {
         <polygon
           points={dataPath}
           fill="url(#radar-fill)"
-          stroke="rgb(216, 255, 62)"
+          stroke="var(--player-radar-accent, rgb(216, 255, 62))"
           strokeWidth="2"
           strokeLinejoin="round"
         />
@@ -909,8 +877,8 @@ function PlayerRadar({ stats }: { stats: RadarStat[] }) {
         {/* Data points */}
         {dataPoints.map((p, i) => (
           <g key={i}>
-            <circle cx={p.x} cy={p.y} r="5" fill="rgb(216, 255, 62)" opacity="0.3" />
-            <circle cx={p.x} cy={p.y} r="3" fill="rgb(216, 255, 62)" />
+            <circle cx={p.x} cy={p.y} r="5" fill="var(--player-radar-accent, rgb(216, 255, 62))" opacity="var(--player-radar-point-halo, 0.3)" />
+            <circle cx={p.x} cy={p.y} r="3" fill="var(--player-radar-accent, rgb(216, 255, 62))" />
           </g>
         ))}
 
@@ -922,7 +890,8 @@ function PlayerRadar({ stats }: { stats: RadarStat[] }) {
             y={label.y}
             textAnchor="middle"
             dominantBaseline="middle"
-            className="fill-white/50 text-[10px] font-semibold"
+            fill="var(--player-radar-label, rgba(255,255,255,0.5))"
+            className="player-radar-label text-[10px] font-semibold"
           >
             {label.label}
           </text>

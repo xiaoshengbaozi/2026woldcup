@@ -23,6 +23,9 @@ const tabs: { id: PlayerTab; label: string }[] = [
   { id: "squads", label: "最佳射手" },
 ];
 
+const INITIAL_SQUAD_RENDER_COUNT = 72;
+const SQUAD_RENDER_BATCH_SIZE = 72;
+
 const officialPlayers = getOfficialPlayerCatalog();
 const scorerPlayers = officialPlayers
   .filter((player) => player.goals > 0)
@@ -402,16 +405,46 @@ function PlayerRail({ players }: { players: PlayerListItem[] }) {
 }
 
 function SquadPlayerGrid({ players }: { players: OfficialPlayerCatalogItem[] }) {
+  const [visibleCount, setVisibleCount] = useState(() => Math.min(INITIAL_SQUAD_RENDER_COUNT, players.length));
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const visiblePlayers = useMemo(() => players.slice(0, visibleCount), [players, visibleCount]);
+  const hasMore = visibleCount < players.length;
+
+  useEffect(() => {
+    setVisibleCount(Math.min(INITIAL_SQUAD_RENDER_COUNT, players.length));
+  }, [players]);
+
+  useEffect(() => {
+    if (!hasMore) return;
+    const sentinel = sentinelRef.current;
+    if (!sentinel || typeof IntersectionObserver === "undefined") {
+      setVisibleCount(players.length);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return;
+        setVisibleCount((count) => Math.min(count + SQUAD_RENDER_BATCH_SIZE, players.length));
+      },
+      { rootMargin: "720px 0px" }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, players.length, visibleCount]);
+
   return (
+    <>
     <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-      {players.map((player) => (
+      {visiblePlayers.map((player) => (
         <Link
           key={player.id}
           href={playerProfileHref(player)}
           className="squad-player-card group grid min-w-0 grid-cols-[56px_minmax(0,1fr)] items-center gap-3 rounded-3xl border border-white/[0.06] bg-white/[0.025] p-3 shadow-[0_16px_46px_rgba(0,0,0,.18)] backdrop-blur-xl transition duration-300 hover:border-volt/30 hover:bg-white/[0.04] sm:grid-cols-[72px_minmax(0,1fr)]"
         >
           <div className="relative h-14 w-14 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/[0.08] sm:h-[72px] sm:w-[72px]">
-            <img src={player.photo} alt={player.nameCn} className="h-full w-full object-cover" />
+            <img src={player.photo} alt={player.nameCn} className="h-full w-full object-cover" loading="lazy" />
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 items-center gap-2">
@@ -446,6 +479,8 @@ function SquadPlayerGrid({ players }: { players: OfficialPlayerCatalogItem[] }) 
         </Link>
       ))}
     </div>
+    {hasMore ? <div ref={sentinelRef} className="h-10" aria-hidden="true" /> : null}
+    </>
   );
 }
 

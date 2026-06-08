@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter_Tight } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
@@ -8,6 +8,8 @@ import { ThemeInit } from "@/components/theme-init";
 import { MobileNavBar } from "@/components/mobile-nav-bar";
 import { SiteAnalyticsProvider } from "@/components/site-analytics-provider";
 import { SupportCreatorModal } from "@/components/support-creator-modal";
+import { PwaRegister } from "@/components/pwa-register";
+import { UserSessionProvider } from "@/components/user-session-provider";
 import { WechatShareBridge } from "@/components/wechat-share-bridge";
 
 const interTight = Inter_Tight({
@@ -22,6 +24,23 @@ export const metadata: Metadata = {
   description:
     "赛波（CYBERBALL）源于赛博世界波，将实时赛事、AI预测、全球新闻与数据可视化融合为足球时代的数字竞技场。48支参赛队实时赔率、赛程日历、球员档案、小组赛积分榜——一屏尽览。",
   applicationName: "赛波 | CYBERBALL",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "赛波",
+    statusBarStyle: "black-translucent"
+  },
+  formatDetection: {
+    telephone: false
+  },
+  icons: {
+    icon: [
+      { url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" }
+    ],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }]
+  },
   alternates: {
     canonical: "/"
   },
@@ -51,6 +70,17 @@ export const metadata: Metadata = {
   }
 };
 
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#05070f" },
+    { media: "(prefers-color-scheme: light)", color: "#f8fafc" }
+  ],
+  colorScheme: "dark light",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover"
+};
+
 const themeScript = "(function(){try{var t=localStorage.getItem('wc-theme');if(t!=='light'&&t!=='dark')t='dark';document.documentElement.setAttribute('data-theme',t)}catch(e){document.documentElement.setAttribute('data-theme','dark')}})()";
 
 export default function RootLayout({
@@ -65,13 +95,16 @@ export default function RootLayout({
       </head>
       <body className={interTight.variable}>
         <SiteAnalyticsProvider>
-          <ThemeInit />
-          <Suspense fallback={null}>
-            <WechatShareBridge />
-          </Suspense>
-          {children}
-          <MobileNavBar />
-          <SupportCreatorModal />
+          <UserSessionProvider>
+            <ThemeInit />
+            <PwaRegister />
+            <Suspense fallback={null}>
+              <WechatShareBridge />
+            </Suspense>
+            {children}
+            <MobileNavBar />
+            <SupportCreatorModal />
+          </UserSessionProvider>
         </SiteAnalyticsProvider>
       </body>
     </html>

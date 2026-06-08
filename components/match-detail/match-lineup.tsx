@@ -697,7 +697,7 @@ function ScoutNoteDialog({
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <PlayerFmScoutCard note={note} href={`/players/${player.id}/`} />
+            <PlayerFmScoutCard note={note} />
           </motion.div>
         </motion.div>
       )}

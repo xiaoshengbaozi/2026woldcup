@@ -7,6 +7,7 @@ import { ChevronLeft } from "lucide-react";
 type MobileSecondaryPageActionsProps = {
   backHref: string;
   backLabel: string;
+  title?: string;
   rightAction?: ReactNode;
   reserveSpace?: boolean;
 };
@@ -14,7 +15,7 @@ type MobileSecondaryPageActionsProps = {
 const topButtonClass =
   "pointer-events-auto absolute top-[calc(env(safe-area-inset-top)+1rem)] grid h-[34px] min-w-[34px] place-items-center rounded-full bg-white/[0.08] text-white/72 shadow-[0_14px_34px_rgba(0,0,0,.38),0_0_20px_rgba(216,255,62,.1),inset_0_1px_0_rgba(255,255,255,.16)] ring-1 ring-white/12 backdrop-blur-2xl transition hover:text-white hover:ring-volt/35";
 
-export function MobileSecondaryPageActions({ backHref, backLabel, rightAction, reserveSpace = false }: MobileSecondaryPageActionsProps) {
+export function MobileSecondaryPageActions({ backHref, backLabel, title, rightAction, reserveSpace = false }: MobileSecondaryPageActionsProps) {
   const [topRailExpanded, setTopRailExpanded] = useState(false);
 
   useEffect(() => {
@@ -49,6 +50,11 @@ export function MobileSecondaryPageActions({ backHref, backLabel, rightAction, r
         <button type="button" onClick={goBack} aria-label={backLabel} className={`${topButtonClass} left-4 w-[34px]`}>
           <ChevronLeft className="h-4 w-4" />
         </button>
+        {title ? (
+          <div className="absolute left-16 right-16 top-[calc(env(safe-area-inset-top)+1rem)] flex h-[34px] items-center justify-center">
+            <h1 className="truncate text-sm font-semibold text-white/88">{title}</h1>
+          </div>
+        ) : null}
         {rightAction ? <div className="pointer-events-auto absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)]">{rightAction}</div> : null}
       </div>
       {reserveSpace ? <div aria-hidden="true" className="h-[calc(env(safe-area-inset-top)+4.125rem)] lg:hidden" /> : null}

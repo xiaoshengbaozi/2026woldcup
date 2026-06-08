@@ -1,4 +1,5 @@
 import { getBackendApiUrl } from "@/lib/world-cup-api";
+import { cachedJson, fetchWithTimeout } from "@/lib/request-cache";
 
 export type LiveChannel = {
   id: string;
@@ -15,14 +16,17 @@ export type LiveChannel = {
 };
 
 export async function fetchLiveChannels(matchId: string) {
-  const response = await fetch(`${getBackendApiUrl()}/api/live-channels?matchId=${encodeURIComponent(matchId)}`, {
-    cache: "no-store",
-  });
-  const payload = (await response.json()) as { channels?: LiveChannel[]; error?: string };
+  const url = `${getBackendApiUrl()}/api/live-channels?matchId=${encodeURIComponent(matchId)}`;
+  const payload = await cachedJson<{ channels?: LiveChannel[]; error?: string }>(url, 5 * 60 * 1000, async () => {
+    const response = await fetchWithTimeout(url, { cache: "no-store" }, 5_000);
+    const payload = (await response.json()) as { channels?: LiveChannel[]; error?: string };
 
-  if (!response.ok) {
-    throw new Error(payload.error || `Live channels returned ${response.status}`);
-  }
+    if (!response.ok) {
+      throw new Error(payload.error || `Live channels returned ${response.status}`);
+    }
+
+    return payload;
+  }, { persist: true, staleTtlMs: 24 * 60 * 60 * 1000 });
 
   return payload.channels ?? [];
 }

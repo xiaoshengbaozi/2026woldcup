@@ -1,10 +1,15 @@
 import type { Match } from "@/types/match";
 import { getEffectiveMatchStatus } from "@/lib/match-status";
+import { cachedJson, fetchWithTimeout } from "@/lib/request-cache";
 
 const LOCAL_API_URL = "http://localhost:3001";
 const LOCAL_FALLBACK_API_PORT = "3004";
 const PRODUCTION_API_URL = "https://api.boyzi.fun";
 const WARMUP_API_URL = "https://api.boyzi.fun";
+const FIXTURE_CACHE_TTL_MS = 5 * 60 * 1000;
+const STANDINGS_CACHE_TTL_MS = 5 * 60 * 1000;
+const PUBLIC_STALE_TTL_MS = 24 * 60 * 60 * 1000;
+const PUBLIC_REQUEST_TIMEOUT_MS = 6_000;
 
 export type NormalizedWorldCupFixture = {
   uid: string;
@@ -90,12 +95,17 @@ export async function fetchWorldCupFixtures(options: { season?: number; league?:
     season: String(options.season ?? 2026),
   });
 
-  const response = await fetch(`${apiUrl}/api/worldcup/fixtures?${params}`, { cache: "no-store" });
-  const payload = (await response.json()) as FixturesResponse & { error?: string };
+  const url = `${apiUrl}/api/worldcup/fixtures?${params}`;
+  const payload = await cachedJson<FixturesResponse & { error?: string }>(url, FIXTURE_CACHE_TTL_MS, async () => {
+    const response = await fetchWithTimeout(url, { cache: "no-store" }, PUBLIC_REQUEST_TIMEOUT_MS);
+    const payload = (await response.json()) as FixturesResponse & { error?: string };
 
-  if (!response.ok) {
-    throw new Error(payload.error || `World Cup fixtures returned ${response.status}`);
-  }
+    if (!response.ok) {
+      throw new Error(payload.error || `World Cup fixtures returned ${response.status}`);
+    }
+
+    return payload;
+  }, { persist: true, staleTtlMs: PUBLIC_STALE_TTL_MS });
 
   return (payload.fixtures ?? []).map(toMatch);
 }
@@ -110,12 +120,17 @@ export async function fetchWorldCupWarmupFixtures(options: { season?: number; le
   if (options.from) params.set("from", options.from);
   if (options.to) params.set("to", options.to);
 
-  const response = await fetch(`${apiUrl}/api/worldcup/warmups?${params}`, { cache: "no-store" });
-  const payload = (await response.json()) as FixturesResponse & { error?: string };
+  const url = `${apiUrl}/api/worldcup/warmups?${params}`;
+  const payload = await cachedJson<FixturesResponse & { error?: string }>(url, FIXTURE_CACHE_TTL_MS, async () => {
+    const response = await fetchWithTimeout(url, { cache: "no-store" }, PUBLIC_REQUEST_TIMEOUT_MS);
+    const payload = (await response.json()) as FixturesResponse & { error?: string };
 
-  if (!response.ok) {
-    throw new Error(payload.error || `World Cup warmup fixtures returned ${response.status}`);
-  }
+    if (!response.ok) {
+      throw new Error(payload.error || `World Cup warmup fixtures returned ${response.status}`);
+    }
+
+    return payload;
+  }, { persist: true, staleTtlMs: PUBLIC_STALE_TTL_MS });
 
   return (payload.fixtures ?? []).map(toMatch);
 }
@@ -127,12 +142,17 @@ export async function fetchWorldCupStandings(options: { season?: number; league?
     season: String(options.season ?? 2026),
   });
 
-  const response = await fetch(`${apiUrl}/api/worldcup/standings?${params}`, { cache: "no-store" });
-  const payload = (await response.json()) as StandingsResponse & { error?: string };
+  const url = `${apiUrl}/api/worldcup/standings?${params}`;
+  const payload = await cachedJson<StandingsResponse & { error?: string }>(url, STANDINGS_CACHE_TTL_MS, async () => {
+    const response = await fetchWithTimeout(url, { cache: "no-store" }, PUBLIC_REQUEST_TIMEOUT_MS);
+    const payload = (await response.json()) as StandingsResponse & { error?: string };
 
-  if (!response.ok) {
-    throw new Error(payload.error || `World Cup standings returned ${response.status}`);
-  }
+    if (!response.ok) {
+      throw new Error(payload.error || `World Cup standings returned ${response.status}`);
+    }
+
+    return payload;
+  }, { persist: true, staleTtlMs: PUBLIC_STALE_TTL_MS });
 
   return payload.standings ?? [];
 }

@@ -2,7 +2,8 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { GlobalSearchDrawerCard } from "./global-search";
 
 type MobileSearchDrawerProps = {
@@ -11,6 +12,12 @@ type MobileSearchDrawerProps = {
 };
 
 export function MobileSearchDrawer({ open, onClose }: MobileSearchDrawerProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     if (!open) return;
 
@@ -37,7 +44,9 @@ export function MobileSearchDrawer({ open, onClose }: MobileSearchDrawerProps) {
     };
   }, [open]);
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {open ? (
         <motion.aside
@@ -48,7 +57,7 @@ export function MobileSearchDrawer({ open, onClose }: MobileSearchDrawerProps) {
           animate={{ x: "0%" }}
           exit={{ x: "100%" }}
           transition={{ type: "spring", stiffness: 360, damping: 38 }}
-          className="fixed inset-y-0 right-0 z-[120] flex h-[100dvh] w-screen flex-col overflow-hidden bg-ink-950/92 px-4 pb-5 pt-[calc(env(safe-area-inset-top)+1rem)] backdrop-blur-3xl lg:hidden"
+          className="fixed inset-y-0 right-0 z-[11000] flex h-[100dvh] w-screen flex-col overflow-hidden bg-ink-950/92 px-4 pb-5 pt-[calc(env(safe-area-inset-top)+1rem)] backdrop-blur-3xl lg:hidden"
           style={{ touchAction: "auto" }}
         >
           <div className="mb-3 flex shrink-0 items-center justify-between">
@@ -67,6 +76,7 @@ export function MobileSearchDrawer({ open, onClose }: MobileSearchDrawerProps) {
           </div>
         </motion.aside>
       ) : null}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

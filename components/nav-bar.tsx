@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -25,8 +25,8 @@ import { GlobalSearch } from "./global-search";
 import { MeAuthDialog, type SharedAuthMode } from "./me-auth-dialog";
 import { openCreatorSupportModal } from "./support-creator-modal";
 import { ThemeToggle } from "./theme-toggle";
-import { getPlayerAvatar } from "@/lib/user-preferences";
-import { userApi, type UserSessionPayload } from "@/lib/user-system";
+import { useUserSession } from "@/components/user-session-provider";
+import { userApi } from "@/lib/user-system";
 
 const navItems = [
   { label: "首页", href: "/", icon: Home },
@@ -41,36 +41,13 @@ export function NavBar() {
   const pathname = usePathname();
   const popoverRef = useRef<HTMLDivElement>(null);
   const closeTimerRef = useRef<number | null>(null);
-  const [home, setHome] = useState<UserSessionPayload | null>(null);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [isSignedIn, setIsSignedIn] = useState<boolean | null>(null);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const { home, avatarUrl, signedIn: isSignedIn, refreshSession, clearSession } = useUserSession();
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [avatarSettingsOpen, setAvatarSettingsOpen] = useState(false);
   const [authMode, setAuthMode] = useState<SharedAuthMode | null>(null);
 
-  const refreshHome = useCallback(() => {
-    userApi<UserSessionPayload>("/api/me/session", { cache: "no-store" })
-      .then((payload) => {
-        const playerId = payload.user.profile.avatarPlayerId ?? null;
-        const followedPlayer = payload.user.followedPlayers.find((player) => player.id === playerId);
-        setHome(payload);
-        setAvatarUrl(payload.user.profile.avatarUrl || followedPlayer?.photo || getPlayerAvatar(playerId));
-        setIsSignedIn(true);
-        setUnreadCount(payload.summary.unreadNotificationCount);
-      })
-      .catch(() => {
-        setHome(null);
-        setAvatarUrl(null);
-        setIsSignedIn(false);
-        setUnreadCount(0);
-      });
-  }, []);
-
-  useEffect(() => {
-    refreshHome();
-  }, [pathname, refreshHome]);
+  const refreshHome = refreshSession;
 
   useEffect(() => {
     if (!popoverOpen) return;
@@ -99,6 +76,7 @@ export function NavBar() {
 
   const checkingSession = isSignedIn === null;
   const meActive = pathname.startsWith("/me");
+  const unreadCount = home?.summary.unreadNotificationCount ?? 0;
   const recentNotifications = home?.user.notifications.slice(0, 12) ?? [];
   const upcomingReminders =
     home?.user.reminders
@@ -124,10 +102,7 @@ export function NavBar() {
   const logout = async () => {
     await userApi("/api/auth/logout", { method: "POST", body: "{}" }).catch(() => undefined);
     setPopoverOpen(false);
-    setHome(null);
-    setAvatarUrl(null);
-    setIsSignedIn(false);
-    setUnreadCount(0);
+    clearSession();
   };
 
   const openAvatarSettings = () => {
