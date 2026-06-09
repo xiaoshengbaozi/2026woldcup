@@ -3,7 +3,6 @@
 import { DashboardShell } from "@/components/dashboard-shell";
 import { LiveMatchesStrip } from "@/components/live-matches-strip";
 import { MatchStats } from "@/components/match-stats";
-import { MobileLiveMatchesEntry } from "@/components/mobile-live-matches-entry";
 import { TeamsIndex } from "@/components/teams/teams-index";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
 import { extractCity } from "@/lib/calendar";
@@ -39,7 +38,6 @@ export default function TeamsPage() {
         visibleCities={totalCities}
         totalCities={totalCities}
       />
-      <MobileLiveMatchesEntry matches={liveQueueMatches} />
       <TeamsIndex />
     </DashboardShell>
   );

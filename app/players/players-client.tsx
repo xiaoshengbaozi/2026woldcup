@@ -7,10 +7,10 @@ import type { ComponentType } from "react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { FilterDropdown } from "@/components/match-filters";
+import { UserActionButton } from "@/components/user-action-button";
 import { useUserSession } from "@/components/user-session-provider";
 import playerArticles from "@/data/player-articles.json";
 import { getOfficialPlayerCatalog, type OfficialPlayerCatalogItem } from "@/lib/official-player-catalog";
-import { fallbackTopScorerProfiles } from "@/lib/world-cup-top-scorers";
 
 type PlayerArticle = (typeof playerArticles.players)[number];
 type PlayerListItem = PlayerArticle | OfficialPlayerCatalogItem;
@@ -35,6 +35,7 @@ const tabs: { id: PlayerTab; label: string }[] = [
 
 const INITIAL_SQUAD_RENDER_COUNT = 72;
 const SQUAD_RENDER_BATCH_SIZE = 72;
+const MOBILE_PLAYERS_FILTERS_STICKY_OFFSET = 56;
 
 const officialPlayers = getOfficialPlayerCatalog();
 const scorerPlayers = officialPlayers
@@ -70,6 +71,11 @@ export function PlayersClient() {
   const [countryFilter, setCountryFilter] = useState("");
   const [sortRule, setSortRule] = useState<SquadSortRule>("age");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const mobileFiltersSentinelRef = useRef<HTMLDivElement>(null);
+  const mobileFiltersRef = useRef<HTMLDivElement>(null);
+  const signedInDefaultAppliedRef = useRef(false);
+  const [isMobileFiltersPinned, setIsMobileFiltersPinned] = useState(false);
+  const [mobileFiltersHeight, setMobileFiltersHeight] = useState(0);
   const { home } = useUserSession();
   const signedIn = Boolean(home);
 
@@ -134,8 +140,57 @@ export function PlayersClient() {
   }, [activeTab, followedPlayers]);
 
   useEffect(() => {
-    if (!signedIn && activeTab === "following") setActiveTab("superstars");
+    if (signedIn && !signedInDefaultAppliedRef.current) {
+      signedInDefaultAppliedRef.current = true;
+      setActiveTab("following");
+      return;
+    }
+
+    if (!signedIn) {
+      signedInDefaultAppliedRef.current = false;
+      if (activeTab === "following") setActiveTab("superstars");
+    }
   }, [activeTab, signedIn]);
+
+  useEffect(() => {
+    const mobileQuery = window.matchMedia("(max-width: 639px)");
+
+    const syncPinnedState = () => {
+      if (!mobileQuery.matches) {
+        setIsMobileFiltersPinned(false);
+        setMobileFiltersHeight(0);
+        return;
+      }
+
+      const sentinel = mobileFiltersSentinelRef.current;
+      const filters = mobileFiltersRef.current;
+      if (!sentinel || !filters) return;
+
+      const nextHeight = filters.offsetHeight;
+      setMobileFiltersHeight((current) => (current === nextHeight ? current : nextHeight));
+      setIsMobileFiltersPinned(sentinel.getBoundingClientRect().top <= MOBILE_PLAYERS_FILTERS_STICKY_OFFSET);
+    };
+
+    syncPinnedState();
+    window.addEventListener("scroll", syncPinnedState, { passive: true });
+    window.addEventListener("resize", syncPinnedState);
+    mobileQuery.addEventListener?.("change", syncPinnedState);
+
+    return () => {
+      window.removeEventListener("scroll", syncPinnedState);
+      window.removeEventListener("resize", syncPinnedState);
+      mobileQuery.removeEventListener?.("change", syncPinnedState);
+    };
+  }, []);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("mobile-top-rail-change", {
+      detail: { pinned: isMobileFiltersPinned, height: mobileFiltersHeight + 12 }
+    }));
+    return () => {
+      window.dispatchEvent(new CustomEvent("mobile-top-rail-change", { detail: { pinned: false } }));
+    };
+  }, [isMobileFiltersPinned, mobileFiltersHeight]);
 
   return (
     <DashboardShell>
@@ -178,24 +233,63 @@ export function PlayersClient() {
           </section>
 
           <section className="space-y-4">
-            <SquadFilters
-              query={playerQuery}
-              regions={regionOptions}
-              countries={countryOptions}
-              region={regionFilter}
-              country={countryFilter}
-              sortRule={sortRule}
-              sortDirection={sortDirection}
-              resultCount={squadPlayers.length}
-              onQueryChange={setPlayerQuery}
-              onRegionChange={(value) => {
-                setRegionFilter(value);
-                setCountryFilter("");
-              }}
-              onCountryChange={setCountryFilter}
-              onSortRuleChange={setSortRule}
-              onSortDirectionChange={setSortDirection}
-            />
+            <div className="hidden sm:block">
+              <SquadFilters
+                query={playerQuery}
+                regions={regionOptions}
+                countries={countryOptions}
+                region={regionFilter}
+                country={countryFilter}
+                sortRule={sortRule}
+                sortDirection={sortDirection}
+                resultCount={squadPlayers.length}
+                onQueryChange={setPlayerQuery}
+                onRegionChange={(value) => {
+                  setRegionFilter(value);
+                  setCountryFilter("");
+                }}
+                onCountryChange={setCountryFilter}
+                onSortRuleChange={setSortRule}
+                onSortDirectionChange={setSortDirection}
+              />
+            </div>
+
+            <div className="-mt-1 sm:hidden">
+              <div
+                ref={mobileFiltersSentinelRef}
+                data-mobile-players-filters-sentinel="true"
+                style={{ height: isMobileFiltersPinned ? mobileFiltersHeight : 0 }}
+              />
+              <div
+                ref={mobileFiltersRef}
+                data-mobile-players-filters="true"
+                className={`${
+                  isMobileFiltersPinned
+                    ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+3.5rem)] z-[65]"
+                    : "relative -mx-3 bg-black/58 backdrop-blur-2xl"
+                } px-3 py-1.5`}
+              >
+                <SquadFilters
+                  query={playerQuery}
+                  regions={regionOptions}
+                  countries={countryOptions}
+                  region={regionFilter}
+                  country={countryFilter}
+                  sortRule={sortRule}
+                  sortDirection={sortDirection}
+                  resultCount={squadPlayers.length}
+                  onQueryChange={setPlayerQuery}
+                  onRegionChange={(value) => {
+                    setRegionFilter(value);
+                    setCountryFilter("");
+                  }}
+                  onCountryChange={setCountryFilter}
+                  onSortRuleChange={setSortRule}
+                  onSortDirectionChange={setSortDirection}
+                />
+              </div>
+            </div>
+
             <SquadPlayerGrid players={squadPlayers} />
           </section>
         </main>
@@ -253,9 +347,9 @@ function SquadFilters({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.05, duration: 0.45 }}
-      className="relative z-10 flex flex-wrap items-center gap-2 sm:z-20 sm:gap-3"
+      className="scrollbar-hidden relative z-[10000] flex flex-nowrap items-center gap-1.5 overflow-x-auto overscroll-x-contain sm:z-20 sm:flex-wrap sm:gap-3 sm:overflow-visible"
     >
-      <label className="glass-chip flex h-10 min-w-0 flex-1 basis-full items-center gap-2 px-4 text-white/70 transition focus-within:text-white sm:min-w-[240px] sm:basis-auto sm:gap-3 sm:px-5">
+      <label className="glass-chip order-1 flex h-10 w-[calc(100vw-17rem)] min-w-[6.25rem] max-w-[10rem] shrink-0 items-center gap-2 px-3 text-white/70 transition focus-within:text-white sm:order-none sm:w-auto sm:min-w-[240px] sm:max-w-none sm:flex-1 sm:basis-auto sm:gap-3 sm:px-5">
         <Search className="h-5 w-5 shrink-0 text-volt/80" />
         <input
           value={query}
@@ -265,7 +359,7 @@ function SquadFilters({
         />
       </label>
 
-      <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+      <div className="order-2 flex shrink-0 items-center gap-1.5 sm:order-none sm:gap-3">
         <FilterDropdown
           icon={Globe2}
           value={region}
@@ -284,12 +378,14 @@ function SquadFilters({
         />
       </div>
 
-      <SortControls
-        rule={sortRule}
-        direction={sortDirection}
-        onRuleChange={onSortRuleChange}
-        onDirectionChange={onSortDirectionChange}
-      />
+      <div className="order-2 flex shrink-0 items-center gap-1.5 sm:order-none sm:gap-3">
+        <SortControls
+          rule={sortRule}
+          direction={sortDirection}
+          onRuleChange={onSortRuleChange}
+          onDirectionChange={onSortDirectionChange}
+        />
+      </div>
 
       <div className="ml-auto hidden h-10 items-center rounded-full bg-white/[0.035] px-4 text-[11px] font-semibold text-white/42 ring-1 ring-white/[0.06] sm:flex">
         <span>当前阵容</span>
@@ -325,7 +421,7 @@ function SortControls({
   };
 
   return (
-    <div className="flex min-w-0 flex-1 items-center gap-2 sm:flex-none sm:gap-3">
+    <div className="glass-chip flex h-10 min-w-0 flex-1 items-center gap-1 overflow-hidden p-1 sm:flex-none">
       {rules.map((item) => {
         const Icon = item.icon;
         const active = rule === item.value;
@@ -335,10 +431,8 @@ function SortControls({
             type="button"
             aria-label={`${item.label}${active && direction === "desc" ? "倒序" : "正序"}排序`}
             onClick={() => handleSortClick(item.value)}
-            className={`glass-chip flex h-10 min-w-0 flex-1 items-center justify-center gap-1.5 px-3 text-[11px] font-semibold transition-all duration-150 sm:flex-none sm:px-4 ${
-              active
-                ? "bg-volt/10 text-volt ring-1 ring-volt/25 shadow-[0_0_18px_rgba(216,255,62,.12)]"
-                : "text-white/50 hover:text-white/78"
+            className={`player-sort-pill flex h-8 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full px-3 text-[11px] font-semibold transition-colors duration-150 sm:flex-none sm:px-4 ${
+              active ? "is-active" : ""
             }`}
           >
             <Icon className="h-3.5 w-3.5 shrink-0" />
@@ -478,11 +572,29 @@ function SquadPlayerGrid({ players }: { players: OfficialPlayerCatalogItem[] }) 
     <>
     <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
       {visiblePlayers.map((player) => (
-        <Link
+        <div
           key={player.id}
-          href={playerProfileHref(player)}
-          className="squad-player-card group grid min-w-0 grid-cols-[56px_minmax(0,1fr)] items-center gap-3 rounded-3xl border border-white/[0.06] bg-white/[0.025] p-3 shadow-[0_16px_46px_rgba(0,0,0,.18)] backdrop-blur-xl transition duration-300 hover:border-volt/30 hover:bg-white/[0.04] sm:grid-cols-[72px_minmax(0,1fr)]"
+          className="squad-player-card group relative min-w-0 rounded-3xl border border-white/[0.06] bg-white/[0.025] p-3 shadow-[0_16px_46px_rgba(0,0,0,.18)] backdrop-blur-xl transition duration-300 hover:border-volt/30 hover:bg-white/[0.04]"
         >
+          <div className="absolute right-2.5 top-2.5 z-10">
+            <UserActionButton
+              kind="player"
+              iconOnly
+              payload={{
+                id: player.apiPlayerId,
+                name: player.nameCn,
+                team: player.countryCn,
+                position: player.positionCn || player.position,
+                photo: player.photo,
+              }}
+              className="h-8 w-8 min-w-8 bg-black/36 shadow-none ring-white/[0.08] hover:bg-white/[0.1] hover:ring-volt/25"
+            />
+          </div>
+
+          <Link
+            href={playerProfileHref(player)}
+            className="grid min-w-0 grid-cols-[56px_minmax(0,1fr)] items-center gap-3 pr-8 sm:grid-cols-[72px_minmax(0,1fr)]"
+          >
           <div className="relative h-14 w-14 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/[0.08] sm:h-[72px] sm:w-[72px]">
             <img src={player.photo} alt={player.nameCn} className="h-full w-full object-cover" loading="lazy" />
           </div>
@@ -516,7 +628,8 @@ function SquadPlayerGrid({ players }: { players: OfficialPlayerCatalogItem[] }) 
               </span>
             </div>
           </div>
-        </Link>
+          </Link>
+        </div>
       ))}
     </div>
     {hasMore ? <div ref={sentinelRef} className="h-10" aria-hidden="true" /> : null}
@@ -597,22 +710,22 @@ function ScorerBoard() {
         <Trophy className="h-4 w-4 text-volt/60" />
       </div>
       <div className="divide-y divide-white/[0.04]">
-        {fallbackTopScorerProfiles.map((player, index) => (
+        {scorerPlayers.slice(0, 8).map((player, index) => (
           <Link
-            key={player.id}
-            href={"/players/" + player.id + "/"}
+            key={player.apiPlayerId}
+            href={"/players/" + player.apiPlayerId + "/"}
             className="group flex items-center gap-3 px-4 py-2.5 transition hover:bg-white/[0.03]"
           >
             <span className="w-4 text-center text-[11px] font-bold text-white/25 group-hover:text-white/50" style={{ fontFamily: "ScreenMatrix, monospace" }}>{index + 1}</span>
             <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full bg-white/[0.06]">
-              <img src={player.photo} alt={player.name} className="h-full w-full object-cover" />
+              <img src={player.photo} alt={player.nameCn} className="h-full w-full object-cover" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[13px] font-bold text-white/70 group-hover:text-white/90">{player.name}</p>
-              <p className="truncate text-[11px] text-white/30">{player.teamName}</p>
+              <p className="truncate text-[13px] font-bold text-white/70 group-hover:text-white/90">{player.nameCn}</p>
+              <p className="truncate text-[11px] text-white/30">{player.countryCn}</p>
             </div>
             <span className="text-xs font-bold text-volt/60 group-hover:text-volt" style={{ fontFamily: "ScreenMatrix, monospace" }}>
-              {player.goals ?? "-"}
+              {player.goals}
             </span>
           </Link>
         ))}

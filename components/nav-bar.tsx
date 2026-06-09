@@ -16,6 +16,7 @@ import {
   LogOut,
   Newspaper,
   Settings,
+  Trophy,
   UserPlus,
   UserRound,
   UsersRound,
@@ -44,6 +45,7 @@ export function NavBar() {
   const { home, avatarUrl, signedIn: isSignedIn, refreshSession, clearSession } = useUserSession();
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notificationSummaryOpen, setNotificationSummaryOpen] = useState(false);
   const [avatarSettingsOpen, setAvatarSettingsOpen] = useState(false);
   const [authMode, setAuthMode] = useState<SharedAuthMode | null>(null);
 
@@ -77,12 +79,30 @@ export function NavBar() {
   const checkingSession = isSignedIn === null;
   const meActive = pathname.startsWith("/me");
   const unreadCount = home?.summary.unreadNotificationCount ?? 0;
-  const recentNotifications = home?.user.notifications.slice(0, 12) ?? [];
+  const recentNotifications = home?.user.notifications.slice(0, 3) ?? [];
   const upcomingReminders =
     home?.user.reminders
       .filter((reminder) => reminder.enabled)
       .sort((a, b) => (new Date(a.startsAt ?? 0).getTime() || 0) - (new Date(b.startsAt ?? 0).getTime() || 0))
-      .slice(0, 12) ?? [];
+      .slice(0, 3) ?? [];
+  const followedPlayerGoalNotifications =
+    home?.user.followedPlayers.slice(0, 6).map((player, index) => ({
+      id: `followed-player-goal-${player.id}`,
+      title: `${player.name} 进球动态`,
+      body: `${player.team ? `${player.team} · ` : ""}${index === 0 ? "关键破门已收录，进球提醒将优先推送。" : "进球提醒已加入你的关注汇总。"}`,
+    })) ?? [];
+  const followedTeamWinNotifications =
+    home?.user.followedTeams.slice(0, 6).map((team, index) => ({
+      id: `followed-team-win-${team.id}`,
+      title: `${team.name} 胜利动态`,
+      body: `${team.region ? `${team.region} · ` : ""}${index === 0 ? "胜场结果与晋级信号将同步到通知。" : "球队胜利提醒已开启。"}`,
+    })) ?? [];
+  const favoriteMatchResultNotifications =
+    home?.user.favoriteMatches.slice(0, 6).map((match) => ({
+      id: `favorite-match-result-${match.id}`,
+      title: `${match.title} 赛果`,
+      body: `${match.stage ? `${match.stage} · ` : ""}${match.startsAt ? `${formatReminderTime(match.startsAt)} · ` : ""}赛果更新会在完场后汇总。`,
+    })) ?? [];
 
   const openPopover = () => {
     if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
@@ -220,6 +240,13 @@ export function NavBar() {
                         </span>
                         <ChevronRight className="h-4 w-4 text-white/34 transition group-hover:translate-x-0.5 group-hover:text-volt" />
                       </Link>
+                      <Link href="/predict" onClick={() => setPopoverOpen(false)} className="group flex min-h-12 items-center justify-between px-2.5 py-3 text-sm font-medium text-white/66 transition hover:text-volt">
+                        <span className="flex items-center gap-2">
+                          <Trophy className="h-4 w-4 text-volt/80" />
+                          我要预测
+                        </span>
+                        <ChevronRight className="h-4 w-4 text-white/34 transition group-hover:translate-x-0.5 group-hover:text-volt" />
+                      </Link>
                       <button type="button" onClick={openAvatarSettings} className="group flex min-h-12 w-full items-center justify-between px-2.5 py-3 text-left text-sm font-medium text-white/66 transition hover:text-volt">
                         <span className="flex items-center gap-2">
                           <Settings className="h-4 w-4 text-volt/80" />
@@ -263,7 +290,7 @@ export function NavBar() {
                       </span>
                     </button>
                     {notificationsOpen ? (
-                      <div className="mt-3 grid max-h-44 gap-2 overflow-y-auto pr-1">
+                      <div className="mt-3 grid gap-2">
                         {isSignedIn && recentNotifications.length
                           ? recentNotifications.map((item) => (
                               <Link key={item.id} href="/me" onClick={() => setPopoverOpen(false)} className="block px-0 py-2 text-left transition hover:text-volt">
@@ -290,6 +317,18 @@ export function NavBar() {
                             <p className="mt-1 text-[11px] leading-4 text-white/38">
                               {checkingSession ? "正在同步你的提醒。" : isSignedIn ? "暂时没有新的比赛提醒。" : "登录后同步收藏比赛、提醒和站内通知。"}
                             </p>
+                          </button>
+                        ) : null}
+                        {isSignedIn && (recentNotifications.length > 0 || upcomingReminders.length > 0) ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPopoverOpen(false);
+                              setNotificationSummaryOpen(true);
+                            }}
+                            className="-mx-2.5 mt-1 inline-flex h-8 w-[calc(100%+1.25rem)] items-center justify-center rounded-full bg-white/[0.055] px-3 text-[11px] font-semibold text-volt ring-1 ring-white/[0.1] transition hover:bg-volt hover:text-black"
+                          >
+                            查看全部
                           </button>
                         ) : null}
                       </div>
@@ -324,7 +363,78 @@ export function NavBar() {
       </nav>
       <MeAuthDialog mode={authMode} onClose={() => setAuthMode(null)} onAuthenticated={refreshHome} />
       <AvatarSettingsDialog open={avatarSettingsOpen} home={home} onClose={() => setAvatarSettingsOpen(false)} onSaved={refreshHome} />
+      {notificationSummaryOpen ? (
+        <NotificationSummaryDialog
+          playerGoals={followedPlayerGoalNotifications}
+          teamWins={followedTeamWinNotifications}
+          matchResults={favoriteMatchResultNotifications}
+          onClose={() => setNotificationSummaryOpen(false)}
+        />
+      ) : null}
     </>
+  );
+}
+
+function NotificationSummaryDialog({
+  playerGoals,
+  teamWins,
+  matchResults,
+  onClose,
+}: {
+  playerGoals: Array<{ id: string; title: string; body: string }>;
+  teamWins: Array<{ id: string; title: string; body: string }>;
+  matchResults: Array<{ id: string; title: string; body: string }>;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-[420] hidden items-center justify-center bg-black/62 px-6 backdrop-blur-xl lg:flex" role="dialog" aria-modal="true" aria-label="通知汇总">
+      <button type="button" aria-label="关闭通知汇总" className="absolute inset-0 cursor-default" onClick={onClose} />
+      <div className="relative w-full max-w-3xl overflow-hidden rounded-[2rem] border border-white/[0.16] bg-[#070a11]/96 p-6 text-white shadow-[0_34px_110px_rgba(0,0,0,.78),0_0_70px_rgba(216,255,62,.13)]">
+        <div className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full bg-volt/12 blur-[70px]" />
+        <div className="relative flex items-start justify-between gap-5">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-volt/75">Notification Center</p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-normal text-white">通知汇总</h2>
+          </div>
+          <button type="button" onClick={onClose} className="inline-flex h-9 items-center justify-center rounded-full bg-white/[0.06] px-4 text-xs font-semibold text-white/66 ring-1 ring-white/[0.1] transition hover:text-volt">
+            关闭
+          </button>
+        </div>
+        <div className="relative mt-6 grid gap-4 md:grid-cols-3">
+          <NotificationSummarySection title="关注的球员进球" items={playerGoals} emptyText="关注球员后，这里会汇总他们的进球动态。" />
+          <NotificationSummarySection title="关注的球队胜利" items={teamWins} emptyText="关注球队后，这里会汇总胜利与晋级动态。" />
+          <NotificationSummarySection title="收藏的比赛结果" items={matchResults} emptyText="收藏比赛后，这里会汇总完场赛果。" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NotificationSummarySection({
+  title,
+  items,
+  emptyText,
+}: {
+  title: string;
+  items: Array<{ id: string; title: string; body: string }>;
+  emptyText: string;
+}) {
+  return (
+    <section className="rounded-[1.5rem] border border-white/[0.1] bg-white/[0.045] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.08)]">
+      <h3 className="text-sm font-semibold text-white/86">{title}</h3>
+      <div className="mt-4 grid gap-3">
+        {items.length ? (
+          items.map((item) => (
+            <article key={item.id} className="rounded-[1.1rem] bg-black/18 p-3 ring-1 ring-white/[0.06]">
+              <p className="text-xs font-semibold text-white/78">{item.title}</p>
+              <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-white/42">{item.body}</p>
+            </article>
+          ))
+        ) : (
+          <p className="rounded-[1.1rem] bg-black/18 p-3 text-[11px] leading-4 text-white/42 ring-1 ring-white/[0.06]">{emptyText}</p>
+        )}
+      </div>
+    </section>
   );
 }
 

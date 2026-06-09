@@ -94,7 +94,7 @@ const profilePanelTabs: { id: ProfilePanelTab; label: string }[] = [
   { id: "career", label: "轨迹" },
 ];
 
-const MOBILE_TOP_MODULE_OFFSET = 54;
+const MOBILE_TOP_MODULE_OFFSET = 48;
 
 const FIFA_CODE_TO_FLAG: Record<string, string> = {
   MEX:"mx",USA:"us",CAN:"ca",ARG:"ar",BRA:"br",COL:"co",ECU:"ec",PAR:"py",URU:"uy",
@@ -246,6 +246,7 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, scoutNot
       <MobileSecondaryPageActions
         backHref="/players/"
         backLabel="返回球员"
+        title={panelTabsPinned ? displayName : undefined}
         rightAction={
           <UserActionButton
             kind="player"
@@ -284,7 +285,7 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, scoutNot
           {/* Top-left: Back button */}
           <Link
             href="/players/"
-            className="group absolute left-4 top-4 z-10 hidden items-center gap-1.5 rounded-full bg-white/[0.06] px-3 py-1.5 text-xs font-semibold text-white/60 ring-1 ring-white/[0.08] backdrop-blur-md transition-all hover:bg-volt/[0.1] hover:text-volt hover:ring-volt/20 sm:left-6 sm:top-5 lg:inline-flex"
+            className="group absolute left-4 top-4 z-10 hidden h-8 items-center gap-1.5 rounded-full bg-white/[0.06] px-3 text-xs font-semibold text-white/60 ring-1 ring-white/[0.08] backdrop-blur-md transition-all hover:bg-volt/[0.1] hover:text-volt hover:ring-volt/20 sm:left-6 sm:top-5 lg:inline-flex"
           >
             <ArrowLeft className="h-3 w-3 transition-transform group-hover:-translate-x-0.5" />
             返回球员
@@ -293,7 +294,8 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, scoutNot
           <UserActionButton
             kind="player"
             payload={followPayload}
-            className="absolute right-4 top-4 z-10 hidden h-8 px-3 text-[10px] backdrop-blur-md sm:right-6 sm:top-5 lg:inline-flex"
+            variant="heroGhost"
+            wrapperClassName="absolute right-4 top-4 z-10 hidden sm:right-6 sm:top-5 lg:inline-flex"
           />
 
           {/* Avatar — overlapping top edge */}
@@ -457,7 +459,7 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, scoutNot
                 ref={panelTabsRef}
                 className={`${
                   panelTabsPinned
-                    ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+3.375rem)] z-[90]"
+                    ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+3rem)] z-[90]"
                     : "relative -mx-3 bg-black/58 backdrop-blur-2xl"
                 } px-3 py-1.5 lg:static lg:mx-0 lg:bg-transparent lg:px-0 lg:py-0 lg:backdrop-blur-none`}
               >
@@ -482,11 +484,11 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, scoutNot
               </div>
               </div>
 
-              <div className="grid gap-5 lg:grid-cols-[.78fr_1.45fr_.78fr]">
-                <div className={`${activeMobilePanel === "overview" ? "block" : "hidden"} space-y-5 lg:block`}>
+              <div className="grid items-start gap-5 lg:grid-cols-[.78fr_1.45fr_.78fr]">
+                <div className={`${activeMobilePanel === "overview" ? "flex" : "hidden"} flex-col gap-5 lg:flex lg:self-start`}>
                   {scoutNote && <PlayerFmScoutCard note={scoutNote} className="lg:hidden" />}
 
-                  <DashPanel title="当前效力" icon={Shield} accent>
+                  <DashPanel title="当前效力" icon={Shield} accent className="current-team-panel">
                     <div className="flex items-center gap-3 border-b border-white/[0.05] pb-4">
                       <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-volt/10 ring-1 ring-white/[0.06]">
                         {currentTeamLogo ? (
@@ -570,7 +572,7 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, scoutNot
                 </div>
 
                 {(hasFifaStory || scoutNote) ? (
-                  <div className={`${hasFifaStory && activeMobilePanel === "story" ? "block" : "hidden"} space-y-5 lg:block`}>
+                  <div className={`${hasFifaStory && activeMobilePanel === "story" ? "flex" : "hidden"} flex-col gap-5 lg:flex lg:self-start`}>
                     {scoutNote && <PlayerFmScoutCard note={scoutNote} className="hidden lg:block" />}
                     {article?.articleCn ? (
                       <PlayerArticleTimeline article={article} />
@@ -580,7 +582,7 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, scoutNot
                   </div>
                 ) : null}
 
-                <div className={`${activeMobilePanel === "career" ? "block" : "hidden"} space-y-5 lg:block`}>
+                <div className={`${activeMobilePanel === "career" ? "flex" : "hidden"} flex-col gap-5 lg:flex lg:self-start`}>
                   <DashPanel title="职业轨迹" icon={CalendarClock}>
                     <div className="space-y-2">
                       {careerTimeline.map((item, index) => (
@@ -944,14 +946,16 @@ function DashPanel({
   icon: Icon,
   children,
   accent,
+  className = "",
 }: {
   title: string;
   icon: LucideIcon;
   children: React.ReactNode;
   accent?: boolean;
+  className?: string;
 }) {
   return (
-    <section className="hero-card overflow-hidden p-5">
+    <section className={`hero-card mt-0 overflow-hidden p-5 ${className}`}>
       <div className="mb-5 flex items-center justify-between border-b border-white/[0.04] pb-3">
         <div className="flex items-center gap-2">
           <Icon className={`h-4 w-4 ${accent ? "text-volt" : "text-volt/70"}`} />

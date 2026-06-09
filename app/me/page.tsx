@@ -460,7 +460,7 @@ function MePageContent() {
     if (!password) return setError("请填写密码");
     if (password.length < 8) return setError("密码至少需要 8 位");
     if (password !== repeatPassword) return setError("两次输入的密码不一致");
-    if (!invitationCode.trim()) return setError("请填写邀请码");
+    if (!invitationCode.trim()) return setError("请填写赛波码");
 
     setRegisterStep("preferences");
   }
@@ -552,7 +552,7 @@ function MePageContent() {
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
           className="min-w-0 space-y-5 order-last lg:order-none"
         >
-          <ProfileBoard home={home} catalog={catalog} topScorers={topScorers} popularTeams={popularTeams} scheduleMatches={matches} initialTab={requestedTab} />
+          <ProfileBoard home={home} catalog={catalog} scheduleMatches={matches} initialTab={requestedTab} />
         </motion.div>
 
         <motion.aside
@@ -588,15 +588,11 @@ function MePageContent() {
 function ProfileBoard({
   home,
   catalog,
-  topScorers,
-  popularTeams,
   scheduleMatches,
   initialTab,
 }: {
   home: UserHomePayload | null;
   catalog: UserPreferenceCatalog;
-  topScorers: WorldCupTopScorer[];
-  popularTeams: Array<{ name: string; flag: string; pct: number; code: string }>;
   scheduleMatches: Match[];
   initialTab: MeTab;
 }) {
@@ -616,14 +612,7 @@ function ProfileBoard({
         photo: player.photo,
         href: playerHref(player),
       }))
-    : fillTopScorers(topScorers).slice(0, 6).map((player) => ({
-        id: String(player.id),
-        name: getLocalizedPlayerName({ id: String(player.id), name: player.name }),
-        team: player.teamName,
-        photo: player.photo,
-        goals: player.goals,
-        href: `/players/${player.id}/`,
-      }));
+    : [];
 
   const teams: TeamCardItem[] = home?.user.followedTeams.length
     ? home.user.followedTeams.map((team) => ({
@@ -633,12 +622,12 @@ function ProfileBoard({
         flag: getTeamFlag(team),
         href: teamHref(team),
       }))
-    : getDefaultPopularTeams(popularTeams, catalog.teams);
+    : [];
 
   const roundLabels = useMemo(() => buildMatchRoundLabels(scheduleMatches), [scheduleMatches]);
   const matches: MatchCardItem[] = home?.user.favoriteMatches.length
     ? home.user.favoriteMatches.map((match) => matchPreferenceToCard(match, findRoundLabelForFavorite(match, scheduleMatches, roundLabels)))
-    : getRecentScheduleMatches(scheduleMatches, catalog, roundLabels).slice(0, 4);
+    : [];
 
   const timeline = buildTimelineItems(players, teams, matches, Boolean(home));
   const xItemCount = xTimeline?.items.length ?? 0;
@@ -687,7 +676,7 @@ function ProfileBoard({
 
   useEffect(() => {
     let active = true;
-    if (!home) {
+    if (!home || !home.user.followedPlayers.length) {
       setXTimeline(null);
       setXTimelineLoading(false);
       return () => {
@@ -746,33 +735,42 @@ function ProfileBoard({
             exit={{ opacity: 0, y: -10 }}
             className="mt-6 h-[143px]"
           >
-            {activeTab === "players" && (
-              <ScrollableRail ariaLabel="滚动关注球员">
-                {players.slice(0, 8).map((player) => (
-                  <div key={player.id} className="w-20 shrink-0 sm:w-24">
-                    <PlayerBubble player={player} catalogPlayers={catalog.players} dimmed={!home} />
-                  </div>
-                ))}
-              </ScrollableRail>
-            )}
-            {activeTab === "teams" && (
-              <ScrollableRail ariaLabel="滚动关注球队">
-                {teams.slice(0, 8).map((team) => (
-                  <div key={team.id} className="w-20 shrink-0 sm:w-24">
-                    <TeamBadge team={team} dimmed={!home} />
-                  </div>
-                ))}
-              </ScrollableRail>
-            )}
-            {activeTab === "matches" && (
-              <ScrollableRail ariaLabel="滚动收藏比赛">
-                {matches.map((match) => (
-                  <div key={match.id} className="w-[min(440px,82vw)] shrink-0">
-                    <MatchStrip match={match} dimmed={!home} />
-                  </div>
-                ))}
-              </ScrollableRail>
-            )}
+            {activeTab === "players" &&
+              (players.length ? (
+                <ScrollableRail ariaLabel="滚动关注球员">
+                  {players.slice(0, 8).map((player) => (
+                    <div key={player.id} className="w-20 shrink-0 sm:w-24">
+                      <PlayerBubble player={player} catalogPlayers={catalog.players} dimmed={!home} />
+                    </div>
+                  ))}
+                </ScrollableRail>
+              ) : (
+                <EmptyFollowState label="关注球员" description="关注后，这里才会显示球员动态。" />
+              ))}
+            {activeTab === "teams" &&
+              (teams.length ? (
+                <ScrollableRail ariaLabel="滚动关注球队">
+                  {teams.slice(0, 8).map((team) => (
+                    <div key={team.id} className="w-20 shrink-0 sm:w-24">
+                      <TeamBadge team={team} dimmed={!home} />
+                    </div>
+                  ))}
+                </ScrollableRail>
+              ) : (
+                <EmptyFollowState label="关注球队" description="关注后，这里才会显示球队动态。" />
+              ))}
+            {activeTab === "matches" &&
+              (matches.length ? (
+                <ScrollableRail ariaLabel="滚动收藏比赛">
+                  {matches.map((match) => (
+                    <div key={match.id} className="w-[min(440px,82vw)] shrink-0">
+                      <MatchStrip match={match} dimmed={!home} />
+                    </div>
+                  ))}
+                </ScrollableRail>
+              ) : (
+                <EmptyFollowState label="收藏比赛" description="收藏后，这里才会显示比赛卡片。" />
+              ))}
           </motion.div>
         </AnimatePresence>
       </section>
@@ -829,18 +827,24 @@ function ProfileBoard({
 
         <div className="mt-4 space-y-4">
           {activeTimelineTab === "combined" ? (
-            timeline.map((item, index) => (
-              <TimelineCard key={item.id} item={item} index={index} />
-            ))
+            timeline.length ? (
+              timeline.map((item, index) => <TimelineCard key={item.id} item={item} index={index} />)
+            ) : (
+              <EmptyTimelineState signedIn={Boolean(home)} />
+            )
           ) : home ? (
-            <PlayerXTimeline
-              items={xTimeline?.items ?? []}
-              configured={xTimeline?.configured}
-              warning={xTimeline?.warning}
-              loading={xTimelineLoading}
-              compact
-              showHeader={false}
-            />
+            home.user.followedPlayers.length ? (
+              <PlayerXTimeline
+                items={xTimeline?.items ?? []}
+                configured={xTimeline?.configured}
+                warning={xTimeline?.warning}
+                loading={xTimelineLoading}
+                compact
+                showHeader={false}
+              />
+            ) : (
+              <EmptyTimelineState signedIn />
+            )
           ) : (
             <div className="rounded-2xl bg-white/[0.025] px-4 py-8 text-center text-sm font-semibold text-white/42 ring-1 ring-white/[0.06]">
               登录关注球员的日常动态
@@ -1052,6 +1056,25 @@ function TimelineCard({ item, index }: { item: TimelineItem; index: number }) {
     <Link href={item.href} className="block rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-volt/60">
       {content}
     </Link>
+  );
+}
+
+function EmptyFollowState({ label, description }: { label: string; description: string }) {
+  return (
+    <div className="grid h-full place-items-center rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.02] px-4 text-center">
+      <div className="max-w-sm">
+        <p className="text-sm font-semibold text-white">{label}</p>
+        <p className="mt-1 text-sm text-white/38">{description}</p>
+      </div>
+    </div>
+  );
+}
+
+function EmptyTimelineState({ signedIn }: { signedIn: boolean }) {
+  return (
+    <div className="rounded-2xl bg-white/[0.025] px-4 py-8 text-center text-sm font-semibold text-white/42 ring-1 ring-white/[0.06]">
+      {signedIn ? "关注或收藏后，这里会出现你的个人时间线。" : "登录后关注或收藏，时间线才会开始显示。"}
+    </div>
   );
 }
 
@@ -1357,7 +1380,7 @@ function RegisterAccountForm({
       <AuthInput label="邮箱" type="email" value={email} required onChange={onEmailChange} />
       <AuthInput label="密码" type="password" value={password} required onChange={onPasswordChange} />
       <AuthInput label="重复密码" type="password" value={repeatPassword} required onChange={onRepeatPasswordChange} />
-      <AuthInput label="邀请码" value={invitationCode} required onChange={onInvitationCodeChange} />
+      <AuthInput label="赛波码" value={invitationCode} required onChange={onInvitationCodeChange} />
       <ModalFooter error={error}>
         <div className="flex flex-wrap items-center gap-3">
           <SecondaryButton type="button" onClick={onSwitchToLogin}>
@@ -1764,42 +1787,6 @@ function getDefaultPopularTeams(popularTeams: Array<{ name: string; flag: string
   });
 }
 
-function getRecentScheduleMatches(matches: Match[], catalog: UserPreferenceCatalog, roundLabels?: Map<string, string>): MatchCardItem[] {
-  const now = Date.now();
-  const upcoming = matches
-    .filter((match) => match.start.getTime() >= now)
-    .sort((a, b) => a.start.getTime() - b.start.getTime());
-  const source = upcoming.length ? upcoming : [...matches].sort((a, b) => Math.abs(a.start.getTime() - now) - Math.abs(b.start.getTime() - now));
-
-  if (source.length) return source.map((match) => matchToCard(match, roundLabels?.get(match.uid)));
-
-  return catalog.matches.map((match) => matchPreferenceToCard(match));
-}
-
-function matchToCard(match: Match, stageLabel?: string): MatchCardItem {
-  const teams = parseTeams(match.summary);
-  const homeName = match.homeTeam?.name || teams.home.name;
-  const awayName = match.awayTeam?.name || teams.away.name;
-  const homeCode = normalizeTeamCode(match.homeTeam?.code) || getTeamCodeByName(homeName);
-  const awayCode = normalizeTeamCode(match.awayTeam?.code) || getTeamCodeByName(awayName);
-  const homeFlag = match.homeTeam?.code ? getFlagUrl(normalizeFlagCode(match.homeTeam.code), 160) : teams.home.image;
-  const awayFlag = match.awayTeam?.code ? getFlagUrl(normalizeFlagCode(match.awayTeam.code), 160) : teams.away.image;
-
-  return {
-    id: match.uid,
-    title: formatMatchTitle(match.summary),
-    stage: stageLabel || match.stage,
-    startsAt: match.start.toISOString(),
-    homeName,
-    awayName,
-    homeCode,
-    awayCode,
-    homeFlag,
-    awayFlag,
-    href: `/matches/${generateMatchSlug(match.summary)}/`,
-  };
-}
-
 function matchPreferenceToCard(match: { id: string; title: string; stage?: string; startsAt?: string }, stageLabel?: string): MatchCardItem {
   const [homeName, awayName] = splitMatchTitle(match.title);
 
@@ -2004,11 +1991,11 @@ function readableError(err: unknown, fallback: string) {
     email_already_registered: "这个邮箱已经注册过了",
     user_disabled: "这个账号已被停用",
     authentication_required: "请先登录",
-    invitation_code_required: "请填写邀请码",
-    invalid_invitation_code: "邀请码无效",
-    invitation_code_disabled: "这个邀请码已停用",
-    invitation_code_expired: "这个邀请码已过期",
-    invitation_code_exhausted: "这个邀请码使用次数已满",
+    invitation_code_required: "请填写赛波码",
+    invalid_invitation_code: "赛波码无效",
+    invitation_code_disabled: "这个赛波码已停用",
+    invitation_code_expired: "这个赛波码已过期",
+    invitation_code_exhausted: "这个赛波码使用次数已满",
   };
   return messages[message] ?? fallback;
 }

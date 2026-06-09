@@ -148,7 +148,7 @@ const MarketOddsRow = memo(function MarketOddsRow({
     onMouseLeave: () => hoverCountry(null, "ranking"),
     onFocus: () => hoverCountry(country.countryCode, "ranking"),
     onBlur: () => hoverCountry(null, "ranking"),
-    className: "market-odds-row group flex w-full items-center gap-3 px-3 py-2.5 text-left transition duration-150 hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-volt/50",
+    className: "market-odds-row group flex w-full items-center gap-3 px-3 py-2.5 text-left transition duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-volt/50",
     style: {
       background: isSelected ? "rgba(216,255,62,0.06)" : undefined,
     },

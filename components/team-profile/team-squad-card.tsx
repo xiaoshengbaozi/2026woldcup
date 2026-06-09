@@ -26,7 +26,7 @@ export function TeamSquadCard({ teamName, coach, squad, loading, error }: TeamSq
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-        className="relative grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-[2fr_3fr]"
+        className="team-squad-card relative grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-[2fr_3fr]"
       >
         <div className="min-h-[320px] rounded-3xl bg-white/[0.025] p-5 ring-1 ring-white/[0.055]">
           <div className="h-5 w-40 rounded-full bg-white/[0.06]" />
@@ -45,7 +45,7 @@ export function TeamSquadCard({ teamName, coach, squad, loading, error }: TeamSq
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-      className="relative grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-[2fr_3fr]"
+      className="team-squad-card relative grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-[2fr_3fr]"
     >
       <SquadLineupPanel
         teamName={displayTeamName}

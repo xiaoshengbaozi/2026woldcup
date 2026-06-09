@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode, TouchEvent, UIEvent } from "react";
-import { Bell, Bookmark, CalendarDays, ChevronRight, Coffee, Flag, LogIn, LogOut, Send, Settings, Star, UserPlus, UserRound, UsersRound, X } from "lucide-react";
+import { Bell, Bookmark, CalendarDays, ChevronRight, Coffee, Flag, LogIn, LogOut, Send, Settings, Star, Trophy, UserPlus, UserRound, UsersRound, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { openCreatorSupportModal } from "@/components/support-creator-modal";
 import type { UserSessionPayload } from "@/lib/user-system";
@@ -249,6 +249,13 @@ export function MobileMeDrawer({
                 active={pathname.startsWith("/matches/calendar")}
                 icon={<CalendarDays className="h-4 w-4" />}
                 label="比赛日历"
+                onClose={onClose}
+              />
+              <DrawerLink
+                href="/predict"
+                active={pathname.startsWith("/predict")}
+                icon={<Trophy className="h-4 w-4" />}
+                label="我的预测"
                 onClose={onClose}
               />
               <DrawerAction

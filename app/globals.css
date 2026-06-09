@@ -144,6 +144,70 @@ button {
     backdrop-filter: blur(22px);
   }
 
+  .data-page-loading {
+    background:
+      radial-gradient(circle at 24% 18%, rgba(216, 255, 62, 0.12), transparent 30%),
+      radial-gradient(circle at 76% 12%, rgba(255, 154, 31, 0.08), transparent 28%),
+      linear-gradient(135deg, #050505 0%, #0b0b0b 48%, #060606 100%);
+  }
+
+  [data-theme="light"] .data-page-loading {
+    background:
+      radial-gradient(circle at 24% 18%, rgba(54, 65, 44, 0.07), transparent 30%),
+      radial-gradient(circle at 76% 12%, rgba(172, 126, 64, 0.06), transparent 28%),
+      linear-gradient(135deg, #f5f7f1 0%, #eef3e8 48%, #fbfaf5 100%);
+  }
+
+  [data-theme="light"] .data-page-loading-spinner {
+    border-color: rgba(54, 65, 44, 0.34);
+    border-top-color: transparent;
+  }
+
+  [data-theme="light"] .data-page-loading-title {
+    color: var(--lm-text-secondary);
+  }
+
+  [data-theme="light"] .data-page-loading-subtitle {
+    color: var(--lm-text-faint);
+  }
+
+  .market-odds-row:hover {
+    background-color: rgba(255, 255, 255, 0.04);
+  }
+
+  [data-theme="light"] .market-odds-row:hover {
+    background-color: var(--lm-bg-hover);
+  }
+
+  .player-sort-pill {
+    background: transparent;
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .player-sort-pill:hover {
+    background: rgba(255, 255, 255, 0.045);
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  .player-sort-pill.is-active {
+    background: rgba(216, 255, 62, 0.12);
+    color: #d8ff3e;
+  }
+
+  [data-theme="light"] .player-sort-pill {
+    color: var(--lm-text-muted);
+  }
+
+  [data-theme="light"] .player-sort-pill:hover {
+    background: rgba(54, 65, 44, 0.08);
+    color: var(--lm-accent-strong);
+  }
+
+  [data-theme="light"] .player-sort-pill.is-active {
+    background: rgba(54, 65, 44, 0.14);
+    color: var(--lm-accent-strong);
+  }
+
   .tabular {
     font-variant-numeric: tabular-nums;
   }

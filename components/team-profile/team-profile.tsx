@@ -296,6 +296,7 @@ export function TeamProfile({ data }: TeamProfileProps) {
       <MobileSecondaryPageActions
         backHref="/teams"
         backLabel="返回球队"
+        title={contentTabsPinned ? data.nameCn : undefined}
         rightAction={
           <UserActionButton
             kind="team"

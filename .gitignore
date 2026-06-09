@@ -11,6 +11,7 @@ node_modules/
 .codex-*.png
 .codex/
 outputs/
+output/
 backend/.codex-*.log
 backend/dist/
 backend/.env

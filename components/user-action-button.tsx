@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bell, Check, Sparkles, Star } from "lucide-react";
 import { MeAuthDialog, type SharedAuthMode } from "@/components/me-auth-dialog";
+import { mobileFloatingSurfaceStyle } from "@/components/mobile-surface-styles";
 import { useUserSession } from "@/components/user-session-provider";
 import { userApi, type PublicUser } from "@/lib/user-system";
 
@@ -13,7 +14,9 @@ type UserActionButtonProps = {
   kind: ActionKind;
   payload: Record<string, string | number | null | undefined>;
   className?: string;
+  wrapperClassName?: string;
   iconOnly?: boolean;
+  variant?: "default" | "heroGhost";
   onChanged?: (active: boolean) => void;
 };
 
@@ -45,7 +48,7 @@ const ACTION_COPY: Record<ActionKind, { idle: string; active: string; pending: s
 };
 
 const topIconButtonClass =
-  "grid h-[34px] w-[34px] min-w-[34px] place-items-center rounded-full bg-white/[0.08] shadow-[0_14px_34px_rgba(0,0,0,.38),0_0_20px_rgba(216,255,62,.1),inset_0_1px_0_rgba(255,255,255,.16)] ring-1 backdrop-blur-2xl transition disabled:opacity-60";
+  "mobile-floating-surface grid h-[34px] w-[34px] min-w-[34px] place-items-center rounded-full bg-white/[0.08] shadow-[0_14px_34px_rgba(0,0,0,.38),0_0_20px_rgba(216,255,62,.1),inset_0_1px_0_rgba(255,255,255,.16)] ring-1 backdrop-blur-2xl transition disabled:opacity-60";
 
 const FEEDBACK_COPY: Record<ActionKind, { added: string; removed: string }> = {
   team: { added: "已关注", removed: "已取消关注" },
@@ -53,7 +56,15 @@ const FEEDBACK_COPY: Record<ActionKind, { added: string; removed: string }> = {
   match: { added: "已收藏", removed: "已取消收藏" },
 };
 
-export function UserActionButton({ kind, payload, className = "", iconOnly = false, onChanged }: UserActionButtonProps) {
+export function UserActionButton({
+  kind,
+  payload,
+  className = "",
+  wrapperClassName = "",
+  iconOnly = false,
+  variant = "default",
+  onChanged,
+}: UserActionButtonProps) {
   const [active, setActive] = useState(false);
   const [busy, setBusy] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -125,25 +136,35 @@ export function UserActionButton({ kind, payload, className = "", iconOnly = fal
   const copy = ACTION_COPY[kind];
   const Icon = kind === "match" ? Bell : active ? Check : Star;
   const label = busy ? (active ? copy.canceling : copy.pending) : active ? copy.active : copy.idle;
+  const wrapperPositionClass = /\b(?:absolute|fixed|sticky|relative)\b/.test(wrapperClassName) ? "" : "relative";
+  const textButtonClass =
+    variant === "heroGhost"
+      ? `inline-flex h-8 items-center justify-center gap-1.5 rounded-full px-3 text-xs font-semibold normal-case tracking-normal transition disabled:opacity-60 ${
+          active
+            ? "bg-volt text-black shadow-[0_0_28px_rgba(216,255,62,.18)]"
+            : "bg-white/[0.06] text-white/60 ring-1 ring-white/[0.08] backdrop-blur-md hover:bg-volt/[0.1] hover:text-volt hover:ring-volt/20"
+        } ${className}`
+      : `inline-flex h-10 items-center justify-center gap-2 rounded-full px-4 text-xs font-black uppercase tracking-[0.12em] transition disabled:opacity-60 ${
+          active
+            ? "bg-volt text-black shadow-[0_0_28px_rgba(216,255,62,.18)]"
+            : "bg-white/[0.07] text-white/72 ring-1 ring-white/[0.1] hover:bg-volt/[0.12] hover:text-volt hover:ring-volt/25"
+        } ${className}`;
 
   return (
     <>
-      <span className="relative inline-flex">
+      <span className={`${wrapperPositionClass} inline-flex ${wrapperClassName}`}>
         <button
           type="button"
           aria-label={label}
           onClick={runAction}
           disabled={busy}
+          style={iconOnly ? mobileFloatingSurfaceStyle : undefined}
           className={
             iconOnly
               ? `${topIconButtonClass} ${
                   active ? "text-volt ring-volt/55" : "text-white/72 ring-white/12 hover:text-white hover:ring-volt/35"
                 } ${className}`
-              : `inline-flex h-10 items-center justify-center gap-2 rounded-full px-4 text-xs font-black uppercase tracking-[0.12em] transition disabled:opacity-60 ${
-                  active
-                    ? "bg-volt text-black shadow-[0_0_28px_rgba(216,255,62,.18)]"
-                    : "bg-white/[0.07] text-white/72 ring-1 ring-white/[0.1] hover:bg-volt/[0.12] hover:text-volt hover:ring-volt/25"
-                } ${className}`
+              : textButtonClass
           }
         >
           <motion.span

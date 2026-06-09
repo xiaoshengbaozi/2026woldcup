@@ -156,7 +156,7 @@ export function MeAuthDialog({ mode, onClose, onAuthenticated }: MeAuthDialogPro
     if (!password) return setError("请填写密码");
     if (password.length < 8) return setError("密码至少需要 8 位");
     if (password !== repeatPassword) return setError("两次输入的密码不一致");
-    if (!invitationCode.trim()) return setError("请填写邀请码");
+    if (!invitationCode.trim()) return setError("请填写赛波码");
 
     setBusy("register");
     try {
@@ -325,7 +325,7 @@ function AuthModal({ mode, registerStep, onClose, children }: { mode: SharedAuth
             <X className="h-5 w-5" />
           </button>
         </div>
-        <div className="relative max-h-[calc(100dvh-10rem)] overflow-y-auto overscroll-contain pr-1">{children}</div>
+        <div className="relative -mx-1 max-h-[calc(100dvh-10rem)] overflow-y-auto overscroll-contain px-1 pb-1">{children}</div>
       </motion.div>
     </motion.div>
   );
@@ -417,7 +417,7 @@ function RegisterAccountForm({
       <AuthInput label="邮箱" type="email" value={email} required onChange={onEmailChange} />
       <AuthInput label="密码" type="password" value={password} required onChange={onPasswordChange} />
       <AuthInput label="重复密码" type="password" value={repeatPassword} required onChange={onRepeatPasswordChange} />
-      <AuthInput label="邀请码" value={invitationCode} required onChange={onInvitationCodeChange} />
+      <AuthInput label="赛波码" value={invitationCode} required onChange={onInvitationCodeChange} />
       <AvatarPicker
         catalog={catalog}
         selectedPlayerId={avatarPlayerId}
@@ -578,7 +578,7 @@ function AuthInput({ label, value, onChange, type = "text", required = false }: 
         value={value}
         required={required}
         onChange={(event) => onChange(event.target.value)}
-        className="h-10 rounded-full bg-black/24 px-4 text-white outline-none ring-1 ring-white/10 transition placeholder:text-white/24 focus:ring-volt/45"
+        className="h-10 rounded-full border border-white/10 bg-black/24 px-4 text-white outline-none transition placeholder:text-white/24 focus:border-volt/45"
       />
     </label>
   );
@@ -669,7 +669,7 @@ function PrimaryButton({ children, ...props }: React.ButtonHTMLAttributes<HTMLBu
   return (
     <button
       {...props}
-      className="inline-flex h-10 min-w-32 items-center justify-center gap-2 rounded-full bg-volt px-4 text-sm font-bold text-black shadow-[0_0_30px_rgba(216,255,62,.2)] transition hover:scale-[1.02] disabled:opacity-60"
+      className="inline-flex h-10 min-w-32 items-center justify-center gap-2 rounded-full border border-transparent bg-volt px-4 text-sm font-bold text-black shadow-[0_0_30px_rgba(216,255,62,.2)] outline-none transition hover:scale-[1.02] focus-visible:border-volt/40 disabled:opacity-60"
     >
       {children}
     </button>
@@ -680,7 +680,7 @@ function SecondaryButton({ children, ...props }: React.ButtonHTMLAttributes<HTML
   return (
     <button
       {...props}
-      className="inline-flex h-10 min-w-28 items-center justify-center gap-2 rounded-full bg-white/[0.06] px-4 text-sm font-semibold text-white/78 ring-1 ring-white/12 transition hover:bg-white/[0.1] hover:text-white disabled:opacity-60"
+      className="inline-flex h-10 min-w-28 items-center justify-center gap-2 rounded-full border border-white/12 bg-white/[0.06] px-4 text-sm font-semibold text-white/78 outline-none transition hover:bg-white/[0.1] hover:text-white focus-visible:border-white/22 disabled:opacity-60"
     >
       {children}
     </button>
@@ -744,11 +744,11 @@ function readableError(err: unknown, fallback: string) {
     email_already_registered: "这个邮箱已经注册过了",
     user_disabled: "这个账号已被停用",
     authentication_required: "请先登录",
-    invitation_code_required: "请填写邀请码",
-    invalid_invitation_code: "邀请码无效",
-    invitation_code_disabled: "这个邀请码已停用",
-    invitation_code_expired: "这个邀请码已过期",
-    invitation_code_exhausted: "这个邀请码使用次数已满",
+    invitation_code_required: "请填写赛波码",
+    invalid_invitation_code: "赛波码无效",
+    invitation_code_disabled: "这个赛波码已停用",
+    invitation_code_expired: "这个赛波码已过期",
+    invitation_code_exhausted: "这个赛波码使用次数已满",
   };
   return messages[message] ?? fallback;
 }

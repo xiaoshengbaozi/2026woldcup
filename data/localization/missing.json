@@ -56,7 +56,11 @@
     "Bayer Leverkusen": "Bayer Leverkusen",
     "Lobos Buap": "Lobos Buap",
     "Zacatepec 1948": "Zacatepec 1948",
-    "Leicester": "Leicester"
+    "Leicester": "Leicester",
+    "Club Tijuana": "Club Tijuana",
+    "Mexico": "Mexico",
+    "Mexico U20": "Mexico U20",
+    "Germany U17": "Germany U17"
   },
   "leagues": {
     "King's Cup": "King's Cup",
@@ -77,7 +81,10 @@
     "K League 1": "K League 1",
     "FIFA U20 World Cup": "FIFA U20 World Cup",
     "2. Bundesliga": "2. Bundesliga",
-    "Championship": "Championship"
+    "Championship": "Championship",
+    "World Cup - U20": "World Cup - U20",
+    "CONCACAF Gold Cup": "CONCACAF Gold Cup",
+    "Gaúcho 1": "Gaúcho 1"
   },
   "positions": {},
   "countries": {

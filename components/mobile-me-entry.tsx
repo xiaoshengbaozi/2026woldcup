@@ -25,7 +25,14 @@ type MobileMeEntryProps = {
   topRightAction?: MobileTopRightAction;
 };
 
-const PRIMARY_PAGES = new Set(["/", "/news", "/data", "/matches", "/favorites", "/players", "/me", "/teams", "/live"]);
+const PRIMARY_PAGES = new Set(["/", "/news", "/data", "/matches", "/favorites", "/players", "/me", "/teams", "/live", "/predict"]);
+const CREATOR_SUPPORT_PAGES = new Set(["/matches", "/players", "/teams"]);
+const PRIMARY_PAGE_WORDMARK_LABELS: Record<string, string> = {
+  "/favorites": "FAVORITES",
+  "/players": "PLAYERS",
+  "/teams": "TEAMS",
+  "/predict": "PREDICT",
+};
 
 export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
   const pathname = usePathname();
@@ -42,6 +49,7 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
   const { home, avatarUrl, loading, refreshSession } = useUserSession();
   const showHomeWordmark = normalizedPathname === "/";
   const showFifaWordmark = normalizedPathname === "/news" || normalizedPathname === "/matches" || normalizedPathname === "/data" || normalizedPathname === "/live";
+  const primaryPageWordmarkLabel = PRIMARY_PAGE_WORDMARK_LABELS[normalizedPathname];
   const showSearchEntry = pathname === "/" || pathname.startsWith("/news");
   const favoritesTopRightAction: MobileTopRightAction | undefined =
     normalizedPathname === "/favorites"
@@ -54,7 +62,7 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
         }
       : undefined;
   const matchesTopRightAction: MobileTopRightAction | undefined =
-    normalizedPathname === "/matches"
+    CREATOR_SUPPORT_PAGES.has(normalizedPathname)
       ? {
           ariaLabel: "打赏作者",
           icon: (
@@ -172,6 +180,7 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
           {loading && <span className="absolute inset-0 bg-black/20" />}
         </button>
         {showHomeWordmark ? <MobileHomeWordmark /> : null}
+        {primaryPageWordmarkLabel ? <MobileHomeWordmark label={primaryPageWordmarkLabel} /> : null}
         {showFifaWordmark ? <MobileFifaWordmark /> : null}
         {resolvedTopRightAction ? (
           <button
@@ -221,11 +230,11 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
   );
 }
 
-function MobileHomeWordmark() {
+function MobileHomeWordmark({ label = "CYBERBALL" }: { label?: string }) {
   return (
     <div className="pointer-events-none absolute left-1/2 top-[calc(env(safe-area-inset-top)+1.18rem)] flex h-8 w-[min(60vw,236px)] -translate-x-1/2 items-center justify-center whitespace-nowrap text-center">
       <span className="text-[19px] font-normal leading-none tracking-[0.26em] text-volt drop-shadow-[0_0_16px_rgba(216,255,62,.5)]" style={{ fontFamily: "CyberballBrand, ScreenMatrix, sans-serif" }}>
-        CYBERBALL
+        {label}
       </span>
     </div>
   );
