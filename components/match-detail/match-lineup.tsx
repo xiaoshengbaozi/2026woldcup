@@ -654,6 +654,31 @@ function ScoutNoteDialog({
 }) {
   if (typeof document === "undefined") return null;
 
+  const href = /^\d+$/.test(player.id) ? `/players/${player.id}/` : null;
+  const playerName = player.nameCn || player.name;
+  const identityContent = (
+    <>
+      <div className="relative grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-full bg-volt/[0.12] ring-1 ring-volt/20 transition group-hover:ring-volt/45">
+        <span className="text-xs font-black text-volt">{player.number ?? getPlayerInitial(player)}</span>
+        {player.photo && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={player.photo}
+            alt={player.nameEn || player.name}
+            className="absolute inset-0 h-full w-full object-cover"
+            onError={(event) => {
+              event.currentTarget.style.display = "none";
+            }}
+          />
+        )}
+      </div>
+      <div className="min-w-0">
+        <p className="truncate text-sm font-black text-white transition group-hover:text-volt">{playerName}</p>
+        <p className="mt-0.5 truncate text-xs text-white/38">{player.nameEn || note.nameEn}</p>
+      </div>
+    </>
+  );
+
   return createPortal(
     <AnimatePresence>
       {open && (
@@ -672,32 +697,19 @@ function ScoutNoteDialog({
             transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="mb-3 flex items-center justify-between gap-3 rounded-3xl bg-white/[0.045] p-3 ring-1 ring-white/[0.08]">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="relative grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-2xl bg-volt/[0.12] ring-1 ring-volt/20">
-                  <span className="text-xs font-black text-volt">{player.number ?? getPlayerInitial(player)}</span>
-                  {player.photo && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={player.photo}
-                      alt={player.nameEn || player.name}
-                      className="absolute inset-0 h-full w-full object-cover"
-                      onError={(event) => {
-                        event.currentTarget.style.display = "none";
-                      }}
-                    />
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-black text-white">{player.nameCn || player.name}</p>
-                  <p className="mt-0.5 truncate text-xs text-white/38">{player.nameEn || note.nameEn}</p>
-                </div>
-              </div>
+            <div className="player-scout-identity hero-card mb-3 flex items-center justify-between gap-3 rounded-[2rem] p-3">
+              {href ? (
+                <Link href={href} className="group relative z-10 flex min-w-0 items-center gap-3 outline-none focus-visible:ring-2 focus-visible:ring-volt/60">
+                  {identityContent}
+                </Link>
+              ) : (
+                <div className="relative z-10 flex min-w-0 items-center gap-3">{identityContent}</div>
+              )}
               <button
                 type="button"
                 onClick={onClose}
-                className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/[0.06] text-white/55 ring-1 ring-white/[0.08] transition hover:bg-white/[0.1] hover:text-white"
-                aria-label="关闭 FM Scout 卡片"
+                className="relative z-10 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/[0.06] text-white/55 ring-1 ring-white/[0.08] transition hover:bg-white/[0.1] hover:text-white"
+                aria-label="关闭球探卡片"
               >
                 <X className="h-4 w-4" />
               </button>

@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { ArrowUpRight, ChevronLeft, ChevronRight, Heart } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowUpRight, ChevronLeft, ChevronRight, Heart, Sparkles } from "lucide-react";
 import {
   continentOrder,
   qualifiedTeams,
@@ -285,7 +285,7 @@ function FollowedTeamsRail({
   onToggleFollow,
 }: {
   teams: FollowedTeamRailItem[];
-  onToggleFollow: (team: QualifiedTeamCard | string) => void;
+  onToggleFollow: (team: QualifiedTeamCard | string) => void | Promise<void>;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -389,8 +389,22 @@ function TeamCard({
   team: QualifiedTeamCard;
   index: number;
   isFollowed: boolean;
-  onToggleFollow: (team: QualifiedTeamCard | string) => void;
+  onToggleFollow: (team: QualifiedTeamCard | string) => void | Promise<void>;
 }) {
+  const [feedback, setFeedback] = useState<"added" | "removed" | null>(null);
+
+  useEffect(() => {
+    if (!feedback) return;
+    const timer = window.setTimeout(() => setFeedback(null), 1050);
+    return () => window.clearTimeout(timer);
+  }, [feedback]);
+
+  const handleToggleFollow = async () => {
+    const nextFeedback = isFollowed ? "removed" : "added";
+    await onToggleFollow(team);
+    setFeedback(nextFeedback);
+  };
+
   return (
     <motion.div
       className="relative"
@@ -429,15 +443,46 @@ function TeamCard({
         type="button"
         aria-pressed={isFollowed}
         aria-label={`${isFollowed ? "Unfollow" : "Follow"} ${team.nameCn}`}
-        onClick={() => onToggleFollow(team)}
+        onClick={handleToggleFollow}
         className={`absolute right-4 top-4 z-10 grid h-10 w-10 place-items-center rounded-full border backdrop-blur-xl transition duration-300 ${
           isFollowed
             ? "border-volt/50 bg-volt text-black shadow-[0_0_28px_rgba(216,255,62,.24)]"
             : "border-white/15 bg-black/35 text-white/72 hover:border-volt/45 hover:bg-volt/[0.16] hover:text-volt"
         }`}
       >
-        <Heart className={`h-4 w-4 ${isFollowed ? "fill-current" : ""}`} />
+        <motion.span
+          className="grid place-items-center"
+          animate={feedback ? { scale: [1, 1.28, 1], rotate: feedback === "added" ? [0, -10, 0] : [0, 10, 0] } : { scale: 1, rotate: 0 }}
+          transition={{ duration: 0.42, ease: "easeOut" }}
+        >
+          <Heart className={`h-4 w-4 ${isFollowed ? "fill-current" : ""}`} />
+        </motion.span>
       </button>
+      <AnimatePresence>
+        {feedback && (
+          <>
+            <motion.span
+              aria-hidden="true"
+              className="pointer-events-none absolute right-4 top-4 z-20 h-10 w-10 rounded-full border border-volt/70 shadow-[0_0_30px_rgba(216,255,62,.22)]"
+              initial={{ opacity: 0.72, scale: 0.92 }}
+              animate={{ opacity: 0, scale: 1.75 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.62, ease: "easeOut" }}
+            />
+            <motion.span
+              role="status"
+              className="pointer-events-none absolute right-4 top-2 z-30 inline-flex -translate-y-full items-center gap-1.5 whitespace-nowrap rounded-full border border-volt/35 bg-black/72 px-3 py-1.5 text-[11px] font-black text-volt shadow-[0_18px_44px_rgba(0,0,0,.45),0_0_26px_rgba(216,255,62,.16)] backdrop-blur-2xl"
+              initial={{ opacity: 0, y: 8, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -6, scale: 0.96 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+            >
+              <Sparkles className="h-3 w-3" />
+              {feedback === "added" ? "已关注" : "已取消关注"}
+            </motion.span>
+          </>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

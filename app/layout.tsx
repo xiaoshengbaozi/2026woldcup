@@ -6,6 +6,7 @@ import "./light-theme.css";
 import "./light-theme-polish.css";
 import { ThemeInit } from "@/components/theme-init";
 import { MobileNavBar } from "@/components/mobile-nav-bar";
+import { MobileTopBarProvider } from "@/components/mobile-top-bar-provider";
 import { SiteAnalyticsProvider } from "@/components/site-analytics-provider";
 import { SupportCreatorModal } from "@/components/support-creator-modal";
 import { PwaRegister } from "@/components/pwa-register";
@@ -96,14 +97,16 @@ export default function RootLayout({
       <body className={interTight.variable}>
         <SiteAnalyticsProvider>
           <UserSessionProvider>
-            <ThemeInit />
-            <PwaRegister />
-            <Suspense fallback={null}>
-              <WechatShareBridge />
-            </Suspense>
-            {children}
-            <MobileNavBar />
-            <SupportCreatorModal />
+            <MobileTopBarProvider>
+              <ThemeInit />
+              <PwaRegister />
+              <Suspense fallback={null}>
+                <WechatShareBridge />
+              </Suspense>
+              {children}
+              <MobileNavBar />
+              <SupportCreatorModal />
+            </MobileTopBarProvider>
           </UserSessionProvider>
         </SiteAnalyticsProvider>
       </body>

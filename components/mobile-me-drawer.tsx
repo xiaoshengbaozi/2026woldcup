@@ -2,11 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode, TouchEvent, UIEvent } from "react";
-import { Bell, Bookmark, CalendarDays, ChevronRight, Coffee, Flag, LogIn, LogOut, Settings, Star, UserPlus, UserRound, UsersRound, X } from "lucide-react";
+import { Bell, Bookmark, CalendarDays, ChevronRight, Coffee, Flag, LogIn, LogOut, Send, Settings, Star, UserPlus, UserRound, UsersRound, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { openCreatorSupportModal } from "@/components/support-creator-modal";
 import type { UserSessionPayload } from "@/lib/user-system";
@@ -19,8 +19,11 @@ type MobileMeDrawerProps = {
   onLogin: () => void;
   onRegister: () => void;
   onOpenAvatarSettings: () => void;
+  onResendVerification: () => void;
   onLogout: () => void;
   onClose: () => void;
+  emailNotice?: string;
+  emailBusy?: boolean;
 };
 
 const emptySummary = {
@@ -29,15 +32,31 @@ const emptySummary = {
   favoriteMatchCount: 0,
 };
 
-export function MobileMeDrawer({ open, home, loading, avatarUrl, onLogin, onRegister, onOpenAvatarSettings, onLogout, onClose }: MobileMeDrawerProps) {
+export function MobileMeDrawer({
+  open,
+  home,
+  loading,
+  avatarUrl,
+  onLogin,
+  onRegister,
+  onOpenAvatarSettings,
+  onResendVerification,
+  onLogout,
+  onClose,
+  emailNotice,
+  emailBusy,
+}: MobileMeDrawerProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const asideRef = useRef<HTMLElement>(null);
   const [followOpen, setFollowOpen] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(true);
   const summary = home?.summary ?? emptySummary;
   const unreadCount = home?.summary.unreadNotificationCount ?? 0;
+  const signature = home?.user.profile.signature?.trim() || "\u4e00\u811a\u4e16\u754c\u6ce2";
   const displayName = home?.user.profile.displayName ?? "赛博世界波";
   const signedIn = Boolean(home);
+  const needsEmailVerification = signedIn && !home?.user.emailVerifiedAt;
 
   useEffect(() => {
     if (!open) return;
@@ -105,16 +124,28 @@ export function MobileMeDrawer({ open, home, loading, avatarUrl, onLogin, onRegi
             <div className="pointer-events-none absolute bottom-16 right-0 h-40 w-24 rounded-full bg-flare/10 blur-[56px]" />
 
             <div className="relative flex items-center justify-between">
-              <Link
-                href="/me"
-                onClick={(event) => {
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => {
                   if (!signedIn) {
-                    event.preventDefault();
                     onClose();
                     onLogin();
                     return;
                   }
                   onClose();
+                  router.push("/me");
+                }}
+                onKeyDown={(event) => {
+                  if (event.key !== "Enter" && event.key !== " ") return;
+                  event.preventDefault();
+                  if (!signedIn) {
+                    onClose();
+                    onLogin();
+                    return;
+                  }
+                  onClose();
+                  router.push("/me");
                 }}
                 className="flex min-w-0 items-center gap-3 rounded-full outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-volt/60"
               >
@@ -127,11 +158,33 @@ export function MobileMeDrawer({ open, home, loading, avatarUrl, onLogin, onRegi
                 </div>
                 <div className="min-w-0">
                   <p className="truncate text-xs font-medium text-white/90">{displayName}</p>
-                  <p className="text-[10px] uppercase tracking-[0.16em] text-white/34">
-                    {signedIn ? "已同步" : loading ? "同步中" : "未登录"}
-                  </p>
+                  {needsEmailVerification ? (
+                    <div className="mt-1 flex min-w-0 items-center gap-1.5">
+                      <span className="shrink-0 text-[10px] font-semibold leading-none text-white/45">{"\u90ae\u7bb1\u5f85\u9a8c\u8bc1"}</span>
+                      <button
+                        type="button"
+                        disabled={emailBusy}
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          onResendVerification();
+                        }}
+                        className="inline-flex h-5 shrink-0 items-center gap-1 rounded-full bg-volt px-2 text-[10px] font-bold leading-none text-black shadow-[0_0_18px_rgba(216,255,62,.2)] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <Send className="h-2.5 w-2.5" />
+                        {emailBusy ? "\u53d1\u9001\u4e2d" : "\u91cd\u53d1"}
+                      </button>
+                      {emailNotice ? <span className="min-w-0 truncate text-[10px] font-semibold leading-none text-white/48">{emailNotice}</span> : null}
+                    </div>
+                  ) : signedIn ? (
+                    <p className="truncate text-[10px] font-semibold leading-5 text-white/40">{signature}</p>
+                  ) : loading ? (
+                    <p className="truncate text-[10px] font-semibold leading-5 text-white/34">{"\u540c\u6b65\u4e2d"}</p>
+                  ) : (
+                    <p className="truncate text-[10px] font-semibold leading-5 text-white/34">{"\u672a\u767b\u5f55"}</p>
+                  )}
                 </div>
-              </Link>
+              </div>
               <button
                 type="button"
                 aria-label="关闭"

@@ -97,7 +97,7 @@ const MarketOddsRow = memo(function MarketOddsRow({
   const content = (
     <>
       <span
-        className="w-5 shrink-0 text-center text-xs font-black tabular"
+        className="market-odds-rank w-5 shrink-0 text-center text-xs font-black tabular"
         style={{ color: getRankColor(rank) }}
       >
         {rank}
@@ -110,15 +110,15 @@ const MarketOddsRow = memo(function MarketOddsRow({
         loading="lazy"
       />
       <div className="min-w-0 flex-1">
-        <div className="truncate text-[13px] font-bold text-white/90">
+        <div className="market-odds-team truncate text-[13px] font-bold text-white/90">
           {teamName}
         </div>
-        <div className="mt-1 h-0.5 overflow-hidden rounded-full bg-white/[0.06]">
+        <div className="market-odds-track mt-1 h-0.5 overflow-hidden rounded-full bg-white/[0.06]">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${width}%` }}
             transition={{ duration: 0.35, delay: Math.min(index, 12) * 0.018 }}
-            className="h-full rounded-full bg-volt shadow-[0_0_10px_rgba(216,255,62,0.35)]"
+            className="market-odds-fill h-full rounded-full bg-volt shadow-[0_0_10px_rgba(216,255,62,0.35)]"
           />
         </div>
       </div>
@@ -148,7 +148,7 @@ const MarketOddsRow = memo(function MarketOddsRow({
     onMouseLeave: () => hoverCountry(null, "ranking"),
     onFocus: () => hoverCountry(country.countryCode, "ranking"),
     onBlur: () => hoverCountry(null, "ranking"),
-    className: "group flex w-full items-center gap-3 px-3 py-2.5 text-left transition duration-150 hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-volt/50",
+    className: "market-odds-row group flex w-full items-center gap-3 px-3 py-2.5 text-left transition duration-150 hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-volt/50",
     style: {
       background: isSelected ? "rgba(216,255,62,0.06)" : undefined,
     },

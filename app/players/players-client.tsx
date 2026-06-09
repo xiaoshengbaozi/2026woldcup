@@ -7,17 +7,27 @@ import type { ComponentType } from "react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { FilterDropdown } from "@/components/match-filters";
+import { useUserSession } from "@/components/user-session-provider";
 import playerArticles from "@/data/player-articles.json";
 import { getOfficialPlayerCatalog, type OfficialPlayerCatalogItem } from "@/lib/official-player-catalog";
 import { fallbackTopScorerProfiles } from "@/lib/world-cup-top-scorers";
 
 type PlayerArticle = (typeof playerArticles.players)[number];
 type PlayerListItem = PlayerArticle | OfficialPlayerCatalogItem;
-type PlayerTab = "superstars" | "wonderkids" | "squads";
+type PlayerTab = "following" | "superstars" | "wonderkids" | "squads";
 type SquadSortRule = "age" | "rating";
 type SortDirection = "asc" | "desc";
+type PlayerRailItem = {
+  id: string | number;
+  apiPlayerId?: string | number | null;
+  nameCn: string;
+  nameEn?: string;
+  photo: string;
+  meta: string;
+};
 
 const tabs: { id: PlayerTab; label: string }[] = [
+  { id: "following", label: "我的关注" },
   { id: "superstars", label: "超级巨星" },
   { id: "wonderkids", label: "神童" },
   { id: "squads", label: "最佳射手" },
@@ -60,6 +70,13 @@ export function PlayersClient() {
   const [countryFilter, setCountryFilter] = useState("");
   const [sortRule, setSortRule] = useState<SquadSortRule>("age");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const { home } = useUserSession();
+  const signedIn = Boolean(home);
+
+  const visibleTabs = useMemo(
+    () => tabs.filter((tab) => tab.id !== "following" || signedIn),
+    [signedIn]
+  );
 
   const regionOptions = useMemo(() => {
     const options = new Map<string, string>();
@@ -98,10 +115,27 @@ export function PlayersClient() {
     });
   }, [countryFilter, playerQuery, regionFilter, sortDirection, sortRule]);
 
-  const visiblePlayers = useMemo((): PlayerListItem[] => {
-    if (activeTab === "squads") return scorerPlayers;
-    return playerArticles.players.filter((player) => player.category === activeTab);
-  }, [activeTab]);
+  const followedPlayers = useMemo<PlayerRailItem[]>(() => {
+    if (!home) return [];
+    return home.user.followedPlayers.map((player) => ({
+      id: player.id,
+      apiPlayerId: player.id,
+      nameCn: player.name,
+      nameEn: player.name,
+      photo: player.photo || "",
+      meta: [player.team, player.position].filter(Boolean).join(" · ") || "已关注",
+    }));
+  }, [home]);
+
+  const visiblePlayers = useMemo((): PlayerRailItem[] => {
+    if (activeTab === "following") return followedPlayers;
+    if (activeTab === "squads") return scorerPlayers.map(toRailItem);
+    return playerArticles.players.filter((player) => player.category === activeTab).map(toRailItem);
+  }, [activeTab, followedPlayers]);
+
+  useEffect(() => {
+    if (!signedIn && activeTab === "following") setActiveTab("superstars");
+  }, [activeTab, signedIn]);
 
   return (
     <DashboardShell>
@@ -109,7 +143,7 @@ export function PlayersClient() {
         <main className="min-w-0 space-y-5">
           <section className="hero-card px-4 py-4 sm:px-5">
             <div className="flex flex-wrap gap-2" role="tablist" aria-label="球员分类">
-              {tabs.map((tab) => {
+              {visibleTabs.map((tab) => {
                 const active = activeTab === tab.id;
                 return (
                   <button
@@ -171,7 +205,7 @@ export function PlayersClient() {
           <section className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
             <div className="flex items-center justify-between">
               <h2 className="text-xs font-bold uppercase tracking-wider text-white/50">{"资料覆盖"}</h2>
-              <span className="text-xs font-black text-volt">{playerArticles.count}</span>
+              <span className="text-xs font-black text-volt" style={{ fontFamily: "ScreenMatrix, monospace" }}>{playerArticles.count}</span>
             </div>
             <div className="mt-3 grid grid-cols-3 gap-3">
               <MiniStat label="巨星" value={playerArticles.players.filter((p) => p.category === "superstars").length} />
@@ -321,7 +355,7 @@ function SortControls({
   );
 }
 
-function PlayerRail({ players }: { players: PlayerListItem[] }) {
+function PlayerRail({ players }: { players: PlayerRailItem[] }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -367,13 +401,19 @@ function PlayerRail({ players }: { players: PlayerListItem[] }) {
               className="group flex w-20 shrink-0 flex-col items-center text-center sm:w-24"
             >
               <div className="relative h-[68px] w-[68px] overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-white/[0.1] transition duration-300 group-hover:scale-105 group-hover:ring-volt/45 sm:h-20 sm:w-20">
-                <img src={player.photo} alt={player.nameCn} className="h-full w-full object-cover" />
+                {player.photo ? (
+                  <img src={player.photo} alt={player.nameCn} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="grid h-full w-full place-items-center text-lg font-black text-volt/70">
+                    {player.nameCn.slice(0, 1)}
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/35 to-transparent" />
               </div>
               <span className="mt-2.5 w-full truncate text-[11px] font-medium text-white/60 group-hover:text-volt sm:mt-3 sm:text-xs">
                 {player.nameCn}
               </span>
-              <span className="mt-0.5 w-full truncate text-[10px] text-white/28 sm:text-[11px]">{railMetaLabel(player)}</span>
+              <span className="mt-0.5 w-full truncate text-[10px] text-white/28 sm:text-[11px]">{player.meta}</span>
             </Link>
           ))}
         </div>
@@ -488,6 +528,17 @@ function countryLabel(player: PlayerListItem) {
   return countryNameCn[player.countryCn] || countryNameCn[player.countryEn] || player.countryCn;
 }
 
+function toRailItem(player: PlayerListItem): PlayerRailItem {
+  return {
+    id: player.id,
+    apiPlayerId: player.apiPlayerId,
+    nameCn: player.nameCn,
+    nameEn: "nameEn" in player ? player.nameEn : undefined,
+    photo: player.photo,
+    meta: railMetaLabel(player),
+  };
+}
+
 function railMetaLabel(player: PlayerListItem) {
   if (isOfficialPlayer(player) && player.goals > 0) {
     return `${countryLabel(player)} · ${player.goals}球`;
@@ -531,7 +582,7 @@ function normalizePlayerLookupKey(value: string | number | null | undefined) {
     .replace(/^-+|-+$/g, "");
 }
 
-function playerProfileHref(player: Pick<PlayerArticle, "apiPlayerId" | "id">) {
+function playerProfileHref(player: Pick<PlayerRailItem, "apiPlayerId" | "id">) {
   return `/players/${player.apiPlayerId || player.id}/`;
 }
 
@@ -552,7 +603,7 @@ function ScorerBoard() {
             href={"/players/" + player.id + "/"}
             className="group flex items-center gap-3 px-4 py-2.5 transition hover:bg-white/[0.03]"
           >
-            <span className="w-4 text-center text-[11px] font-bold text-white/25 group-hover:text-white/50">{index + 1}</span>
+            <span className="w-4 text-center text-[11px] font-bold text-white/25 group-hover:text-white/50" style={{ fontFamily: "ScreenMatrix, monospace" }}>{index + 1}</span>
             <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full bg-white/[0.06]">
               <img src={player.photo} alt={player.name} className="h-full w-full object-cover" />
             </div>
@@ -560,7 +611,7 @@ function ScorerBoard() {
               <p className="truncate text-[13px] font-bold text-white/70 group-hover:text-white/90">{player.name}</p>
               <p className="truncate text-[11px] text-white/30">{player.teamName}</p>
             </div>
-            <span className="text-xs font-bold text-volt/60 group-hover:text-volt">
+            <span className="text-xs font-bold text-volt/60 group-hover:text-volt" style={{ fontFamily: "ScreenMatrix, monospace" }}>
               {player.goals ?? "-"}
             </span>
           </Link>
@@ -573,7 +624,7 @@ function ScorerBoard() {
 function MiniStat({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.04]">
-      <p className="text-xl font-black tabular-nums text-white">{value}</p>
+      <p className="text-xl font-black tabular-nums text-white" style={{ fontFamily: "ScreenMatrix, monospace" }}>{value}</p>
       <p className="mt-0.5 text-[11px] text-white/32">{label}</p>
     </div>
   );

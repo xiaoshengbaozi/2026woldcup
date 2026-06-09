@@ -67,14 +67,16 @@ export function MatchDetailClient({ slug }: { slug: string }) {
           />
         ) : undefined}
       />
-      <MatchHero detail={detail} />
-      {!isStarted && <div className="-mt-2 hidden justify-end lg:flex">
-        <UserActionButton
-          kind="match"
-          payload={favoritePayload}
-          className="h-9 px-4 text-[11px]"
-        />
-      </div>}
+      <MatchHero
+        detail={detail}
+        favoriteAction={!isStarted ? (
+          <UserActionButton
+            kind="match"
+            payload={favoritePayload}
+            className="match-hero-favorite-button min-h-8 px-3 py-0 text-[10px]"
+          />
+        ) : undefined}
+      />
       <MatchNav active={activeTab} onTabChange={setActiveTab} />
 
       <div className="space-y-5">

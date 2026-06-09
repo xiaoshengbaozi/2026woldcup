@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 import { CalendarDays, Clock, MapPin, Trophy } from "lucide-react";
 import carrasquillaImage from "@/assets/players/PAN-panama/headshots/adalberto-carrasquilla.webp";
@@ -212,7 +213,7 @@ function formatMatchStatus(detail: MatchDetail, start: Date) {
   return "比赛中";
 }
 
-export function MatchHero({ detail }: { detail: MatchDetail }) {
+export function MatchHero({ detail, favoriteAction }: { detail: MatchDetail; favoriteAction?: ReactNode }) {
   const teams = parseTeams(detail.match.summary);
   const stageLabel = formatStageLabel(detail.match.stage, detail.match.summary);
   const statusLabel = STATUS_LABEL[detail.status];
@@ -238,7 +239,7 @@ export function MatchHero({ detail }: { detail: MatchDetail }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      className={`hero-card relative -mx-3 -mt-4 min-h-[280px] overflow-visible rounded-b-[2rem] rounded-t-none shadow-none sm:-mx-6 sm:-mt-5 sm:min-h-[380px] lg:mx-0 lg:rounded-[2rem] ${
+      className={`match-hero-banner hero-card relative -mx-3 -mt-4 min-h-[280px] overflow-visible rounded-b-[2rem] rounded-t-none shadow-none sm:-mx-6 sm:-mt-5 sm:min-h-[380px] lg:mx-0 lg:rounded-[2rem] ${
         isStarted ? "lg:mt-0 lg:min-h-[216px]" : "lg:mt-14 lg:min-h-[360px]"
       }`}
     >
@@ -248,13 +249,13 @@ export function MatchHero({ detail }: { detail: MatchDetail }) {
             src={venueBannerImage}
             alt=""
             aria-hidden="true"
-            className="absolute inset-0 h-full w-full object-cover opacity-55 saturate-[1.08]"
+            className="match-hero-bg-image absolute inset-0 h-full w-full object-cover opacity-55 saturate-[1.08]"
             loading="eager"
           />
         )}
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,3,3,0.20),rgba(2,3,3,0.70)),radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.08),transparent_52%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.07),rgba(255,255,255,0.015)_34%,rgba(0,0,0,0.24))]" />
-        <div className="absolute inset-0 opacity-[0.18] [background-image:linear-gradient(rgba(255,255,255,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.09)_1px,transparent_1px)] [background-size:42px_42px]" />
+        <div className="match-hero-bg-shade absolute inset-0 bg-[linear-gradient(180deg,rgba(2,3,3,0.20),rgba(2,3,3,0.70)),radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.08),transparent_52%)]" />
+        <div className="match-hero-bg-glass absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.07),rgba(255,255,255,0.015)_34%,rgba(0,0,0,0.24))]" />
+        <div className="match-hero-grid absolute inset-0 opacity-[0.18] [background-image:linear-gradient(rgba(255,255,255,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.09)_1px,transparent_1px)] [background-size:42px_42px]" />
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-volt/35 to-transparent" />
 
         <PosterWedge side="left" accent={homeAccent} />
@@ -380,6 +381,7 @@ export function MatchHero({ detail }: { detail: MatchDetail }) {
               start={adjustedStart}
               location={detail.match.location}
               stage={detail.match.stage}
+              action={favoriteAction}
             />
           </div>
         </div>
@@ -392,13 +394,15 @@ function MatchMetaRow({
   start,
   location,
   stage,
+  action,
 }: {
   start: Date;
   location: string;
   stage: string;
+  action?: ReactNode;
 }) {
   return (
-    <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-[10px] font-medium uppercase tracking-[0.12em] text-white/50 sm:mt-4 sm:gap-3 sm:text-[11px]">
+    <div className="match-meta-row mt-2 flex flex-wrap items-center justify-center gap-2 text-[10px] font-medium uppercase tracking-[0.12em] text-white/50 sm:mt-4 sm:gap-3 sm:text-[11px]">
       <span className="inline-flex items-center gap-1.5">
         <CalendarDays className="h-3.5 w-3.5 text-volt/70" />
         {start.toLocaleDateString("zh-CN", { month: "2-digit", day: "2-digit" })}
@@ -419,6 +423,7 @@ function MatchMetaRow({
           冠军争夺战
         </span>
       )}
+      {action && <span className="match-meta-action hidden items-center lg:inline-flex">{action}</span>}
     </div>
   );
 }

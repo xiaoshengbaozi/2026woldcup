@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
-import { CalendarDays, Check, ChevronDown, Clock, Flame, GitFork, Grid3X3, Layers, LayoutList, MapPin, Search } from "lucide-react";
+import { CalendarDays, Check, ChevronDown, Clock, GitFork, Grid3X3, Layers, LayoutList, MapPin, Search } from "lucide-react";
 import { ComponentType, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { openCreatorSupportModal } from "@/components/support-creator-modal";
@@ -116,32 +116,31 @@ export function MatchFilters({
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.08, duration: 0.65 }}
-        className="relative z-[10000] flex flex-wrap items-center gap-2 sm:z-20 sm:gap-3"
+        className="scrollbar-hidden relative z-[10000] flex flex-nowrap items-center gap-1.5 overflow-x-auto overscroll-x-contain sm:z-20 sm:flex-wrap sm:gap-3 sm:overflow-visible"
       >
         <div className="hidden sm:block">
           <MatchSourceToggle value={matchSource} onChange={onMatchSourceChange} />
         </div>
 
-        <div className="flex shrink-0 items-center gap-2 sm:hidden">
-          <MobileScheduleModeToggle layout={layout} onChange={onLayoutChange} />
-          <WarmupSourcePill value={matchSource} onChange={onMatchSourceChange} />
-        </div>
-
-        <label className="glass-chip order-2 flex h-10 min-w-0 basis-full items-center gap-2 px-4 text-white/70 transition focus-within:text-white sm:order-none sm:flex-1 sm:basis-auto sm:gap-3 sm:px-5">
+        <label className="glass-chip order-1 flex h-10 w-[calc(100vw-17rem)] min-w-[6.25rem] max-w-[10rem] shrink-0 items-center gap-2 px-3 text-white/70 transition focus-within:text-white sm:order-none sm:w-auto sm:min-w-0 sm:max-w-none sm:flex-1 sm:basis-auto sm:gap-3 sm:px-5">
           <Search className="h-5 w-5 shrink-0 text-volt/80" />
           <input
             value={query}
             onChange={(event) => onQueryChange(event.target.value)}
-            placeholder="搜索球队、场馆、城市或比赛"
+            placeholder="球队、场馆、城市或比赛"
             className="w-full bg-transparent text-xs text-white outline-none placeholder:text-white/35"
           />
         </label>
+
+        <div className="order-1 flex shrink-0 items-center gap-2 sm:hidden">
+          <MobileScheduleModeToggle layout={layout} onChange={onLayoutChange} />
+        </div>
 
         <div className="hidden sm:block">
           <LayoutToggle layout={layout} onChange={onLayoutChange} />
         </div>
 
-        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+        <div className="order-2 flex w-auto shrink-0 items-center gap-1.5 sm:order-none sm:gap-3">
           <FilterDropdown
             icon={Clock}
             value={String(timezoneOffset)}
@@ -270,32 +269,6 @@ function MobileScheduleModeToggle({
         );
       })}
     </div>
-  );
-}
-
-function WarmupSourcePill({
-  value,
-  onChange
-}: {
-  value: ScheduleMatchSource;
-  onChange: (value: ScheduleMatchSource) => void;
-}) {
-  const active = value === "warmups";
-
-  return (
-    <button
-      type="button"
-      aria-pressed={active}
-      onClick={() => onChange(active ? "official" : "warmups")}
-      className={`glass-chip flex h-10 shrink-0 items-center gap-1.5 px-3 text-[11px] font-semibold transition-all duration-150 ${
-        active
-          ? "text-flare ring-1 ring-flare/30 shadow-[0_0_18px_rgba(255,154,31,.14)]"
-          : "text-white/56 hover:text-white/80"
-      }`}
-    >
-      <Flame className={`h-3.5 w-3.5 ${active ? "text-flare" : "text-flare/70"}`} />
-      <span>热身赛</span>
-    </button>
   );
 }
 

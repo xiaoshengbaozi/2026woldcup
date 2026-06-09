@@ -60,7 +60,7 @@ export const RankingRow = memo(function RankingRow({ entry, isSqueezed }: Rankin
       onClick={handleClick}
       onPointerEnter={handlePointerEnter}
       onPointerLeave={handlePointerLeave}
-      className="flex items-center px-4 cursor-pointer border-b border-white/[0.04] transition-colors duration-150 hover:bg-white/[0.05]"
+      className="ranking-row flex items-center px-4 cursor-pointer border-b border-white/[0.04] transition-colors duration-150 hover:bg-white/[0.05]"
       style={{
         height: isTop3 ? 68 : isSqueezed ? 48 : 56,
         background: isSelected
@@ -72,7 +72,7 @@ export const RankingRow = memo(function RankingRow({ entry, isSqueezed }: Rankin
     >
       {/* Rank Number */}
       <span
-        className="font-bold w-8 text-center shrink-0"
+        className="ranking-row-rank font-bold w-8 text-center shrink-0"
         style={{
           fontSize: isTop3 ? 20 : 15,
           color: rankColor,
@@ -92,7 +92,7 @@ export const RankingRow = memo(function RankingRow({ entry, isSqueezed }: Rankin
           loading="lazy"
         />
         <span
-          className="font-semibold text-white/85 truncate"
+          className="ranking-row-team font-semibold text-white/85 truncate"
           style={{ fontSize: isTop3 ? 16 : 14 }}
         >
           {country ? localizeTeamName(country.countryName, country.countryCode) : entry.countryCode}
@@ -101,7 +101,7 @@ export const RankingRow = memo(function RankingRow({ entry, isSqueezed }: Rankin
 
       {/* Probability */}
       <span
-        className="font-bold text-white ml-auto mr-4 shrink-0"
+        className="ranking-row-probability font-bold text-white ml-auto mr-4 shrink-0"
         style={{ fontSize: isTop3 ? 22 : 18 }}
       >
         {entry.probability.toFixed(1)}%
@@ -109,7 +109,7 @@ export const RankingRow = memo(function RankingRow({ entry, isSqueezed }: Rankin
 
       {/* Delta */}
       <span
-        className="text-sm font-semibold w-16 text-right shrink-0"
+        className="ranking-row-delta text-sm font-semibold w-16 text-right shrink-0"
         style={{
           color: isUp ? "#d8ff3e" : isDown ? "#FF1744" : "rgba(255,255,255,0.32)",
         }}

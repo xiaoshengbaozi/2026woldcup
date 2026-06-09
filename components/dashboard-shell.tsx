@@ -2,47 +2,22 @@
 
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
-import { Plus } from "lucide-react";
 import { BackToTopButton } from "./back-to-top-button";
 import { NavBar } from "./nav-bar";
-import { MobileMeEntry } from "./mobile-me-entry";
 import { SiteFooter } from "./site-footer";
 import { UserNotificationToast } from "./user-notification-toast";
-import { openCreatorSupportModal } from "./support-creator-modal";
 
 const PRIMARY_PAGES = new Set(["/", "/news", "/data", "/matches", "/favorites", "/players", "/me", "/teams", "/live"]);
 
 export function DashboardShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const normalizedPathname = pathname !== "/" ? pathname.replace(/\/$/, "") : pathname;
-  const hasMobileMeEntry = PRIMARY_PAGES.has(normalizedPathname);
-  const favoritesTopRightAction = normalizedPathname === "/favorites"
-    ? {
-        ariaLabel: "添加收藏",
-        icon: <Plus className="h-4 w-4" />,
-        onClick: () => {
-          window.location.href = "/matches";
-        },
-      }
-    : undefined;
-  const matchesTopRightAction = normalizedPathname === "/matches"
-    ? {
-        ariaLabel: "打赏作者",
-        icon: (
-          <span className="relative block h-7 w-7 overflow-hidden">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/support/beer-glass.webp" alt="" className="h-full w-full object-contain p-0.5" />
-          </span>
-        ),
-        onClick: openCreatorSupportModal,
-      }
-    : undefined;
-  const topRightAction = favoritesTopRightAction ?? matchesTopRightAction;
+  const hasMobileTopBar = PRIMARY_PAGES.has(normalizedPathname);
 
   return (
     <div
       className={`relative flex min-h-screen flex-col overflow-x-hidden px-3 pb-28 sm:px-6 lg:px-8 lg:pb-5 lg:pt-5 ${
-        hasMobileMeEntry ? "pt-[calc(env(safe-area-inset-top)+4.125rem)]" : "pt-4 sm:pt-5"
+        hasMobileTopBar ? "pt-[calc(env(safe-area-inset-top)+4.125rem)]" : "pt-4 sm:pt-5"
       }`}
     >
       <div className="pointer-events-none fixed left-1/2 top-0 h-[360px] w-[min(720px,100vw)] -translate-x-1/2 rounded-full bg-volt/10 blur-[120px] sm:h-[520px]" />
@@ -52,7 +27,6 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         {children}
         <SiteFooter />
       </div>
-      {hasMobileMeEntry && <MobileMeEntry topRightAction={topRightAction} />}
       <UserNotificationToast />
       <BackToTopButton />
     </div>

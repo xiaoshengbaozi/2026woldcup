@@ -56,9 +56,13 @@ export function MobileSearchDrawer({ open, onClose }: MobileSearchDrawerProps) {
           initial={{ x: "100%" }}
           animate={{ x: "0%" }}
           exit={{ x: "100%" }}
-          transition={{ type: "spring", stiffness: 360, damping: 38 }}
-          className="fixed inset-y-0 right-0 z-[11000] flex h-[100dvh] w-screen flex-col overflow-hidden bg-ink-950/92 px-4 pb-5 pt-[calc(env(safe-area-inset-top)+1rem)] backdrop-blur-3xl lg:hidden"
-          style={{ touchAction: "auto" }}
+          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+          className="fixed inset-y-0 right-0 z-[11000] flex h-[100dvh] w-screen transform-gpu flex-col overflow-hidden bg-[#05070b] px-4 pb-5 pt-[calc(env(safe-area-inset-top)+1rem)] shadow-[0_0_80px_rgba(0,0,0,.52)] will-change-transform lg:hidden"
+          style={{
+            backfaceVisibility: "hidden",
+            contain: "layout paint size",
+            touchAction: "auto",
+          }}
         >
           <div className="mb-3 flex shrink-0 items-center justify-between">
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-white/66">Search</p>

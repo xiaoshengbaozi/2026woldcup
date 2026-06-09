@@ -13,7 +13,7 @@ import { ModuleC_OddsTimeline } from "@/components/market-timeline/module-c-time
 import { ThreeGlobe } from "@/components/market-map/three-globe";
 import { StatusBar } from "./status-bar";
 import { NavBar } from "@/components/nav-bar";
-import { MobileMeEntry } from "@/components/mobile-me-entry";
+import { useMobileTopBar } from "@/components/mobile-top-bar-provider";
 import { SiteFooter } from "@/components/site-footer";
 
 const MOBILE_TOP_MODULE_OFFSET = 66;
@@ -30,6 +30,7 @@ export function MarketDashboard() {
   const [mobileTabsPinned, setMobileTabsPinned] = useState(false);
   const [mobileTabsHeight, setMobileTabsHeight] = useState(0);
   const overlayRef = useRef<HTMLDivElement>(null);
+  const { setTopRightAction } = useMobileTopBar();
 
   const handleFullscreenChange = useCallback((v: boolean, system = false) => {
     setWebFullscreen(v);
@@ -98,7 +99,26 @@ export function MarketDashboard() {
     };
   }, [mobileTabsPinned]);
 
-  const marketDataReady = dataSource === "live" && countryCount > 0;
+  const shouldShowMarketDashboard = dataSource !== "mock";
+  const hasMarketCountries = dataSource === "live" && countryCount > 0;
+
+  useEffect(() => {
+    if (!hasMarketCountries) {
+      setTopRightAction(null);
+      return;
+    }
+
+    setTopRightAction({
+      ariaLabel: "打开概率地图",
+      active: webFullscreen,
+      icon: <MapIcon className="h-4 w-4" />,
+      onClick: () => handleFullscreenChange(true, false),
+    });
+
+    return () => {
+      setTopRightAction(null);
+    };
+  }, [handleFullscreenChange, hasMarketCountries, setTopRightAction, webFullscreen]);
 
   return (
     <div className="relative flex min-h-screen flex-col px-4 pb-28 pt-[calc(env(safe-area-inset-top)+4.125rem)] sm:px-6 lg:px-8 lg:pb-5 lg:pt-5">
@@ -110,7 +130,7 @@ export function MarketDashboard() {
         {/* Navigation bar */}
         <NavBar />
 
-        {!marketDataReady ? (
+        {!shouldShowMarketDashboard ? (
           <MarketDataLoadingPanel />
         ) : (
           <>
@@ -218,20 +238,9 @@ export function MarketDashboard() {
         <SiteFooter />
       </div>
 
-      {marketDataReady && (
-      <MobileMeEntry
-        topRightAction={{
-          ariaLabel: "打开概率地图",
-          active: webFullscreen,
-          icon: <MapIcon className="h-4 w-4" />,
-          onClick: () => handleFullscreenChange(true, false),
-        }}
-      />
-      )}
-
       {/* Web fullscreen overlay — globe + rankings + overflow */}
       {createPortal(
-        marketDataReady && webFullscreen ? (
+        hasMarketCountries && webFullscreen ? (
           <div ref={overlayRef} className="fixed inset-0 z-[9999] overflow-hidden bg-[#050505]">
             {/* Globe remains full-frame; panels float above it. */}
             <div className="pointer-events-none absolute inset-0">

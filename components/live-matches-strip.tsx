@@ -102,7 +102,7 @@ export function LiveMatchesStrip({ matches }: LiveMatchesStripProps) {
               <span className="relative inline-flex h-2 w-2 rounded-full bg-volt shadow-[0_0_10px_rgba(216,255,62,0.7)]" />
             </span>
             <span className="text-[10px] font-bold uppercase tracking-widest text-volt">
-              LIVE
+              直播
             </span>
             <Radio className="h-3.5 w-3.5 animate-pulse text-volt/70" />
           </button>
@@ -132,7 +132,7 @@ export function LiveMatchesStrip({ matches }: LiveMatchesStripProps) {
             aria-expanded={expanded}
           >
             <span className="whitespace-nowrap text-[10px] uppercase tracking-wider text-white/32">
-              Details
+              展开
             </span>
             <motion.span
               animate={{ rotate: expanded ? 180 : 0 }}
@@ -169,9 +169,9 @@ export function LiveMatchesStrip({ matches }: LiveMatchesStripProps) {
                   border: "1px solid rgba(255,255,255,0.06)",
                 }}
               >
-                <p className="text-sm font-semibold text-white/78">No live matches right now</p>
+                <p className="text-sm font-semibold text-white/78">暂无正在直播的比赛</p>
                 <p className="mt-2 text-xs leading-5 text-white/42">
-                  The ticker will automatically show the next scheduled fixtures.
+                  直播条会自动显示下一批赛程。
                 </p>
               </div>
             )}
@@ -195,7 +195,7 @@ function MatchTickerItem({ match, isLive, stageLabel }: { match: Match; isLive: 
   const score = getMatchScore(match);
   const matchup = hasStarted
     ? `${teams.home.name}${score.home}:${score.away}${teams.away.name}`
-    : `${teams.home.name} vs ${teams.away.name}`;
+    : `${teams.home.name} 对 ${teams.away.name}`;
 
   const content = (
     <>

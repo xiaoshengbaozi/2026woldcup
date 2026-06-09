@@ -27,7 +27,8 @@ function getWsUrl(apiUrl: string) {
   return apiUrl.replace(/^http:/, "ws:").replace(/^https:/, "wss:");
 }
 
-function applySnapshot(message: SnapshotMessage) {
+function applySnapshot(message: SnapshotMessage, options: { persist?: boolean } = {}) {
+  const persist = options.persist ?? true;
   const store = useStore.getState();
   unstable_batchedUpdates(() => {
     store.updateCountries(message.countries);
@@ -39,7 +40,7 @@ function applySnapshot(message: SnapshotMessage) {
     store.setDataSource("live");
     store.setStatus("connected");
   });
-  saveLastSnapshot(message);
+  if (persist) saveLastSnapshot(message);
 }
 
 function applyDelta(message: DeltaMessage) {
@@ -101,9 +102,28 @@ export function useLiveMarketData() {
       try {
         const response = await fetchWithTimeout(`${apiUrl}/api/snapshot`, { cache: "no-store" }, 5_000);
         if (!response.ok) throw new Error(`Snapshot returned ${response.status}`);
-        applySnapshot((await response.json()) as SnapshotMessage);
+        const snapshot = (await response.json()) as SnapshotMessage;
+        if (snapshot.countries.length) {
+          applySnapshot(snapshot);
+          return;
+        }
+
+        const lastSnapshot = readLastSnapshot();
+        if (lastSnapshot) {
+          applySnapshot(lastSnapshot, { persist: false });
+          useStore.getState().setStatus("stale");
+          return;
+        }
+
+        applySnapshot(snapshot, { persist: false });
       } catch (err) {
         console.warn("[MarketData] Snapshot request failed:", err);
+        const lastSnapshot = readLastSnapshot();
+        if (lastSnapshot) {
+          applySnapshot(lastSnapshot, { persist: false });
+          useStore.getState().setStatus("stale");
+          return;
+        }
         if (useStore.getState().countries.size) {
           useStore.getState().setStatus("stale");
           return;
@@ -209,5 +229,19 @@ function saveLastSnapshot(message: SnapshotMessage) {
     window.localStorage.setItem(SNAPSHOT_STORAGE_KEY, JSON.stringify({ savedAt: Date.now(), snapshot: compact }));
   } catch {
     // If storage is unavailable, the in-memory store still preserves the current frame.
+  }
+}
+
+function readLastSnapshot() {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = window.localStorage.getItem(SNAPSHOT_STORAGE_KEY);
+    if (!raw) return null;
+    const payload = JSON.parse(raw) as { snapshot?: SnapshotMessage };
+    if (!payload.snapshot?.countries?.length) return null;
+    return payload.snapshot;
+  } catch {
+    return null;
   }
 }

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell, Check, Star } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Bell, Check, Sparkles, Star } from "lucide-react";
 import { MeAuthDialog, type SharedAuthMode } from "@/components/me-auth-dialog";
 import { useUserSession } from "@/components/user-session-provider";
 import { userApi, type PublicUser } from "@/lib/user-system";
@@ -46,17 +47,30 @@ const ACTION_COPY: Record<ActionKind, { idle: string; active: string; pending: s
 const topIconButtonClass =
   "grid h-[34px] w-[34px] min-w-[34px] place-items-center rounded-full bg-white/[0.08] shadow-[0_14px_34px_rgba(0,0,0,.38),0_0_20px_rgba(216,255,62,.1),inset_0_1px_0_rgba(255,255,255,.16)] ring-1 backdrop-blur-2xl transition disabled:opacity-60";
 
+const FEEDBACK_COPY: Record<ActionKind, { added: string; removed: string }> = {
+  team: { added: "已关注", removed: "已取消关注" },
+  player: { added: "已关注", removed: "已取消关注" },
+  match: { added: "已收藏", removed: "已取消收藏" },
+};
+
 export function UserActionButton({ kind, payload, className = "", iconOnly = false, onChanged }: UserActionButtonProps) {
   const [active, setActive] = useState(false);
   const [busy, setBusy] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [authMode, setAuthMode] = useState<SharedAuthMode | null>(null);
+  const [feedback, setFeedback] = useState<"added" | "removed" | null>(null);
   const { home, signedIn, refreshSession } = useUserSession();
   const id = String(payload.id || payload.matchId || "");
 
   useEffect(() => {
     setActive(Boolean(home && isAlreadySaved(kind, id, home.user)));
   }, [home, id, kind]);
+
+  useEffect(() => {
+    if (!feedback) return;
+    const timer = window.setTimeout(() => setFeedback(null), 1100);
+    return () => window.clearTimeout(timer);
+  }, [feedback]);
 
   async function runAction() {
     if (busy) return;
@@ -78,6 +92,7 @@ export function UserActionButton({ kind, payload, className = "", iconOnly = fal
       });
       const nextActive = isAlreadySaved(kind, id, result.user);
       setActive(nextActive);
+      if (nextActive) setFeedback("added");
       onChanged?.(nextActive);
       void refreshSession();
     } finally {
@@ -98,6 +113,7 @@ export function UserActionButton({ kind, payload, className = "", iconOnly = fal
       const result = await userApi<{ user: PublicUser }>(path, { method: "DELETE" });
       const nextActive = isAlreadySaved(kind, id, result.user);
       setActive(nextActive);
+      setFeedback(nextActive ? "added" : "removed");
       onChanged?.(nextActive);
       void refreshSession();
       setConfirmOpen(false);
@@ -112,26 +128,60 @@ export function UserActionButton({ kind, payload, className = "", iconOnly = fal
 
   return (
     <>
-      <button
-        type="button"
-        aria-label={label}
-        onClick={runAction}
-        disabled={busy}
-        className={
-          iconOnly
-            ? `${topIconButtonClass} ${
-                active ? "text-volt ring-volt/55" : "text-white/72 ring-white/12 hover:text-white hover:ring-volt/35"
-              } ${className}`
-            : `inline-flex h-10 items-center justify-center gap-2 rounded-full px-4 text-xs font-black uppercase tracking-[0.12em] transition disabled:opacity-60 ${
-                active
-                  ? "bg-volt text-black shadow-[0_0_28px_rgba(216,255,62,.18)]"
-                  : "bg-white/[0.07] text-white/72 ring-1 ring-white/[0.1] hover:bg-volt/[0.12] hover:text-volt hover:ring-volt/25"
-              } ${className}`
-        }
-      >
-        <Icon className="h-4 w-4" />
-        {!iconOnly && label}
-      </button>
+      <span className="relative inline-flex">
+        <button
+          type="button"
+          aria-label={label}
+          onClick={runAction}
+          disabled={busy}
+          className={
+            iconOnly
+              ? `${topIconButtonClass} ${
+                  active ? "text-volt ring-volt/55" : "text-white/72 ring-white/12 hover:text-white hover:ring-volt/35"
+                } ${className}`
+              : `inline-flex h-10 items-center justify-center gap-2 rounded-full px-4 text-xs font-black uppercase tracking-[0.12em] transition disabled:opacity-60 ${
+                  active
+                    ? "bg-volt text-black shadow-[0_0_28px_rgba(216,255,62,.18)]"
+                    : "bg-white/[0.07] text-white/72 ring-1 ring-white/[0.1] hover:bg-volt/[0.12] hover:text-volt hover:ring-volt/25"
+                } ${className}`
+          }
+        >
+          <motion.span
+            className="grid place-items-center"
+            animate={feedback ? { scale: [1, 1.26, 1], rotate: feedback === "added" ? [0, -9, 0] : [0, 9, 0] } : { scale: 1, rotate: 0 }}
+            transition={{ duration: 0.42, ease: "easeOut" }}
+          >
+            <Icon className="h-4 w-4" />
+          </motion.span>
+          {!iconOnly && label}
+        </button>
+
+        <AnimatePresence>
+          {feedback && (
+            <>
+              <motion.span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 rounded-full border border-volt/70 shadow-[0_0_28px_rgba(216,255,62,.22)]"
+                initial={{ opacity: 0.75, scale: 0.92 }}
+                animate={{ opacity: 0, scale: 1.55 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.62, ease: "easeOut" }}
+              />
+              <motion.span
+                role="status"
+                className="pointer-events-none absolute left-1/2 top-0 z-20 inline-flex -translate-x-1/2 -translate-y-[calc(100%+0.5rem)] items-center gap-1.5 whitespace-nowrap rounded-full border border-volt/35 bg-black/72 px-3 py-1.5 text-[11px] font-black text-volt shadow-[0_18px_44px_rgba(0,0,0,.45),0_0_26px_rgba(216,255,62,.16)] backdrop-blur-2xl"
+                initial={{ opacity: 0, y: 8, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -6, scale: 0.96 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+              >
+                <Sparkles className="h-3 w-3" />
+                {FEEDBACK_COPY[kind][feedback]}
+              </motion.span>
+            </>
+          )}
+        </AnimatePresence>
+      </span>
 
       {confirmOpen && (
         <div className="fixed inset-0 z-[430] grid place-items-center bg-black/62 px-4 backdrop-blur-xl">

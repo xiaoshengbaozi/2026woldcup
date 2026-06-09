@@ -49,7 +49,10 @@ export function GlobalSearchDrawerCard({ onNavigate }: { onNavigate?: () => void
   const [news, setNews] = useState<SearchNewsItem[]>([]);
 
   useEffect(() => {
-    window.requestAnimationFrame(() => inputRef.current?.focus());
+    const focusTimer = window.setTimeout(() => {
+      inputRef.current?.focus({ preventScroll: true });
+    }, 180);
+    return () => window.clearTimeout(focusTimer);
   }, []);
 
   useEffect(() => {
@@ -224,7 +227,7 @@ export function GlobalSearch() {
             type="button"
             onClick={openSearch}
             aria-label="打开全局搜索"
-            className="group absolute right-0 top-0 flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-white/60 ring-1 ring-white/[0.08] transition-all duration-200 hover:bg-white/[0.1] hover:text-white hover:ring-volt/35"
+            className="global-search-trigger group absolute right-0 top-0 flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-white/60 ring-1 ring-white/[0.08] transition-all duration-200 hover:bg-white/[0.1] hover:text-white hover:ring-volt/35"
           >
             <Search className="h-4 w-4 transition duration-300 group-hover:scale-110 group-hover:text-volt" />
           </button>
@@ -241,7 +244,7 @@ export function GlobalSearch() {
             exit={{ width: 36, opacity: 0, scaleX: 0.78 }}
             transition={{ type: "spring", stiffness: 360, damping: 34 }}
             style={{ transformOrigin: "right center" }}
-            className="group absolute right-0 top-0 z-[220] flex h-8 items-center gap-2 overflow-hidden rounded-full bg-[#070a10]/92 px-3 ring-1 ring-white/[0.1] shadow-[0_16px_48px_rgba(0,0,0,.28),0_0_28px_rgba(216,255,62,.08)] backdrop-blur-2xl focus-within:ring-volt/42"
+            className="global-search-form group absolute right-0 top-0 z-[220] flex h-8 items-center gap-2 overflow-hidden rounded-full bg-[#070a10]/92 px-3 ring-1 ring-white/[0.1] shadow-[0_16px_48px_rgba(0,0,0,.28),0_0_28px_rgba(216,255,62,.08)] backdrop-blur-2xl focus-within:ring-volt/42"
           >
             <Search className="h-4 w-4 shrink-0 text-volt/75" />
             <input
@@ -254,7 +257,7 @@ export function GlobalSearch() {
               }}
               onBlur={scheduleClose}
               placeholder="搜索球队 / 球员 / 赛程 / 新闻"
-              className="min-w-0 flex-1 bg-transparent text-xs font-semibold text-white outline-none placeholder:text-white/30"
+              className="global-search-input min-w-0 flex-1 bg-transparent text-xs font-semibold text-white outline-none placeholder:text-white/30"
             />
             {query ? (
               <button
@@ -264,7 +267,7 @@ export function GlobalSearch() {
                   setQuery("");
                   inputRef.current?.focus();
                 }}
-                className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-white/35 transition hover:bg-white/[0.08] hover:text-white"
+                className="global-search-clear grid h-6 w-6 shrink-0 place-items-center rounded-full text-white/35 transition hover:bg-white/[0.08] hover:text-white"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -287,22 +290,22 @@ export function GlobalSearch() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.98 }}
             transition={{ duration: 0.18, ease: "easeOut" }}
-            className="absolute right-0 top-[calc(100%+0.65rem)] z-[320] w-[320px] overflow-hidden rounded-[1.6rem] border border-white/[0.18] bg-[#070a11] shadow-[0_30px_90px_rgba(0,0,0,.78),0_0_58px_rgba(216,255,62,.16)]"
+            className="global-search-popover absolute right-0 top-[calc(100%+0.65rem)] z-[320] w-[320px] overflow-hidden rounded-[1.6rem] border border-white/[0.18] bg-[#070a11] shadow-[0_30px_90px_rgba(0,0,0,.78),0_0_58px_rgba(216,255,62,.16)]"
           >
             {suggestions.length ? (
-              <div className="divide-y divide-white/[0.08] px-2 py-1 pb-4">
+              <div className="global-search-list divide-y divide-white/[0.08] px-2 py-1 pb-4">
                 {suggestions.map((item) => (
                   <SuggestionRow key={`${item.type}-${item.id}`} item={item} onNavigate={() => setFocused(false)} />
                 ))}
               </div>
             ) : (
-              <div className="px-5 py-8 text-center">
+              <div className="global-search-empty px-5 py-8 text-center">
                 <Search className="mx-auto h-7 w-7 text-white/18" />
                 <p className="mt-3 text-sm font-bold text-white/58">没有匹配结果</p>
                 <p className="mt-1 text-xs text-white/32">换一个球队、球员或城市试试。</p>
               </div>
             )}
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-white/[0.035] backdrop-blur-xl [mask-image:linear-gradient(to_top,black,transparent)]" />
+            <div className="global-search-popover-fade pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-white/[0.035] backdrop-blur-xl [mask-image:linear-gradient(to_top,black,transparent)]" />
           </motion.div>
         ) : null}
       </AnimatePresence>
@@ -322,7 +325,7 @@ function SuggestionRow({
   const actionKind = item.type === "teams" ? "team" : item.type === "players" ? "player" : item.type === "matches" ? "match" : null;
   const content = (
     <Link href={item.href} onClick={onNavigate} className="group/link flex min-w-0 flex-1 items-center gap-3">
-      <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-white/[0.055] ring-1 ring-white/[0.08]">
+      <div className="global-search-thumb relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-white/[0.055] ring-1 ring-white/[0.08]">
         {item.image ? (
           <Image src={item.image} alt="" fill sizes="40px" className="object-cover" />
         ) : (
@@ -333,12 +336,12 @@ function SuggestionRow({
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 items-center gap-2">
-          <p className="truncate text-sm font-black text-white transition group-hover/link:text-volt">{item.title}</p>
-          <span className="shrink-0 rounded-full bg-volt/[0.14] px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-volt">
+          <p className="global-search-title truncate text-sm font-black text-white transition group-hover/link:text-volt">{item.title}</p>
+          <span className="global-search-badge shrink-0 rounded-full bg-volt/[0.14] px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-volt">
             {labelByType(item.type)}
           </span>
         </div>
-        <p className="mt-0.5 truncate text-xs text-white/72">{item.eyebrow || item.description}</p>
+        <p className="global-search-meta mt-0.5 truncate text-xs text-white/72">{item.eyebrow || item.description}</p>
       </div>
     </Link>
   );
@@ -346,7 +349,7 @@ function SuggestionRow({
   if (hidden) return null;
 
   return (
-    <div className="group flex items-center gap-3 px-2.5 py-3 transition hover:bg-white/[0.045]">
+    <div className="global-search-row group flex items-center gap-3 px-2.5 py-3 transition hover:bg-white/[0.045]">
       {content}
       {actionKind ? (
         <UserActionButton

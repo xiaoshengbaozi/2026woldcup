@@ -4,23 +4,28 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactNode, TouchEvent } from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Search, UserRound } from "lucide-react";
+import { Plus, Search, UserRound } from "lucide-react";
 import { AvatarSettingsDialog } from "./avatar-settings-dialog";
 import { useUserSession } from "@/components/user-session-provider";
-import { userApi } from "@/lib/user-system";
+import { userApi, type PublicUser } from "@/lib/user-system";
 import { MeAuthDialog, type SharedAuthMode } from "./me-auth-dialog";
 import { MobileMeDrawer } from "./mobile-me-drawer";
 import { MobileSearchDrawer } from "./mobile-search-drawer";
 import { mobileFloatingSurfaceStyle } from "@/components/mobile-surface-styles";
+import { openCreatorSupportModal } from "@/components/support-creator-modal";
+
+export type MobileTopRightAction = {
+  ariaLabel: string;
+  active?: boolean;
+  icon: ReactNode;
+  onClick: () => void;
+};
 
 type MobileMeEntryProps = {
-  topRightAction?: {
-    ariaLabel: string;
-    active?: boolean;
-    icon: ReactNode;
-    onClick: () => void;
-  };
+  topRightAction?: MobileTopRightAction;
 };
+
+const PRIMARY_PAGES = new Set(["/", "/news", "/data", "/matches", "/favorites", "/players", "/me", "/teams", "/live"]);
 
 export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
   const pathname = usePathname();
@@ -32,12 +37,42 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
   const [topRailExpanded, setTopRailExpanded] = useState(false);
   const [topRailHeight, setTopRailHeight] = useState(88);
   const [authMode, setAuthMode] = useState<SharedAuthMode | null>(null);
+  const [emailBusy, setEmailBusy] = useState(false);
+  const [emailNotice, setEmailNotice] = useState("");
   const { home, avatarUrl, loading, refreshSession } = useUserSession();
   const showHomeWordmark = normalizedPathname === "/";
   const showFifaWordmark = normalizedPathname === "/news" || normalizedPathname === "/matches" || normalizedPathname === "/data" || normalizedPathname === "/live";
   const showSearchEntry = pathname === "/" || pathname.startsWith("/news");
+  const favoritesTopRightAction: MobileTopRightAction | undefined =
+    normalizedPathname === "/favorites"
+      ? {
+          ariaLabel: "添加收藏",
+          icon: <Plus className="h-4 w-4" />,
+          onClick: () => {
+            window.location.href = "/matches";
+          },
+        }
+      : undefined;
+  const matchesTopRightAction: MobileTopRightAction | undefined =
+    normalizedPathname === "/matches"
+      ? {
+          ariaLabel: "打赏作者",
+          icon: (
+            <span className="relative block h-7 w-7 overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/support/beer-glass.webp" alt="" className="h-full w-full object-contain p-0.5" />
+            </span>
+          ),
+          onClick: openCreatorSupportModal,
+        }
+      : undefined;
+  const resolvedTopRightAction = topRightAction ?? favoritesTopRightAction ?? matchesTopRightAction;
 
   const refreshHome = refreshSession;
+
+  useEffect(() => {
+    if (home?.user.emailVerifiedAt) setEmailNotice("");
+  }, [home?.user.emailVerifiedAt]);
 
   useEffect(() => {
     const handleTopRailChange = (event: Event) => {
@@ -79,8 +114,28 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
 
   const logout = async () => {
     await userApi("/api/auth/logout", { method: "POST", body: "{}" }).catch(() => undefined);
+    setEmailNotice("");
     refreshHome();
   };
+
+  const resendEmailVerification = async () => {
+    setEmailBusy(true);
+    setEmailNotice("");
+    try {
+      const result = await userApi<{ user: PublicUser; emailVerificationSent?: boolean; alreadyVerified?: boolean }>("/api/auth/resend-verification", {
+        method: "POST",
+        body: "{}",
+      });
+      setEmailNotice(result.alreadyVerified ? "\u90ae\u7bb1\u5df2\u9a8c\u8bc1" : result.emailVerificationSent ? "\u9a8c\u8bc1\u90ae\u4ef6\u5df2\u53d1\u9001" : "\u90ae\u4ef6\u670d\u52a1\u6682\u672a\u914d\u7f6e");
+      await refreshHome();
+    } catch {
+      setEmailNotice("\u53d1\u9001\u5931\u8d25\uff0c\u7a0d\u540e\u518d\u8bd5");
+    } finally {
+      setEmailBusy(false);
+    }
+  };
+
+  if (!PRIMARY_PAGES.has(normalizedPathname)) return null;
 
   return (
     <>
@@ -118,17 +173,17 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
         </button>
         {showHomeWordmark ? <MobileHomeWordmark /> : null}
         {showFifaWordmark ? <MobileFifaWordmark /> : null}
-        {topRightAction ? (
+        {resolvedTopRightAction ? (
           <button
             type="button"
-            aria-label={topRightAction.ariaLabel}
-            onClick={topRightAction.onClick}
+            aria-label={resolvedTopRightAction.ariaLabel}
+            onClick={resolvedTopRightAction.onClick}
             className={`mobile-floating-surface pointer-events-auto absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)] grid h-[34px] w-[34px] place-items-center rounded-full bg-white/[0.08] text-white/72 shadow-[0_14px_34px_rgba(0,0,0,.38),0_0_20px_rgba(216,255,62,.1),inset_0_1px_0_rgba(255,255,255,.16)] ring-1 backdrop-blur-2xl transition ${
-              topRightAction.active ? "ring-volt/55 text-volt" : "ring-white/12 hover:text-white hover:ring-volt/35"
+              resolvedTopRightAction.active ? "ring-volt/55 text-volt" : "ring-white/12 hover:text-white hover:ring-volt/35"
             }`}
             style={mobileFloatingSurfaceStyle}
           >
-            {topRightAction.icon}
+            {resolvedTopRightAction.icon}
           </button>
         ) : showSearchEntry ? (
           <button
@@ -153,8 +208,11 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
         onLogin={() => setAuthMode("login")}
         onRegister={() => setAuthMode("register")}
         onOpenAvatarSettings={() => setAvatarSettingsOpen(true)}
+        onResendVerification={resendEmailVerification}
         onLogout={logout}
         onClose={() => setDrawerOpen(false)}
+        emailNotice={emailNotice}
+        emailBusy={emailBusy}
       />
       <MeAuthDialog mode={authMode} onClose={() => setAuthMode(null)} onAuthenticated={refreshHome} />
       <AvatarSettingsDialog open={avatarSettingsOpen} home={home} onClose={() => setAvatarSettingsOpen(false)} onSaved={refreshHome} />

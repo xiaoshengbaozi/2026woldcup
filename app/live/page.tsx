@@ -57,7 +57,7 @@ export default function LivePage() {
               <Radio className="h-5 w-5" />
             </span>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/38">LIVE CENTER</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/38">直播中心</p>
               <h1 className="mt-1 text-2xl font-semibold text-white">24小时内即将开赛</h1>
             </div>
           </div>

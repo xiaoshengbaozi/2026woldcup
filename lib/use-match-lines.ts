@@ -74,8 +74,11 @@ function subscribeMatchLines(subscriber: (state: MatchLinesState) => void) {
   subscribers.add(subscriber);
   subscriber({ ...matchLinesState });
 
-  if (!timer) {
+  if (matchLinesState.events.length === 0) {
     void loadMatchLines();
+  }
+
+  if (!timer) {
     timer = window.setInterval(() => {
       if (!document.hidden && navigator.onLine) {
         void loadMatchLines();
