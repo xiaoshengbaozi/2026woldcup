@@ -21,6 +21,7 @@
 :root {
   color-scheme: dark;
   background: #050505;
+  --pwa-status-bar-color: #05070f;
 
   /* ── Market Prediction OS tokens ── */
   --bg-primary: #0A0A0F;
@@ -300,6 +301,30 @@ button {
   }
 }
 
+@media all and (display-mode: standalone) {
+  html,
+  body {
+    background-color: var(--pwa-status-bar-color);
+  }
+
+  body {
+    min-height: 100dvh;
+    overscroll-behavior-y: none;
+  }
+}
+
+@supports (-webkit-touch-callout: none) {
+  @media all and (display-mode: standalone) {
+    html {
+      min-height: -webkit-fill-available;
+    }
+
+    body {
+      min-height: -webkit-fill-available;
+    }
+  }
+}
+
 @media (max-width: 768px) {
   .glass-panel {
     backdrop-filter: blur(18px);
@@ -459,4 +484,12 @@ button {
 }
 .scrollbar-hidden::-webkit-scrollbar {
   display: none;
+}
+
+.mobile-floating-surface {
+  box-shadow:
+    0 -8px 40px rgba(0, 0, 0, 0.5),
+    0 0 60px -10px rgba(216, 255, 62, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(216, 255, 62, 0.04) !important;
 }

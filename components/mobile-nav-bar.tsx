@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { BarChart3, Calendar, Home, Newspaper, Radio } from "lucide-react";
 import { useEffect, useState, type MouseEvent } from "react";
+import { mobileFloatingSurfaceShadow } from "@/components/mobile-surface-styles";
 
 const navItems = [
   { label: "首页", href: "/", icon: Home },
@@ -57,7 +58,7 @@ export function MobileNavBar() {
     >
       <div className="mx-3 mb-3 flex items-stretch gap-3">
         <div
-          className={`mobile-nav-bar relative flex flex-1 items-center justify-around rounded-full px-2 py-2 ${
+          className={`mobile-nav-bar mobile-floating-surface relative flex flex-1 items-center justify-around rounded-full px-2 py-2 ${
             isLivePage ? "pointer-events-none z-0 opacity-0" : ""
           }`}
           style={mobileNavSurfaceStyle}
@@ -109,7 +110,7 @@ export function MobileNavBar() {
         <Link
           href={isLivePage ? liveReturnHref : "/live"}
           onClick={handleLiveNavClick}
-          className="pointer-events-auto relative z-[90] flex h-[62px] w-[62px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-full text-black transition-transform hover:scale-[1.02]"
+          className="mobile-floating-surface pointer-events-auto relative z-[90] flex h-[62px] w-[62px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-full text-black transition-transform hover:scale-[1.02]"
           style={liveNavSurfaceStyle}
           aria-label="直播"
         >
@@ -124,8 +125,7 @@ export function MobileNavBar() {
 const mobileNavSurfaceStyle = {
   background:
     "linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)), rgba(5,8,8,0.92)",
-  boxShadow:
-    "0 -8px 40px rgba(0,0,0,0.5), 0 0 60px -10px rgba(216,255,62,0.04), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(216,255,62,0.04)",
+  boxShadow: mobileFloatingSurfaceShadow,
   backdropFilter: "blur(32px)",
   WebkitBackdropFilter: "blur(32px)",
 };
@@ -133,8 +133,7 @@ const mobileNavSurfaceStyle = {
 const liveNavSurfaceStyle = {
   background:
     "linear-gradient(135deg, rgba(216,255,62,0.98), rgba(184,214,65,0.92)), rgba(216,255,62,0.96)",
-  boxShadow:
-    "0 -8px 40px rgba(0,0,0,0.5), 0 0 34px rgba(216,255,62,0.28), inset 0 1px 0 rgba(255,255,255,0.38), inset 0 -1px 0 rgba(0,0,0,0.1)",
+  boxShadow: mobileFloatingSurfaceShadow,
   backdropFilter: "blur(32px)",
   WebkitBackdropFilter: "blur(32px)",
 };

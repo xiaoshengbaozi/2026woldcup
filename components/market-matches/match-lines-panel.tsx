@@ -5,6 +5,12 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart3, TrendingUp, X, Zap, Globe2, ChevronDown } from "lucide-react";
 import { getTeamCodeFromName, localizeTeamName } from "@/lib/team-localization";
+import {
+  getLineupPlayerEnterTransition,
+  lineupPlayerEnterAnimate,
+  lineupPlayerEnterInitial,
+  lineupPlayerEnterVariants,
+} from "@/components/motion/lineup-player-enter";
 import { useMatchLines } from "@/lib/use-match-lines";
 import { formatVolume } from "@/lib/format";
 import { getFlagUrl } from "@/lib/world-cup-2026";
@@ -284,16 +290,16 @@ function MatchDetailModal({
       onClick={onClose}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+      <div className="match-detail-modal-backdrop absolute inset-0 bg-black/70 backdrop-blur-sm" />
 
       {/* Card */}
       <motion.div
-        initial={{ scale: 0.92, y: 20, opacity: 0 }}
-        animate={{ scale: 1, y: 0, opacity: 1 }}
-        exit={{ scale: 0.92, y: 20, opacity: 0 }}
-        transition={{ type: "spring", damping: 28, stiffness: 380 }}
+        initial={lineupPlayerEnterInitial}
+        animate={lineupPlayerEnterAnimate}
+        exit={{ opacity: 0, y: 8 }}
+        transition={getLineupPlayerEnterTransition(0, 0.08, 0.02, 0.3)}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-[380px] overflow-hidden rounded-[24px] border border-white/[0.08] bg-[#111113] shadow-[0_32px_64px_rgba(0,0,0,0.6)]"
+        className="match-detail-modal relative w-full max-w-[380px] overflow-hidden rounded-[24px] border border-white/[0.08] bg-[#111113] shadow-[0_32px_64px_rgba(0,0,0,0.6)]"
       >
         {/* Close button */}
         <button
@@ -309,17 +315,29 @@ function MatchDetailModal({
         {/* Main content area — flight card layout */}
         <div className="relative px-6 pt-7 pb-5">
           {/* Time row */}
-          <div className="flex items-center justify-between mb-5">
+          <motion.div
+            custom={0}
+            variants={lineupPlayerEnterVariants}
+            initial="hidden"
+            animate="visible"
+            className="mb-5 flex items-center justify-between"
+          >
             <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-white/25" style={{ fontFamily: "ScreenMatrix" }}>
               开赛时间
             </span>
             <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-white/25" style={{ fontFamily: "ScreenMatrix" }}>
               {event.ticker}
             </span>
-          </div>
+          </motion.div>
 
           {/* Teams vs layout — flight path inspired */}
-          <div className="flex items-center justify-between gap-3">
+          <motion.div
+            custom={1}
+            variants={lineupPlayerEnterVariants}
+            initial="hidden"
+            animate="visible"
+            className="flex items-center justify-between gap-3"
+          >
             {/* Home team */}
             <div className="flex flex-col items-center min-w-0 gap-1.5">
               <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-white/35" style={{ fontFamily: "ScreenMatrix" }}>
@@ -387,12 +405,18 @@ function MatchDetailModal({
                 {awayLocalized}
               </span>
             </div>
-          </div>
+          </motion.div>
 
           {/* Dotted flight path */}
-          <div className="relative mt-4 h-[1px]">
+          <motion.div
+            custom={2}
+            variants={lineupPlayerEnterVariants}
+            initial="hidden"
+            animate="visible"
+            className="relative mt-4 h-[1px]"
+          >
             <div className="absolute inset-x-0 top-1/2 h-[1px] bg-gradient-to-r from-transparent via-white/15 to-transparent" />
-          </div>
+          </motion.div>
 
           {/* Odds grid — adapts to 2 or 3 markets */}
           <div
@@ -404,8 +428,12 @@ function MatchDetailModal({
               const isDraw = moneyline.length === 3 && idx === 1;
               const isAway = !isHome && !isDraw;
               return (
-                <div
+                <motion.div
                   key={market.id}
+                  custom={idx + 3}
+                  variants={lineupPlayerEnterVariants}
+                  initial="hidden"
+                  animate="visible"
                   className="flex flex-col items-center gap-1 rounded-xl border border-white/[0.05] bg-white/[0.025] px-2 py-2.5 transition hover:border-volt/15"
                 >
                   <span className="text-[9px] uppercase tracking-[0.1em] text-white/30">
@@ -424,13 +452,19 @@ function MatchDetailModal({
                       Bid {market.bestBid.toFixed(2)}
                     </span>
                   )}
-                </div>
+                </motion.div>
               );
             })}
           </div>
 
           {/* Market stats footer */}
-          <div className="mt-4 flex items-center justify-between border-t border-white/[0.04] pt-3">
+          <motion.div
+            custom={moneyline.length + 3}
+            variants={lineupPlayerEnterVariants}
+            initial="hidden"
+            animate="visible"
+            className="mt-4 flex items-center justify-between border-t border-white/[0.04] pt-3"
+          >
             <div className="flex items-center gap-1.5 text-[10px] text-white/25">
               <Globe2 className="h-3 w-3" />
               <span>流动性 {formatVolume(event.liquidity)}</span>
@@ -439,7 +473,7 @@ function MatchDetailModal({
               <TrendingUp className="h-3 w-3" />
               <span>24h 交易量 {formatVolume(event.volume24h)}</span>
             </div>
-          </div>
+          </motion.div>
         </div>
       </motion.div>
     </motion.div>

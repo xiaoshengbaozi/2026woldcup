@@ -134,6 +134,7 @@ export function injectMockData() {
   store.setEvents(generateMockEvents());
   store.recomputeRankings();
   store.setStatus("connected");
+  store.setDataSource("mock");
 
   console.log(`[Mock] Injected ${countries.length} countries with history and events`);
 }

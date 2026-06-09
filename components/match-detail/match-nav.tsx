@@ -12,7 +12,7 @@ const NAV_ITEMS: { id: MatchTab; label: string }[] = [
   { id: "analysis", label: "分析" },
 ];
 
-const MOBILE_TOP_MODULE_OFFSET = 54;
+const MOBILE_TOP_MODULE_OFFSET = 66;
 
 export function MatchNav({
   active,
@@ -90,12 +90,12 @@ export function MatchNav({
       ref={navRef}
       className={`${
         isPinned
-          ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+3.375rem)] z-[65] px-3 py-2"
-          : "relative -mx-3 bg-black/58 px-3 py-2 backdrop-blur-2xl"
+          ? "match-tabs-rail fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[65] px-3 py-2"
+          : "match-tabs-rail relative -mx-3 px-3 py-2"
       } mb-5 lg:static lg:mx-0 lg:bg-transparent lg:px-1 lg:py-0 lg:backdrop-blur-none`}
     >
       <div
-        className="flex flex-wrap gap-1.5"
+        className="scrollbar-hidden flex flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain"
         role="tablist"
         aria-label="比赛详情"
       >
@@ -109,10 +109,10 @@ export function MatchNav({
               role="tab"
               aria-selected={isActive}
               onClick={() => handleTabChange(item.id)}
-              className={`group relative flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-left text-xs font-bold transition duration-300 sm:px-3.5 sm:py-2 sm:text-sm ${
+              className={`group relative flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-left text-sm font-bold transition duration-300 ${
                 isActive
-                  ? "bg-volt text-black shadow-[0_0_24px_rgba(216,255,62,.2)]"
-                : "bg-white/[0.055] text-white/62 ring-1 ring-white/[0.08] hover:bg-white/[0.09] hover:text-white"
+                  ? "bg-volt text-black shadow-[0_0_26px_rgba(216,255,62,.2)]"
+                : "bg-white/[0.045] text-white/58 ring-1 ring-white/[0.08] hover:bg-white/[0.08] hover:text-white"
               }`}
             >
               <span>{item.label}</span>

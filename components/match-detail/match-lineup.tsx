@@ -9,6 +9,11 @@ import matchStarPlayers from "@/data/match-star-players.json";
 import playerArticles from "@/data/player-articles.json";
 import { localizeCoachName } from "@/lib/coach-localization";
 import { PlayerFmScoutCard } from "@/components/player-fm-scout-card";
+import {
+  getLineupPlayerEnterTransition,
+  lineupPlayerEnterAnimate,
+  lineupPlayerEnterInitial,
+} from "@/components/motion/lineup-player-enter";
 import { getOfficialPlayerCatalog, type OfficialPlayerCatalogItem } from "@/lib/official-player-catalog";
 import { hasKnownBlankPlayerPhoto } from "@/lib/player-photo-overrides";
 import { findPlayerScoutNoteByIdentity, type PlayerScoutNote } from "@/lib/player-scout-notes";
@@ -1015,9 +1020,9 @@ function PlayerCell({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.15 + index * 0.02, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+      initial={lineupPlayerEnterInitial}
+      animate={lineupPlayerEnterAnimate}
+      transition={getLineupPlayerEnterTransition(index)}
       className="group relative flex items-center gap-2 overflow-hidden rounded-xl px-2 py-1.5 transition-all duration-200 hover:bg-white/[0.04]"
       style={{
         background: "rgba(255,255,255,0.025)",

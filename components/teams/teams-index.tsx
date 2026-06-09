@@ -214,12 +214,12 @@ export function TeamsIndex() {
               ref={tabsRef}
               className={`${
                 isPinned
-                  ? "teams-tabs-rail fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[65] px-3 py-2"
-                  : "teams-tabs-rail relative -mx-3 bg-black/58 px-3 py-2 backdrop-blur-2xl"
+                  ? "teams-tabs-rail teams-tabs-rail-pinned fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[65] px-3 py-2"
+                  : "teams-tabs-rail relative -mx-3 px-3 py-2"
               } sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none`}
             >
             <div
-              className="flex flex-wrap gap-1.5"
+              className="scrollbar-hidden flex flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain"
               role="tablist"
               aria-label="地区分类"
             >
@@ -233,7 +233,7 @@ export function TeamsIndex() {
                     role="tab"
                     aria-selected={isActive}
                     onClick={() => handleContinentChange(item.continent)}
-                    className={`group relative flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-bold transition duration-300 ${
+                    className={`group relative flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold transition duration-300 ${
                       isActive
                         ? "bg-volt text-black shadow-[0_0_26px_rgba(216,255,62,.2)]"
                         : "bg-white/[0.045] text-white/58 ring-1 ring-white/[0.08] hover:bg-white/[0.08] hover:text-white"

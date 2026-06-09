@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { MatchCalendarView } from "@/components/match-calendar-view";
+import { MobileLiveMatchesEntry } from "@/components/mobile-live-matches-entry";
 import { MobileSecondaryPageActions } from "@/components/mobile-secondary-page-actions";
 import { parseCalendar } from "@/lib/calendar";
 import { cachedText, fetchWithTimeout } from "@/lib/request-cache";
@@ -42,7 +43,13 @@ export default function MatchCalendarPage() {
 
   return (
     <DashboardShell>
-      <MobileSecondaryPageActions backHref="/matches" backLabel="返回赛程" title="比赛日历" reserveSpace />
+      <MobileSecondaryPageActions
+        backHref="/matches"
+        backLabel="返回赛程"
+        title="比赛日历"
+        reserveSpace
+        rightAction={<MobileLiveMatchesEntry matches={matches} variant="inline" />}
+      />
 
       <main className="-mt-4 w-full min-w-0 space-y-4 pb-6 sm:mt-0 lg:pb-0">
         {loading ? (

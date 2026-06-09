@@ -353,12 +353,12 @@ export default function NewsPage() {
         ref={mobileTabsRef}
         className={`${
           isMobileTabsPinned
-            ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[65] px-3 py-2"
-            : "relative -mx-3 mt-4 bg-black/58 px-3 py-2 backdrop-blur-2xl"
+            ? "news-tabs-rail fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[65] px-3 py-2"
+            : "news-tabs-rail relative -mx-3 mt-4 px-3 py-2"
         } lg:hidden`}
         aria-label="新闻分类"
       >
-        <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="新闻分类">
+        <div className="scrollbar-hidden flex flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain" role="tablist" aria-label="新闻分类">
           {mobileNewsTabs.map((tab) => {
             const isActive = tab.id === activeNewsTab;
 
@@ -370,7 +370,7 @@ export default function NewsPage() {
                 aria-selected={isActive}
                 aria-label={`${tab.title}：${tab.label}`}
                 onClick={() => scrollToNewsSection(tab.id)}
-                className={`relative rounded-full px-4 py-2 text-sm font-bold transition duration-300 ${
+                className={`relative shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold transition duration-300 ${
                   isActive
                     ? "bg-volt text-black shadow-[0_0_26px_rgba(216,255,62,.2)]"
                     : "bg-white/[0.045] text-white/58 ring-1 ring-white/[0.08] hover:bg-white/[0.08] hover:text-white"

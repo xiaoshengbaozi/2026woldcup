@@ -1,7 +1,6 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { usePathname } from "next/navigation";
 import { getPlayerAvatar } from "@/lib/user-preferences";
 import { userApi, type UserSessionPayload } from "@/lib/user-system";
 
@@ -19,7 +18,6 @@ const UserSessionContext = createContext<UserSessionContextValue | null>(null);
 let sessionRequest: Promise<UserSessionPayload | null> | null = null;
 
 export function UserSessionProvider({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
   const [home, setHome] = useState<UserSessionPayload | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
@@ -66,15 +64,8 @@ export function UserSessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    let active = true;
-    setLoading(true);
-    refreshSession().finally(() => {
-      if (active) setLoading(false);
-    });
-    return () => {
-      active = false;
-    };
-  }, [pathname, refreshSession]);
+    refreshSession();
+  }, [refreshSession]);
 
   const value = useMemo(
     () => ({ home, avatarUrl, signedIn, loading, refreshSession, clearSession }),

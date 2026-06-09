@@ -8,6 +8,7 @@ import { NavBar } from "./nav-bar";
 import { MobileMeEntry } from "./mobile-me-entry";
 import { SiteFooter } from "./site-footer";
 import { UserNotificationToast } from "./user-notification-toast";
+import { openCreatorSupportModal } from "./support-creator-modal";
 
 const PRIMARY_PAGES = new Set(["/", "/news", "/data", "/matches", "/favorites", "/players", "/me", "/teams", "/live"]);
 
@@ -24,6 +25,19 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         },
       }
     : undefined;
+  const matchesTopRightAction = normalizedPathname === "/matches"
+    ? {
+        ariaLabel: "打赏作者",
+        icon: (
+          <span className="relative block h-7 w-7 overflow-hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/support/beer-glass.webp" alt="" className="h-full w-full object-contain p-0.5" />
+          </span>
+        ),
+        onClick: openCreatorSupportModal,
+      }
+    : undefined;
+  const topRightAction = favoritesTopRightAction ?? matchesTopRightAction;
 
   return (
     <div
@@ -38,7 +52,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
         {children}
         <SiteFooter />
       </div>
-      {hasMobileMeEntry && <MobileMeEntry topRightAction={favoritesTopRightAction} />}
+      {hasMobileMeEntry && <MobileMeEntry topRightAction={topRightAction} />}
       <UserNotificationToast />
       <BackToTopButton />
     </div>

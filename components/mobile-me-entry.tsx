@@ -11,6 +11,7 @@ import { userApi } from "@/lib/user-system";
 import { MeAuthDialog, type SharedAuthMode } from "./me-auth-dialog";
 import { MobileMeDrawer } from "./mobile-me-drawer";
 import { MobileSearchDrawer } from "./mobile-search-drawer";
+import { mobileFloatingSurfaceStyle } from "@/components/mobile-surface-styles";
 
 type MobileMeEntryProps = {
   topRightAction?: {
@@ -102,9 +103,10 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
           type="button"
           aria-label="打开我的世界杯"
           onClick={() => setDrawerOpen(true)}
-          className={`pointer-events-auto absolute left-4 top-[calc(env(safe-area-inset-top)+1rem)] grid h-[34px] w-[34px] place-items-center overflow-hidden rounded-full bg-white/[0.08] shadow-[0_14px_34px_rgba(0,0,0,.38),0_0_20px_rgba(216,255,62,.1),inset_0_1px_0_rgba(255,255,255,.16)] ring-1 backdrop-blur-2xl transition ${
+          className={`mobile-floating-surface pointer-events-auto absolute left-4 top-[calc(env(safe-area-inset-top)+1rem)] grid h-[34px] w-[34px] place-items-center overflow-hidden rounded-full bg-white/[0.08] shadow-[0_14px_34px_rgba(0,0,0,.38),0_0_20px_rgba(216,255,62,.1),inset_0_1px_0_rgba(255,255,255,.16)] ring-1 backdrop-blur-2xl transition ${
             drawerOpen || pathname.startsWith("/me") ? "ring-volt/55" : "ring-white/12"
           }`}
+          style={mobileFloatingSurfaceStyle}
         >
           {home && avatarUrl ? (
             <Image src={avatarUrl} alt="" fill sizes="34px" className="object-cover" />
@@ -121,9 +123,10 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
             type="button"
             aria-label={topRightAction.ariaLabel}
             onClick={topRightAction.onClick}
-            className={`pointer-events-auto absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)] grid h-[34px] w-[34px] place-items-center rounded-full bg-white/[0.08] text-white/72 shadow-[0_14px_34px_rgba(0,0,0,.38),0_0_20px_rgba(216,255,62,.1),inset_0_1px_0_rgba(255,255,255,.16)] ring-1 backdrop-blur-2xl transition ${
+            className={`mobile-floating-surface pointer-events-auto absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)] grid h-[34px] w-[34px] place-items-center rounded-full bg-white/[0.08] text-white/72 shadow-[0_14px_34px_rgba(0,0,0,.38),0_0_20px_rgba(216,255,62,.1),inset_0_1px_0_rgba(255,255,255,.16)] ring-1 backdrop-blur-2xl transition ${
               topRightAction.active ? "ring-volt/55 text-volt" : "ring-white/12 hover:text-white hover:ring-volt/35"
             }`}
+            style={mobileFloatingSurfaceStyle}
           >
             {topRightAction.icon}
           </button>
@@ -132,9 +135,10 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
             type="button"
             aria-label="打开全局搜索"
             onClick={() => setSearchOpen(true)}
-            className={`pointer-events-auto absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)] grid h-[34px] w-[34px] place-items-center rounded-full bg-white/[0.08] text-white/72 shadow-[0_14px_34px_rgba(0,0,0,.38),0_0_20px_rgba(216,255,62,.1),inset_0_1px_0_rgba(255,255,255,.16)] ring-1 backdrop-blur-2xl transition ${
+            className={`mobile-floating-surface pointer-events-auto absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)] grid h-[34px] w-[34px] place-items-center rounded-full bg-white/[0.08] text-white/72 shadow-[0_14px_34px_rgba(0,0,0,.38),0_0_20px_rgba(216,255,62,.1),inset_0_1px_0_rgba(255,255,255,.16)] ring-1 backdrop-blur-2xl transition ${
               searchOpen ? "ring-volt/55 text-volt" : "ring-white/12 hover:text-white hover:ring-volt/35"
             }`}
+            style={mobileFloatingSurfaceStyle}
           >
             <Search className="h-4 w-4" />
           </button>

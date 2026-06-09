@@ -5,9 +5,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { GROUPS, getTeamByCode, type GroupTeam, type GroupMatch } from "@/data/world-cup-2026-groups";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { MeAuthDialog } from "@/components/me-auth-dialog";
+import { useUserSession } from "@/components/user-session-provider";
 import { usePredictionStore } from "@/lib/store/prediction-store";
 import { buildKnockoutMatchesForTopology, type StandingRow, type KnockoutMatch } from "@/lib/store/prediction";
-import { userApi, type PublicUser, type UserSessionPayload } from "@/lib/user-system";
+import { userApi, type PublicUser } from "@/lib/user-system";
 import { fallbackUserPreferenceCatalog, type UserPreferenceCatalog } from "@/lib/user-preferences";
 import { ChevronLeft, Clock3, FolderOpen, GitBranch, LogIn, Maximize2, Minus, Plus, RotateCcw, Save, ShieldCheck, Shuffle, Trash2, UserPlus, X } from "lucide-react";
 
@@ -1019,6 +1020,8 @@ type PredictionArchive = PublicUser["predictionArchives"][number];
 const LAST_PREDICTION_ARCHIVE_KEY = "worldcup-last-prediction-archive-id";
 
 function PredictAuthLoading() {
+  return <div className="min-h-screen" aria-hidden="true" />;
+
   return (
     <div className="relative grid min-h-screen place-items-center overflow-hidden px-6 py-10">
       <div className="pointer-events-none fixed left-1/2 top-0 h-[360px] w-[min(720px,100vw)] -translate-x-1/2 rounded-full bg-volt/10 blur-[120px]" />
@@ -1563,7 +1566,7 @@ function PredictionArchivePanel() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.98 }}
             transition={{ duration: 0.18 }}
-            className="absolute right-0 top-12 z-30 w-[min(360px,calc(100vw-2rem))] rounded-3xl bg-black/70 p-3 shadow-[0_28px_70px_rgba(0,0,0,.55)] ring-1 ring-white/10 backdrop-blur-2xl"
+            className="fixed inset-x-4 top-[calc(env(safe-area-inset-top)+7rem)] z-[90] w-auto rounded-3xl bg-black/70 p-3 shadow-[0_28px_70px_rgba(0,0,0,.55)] ring-1 ring-white/10 backdrop-blur-2xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-12 sm:z-30 sm:w-[min(360px,calc(100vw-2rem))]"
           >
             <div className="mb-2 flex items-center justify-between gap-3">
               <div>
@@ -1580,7 +1583,7 @@ function PredictionArchivePanel() {
               </button>
             </div>
             <form
-              className="flex flex-col gap-2 sm:flex-row"
+              className="flex w-full flex-col gap-2 sm:flex-row"
               onSubmit={(event) => {
                 event.preventDefault();
                 saveArchive();
@@ -1592,12 +1595,12 @@ function PredictionArchivePanel() {
                 onChange={(event) => setName(event.target.value)}
                 placeholder="给这次模拟起个名字"
                 maxLength={40}
-                className="h-10 min-w-0 flex-1 rounded-full bg-black/35 px-4 text-sm text-white outline-none ring-1 ring-white/10 transition placeholder:text-white/24 focus:ring-volt/40"
+                className="h-10 w-full min-w-0 flex-1 rounded-full bg-black/35 px-4 text-sm text-white outline-none ring-1 ring-white/10 transition placeholder:text-white/24 focus:ring-volt/40"
               />
               <button
                 type="submit"
                 disabled={busy === "save" || progress.filled === 0}
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-volt px-4 text-sm font-bold text-black shadow-[0_0_22px_rgba(216,255,62,.16)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-45"
+                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-full bg-volt px-4 text-sm font-bold text-black shadow-[0_0_22px_rgba(216,255,62,.16)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-45 sm:w-auto"
               >
                 {busy === "save" ? <Clock3 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                 确认
@@ -1698,7 +1701,8 @@ function getArchiveProgress(archive: PredictionArchive) {
 }
 
 export default function PredictPage() {
-  const [authStatus, setAuthStatus] = useState<AuthStatus>("checking");
+  const { signedIn, loading: sessionLoading, refreshSession } = useUserSession();
+  const [authStatus, setAuthStatus] = useState<AuthStatus>(() => (signedIn ? "allowed" : "checking"));
   const [activeTab, setActiveTab] = useState<TabId>("groups");
   const [topologyOpen, setTopologyOpen] = useState(false);
   const { autoFillRandom, resetAll } = usePredictionStore();
@@ -1709,20 +1713,14 @@ export default function PredictPage() {
   const knockoutFilled = Object.keys(knockoutPicks).length;
 
   useEffect(() => {
-    let active = true;
-
-    userApi<UserSessionPayload>("/api/me/session", { cache: "no-store" })
-      .then(() => {
-        if (active) setAuthStatus("allowed");
-      })
-      .catch(() => {
-        if (active) setAuthStatus("unauthenticated");
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
+    if (signedIn === true) {
+      setAuthStatus("allowed");
+      return;
+    }
+    if (signedIn === false && !sessionLoading) {
+      setAuthStatus("unauthenticated");
+    }
+  }, [sessionLoading, signedIn]);
 
   useEffect(() => {
     if (!topologyOpen) return;
@@ -1746,7 +1744,12 @@ export default function PredictPage() {
   if (authStatus === "unauthenticated") {
     return (
       <DashboardShell>
-        <PredictAccessGate onAuthenticated={() => setAuthStatus("allowed")} />
+        <PredictAccessGate
+          onAuthenticated={() => {
+            setAuthStatus("allowed");
+            refreshSession();
+          }}
+        />
       </DashboardShell>
     );
   }
@@ -1795,7 +1798,7 @@ export default function PredictPage() {
             <button
               type="button"
               onClick={() => setTopologyOpen(true)}
-              className="flex items-center gap-1.5 rounded-lg bg-volt text-black px-3 py-1.5 text-[10px] font-black uppercase tracking-wider shadow-[0_0_22px_rgba(216,255,62,.16)] transition-all hover:scale-[1.01]"
+              className="hidden items-center gap-1.5 rounded-lg bg-volt text-black px-3 py-1.5 text-[10px] font-black uppercase tracking-wider shadow-[0_0_22px_rgba(216,255,62,.16)] transition-all hover:scale-[1.01] md:flex"
             >
               <GitBranch size={12} />
               拓扑图

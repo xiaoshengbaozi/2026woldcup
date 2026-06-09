@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Map as MapIcon } from "lucide-react";
 import { useLiveMarketData } from "@/lib/use-live-market-data";
+import { useStore } from "@/lib/store";
 import { ModuleD_Ticker } from "@/components/market-ticker/module-d-ticker";
 import { MarketOddsCard } from "@/components/market-ranking/market-odds-card";
 import { RankingOverflowCard } from "@/components/market-ranking/ranking-overflow-card";
@@ -19,6 +20,8 @@ const MOBILE_TOP_MODULE_OFFSET = 66;
 
 export function MarketDashboard() {
   useLiveMarketData();
+  const dataSource = useStore((s) => s.dataSource);
+  const countryCount = useStore((s) => s.countries.size);
   const [webFullscreen, setWebFullscreen] = useState(false);
   const [systemFsPending, setSystemFsPending] = useState(false);
   const [mobileDataTab, setMobileDataTab] = useState<"teams" | "matches">("teams");
@@ -95,6 +98,8 @@ export function MarketDashboard() {
     };
   }, [mobileTabsPinned]);
 
+  const marketDataReady = dataSource === "live" && countryCount > 0;
+
   return (
     <div className="relative flex min-h-screen flex-col px-4 pb-28 pt-[calc(env(safe-area-inset-top)+4.125rem)] sm:px-6 lg:px-8 lg:pb-5 lg:pt-5">
       {/* Ambient glow — same as homepage */}
@@ -105,6 +110,10 @@ export function MarketDashboard() {
         {/* Navigation bar */}
         <NavBar />
 
+        {!marketDataReady ? (
+          <MarketDataLoadingPanel />
+        ) : (
+          <>
         {/* Ticker strip */}
         <div className="hero-card hidden overflow-hidden sm:block">
           <ModuleD_Ticker />
@@ -204,9 +213,12 @@ export function MarketDashboard() {
         </div>
 
         <StatusBar />
+          </>
+        )}
         <SiteFooter />
       </div>
 
+      {marketDataReady && (
       <MobileMeEntry
         topRightAction={{
           ariaLabel: "打开概率地图",
@@ -215,10 +227,11 @@ export function MarketDashboard() {
           onClick: () => handleFullscreenChange(true, false),
         }}
       />
+      )}
 
       {/* Web fullscreen overlay — globe + rankings + overflow */}
       {createPortal(
-        webFullscreen ? (
+        marketDataReady && webFullscreen ? (
           <div ref={overlayRef} className="fixed inset-0 z-[9999] overflow-hidden bg-[#050505]">
             {/* Globe remains full-frame; panels float above it. */}
             <div className="pointer-events-none absolute inset-0">
@@ -252,5 +265,28 @@ export function MarketDashboard() {
         document.body,
       )}
     </div>
+  );
+}
+
+function MarketDataLoadingPanel() {
+  return (
+    <section className="hero-card relative flex min-h-[60vh] items-center justify-center overflow-hidden px-6 py-16 text-center">
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.06]"
+        style={{
+          backgroundImage: "radial-gradient(circle, rgba(216,255,62,0.9) 0.8px, transparent 0.8px)",
+          backgroundSize: "16px 16px",
+        }}
+      />
+      <div className="relative z-10">
+        <div className="mx-auto mb-5 h-10 w-10 animate-spin rounded-full border-2 border-volt/60 border-t-transparent" />
+        <p className="text-sm font-semibold uppercase tracking-[0.14em] text-white/74">
+          正在连接实时市场数据
+        </p>
+        <p className="mt-3 text-xs uppercase tracking-[0.12em] text-white/34">
+          Waiting for live Polymarket snapshot
+        </p>
+      </div>
+    </section>
   );
 }

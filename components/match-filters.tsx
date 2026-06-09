@@ -5,7 +5,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { CalendarDays, Check, ChevronDown, Clock, Flame, GitFork, Grid3X3, Layers, LayoutList, MapPin, Search } from "lucide-react";
 import { ComponentType, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { MobileSearchDrawer } from "@/components/mobile-search-drawer";
 import { openCreatorSupportModal } from "@/components/support-creator-modal";
 import type { ScheduleLayout, ScheduleMatchSource } from "@/app/matches/page";
 import { formatStageLabel, getStageGroupId, rankStage } from "@/lib/stage";
@@ -32,7 +31,6 @@ type MatchFiltersProps = {
   cities: string[];
   timezoneOffset: number;
   layout: ScheduleLayout;
-  mobileSearchEnabled?: boolean;
   onQueryChange: (value: string) => void;
   onMatchSourceChange: (value: ScheduleMatchSource) => void;
   onStageChange: (value: string) => void;
@@ -86,7 +84,6 @@ export function MatchFilters({
   cities,
   timezoneOffset,
   layout,
-  mobileSearchEnabled = false,
   onQueryChange,
   onMatchSourceChange,
   onStageChange,
@@ -94,7 +91,6 @@ export function MatchFilters({
   onTimezoneChange,
   onLayoutChange
 }: MatchFiltersProps) {
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const sorted = sortStages(stages);
   const stageOptions = useMemo(
     () => sorted.map((item) => ({
@@ -131,21 +127,7 @@ export function MatchFilters({
           <WarmupSourcePill value={matchSource} onChange={onMatchSourceChange} />
         </div>
 
-        {mobileSearchEnabled ? (
-          <button
-            type="button"
-            aria-label="打开全局搜索"
-            title="搜索"
-            onClick={() => setMobileSearchOpen(true)}
-            className={`glass-chip group flex h-10 w-10 shrink-0 items-center justify-center px-0 text-white/78 transition hover:text-white sm:hidden ${
-              mobileSearchOpen ? "text-volt ring-1 ring-volt/25" : ""
-            }`}
-          >
-            <Search className="h-4 w-4 text-volt/80 transition duration-200 group-hover:scale-110 group-hover:text-volt" />
-          </button>
-        ) : null}
-
-        <label className="glass-chip hidden h-10 min-w-0 flex-1 items-center gap-2 px-4 text-white/70 transition focus-within:text-white sm:flex sm:gap-3 sm:px-5">
+        <label className="glass-chip order-2 flex h-10 min-w-0 basis-full items-center gap-2 px-4 text-white/70 transition focus-within:text-white sm:order-none sm:flex-1 sm:basis-auto sm:gap-3 sm:px-5">
           <Search className="h-5 w-5 shrink-0 text-volt/80" />
           <input
             value={query}
@@ -193,7 +175,6 @@ export function MatchFilters({
           <SupportBeerButton />
         </div>
       </motion.section>
-      {mobileSearchEnabled ? <MobileSearchDrawer open={mobileSearchOpen} onClose={() => setMobileSearchOpen(false)} /> : null}
     </>
   );
 }
@@ -205,7 +186,7 @@ function SupportBeerButton() {
       aria-label="打赏作者"
       title="打赏作者"
       onClick={openCreatorSupportModal}
-      className="glass-chip group relative box-border flex h-10 min-h-10 w-10 shrink-0 items-center justify-center overflow-hidden px-0 text-white/78 ring-1 ring-transparent transition hover:text-white hover:ring-amber-300/25 sm:w-auto sm:min-w-[11.5rem] sm:justify-start sm:gap-2.5 sm:px-4"
+      className="glass-chip group relative box-border hidden h-10 min-h-10 w-10 shrink-0 items-center justify-center overflow-hidden px-0 text-white/78 ring-1 ring-transparent transition hover:text-white hover:ring-amber-300/25 sm:flex sm:w-auto sm:min-w-[11.5rem] sm:justify-start sm:gap-2.5 sm:px-4"
     >
       <span className="relative block h-8 max-h-8 w-8 shrink-0 overflow-hidden">
         <Image

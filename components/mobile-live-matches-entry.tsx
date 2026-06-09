@@ -2,16 +2,19 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { Radio, X } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { MobileLiveMatchesList } from "@/components/mobile-live-matches-list";
+import { mobileFloatingSurfaceStyle } from "@/components/mobile-surface-styles";
 import { getUpcomingMatchesWithinWindow, isMatchInLiveWindow } from "@/lib/live-match-queue";
 import type { Match } from "@/types/match";
 
 type MobileLiveMatchesEntryProps = {
   matches: Match[];
+  variant?: "fixed" | "inline";
 };
 
-export function MobileLiveMatchesEntry({ matches }: MobileLiveMatchesEntryProps) {
+export function MobileLiveMatchesEntry({ matches, variant = "fixed" }: MobileLiveMatchesEntryProps) {
   const [currentTime, setCurrentTime] = useState(() => Date.now());
   const [open, setOpen] = useState(false);
 
@@ -25,6 +28,36 @@ export function MobileLiveMatchesEntry({ matches }: MobileLiveMatchesEntryProps)
     [currentTime, matches]
   );
   const isLive = displayMatches.some((match) => isMatchInLiveWindow(match, currentTime));
+  const buttonPositionClass =
+    variant === "fixed"
+      ? "fixed right-4 top-[calc(env(safe-area-inset-top)+1rem)] z-[75]"
+      : "relative";
+  const buttonToneClass = open ? "ring-volt/55 text-volt" : "ring-white/12 hover:text-white hover:ring-volt/35";
+
+  const rememberLiveReturnUrl = () => {
+    window.sessionStorage.setItem(
+      "mobile-live-return-url",
+      `${window.location.pathname}${window.location.search}${window.location.hash}`
+    );
+  };
+
+  if (variant === "inline") {
+    return (
+      <Link
+        href="/live"
+        aria-label="打开直播比赛"
+        onClick={rememberLiveReturnUrl}
+        className={`mobile-floating-surface pointer-events-auto grid h-[34px] w-[34px] place-items-center rounded-full bg-white/[0.08] text-white/72 shadow-[0_14px_34px_rgba(0,0,0,.38),0_0_20px_rgba(216,255,62,.1),inset_0_1px_0_rgba(255,255,255,.16)] ring-1 backdrop-blur-2xl transition lg:hidden ${buttonPositionClass} ${buttonToneClass}`}
+        style={mobileFloatingSurfaceStyle}
+      >
+        <span className="absolute right-1.5 top-1.5 flex h-1.5 w-1.5">
+          {isLive ? <span className="live-ping absolute inline-flex h-full w-full rounded-full bg-volt opacity-75" /> : null}
+          <span className={`relative inline-flex h-1.5 w-1.5 rounded-full ${isLive ? "bg-volt" : "bg-flare"}`} />
+        </span>
+        <Radio className="h-4 w-4" />
+      </Link>
+    );
+  }
 
   return (
     <>
@@ -32,9 +65,11 @@ export function MobileLiveMatchesEntry({ matches }: MobileLiveMatchesEntryProps)
         type="button"
         aria-label="打开直播比赛"
         onClick={() => setOpen(true)}
-        className={`pointer-events-auto fixed right-4 top-[calc(env(safe-area-inset-top)+1rem)] z-[75] grid h-[34px] w-[34px] place-items-center rounded-full bg-white/[0.08] text-white/72 shadow-[0_14px_34px_rgba(0,0,0,.38),0_0_20px_rgba(216,255,62,.1),inset_0_1px_0_rgba(255,255,255,.16)] ring-1 backdrop-blur-2xl transition lg:hidden ${
-          open ? "ring-volt/55 text-volt" : "ring-white/12 hover:text-white hover:ring-volt/35"
+        onPointerUp={() => setOpen(true)}
+        className={`mobile-floating-surface pointer-events-auto grid h-[34px] w-[34px] place-items-center rounded-full bg-white/[0.08] text-white/72 shadow-[0_14px_34px_rgba(0,0,0,.38),0_0_20px_rgba(216,255,62,.1),inset_0_1px_0_rgba(255,255,255,.16)] ring-1 backdrop-blur-2xl transition lg:hidden ${buttonPositionClass} ${
+          buttonToneClass
         }`}
+        style={mobileFloatingSurfaceStyle}
       >
         <span className="absolute right-1.5 top-1.5 flex h-1.5 w-1.5">
           {isLive ? <span className="live-ping absolute inline-flex h-full w-full rounded-full bg-volt opacity-75" /> : null}

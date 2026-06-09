@@ -16,7 +16,6 @@ const STALE_AFTER_MS = 15_000;
 const RECONNECT_BASE_MS = 1_000;
 const RECONNECT_MAX_MS = 30_000;
 const SNAPSHOT_STORAGE_KEY = "wc-market-last-snapshot";
-const SNAPSHOT_STALE_TTL_MS = 6 * 60 * 60 * 1000;
 
 function getApiUrl() {
   return getBackendApiUrl();
@@ -37,6 +36,7 @@ function applySnapshot(message: SnapshotMessage) {
 
     store.recomputeRankings();
     store.recordUpdate(message.timestamp, Math.max(0, Date.now() - message.timestamp));
+    store.setDataSource("live");
     store.setStatus("connected");
   });
   saveLastSnapshot(message);
@@ -60,6 +60,7 @@ function applyDelta(message: DeltaMessage) {
       store.scheduleRankingsRecompute();
     }
     store.recordUpdate(message.timestamp, Math.max(0, Date.now() - message.timestamp));
+    store.setDataSource("live");
     store.setStatus("connected");
   });
   saveLastSnapshot({
@@ -103,12 +104,6 @@ export function useLiveMarketData() {
         applySnapshot((await response.json()) as SnapshotMessage);
       } catch (err) {
         console.warn("[MarketData] Snapshot request failed:", err);
-        const lastSnapshot = readLastSnapshot();
-        if (lastSnapshot) {
-          applySnapshot(lastSnapshot);
-          useStore.getState().setStatus("stale");
-          return;
-        }
         if (useStore.getState().countries.size) {
           useStore.getState().setStatus("stale");
           return;
@@ -157,6 +152,7 @@ export function useLiveMarketData() {
       };
     }
 
+    discardMockMarketData();
     useStore.getState().setStatus("initializing");
     void loadSnapshot();
     connect();
@@ -181,6 +177,24 @@ export function useLiveMarketData() {
   }, []);
 }
 
+function discardMockMarketData() {
+  const store = useStore.getState();
+  if (store.dataSource !== "mock") return;
+
+  useStore.setState({
+    countries: new Map(),
+    history: new Map(),
+    events: [],
+    rankings: [],
+    squeezePairs: [],
+    vibrationTriggers: [],
+    lastUpdateTimestamp: null,
+    updateCount: 0,
+    latency: 0,
+    dataSource: "empty",
+  });
+}
+
 function saveLastSnapshot(message: SnapshotMessage) {
   if (typeof window === "undefined" || !message.countries.length) return;
 
@@ -195,19 +209,5 @@ function saveLastSnapshot(message: SnapshotMessage) {
     window.localStorage.setItem(SNAPSHOT_STORAGE_KEY, JSON.stringify({ savedAt: Date.now(), snapshot: compact }));
   } catch {
     // If storage is unavailable, the in-memory store still preserves the current frame.
-  }
-}
-
-function readLastSnapshot() {
-  if (typeof window === "undefined") return null;
-
-  try {
-    const raw = window.localStorage.getItem(SNAPSHOT_STORAGE_KEY);
-    if (!raw) return null;
-    const payload = JSON.parse(raw) as { savedAt?: number; snapshot?: SnapshotMessage };
-    if (!payload.snapshot || !payload.savedAt || Date.now() - payload.savedAt > SNAPSHOT_STALE_TTL_MS) return null;
-    return payload.snapshot;
-  } catch {
-    return null;
   }
 }

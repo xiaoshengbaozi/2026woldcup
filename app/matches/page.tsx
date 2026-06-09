@@ -5,7 +5,6 @@ import { DashboardShell } from "@/components/dashboard-shell";
 import { LiveMatchesStrip } from "@/components/live-matches-strip";
 import { getCityFilterGroup, getStageFilterGroup, MatchFilters, readFilterGroupValue } from "@/components/match-filters";
 import { MatchStats } from "@/components/match-stats";
-import { MobileLiveMatchesEntry } from "@/components/mobile-live-matches-entry";
 import { MobileMatchDayStrip, type MatchDayOption } from "@/components/mobile-match-day-strip";
 import { ScheduleList } from "@/components/schedule-list";
 import { extractCity, groupMatchesByDay } from "@/lib/calendar";
@@ -71,10 +70,10 @@ export default function MatchesPage() {
         (!normalizedQuery || haystack.includes(normalizedQuery)) &&
         (!stage || (stageGroup ? getStageFilterGroup(match.stage) === stageGroup : match.stage === stage)) &&
         (activeCity === "全部城市" || (cityGroup ? getCityFilterGroup(city) === cityGroup : city === activeCity)) &&
-        (layout !== "default" || !selectedDay || getMatchDayKey(match.start, timezoneOffset) === selectedDay)
+        (!selectedDay || getMatchDayKey(match.start, timezoneOffset) === selectedDay)
       );
     });
-  }, [activeCity, layout, query, scheduleMatches, selectedDay, stage, timezoneOffset]);
+  }, [activeCity, query, scheduleMatches, selectedDay, stage, timezoneOffset]);
 
   const grouped = useMemo(() => groupMatchesByDay(filteredMatches), [filteredMatches]);
   const matchDays = useMemo(
@@ -95,10 +94,6 @@ export default function MatchesPage() {
   useEffect(() => {
     if (!cities.includes(activeCity)) setActiveCity("全部城市");
   }, [activeCity, cities, setActiveCity]);
-
-  useEffect(() => {
-    if (layout !== "default" && selectedDay) setSelectedDay("");
-  }, [layout, selectedDay]);
 
   useEffect(() => {
     const mobileQuery = window.matchMedia("(max-width: 639px)");
@@ -245,7 +240,6 @@ export default function MatchesPage() {
               cities={cities}
               timezoneOffset={timezoneOffset}
               layout={layout}
-              mobileSearchEnabled
               onQueryChange={setQuery}
               onMatchSourceChange={setMatchSource}
               onStageChange={setStage}
@@ -253,17 +247,14 @@ export default function MatchesPage() {
               onTimezoneChange={setTimezoneOffset}
               onLayoutChange={setLayout}
             />
-            {layout === "default" ? (
-              <MobileMatchDayStrip
-                days={matchDays}
-                selectedDay={selectedDay}
-                onSelectDay={setSelectedDay}
-              />
-            ) : null}
+            <MobileMatchDayStrip
+              days={matchDays}
+              selectedDay={selectedDay}
+              onSelectDay={setSelectedDay}
+            />
           </div>
         </div>
       </div>
-      <MobileLiveMatchesEntry matches={liveQueueMatches} />
 
       <ScheduleList
         grouped={grouped}
