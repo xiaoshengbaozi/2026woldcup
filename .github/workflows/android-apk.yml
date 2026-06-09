@@ -31,7 +31,19 @@ jobs:
         working-directory: android
         run: |
           chmod +x ./gradlew
-          ./gradlew --no-daemon --stacktrace :app:assembleDebug
+          set +e
+          ./gradlew --no-daemon --stacktrace :app:assembleDebug > ../android-debug-build.log 2>&1
+          status=$?
+          cat ../android-debug-build.log
+          if [ "$status" -ne 0 ]; then
+            {
+              echo "Android debug build failed. Last 120 lines:"
+              tail -n 120 ../android-debug-build.log
+            } | while IFS= read -r line; do
+              echo "::error file=android/app/build.gradle,line=1::$line"
+            done
+            exit "$status"
+          fi
 
       - name: Build release APK
         working-directory: android
