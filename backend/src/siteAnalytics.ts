@@ -14,12 +14,14 @@ type SiteAnalyticsStats = {
 const ANALYTICS_FILE = resolve(process.env.SITE_ANALYTICS_FILE || "data/site-analytics.json");
 const ONLINE_WINDOW_MS = 60_000;
 const TIME_ZONE = process.env.SITE_ANALYTICS_TIME_ZONE || "Asia/Shanghai";
+const DB_CLEANUP_INTERVAL_MS = 60_000;
 
 let data: SiteAnalyticsData = { days: {} };
 let loaded = false;
 let writeChain = Promise.resolve();
 let pool: Pool | null = null;
 let dbReady: Promise<Pool | null> | null = null;
+let lastDbCleanupAt = 0;
 const onlineSessions = new Map<string, number>();
 
 export async function recordSiteVisit(sessionId: string) {
@@ -53,12 +55,12 @@ export async function recordSiteHeartbeat(sessionId: string) {
   const normalizedSessionId = normalizeSessionId(sessionId);
   if (db) {
     await touchOnlineSessionInDb(db, normalizedSessionId);
-    return getSiteAnalyticsStats();
+    return null;
   }
 
   await ensureLoaded();
   touchOnlineSession(normalizedSessionId);
-  return getSiteAnalyticsStats();
+  return null;
 }
 
 export async function getSiteAnalyticsStats(): Promise<SiteAnalyticsStats> {
@@ -66,7 +68,7 @@ export async function getSiteAnalyticsStats(): Promise<SiteAnalyticsStats> {
   const today = getTodayKey();
   if (db) {
     const staleBefore = new Date(Date.now() - ONLINE_WINDOW_MS);
-    await db.query("delete from site_analytics_sessions where last_seen_at < $1", [staleBefore]);
+    await cleanupStaleOnlineSessionsInDb(db, staleBefore);
     const result = await db.query<{ today_views: number; online_users: number }>(
       `
       select
@@ -160,6 +162,13 @@ async function touchOnlineSessionInDb(db: Pool, sessionId: string) {
     `,
     [sessionId]
   );
+}
+
+async function cleanupStaleOnlineSessionsInDb(db: Pool, staleBefore = new Date(Date.now() - ONLINE_WINDOW_MS)) {
+  const now = Date.now();
+  if (now - lastDbCleanupAt < DB_CLEANUP_INTERVAL_MS) return;
+  lastDbCleanupAt = now;
+  await db.query("delete from site_analytics_sessions where last_seen_at < $1", [staleBefore]);
 }
 
 async function ensureLoaded() {

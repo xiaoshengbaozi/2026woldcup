@@ -34,6 +34,7 @@ const MAX_JSON_BODY_BYTES = 256 * 1024;
 const CACHE_PUBLIC_SHORT = "public, max-age=15, stale-while-revalidate=60, stale-if-error=300";
 const CACHE_PUBLIC_MEDIUM = "public, max-age=300, stale-while-revalidate=900, stale-if-error=86400";
 const CACHE_PUBLIC_LONG = "public, max-age=3600, stale-while-revalidate=86400, stale-if-error=604800";
+const CORS_PREFLIGHT_MAX_AGE_SECONDS = 86400;
 const DEFAULT_CORS_ORIGINS = [
   "https://ball.boyzi.fun",
   "https://beta-wzja.world-cup-2026-625.pages.dev",
@@ -277,7 +278,8 @@ async function handleSiteAnalyticsRequest(req: http.IncomingMessage, res: http.S
   const action = body.action === "heartbeat" ? "heartbeat" : "view";
 
   if (action === "heartbeat") {
-    sendJson(res, await recordSiteHeartbeat(sessionId));
+    await recordSiteHeartbeat(sessionId);
+    sendJson(res, { ok: true });
     return;
   }
 
@@ -673,6 +675,7 @@ function setCorsHeaders(req: http.IncomingMessage, res: http.ServerResponse) {
 
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Max-Age", String(CORS_PREFLIGHT_MAX_AGE_SECONDS));
 }
 
 function getAllowedCorsOrigins() {

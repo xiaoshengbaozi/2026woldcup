@@ -19,6 +19,7 @@ export async function sendSiteAnalytics(action: "view" | "heartbeat", sessionId:
 
   const payload = await response.json().catch(() => null);
   if (!response.ok) throw new Error(payload?.error || `site_analytics_${response.status}`);
+  if (!hasSiteAnalyticsStats(payload)) return null;
 
   return normalizeSiteAnalyticsStats(payload);
 }
@@ -52,6 +53,15 @@ function normalizeSiteAnalyticsStats(payload: unknown): SiteAnalyticsStats {
     todayViews: readStatNumber(stats.todayViews),
     onlineUsers: readStatNumber(stats.onlineUsers),
   };
+}
+
+function hasSiteAnalyticsStats(payload: unknown) {
+  return Boolean(
+    payload &&
+      typeof payload === "object" &&
+      "todayViews" in payload &&
+      "onlineUsers" in payload
+  );
 }
 
 function readStatNumber(value: unknown) {

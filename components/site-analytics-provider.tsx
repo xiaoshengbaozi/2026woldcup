@@ -27,7 +27,7 @@ export function SiteAnalyticsProvider({ children }: { children: ReactNode }) {
       if (action === "heartbeat" && (document.hidden || !navigator.onLine)) return;
       sendSiteAnalytics(action, sessionId)
         .then((nextStats) => {
-          if (active) setStats(nextStats);
+          if (active && nextStats) setStats(nextStats);
         })
         .catch((error) => {
           console.warn("[SiteAnalytics] unavailable:", error);

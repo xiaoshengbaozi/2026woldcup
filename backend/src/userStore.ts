@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { dirname, resolve } from "path";
 import { pbkdf2Sync, randomBytes, randomUUID, timingSafeEqual } from "crypto";
-import type { Pool } from "pg";
+import type { Pool, PoolClient } from "pg";
 
 export interface UserProfile {
   displayName: string;
@@ -202,7 +202,7 @@ export class UserStore {
     };
 
     this.data.invitationCodes.push(invitation);
-    void this.save();
+    void this.saveInvitationCode(invitation);
     return invitation;
   }
 
@@ -218,7 +218,7 @@ export class UserStore {
       ...(invitation.usedBy ?? []),
     ];
     invitation.updatedAt = Date.now();
-    void this.save();
+    void this.saveInvitationCode(invitation);
     return invitation;
   }
 
@@ -227,7 +227,7 @@ export class UserStore {
     if (!invitation) throw createUserStoreError("invitation_code_not_found", 404);
     invitation.disabledAt = disabled ? Date.now() : null;
     invitation.updatedAt = Date.now();
-    void this.save();
+    void this.saveInvitationCode(invitation);
     return invitation;
   }
 
@@ -235,7 +235,7 @@ export class UserStore {
     const invitation = this.data.invitationCodes.find((item) => item.id === id);
     if (!invitation) throw createUserStoreError("invitation_code_not_found", 404);
     this.data.invitationCodes = this.data.invitationCodes.filter((item) => item.id !== id);
-    void this.save();
+    void this.deleteInvitationCodeFromStore(id);
     return invitation;
   }
 
@@ -289,7 +289,7 @@ export class UserStore {
     };
 
     this.data.users.push(user);
-    void this.save();
+    void this.saveUser(user);
     return user;
   }
 
@@ -516,7 +516,7 @@ export class UserStore {
   deleteUser(userId: string) {
     const user = this.requireUser(userId);
     this.data.users = this.data.users.filter((item) => item.id !== userId);
-    void this.save();
+    void this.deleteUserFromStore(userId);
     return user;
   }
 
@@ -558,7 +558,7 @@ export class UserStore {
 
   private touch(user: WorldCupUser) {
     user.updatedAt = Date.now();
-    void this.save();
+    void this.saveUser(user);
   }
 
   private loadFromFile() {
@@ -585,6 +585,10 @@ export class UserStore {
       `);
     }
 
+    if (await this.loadNormalizedFromPostgres()) {
+      return;
+    }
+
     const result = await this.pool.query<{ data: UserDatabase }>(
       "select data from user_store_documents where id = $1",
       ["default"]
@@ -594,11 +598,12 @@ export class UserStore {
       this.data = result.rows[0].data;
       this.data.users = this.data.users.map(normalizeStoredUser);
       this.data.invitationCodes = (this.data.invitationCodes ?? []).map(normalizeStoredInvitationCode);
+      await this.persistAllToPostgres();
       return;
     }
 
     this.loadFromFile();
-    await this.save();
+    await this.persistAllToPostgres();
   }
 
   private async save() {
@@ -617,6 +622,148 @@ export class UserStore {
     );
   }
 
+  private async saveUser(user: WorldCupUser) {
+    if (!this.pool) {
+      await this.save();
+      return;
+    }
+
+    await withClient(this.pool, async (client) => {
+      await client.query("begin");
+      try {
+        await upsertUserRow(client, user);
+        await replaceUserCollections(client, user);
+        await client.query("commit");
+      } catch (error) {
+        await client.query("rollback");
+        throw error;
+      }
+    }).catch((error) => {
+      console.warn("[UserStore] save user failed:", error);
+    });
+  }
+
+  private async saveInvitationCode(invitation: InvitationCode) {
+    if (!this.pool) {
+      await this.save();
+      return;
+    }
+
+    await this.pool.query(
+      `
+      insert into invitation_codes (id, code, note, max_uses, used_count, expires_at, disabled_at, used_by, created_at, updated_at)
+      values ($1, $2, $3, $4, $5, to_timestamp($6::double precision / 1000), to_timestamp($7::double precision / 1000), $8, to_timestamp($9::double precision / 1000), to_timestamp($10::double precision / 1000))
+      on conflict (id) do update set
+        code = excluded.code,
+        note = excluded.note,
+        max_uses = excluded.max_uses,
+        used_count = excluded.used_count,
+        expires_at = excluded.expires_at,
+        disabled_at = excluded.disabled_at,
+        used_by = excluded.used_by,
+        updated_at = excluded.updated_at
+      `,
+      [
+        invitation.id,
+        invitation.code,
+        invitation.note ?? null,
+        invitation.maxUses,
+        invitation.usedCount,
+        invitation.expiresAt ?? null,
+        invitation.disabledAt ?? null,
+        JSON.stringify(invitation.usedBy ?? []),
+        invitation.createdAt,
+        invitation.updatedAt,
+      ]
+    ).catch((error) => {
+      console.warn("[UserStore] save invitation failed:", error);
+    });
+  }
+
+  private async deleteUserFromStore(userId: string) {
+    if (!this.pool) {
+      await this.save();
+      return;
+    }
+    await this.pool.query("delete from users where id = $1", [userId]).catch((error) => {
+      console.warn("[UserStore] delete user failed:", error);
+    });
+  }
+
+  private async deleteInvitationCodeFromStore(id: string) {
+    if (!this.pool) {
+      await this.save();
+      return;
+    }
+    await this.pool.query("delete from invitation_codes where id = $1", [id]).catch((error) => {
+      console.warn("[UserStore] delete invitation failed:", error);
+    });
+  }
+
+  private async loadNormalizedFromPostgres() {
+    if (!this.pool) return false;
+
+    const [users, invitations] = await Promise.all([
+      this.pool.query<Record<string, unknown>>("select * from users order by created_at asc"),
+      this.pool.query<Record<string, unknown>>("select * from invitation_codes order by created_at asc"),
+    ]);
+
+    if (!users.rowCount && !invitations.rowCount) return false;
+
+    const [
+      followedTeams,
+      followedPlayers,
+      favoriteMatches,
+      reminders,
+      predictions,
+      predictionArchives,
+      watchHistory,
+      newsSubscriptions,
+      notifications,
+    ] = await Promise.all([
+      this.pool.query<Record<string, unknown>>("select * from user_followed_teams order by followed_at desc"),
+      this.pool.query<Record<string, unknown>>("select * from user_followed_players order by followed_at desc"),
+      this.pool.query<Record<string, unknown>>("select * from user_favorite_matches order by added_at desc"),
+      this.pool.query<Record<string, unknown>>("select * from user_match_reminders order by created_at desc"),
+      this.pool.query<Record<string, unknown>>("select * from user_match_predictions order by updated_at desc"),
+      this.pool.query<Record<string, unknown>>("select * from user_prediction_archives order by updated_at desc"),
+      this.pool.query<Record<string, unknown>>("select * from user_watch_records order by watched_at desc"),
+      this.pool.query<Record<string, unknown>>("select * from user_news_subscriptions order by updated_at desc"),
+      this.pool.query<Record<string, unknown>>("select * from user_notifications order by created_at desc"),
+    ]);
+
+    this.data = {
+      users: users.rows.map((row) => normalizeStoredUser(rowToUser(
+        row,
+        rowsByUser(followedTeams.rows, row.id, rowToFollowedTeam),
+        rowsByUser(followedPlayers.rows, row.id, rowToFollowedPlayer),
+        rowsByUser(favoriteMatches.rows, row.id, rowToFavoriteMatch),
+        rowsByUser(reminders.rows, row.id, rowToReminder),
+        rowsByUser(predictions.rows, row.id, rowToPrediction),
+        rowsByUser(predictionArchives.rows, row.id, rowToPredictionArchive).slice(0, 4),
+        rowsByUser(watchHistory.rows, row.id, rowToWatchRecord),
+        rowsByUser(newsSubscriptions.rows, row.id, rowToNewsSubscription),
+        rowsByUser(notifications.rows, row.id, rowToNotification),
+      ))),
+      invitationCodes: invitations.rows.map(rowToInvitationCode).map(normalizeStoredInvitationCode),
+    };
+    return true;
+  }
+
+  private async persistAllToPostgres() {
+    if (!this.pool) {
+      await this.save();
+      return;
+    }
+
+    for (const user of this.data.users) {
+      await this.saveUser(user);
+    }
+    for (const invitation of this.data.invitationCodes) {
+      await this.saveInvitationCode(invitation);
+    }
+  }
+
   private requireUsableInvitationCode(code: string) {
     const normalized = normalizeInvitationCode(code);
     if (!normalized) throw createUserStoreError("invitation_code_required", 400);
@@ -627,6 +774,353 @@ export class UserStore {
     if (invitation.expiresAt && invitation.expiresAt <= Date.now()) throw createUserStoreError("invitation_code_expired", 403);
     if (invitation.usedCount >= invitation.maxUses) throw createUserStoreError("invitation_code_exhausted", 403);
     return invitation;
+  }
+}
+
+async function withClient<T>(pool: Pool, callback: (client: PoolClient) => Promise<T>) {
+  const client = await pool.connect();
+  try {
+    return await callback(client);
+  } finally {
+    client.release();
+  }
+}
+
+async function upsertUserRow(client: PoolClient, user: WorldCupUser) {
+  await client.query(
+    `
+    insert into users (
+      id, email, password_hash, password_salt,
+      email_verified_at, email_verification_token_hash, email_verification_expires_at, email_verification_sent_at,
+      disabled_at, display_name, signature, home_team_id, avatar_player_id, avatar_url, timezone, language,
+      created_at, updated_at
+    )
+    values (
+      $1, $2, $3, $4,
+      to_timestamp($5::double precision / 1000), $6, to_timestamp($7::double precision / 1000), to_timestamp($8::double precision / 1000),
+      to_timestamp($9::double precision / 1000), $10, $11, $12, $13, $14, $15, $16,
+      to_timestamp($17::double precision / 1000), to_timestamp($18::double precision / 1000)
+    )
+    on conflict (id) do update set
+      email = excluded.email,
+      password_hash = excluded.password_hash,
+      password_salt = excluded.password_salt,
+      email_verified_at = excluded.email_verified_at,
+      email_verification_token_hash = excluded.email_verification_token_hash,
+      email_verification_expires_at = excluded.email_verification_expires_at,
+      email_verification_sent_at = excluded.email_verification_sent_at,
+      disabled_at = excluded.disabled_at,
+      display_name = excluded.display_name,
+      signature = excluded.signature,
+      home_team_id = excluded.home_team_id,
+      avatar_player_id = excluded.avatar_player_id,
+      avatar_url = excluded.avatar_url,
+      timezone = excluded.timezone,
+      language = excluded.language,
+      updated_at = excluded.updated_at
+    `,
+    [
+      user.id,
+      user.email,
+      user.passwordHash,
+      user.passwordSalt,
+      user.emailVerifiedAt ?? null,
+      user.emailVerificationTokenHash ?? null,
+      user.emailVerificationExpiresAt ?? null,
+      user.emailVerificationSentAt ?? null,
+      user.disabledAt ?? null,
+      user.profile.displayName,
+      user.profile.signature ?? null,
+      user.profile.homeTeamId,
+      user.profile.avatarPlayerId ?? "lionel-messi",
+      user.profile.avatarUrl ?? null,
+      user.profile.timezone,
+      user.profile.language,
+      user.createdAt,
+      user.updatedAt,
+    ]
+  );
+}
+
+async function replaceUserCollections(client: PoolClient, user: WorldCupUser) {
+  const userId = user.id;
+  await client.query("delete from user_followed_teams where user_id = $1", [userId]);
+  await client.query("delete from user_followed_players where user_id = $1", [userId]);
+  await client.query("delete from user_favorite_matches where user_id = $1", [userId]);
+  await client.query("delete from user_match_reminders where user_id = $1", [userId]);
+  await client.query("delete from user_match_predictions where user_id = $1", [userId]);
+  await client.query("delete from user_prediction_archives where user_id = $1", [userId]);
+  await client.query("delete from user_watch_records where user_id = $1", [userId]);
+  await client.query("delete from user_news_subscriptions where user_id = $1", [userId]);
+  await client.query("delete from user_notifications where user_id = $1", [userId]);
+
+  for (const item of user.followedTeams) {
+    await client.query(
+      "insert into user_followed_teams (user_id, team_id, team_name, region, logo, followed_at) values ($1, $2, $3, $4, $5, to_timestamp($6::double precision / 1000)) on conflict (user_id, team_id) do update set team_name = excluded.team_name, region = excluded.region, logo = excluded.logo, followed_at = excluded.followed_at",
+      [userId, item.id, item.name, item.region ?? null, item.logo ?? null, item.followedAt]
+    );
+  }
+
+  for (const item of user.followedPlayers) {
+    await client.query(
+      "insert into user_followed_players (user_id, player_id, player_name, team, position, photo, followed_at) values ($1, $2, $3, $4, $5, $6, to_timestamp($7::double precision / 1000)) on conflict (user_id, player_id) do update set player_name = excluded.player_name, team = excluded.team, position = excluded.position, photo = excluded.photo, followed_at = excluded.followed_at",
+      [userId, item.id, item.name, item.team ?? null, item.position ?? null, item.photo ?? null, item.followedAt]
+    );
+  }
+
+  for (const item of user.favoriteMatches) {
+    await client.query(
+      "insert into user_favorite_matches (user_id, match_id, title, stage, starts_at, added_at) values ($1, $2, $3, $4, $5, to_timestamp($6::double precision / 1000)) on conflict (user_id, match_id) do update set title = excluded.title, stage = excluded.stage, starts_at = excluded.starts_at, added_at = excluded.added_at",
+      [userId, item.id, item.title, item.stage ?? null, item.startsAt ?? null, item.addedAt]
+    );
+  }
+
+  for (const item of user.reminders) {
+    await client.query(
+      "insert into user_match_reminders (id, user_id, match_id, title, starts_at, remind_before_minutes, channel, enabled, last_queued_at, created_at) values ($1, $2, $3, $4, $5, $6, $7, $8, to_timestamp($9::double precision / 1000), to_timestamp($10::double precision / 1000)) on conflict (user_id, id) do update set match_id = excluded.match_id, title = excluded.title, starts_at = excluded.starts_at, remind_before_minutes = excluded.remind_before_minutes, channel = excluded.channel, enabled = excluded.enabled, last_queued_at = excluded.last_queued_at",
+      [item.id, userId, item.matchId, item.title, item.startsAt ?? null, item.remindBeforeMinutes, item.channel, item.enabled, item.lastQueuedAt ?? null, item.createdAt]
+    );
+  }
+
+  for (const item of user.predictions) {
+    await client.query(
+      "insert into user_match_predictions (id, user_id, match_id, title, home_score, away_score, confidence, created_at, updated_at) values ($1, $2, $3, $4, $5, $6, $7, to_timestamp($8::double precision / 1000), to_timestamp($9::double precision / 1000)) on conflict (id) do update set match_id = excluded.match_id, title = excluded.title, home_score = excluded.home_score, away_score = excluded.away_score, confidence = excluded.confidence, updated_at = excluded.updated_at",
+      [item.id, userId, item.matchId, item.title, item.homeScore, item.awayScore, item.confidence, item.createdAt, item.updatedAt]
+    );
+  }
+
+  for (const item of user.predictionArchives ?? []) {
+    await client.query(
+      "insert into user_prediction_archives (id, user_id, name, group_scores, knockout_picks, created_at, updated_at) values ($1, $2, $3, $4, $5, to_timestamp($6::double precision / 1000), to_timestamp($7::double precision / 1000)) on conflict (id) do update set name = excluded.name, group_scores = excluded.group_scores, knockout_picks = excluded.knockout_picks, updated_at = excluded.updated_at",
+      [item.id, userId, item.name, JSON.stringify(item.groupScores ?? {}), JSON.stringify(item.knockoutPicks ?? {}), item.createdAt, item.updatedAt]
+    );
+  }
+
+  for (const item of user.watchHistory) {
+    await client.query(
+      "insert into user_watch_records (id, user_id, match_id, title, status, watched_at) values ($1, $2, $3, $4, $5, to_timestamp($6::double precision / 1000)) on conflict (id) do update set match_id = excluded.match_id, title = excluded.title, status = excluded.status, watched_at = excluded.watched_at",
+      [item.id, userId, item.matchId, item.title, item.status, item.watchedAt]
+    );
+  }
+
+  for (const item of user.newsSubscriptions) {
+    await client.query(
+      "insert into user_news_subscriptions (user_id, topic_id, topic, enabled, updated_at) values ($1, $2, $3, $4, to_timestamp($5::double precision / 1000)) on conflict (user_id, topic_id) do update set topic = excluded.topic, enabled = excluded.enabled, updated_at = excluded.updated_at",
+      [userId, item.id, item.topic, item.enabled, item.updatedAt]
+    );
+  }
+
+  for (const item of user.notifications) {
+    await client.query(
+      "insert into user_notifications (id, user_id, type, title, body, channel, read, metadata, created_at) values ($1, $2, $3, $4, $5, $6, $7, $8, to_timestamp($9::double precision / 1000)) on conflict (id) do update set title = excluded.title, body = excluded.body, channel = excluded.channel, read = excluded.read, metadata = excluded.metadata",
+      [item.id, userId, item.type, item.title, item.body, item.channel, item.read, JSON.stringify(item.metadata ?? {}), item.createdAt]
+    );
+  }
+}
+
+function rowsByUser<T>(rows: Record<string, unknown>[], userId: unknown, mapper: (row: Record<string, unknown>) => T) {
+  return rows.filter((row) => String(row.user_id) === String(userId)).map(mapper);
+}
+
+function rowToUser(
+  row: Record<string, unknown>,
+  followedTeams: FollowedTeam[],
+  followedPlayers: FollowedPlayer[],
+  favoriteMatches: FavoriteMatch[],
+  reminders: MatchReminder[],
+  predictions: MatchPrediction[],
+  predictionArchives: PredictionArchive[],
+  watchHistory: WatchRecord[],
+  newsSubscriptions: NewsSubscription[],
+  notifications: UserNotification[],
+): WorldCupUser {
+  return {
+    id: String(row.id),
+    email: String(row.email),
+    passwordHash: String(row.password_hash),
+    passwordSalt: String(row.password_salt),
+    emailVerifiedAt: dateToMs(row.email_verified_at),
+    emailVerificationTokenHash: nullableString(row.email_verification_token_hash),
+    emailVerificationExpiresAt: dateToMs(row.email_verification_expires_at),
+    emailVerificationSentAt: dateToMs(row.email_verification_sent_at),
+    disabledAt: dateToMs(row.disabled_at),
+    createdAt: dateToMs(row.created_at) ?? Date.now(),
+    updatedAt: dateToMs(row.updated_at) ?? Date.now(),
+    profile: {
+      displayName: String(row.display_name || String(row.email).split("@")[0]),
+      signature: nullableString(row.signature),
+      homeTeamId: nullableString(row.home_team_id),
+      avatarPlayerId: nullableString(row.avatar_player_id) ?? "lionel-messi",
+      avatarUrl: nullableString(row.avatar_url),
+      timezone: String(row.timezone || "Asia/Shanghai"),
+      language: row.language === "en-US" ? "en-US" : "zh-CN",
+    },
+    followedTeams,
+    followedPlayers,
+    favoriteMatches,
+    reminders,
+    predictions,
+    predictionArchives,
+    watchHistory,
+    newsSubscriptions,
+    notifications,
+  };
+}
+
+function rowToInvitationCode(row: Record<string, unknown>): InvitationCode {
+  return {
+    id: String(row.id),
+    code: String(row.code),
+    note: nullableString(row.note) ?? undefined,
+    maxUses: Number(row.max_uses ?? 1),
+    usedCount: Number(row.used_count ?? 0),
+    expiresAt: dateToMs(row.expires_at),
+    disabledAt: dateToMs(row.disabled_at),
+    createdAt: dateToMs(row.created_at) ?? Date.now(),
+    updatedAt: dateToMs(row.updated_at) ?? Date.now(),
+    usedBy: parseJsonArray(row.used_by),
+  };
+}
+
+function rowToFollowedTeam(row: Record<string, unknown>): FollowedTeam {
+  return {
+    id: String(row.team_id),
+    name: String(row.team_name),
+    region: nullableString(row.region) ?? undefined,
+    logo: nullableString(row.logo) ?? undefined,
+    followedAt: dateToMs(row.followed_at) ?? Date.now(),
+  };
+}
+
+function rowToFollowedPlayer(row: Record<string, unknown>): FollowedPlayer {
+  return {
+    id: String(row.player_id),
+    name: String(row.player_name),
+    team: nullableString(row.team) ?? undefined,
+    position: nullableString(row.position) ?? undefined,
+    photo: nullableString(row.photo) ?? undefined,
+    followedAt: dateToMs(row.followed_at) ?? Date.now(),
+  };
+}
+
+function rowToFavoriteMatch(row: Record<string, unknown>): FavoriteMatch {
+  return {
+    id: String(row.match_id),
+    title: String(row.title),
+    stage: nullableString(row.stage) ?? undefined,
+    startsAt: dateToIso(row.starts_at),
+    addedAt: dateToMs(row.added_at) ?? Date.now(),
+  };
+}
+
+function rowToReminder(row: Record<string, unknown>): MatchReminder {
+  const channel = row.channel === "email" || row.channel === "push" ? row.channel : "site";
+  return {
+    id: String(row.id),
+    matchId: String(row.match_id),
+    title: String(row.title),
+    startsAt: dateToIso(row.starts_at),
+    remindBeforeMinutes: Number(row.remind_before_minutes ?? 30),
+    channel,
+    enabled: row.enabled !== false,
+    lastQueuedAt: dateToMs(row.last_queued_at),
+    createdAt: dateToMs(row.created_at) ?? Date.now(),
+  };
+}
+
+function rowToPrediction(row: Record<string, unknown>): MatchPrediction {
+  return {
+    id: String(row.id),
+    matchId: String(row.match_id),
+    title: String(row.title),
+    homeScore: Number(row.home_score ?? 0),
+    awayScore: Number(row.away_score ?? 0),
+    confidence: Number(row.confidence ?? 50),
+    createdAt: dateToMs(row.created_at) ?? Date.now(),
+    updatedAt: dateToMs(row.updated_at) ?? Date.now(),
+  };
+}
+
+function rowToPredictionArchive(row: Record<string, unknown>): PredictionArchive {
+  return {
+    id: String(row.id),
+    name: String(row.name || "我的模拟"),
+    createdAt: dateToMs(row.created_at) ?? Date.now(),
+    updatedAt: dateToMs(row.updated_at) ?? Date.now(),
+    groupScores: parseJsonObject(row.group_scores),
+    knockoutPicks: parseJsonObject(row.knockout_picks),
+  };
+}
+
+function rowToWatchRecord(row: Record<string, unknown>): WatchRecord {
+  const status = row.status === "watched" || row.status === "missed" ? row.status : "planned";
+  return {
+    id: String(row.id),
+    matchId: String(row.match_id),
+    title: String(row.title),
+    status,
+    watchedAt: dateToMs(row.watched_at) ?? Date.now(),
+  };
+}
+
+function rowToNewsSubscription(row: Record<string, unknown>): NewsSubscription {
+  return {
+    id: String(row.topic_id),
+    topic: String(row.topic),
+    enabled: row.enabled !== false,
+    updatedAt: dateToMs(row.updated_at) ?? Date.now(),
+  };
+}
+
+function rowToNotification(row: Record<string, unknown>): UserNotification {
+  const type = row.type === "match_reminder" ? "match_reminder" : "system";
+  const channel = row.channel === "email" || row.channel === "push" ? row.channel : "site";
+  return {
+    id: String(row.id),
+    type,
+    title: String(row.title),
+    body: String(row.body),
+    channel,
+    read: row.read === true,
+    createdAt: dateToMs(row.created_at) ?? Date.now(),
+    metadata: parseJsonObject(row.metadata),
+  };
+}
+
+function nullableString(value: unknown) {
+  return typeof value === "string" && value ? value : null;
+}
+
+function dateToMs(value: unknown) {
+  if (!value) return null;
+  const time = value instanceof Date ? value.getTime() : new Date(String(value)).getTime();
+  return Number.isFinite(time) ? time : null;
+}
+
+function dateToIso(value: unknown) {
+  const time = dateToMs(value);
+  return time ? new Date(time).toISOString() : undefined;
+}
+
+function parseJsonArray(value: unknown) {
+  if (Array.isArray(value)) return value as InvitationCode["usedBy"];
+  if (typeof value !== "string") return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed as InvitationCode["usedBy"] : [];
+  } catch {
+    return [];
+  }
+}
+
+function parseJsonObject(value: unknown) {
+  if (value && typeof value === "object" && !Array.isArray(value)) return value as Record<string, never>;
+  if (typeof value !== "string") return {};
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
   }
 }
 
