@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "fun.boyzi.cyberball",
+      "sha256_cert_fingerprints": [
+        "FD:1E:D5:D3:BF:E8:B3:DB:72:BF:3F:66:91:4C:2E:60:F1:2A:15:84:0D:DA:41:D3:48:9E:87:9E:8C:34:39:BC"
+      ]
+    }
+  }
+]

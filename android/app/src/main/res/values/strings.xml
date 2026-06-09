@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">赛波</string>
+    <string name="launch_url">https://ball.boyzi.fun/</string>
+    <string name="host_name">ball.boyzi.fun</string>
+</resources>
