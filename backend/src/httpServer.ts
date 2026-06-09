@@ -35,6 +35,7 @@ const CACHE_PUBLIC_SHORT = "public, max-age=15, stale-while-revalidate=60, stale
 const CACHE_PUBLIC_MEDIUM = "public, max-age=300, stale-while-revalidate=900, stale-if-error=86400";
 const CACHE_PUBLIC_LONG = "public, max-age=3600, stale-while-revalidate=86400, stale-if-error=604800";
 const CORS_PREFLIGHT_MAX_AGE_SECONDS = 86400;
+const NEWS_PROXY_TIMEOUT_MS = 5_000;
 const DEFAULT_CORS_ORIGINS = [
   "https://ball.boyzi.fun",
   "https://beta-wzja.world-cup-2026-625.pages.dev",
@@ -217,7 +218,7 @@ export function createHttpServer(options: HttpServerOptions) {
 
     if (req.method === "GET" && url.pathname === "/api/snapshot") {
       const snapshot = options.snapshotCache.getLatest();
-      sendCachedJson(res, snapshot ?? { type: "snapshot", timestamp: Date.now(), countries: [], events: [], history: {} }, CACHE_PUBLIC_SHORT);
+      sendCachedJson(res, toLightweightSnapshot(snapshot), CACHE_PUBLIC_SHORT);
       return;
     }
 
@@ -260,6 +261,16 @@ function isFailoverOriginActive() {
   const activeFile = process.env.CF_FAILOVER_ACTIVE_FILE;
   if (activeFile) return existsSync(activeFile);
   return process.env.CF_FAILOVER_ACTIVE !== "false";
+}
+
+function toLightweightSnapshot(snapshot: ReturnType<SnapshotCache["getLatest"]>) {
+  return {
+    type: "snapshot" as const,
+    timestamp: snapshot?.timestamp ?? Date.now(),
+    countries: snapshot?.countries ?? [],
+    events: snapshot?.events ?? [],
+    history: {},
+  };
 }
 
 async function handleSiteAnalyticsRequest(req: http.IncomingMessage, res: http.ServerResponse) {
@@ -466,7 +477,7 @@ function handleNewsRequest(url: URL, res: http.ServerResponse) {
   const params = new URLSearchParams(url.searchParams);
   if (!params.has("limit")) params.set("limit", "24");
 
-  fetch(`${newsApi}/api/news?${params.toString()}`, { cache: "no-store" })
+  fetchWithTimeout(`${newsApi}/api/news?${params.toString()}`, { cache: "no-store" }, NEWS_PROXY_TIMEOUT_MS)
     .then(async (response) => {
       const payload = await response.json().catch(() => null);
       if (!response.ok) {
@@ -724,6 +735,20 @@ function sendHtml(res: http.ServerResponse, html: string) {
   res.end(html);
 }
 
+async function fetchWithTimeout(input: string, init: RequestInit, timeoutMs: number) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 function renderAdminPage() {
   return renderAdminPageHtml();
 }
@@ -874,7 +899,12 @@ function renderAdminPageLegacy() {
       \`).join("");
     }
     refresh();
-    setInterval(refresh, 5000);
+    setInterval(function () {
+      if (!document.hidden) refresh();
+    }, 15000);
+    document.addEventListener("visibilitychange", function () {
+      if (!document.hidden) refresh();
+    });
   </script>
 </body>
 </html>`;

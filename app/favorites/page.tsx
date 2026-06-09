@@ -7,6 +7,7 @@ import {
   Bell,
   BarChart3,
   CalendarDays,
+  ArrowRight,
   CloudSun,
   ChevronRight,
   Clock3,
@@ -18,97 +19,21 @@ import {
 import { DashboardShell } from "@/components/dashboard-shell";
 import { StatCard } from "@/components/stat-card";
 import { UserActionButton } from "@/components/user-action-button";
-import { detailRows, extractCity, localizeLocationText } from "@/lib/calendar";
-import { generateMatchRouteSlug, generateMatchSlug } from "@/lib/match-detail";
+import { useUserSession } from "@/components/user-session-provider";
+import { buildFavoriteMatchCards, compactFavoriteMatchStage, formatFavoriteVenueLine, getFavoriteTeamCode, type FavoriteMatchCard } from "@/lib/favorite-matches";
 import { getMatchLiveDisplay } from "@/lib/match-live-display";
-import { parseTeams } from "@/lib/teams";
-import { userApi, type UserSessionPayload } from "@/lib/user-system";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
-import type { Match, Team } from "@/types/match";
+import type { Team } from "@/types/match";
 
-type FavoritePreference = UserSessionPayload["user"]["favoriteMatches"][number];
-
-type FavoriteMatchCard = {
-  id: string;
-  title: string;
-  stage: string;
-  startsAt?: string;
-  location: string;
-  city: string;
-  href: string;
-  sourceMatch?: Match;
-  home: Team;
-  away: Team;
-  tag: string;
-};
-
-const FEATURED_TEAM_KEYWORDS = [
-  "Argentina",
-  "Brazil",
-  "France",
-  "England",
-  "Spain",
-  "Portugal",
-  "United States",
-  "Mexico",
+const stackDepthStyles = [
+  { x: 0, y: 0, scale: 1, opacity: 1 },
+  { x: 10, y: 8, scale: 0.975, opacity: 0.82 },
+  { x: 18, y: 14, scale: 0.95, opacity: 0.66 },
 ];
-
-const FLAG_TO_TEAM_CODE: Record<string, string> = {
-  ar: "ARG",
-  at: "AUT",
-  au: "AUS",
-  ba: "BIH",
-  be: "BEL",
-  br: "BRA",
-  ca: "CAN",
-  cd: "COD",
-  ch: "SUI",
-  ci: "CIV",
-  co: "COL",
-  cv: "CPV",
-  cw: "CUW",
-  cz: "CZE",
-  de: "GER",
-  dz: "ALG",
-  ec: "ECU",
-  eg: "EGY",
-  es: "ESP",
-  fr: "FRA",
-  "gb-eng": "ENG",
-  "gb-sct": "SCO",
-  gh: "GHA",
-  hr: "CRO",
-  ht: "HAI",
-  iq: "IRQ",
-  ir: "IRN",
-  it: "ITA",
-  jo: "JOR",
-  jp: "JPN",
-  kr: "KOR",
-  ma: "MAR",
-  mx: "MEX",
-  nl: "NED",
-  no: "NOR",
-  nz: "NZL",
-  pa: "PAN",
-  pt: "POR",
-  py: "PAR",
-  qa: "QAT",
-  sa: "SAU",
-  se: "SWE",
-  sn: "SEN",
-  tn: "TUN",
-  tr: "TUR",
-  us: "USA",
-  uy: "URU",
-  uz: "UZB",
-  za: "RSA",
-};
 
 export default function FavoritesPage() {
   const { matches, warmupMatches, loading } = useWorldCupData();
-  const [home, setHome] = useState<UserSessionPayload | null>(null);
-  const [homeLoaded, setHomeLoaded] = useState(false);
+  const { home } = useUserSession();
   const [activeIndex, setActiveIndex] = useState(0);
   const [dismissedFavoriteIds, setDismissedFavoriteIds] = useState<Set<string>>(() => new Set());
 
@@ -117,36 +42,7 @@ export default function FavoritesPage() {
     [matches, warmupMatches]
   );
 
-  useEffect(() => {
-    let mounted = true;
-    userApi<UserSessionPayload>("/api/me/session", { cache: "no-store" })
-      .then((payload) => {
-        if (mounted) setHome(payload);
-      })
-      .catch(() => {
-        if (mounted) setHome(null);
-      })
-      .finally(() => {
-        if (mounted) setHomeLoaded(true);
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  const favoriteCards = useMemo(() => {
-    const saved = home?.user.favoriteMatches ?? [];
-    if (saved.length) {
-      return saved
-        .map((favorite) => favoritePreferenceToCard(favorite, scheduleMatches))
-        .sort((a, b) => getSortTime(a) - getSortTime(b));
-    }
-
-    return getDefaultFavoriteMatches(scheduleMatches).map((match, index) =>
-      matchToCard(match, index === 0 ? "主收藏" : "推荐收藏")
-    );
-  }, [home, scheduleMatches]);
+  const favoriteCards = useMemo(() => buildFavoriteMatchCards(home, scheduleMatches), [home, scheduleMatches]);
 
   const visibleCards = useMemo(() => {
     return favoriteCards.filter((match) => !dismissedFavoriteIds.has(match.id));
@@ -225,8 +121,8 @@ function MatchCardStack({
   const stack = getStackMatches(matches, activeIndex);
 
   return (
-    <section className="relative h-[326px] overflow-visible pt-1">
-      <div className="absolute inset-x-3 top-10 h-[232px] rounded-[2rem] bg-volt/10 blur-3xl" />
+    <section className="relative h-[288px] overflow-visible pt-1 sm:h-[326px]">
+      <div className="absolute inset-x-8 top-8 h-[210px] rounded-[2rem] bg-volt/[0.055] blur-3xl sm:inset-x-3 sm:h-[232px] sm:bg-volt/10" />
       <AnimatePresence initial={false}>
         {stack.map(({ match, index, depth }) => (
           <StackCard
@@ -260,6 +156,7 @@ function StackCard({
   onRemove: () => void;
 }) {
   const isTop = depth === 0;
+  const stackStyle = stackDepthStyles[depth] ?? stackDepthStyles[stackDepthStyles.length - 1];
   const kickoff = match.startsAt ? new Date(match.startsAt) : null;
   const display = match.sourceMatch && kickoff
     ? getMatchLiveDisplay({ match: match.sourceMatch, kickoff, scheduledStageLabel: match.stage })
@@ -277,17 +174,17 @@ function StackCard({
       onClick={() => {
         if (!isTop) onSelect();
       }}
-      initial={{ opacity: 0, y: depth * 78, scale: 1 - depth * 0.035 }}
+      initial={{ opacity: 0, x: stackStyle.x + 18, y: stackStyle.y, scale: stackStyle.scale }}
       animate={{
-        opacity: 1 - depth * 0.16,
-        x: 0,
-        y: depth * 78,
-        scale: 1 - depth * 0.035,
+        opacity: stackStyle.opacity,
+        x: stackStyle.x,
+        y: stackStyle.y,
+        scale: stackStyle.scale,
         rotate: 0,
       }}
-      exit={{ opacity: 0, x: -360, rotate: -7, transition: { duration: 0.2, ease: [0.22, 1, 0.36, 1] } }}
-      transition={{ type: "spring", stiffness: 430, damping: 42, mass: 0.82 }}
-      className={`absolute inset-x-0 top-0 overflow-hidden rounded-[2.25rem] p-4 shadow-[0_28px_90px_rgba(0,0,0,.58),0_0_42px_rgba(216,255,62,.16)] ${
+      exit={{ opacity: 0, x: -320, rotate: -4, transition: { duration: 0.18, ease: [0.22, 1, 0.36, 1] } }}
+      transition={{ type: "spring", stiffness: 520, damping: 54, mass: 0.68 }}
+      className={`absolute inset-x-0 top-0 overflow-hidden rounded-[2.25rem] p-4 shadow-[0_16px_42px_rgba(0,0,0,.34),0_0_24px_rgba(216,255,62,.08)] sm:shadow-[0_24px_72px_rgba(0,0,0,.5),0_0_34px_rgba(216,255,62,.12)] ${
         isTop
           ? "z-30 cursor-grab bg-volt text-black active:cursor-grabbing"
           : "z-20 cursor-pointer bg-[#101411]/92 text-white ring-1 ring-white/[0.08] backdrop-blur-3xl"
@@ -335,12 +232,12 @@ function StackCard({
         <PassInfo icon={<Clock3 className="h-3 w-3" />} label="开赛" value={display?.centerLabel ?? formatTime(kickoff)} muted={!isTop} />
         <PassInfo icon={<CalendarDays className="h-3 w-3" />} label="日期" value={formatShortDate(kickoff)} muted={!isTop} />
         <PassInfo icon={<MapPin className="h-3 w-3" />} label="城市" value={match.city || "TBD"} muted={!isTop} />
-        <PassInfo icon={<Star className="h-3 w-3" />} label="阶段" value={compactStage(match.stage)} muted={!isTop} />
+        <PassInfo icon={<Star className="h-3 w-3" />} label="阶段" value={compactFavoriteMatchStage(match.stage)} muted={!isTop} />
       </div>
       <div className="relative mt-4 flex items-center justify-between gap-3">
         <p className={`flex min-w-0 items-center gap-1.5 pl-3 text-xs font-medium ${isTop ? "text-black/52" : "text-white/42"}`}>
           <MapPin className="h-3.5 w-3.5 shrink-0" />
-          <span className="truncate">{match.location || "球场待定"}</span>
+          <span className="truncate">{formatFavoriteVenueLine(match)}</span>
         </p>
         {isTop && (
           <Link
@@ -363,19 +260,22 @@ function PinnedMatchInfo({ match }: { match: FavoriteMatchCard }) {
   return (
     <motion.section
       key={match.id}
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, scale: 0.985 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
       className="relative"
     >
       <FavoriteOddsPanel match={match} odds={odds} />
 
-      <Link
-        href={match.href}
-        className="relative mt-3 flex h-10 items-center justify-between rounded-full bg-black/32 px-4 text-sm font-black text-white ring-1 ring-white/[0.08] transition hover:bg-volt hover:text-black"
-      >
-        查看完整比赛页
-        <ChevronRight className="h-4 w-4" />
-      </Link>
+      <div className="relative mt-3 flex justify-end">
+        <Link
+          href="/favorites/matches"
+          className="inline-flex h-10 items-center justify-between gap-2 rounded-full bg-volt/15 px-4 text-sm font-black text-volt shadow-[0_0_44px_rgba(216,255,62,.24)] ring-1 ring-volt/25 transition hover:bg-volt hover:text-black"
+        >
+          查看全部赛事卡
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      </div>
     </motion.section>
   );
 }
@@ -397,10 +297,10 @@ function CompactFavoriteCard({
 
   return (
     <motion.article
-      initial={{ opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, x: 10 }}
+      animate={{ opacity: 1, x: 0 }}
       transition={{ delay: Math.min(index * 0.03, 0.18) }}
-      className={`group relative overflow-hidden rounded-[1.75rem] p-3 shadow-[0_22px_70px_rgba(0,0,0,.35),inset_0_1px_0_rgba(255,255,255,.1)] ring-1 backdrop-blur-3xl transition ${
+      className={`group relative overflow-hidden rounded-[1.75rem] p-3 shadow-[0_12px_34px_rgba(0,0,0,.24),inset_0_1px_0_rgba(255,255,255,.1)] ring-1 backdrop-blur-3xl transition sm:shadow-[0_18px_54px_rgba(0,0,0,.3),inset_0_1px_0_rgba(255,255,255,.1)] ${
         active
           ? "bg-volt/[0.12] ring-volt/28"
           : "bg-white/[0.045] ring-white/[0.075] hover:bg-white/[0.07]"
@@ -521,7 +421,7 @@ function FavoriteOddsPanel({ match, odds }: { match: FavoriteMatchCard; odds: Fa
   const probabilitySegments = buildFavoriteProbabilitySegments(homeOdds, drawOdds, awayOdds);
 
   return (
-    <div className="favorites-odds-panel relative mx-auto overflow-hidden rounded-[24px] border border-white/[0.08] bg-[#111113]/90 shadow-[0_28px_64px_rgba(0,0,0,0.34)] backdrop-blur-xl">
+    <div className="favorites-odds-panel relative mx-auto overflow-hidden rounded-[24px] border border-white/[0.08] bg-[#111113]/90 shadow-[0_14px_36px_rgba(0,0,0,0.24)] backdrop-blur-xl sm:shadow-[0_24px_56px_rgba(0,0,0,0.3)]">
       <div className="favorites-odds-glow pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(216,255,62,0.12),transparent_34%),radial-gradient(circle_at_92%_18%,rgba(255,154,31,0.10),transparent_36%)]" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-volt/30 to-transparent" />
 
@@ -686,72 +586,6 @@ function LoadingStack() {
   );
 }
 
-function matchToCard(match: Match, tag = "收藏"): FavoriteMatchCard {
-  const teams = parseTeams(match.summary);
-  const venue = detailRows(match).find((detail) => detail.type === "venue")?.text || localizeLocationText(match.location);
-
-  return {
-    id: match.uid,
-    title: normalizeTitle(match.summary),
-    stage: match.stage,
-    startsAt: match.start.toISOString(),
-    location: venue,
-    city: extractCity(match.location),
-    href: `/matches/${generateMatchRouteSlug(match)}`,
-    sourceMatch: match,
-    home: teams.home,
-    away: teams.away,
-    tag,
-  };
-}
-
-function favoritePreferenceToCard(favorite: FavoritePreference, scheduleMatches: Match[]): FavoriteMatchCard {
-  const matched = findScheduleMatch(favorite, scheduleMatches);
-  if (matched) return matchToCard(matched, "已收藏");
-
-  const teams = parseTeams(favorite.title);
-  return {
-    id: favorite.id,
-    title: normalizeTitle(favorite.title),
-    stage: favorite.stage || "收藏赛程",
-    startsAt: favorite.startsAt,
-    location: "球场待公布",
-    city: "TBD",
-    href: `/matches/${generateMatchSlug(favorite.title)}`,
-    home: teams.home,
-    away: teams.away,
-    tag: "已收藏",
-  };
-}
-
-function findScheduleMatch(favorite: FavoritePreference, scheduleMatches: Match[]) {
-  const direct = scheduleMatches.find((match) => match.uid === favorite.id);
-  if (direct) return direct;
-
-  const favoriteTitle = normalizeTitle(favorite.title);
-  const favoriteStart = favorite.startsAt ? new Date(favorite.startsAt).getTime() : NaN;
-
-  return scheduleMatches.find((match) => {
-    if (normalizeTitle(match.summary) !== favoriteTitle) return false;
-    if (!Number.isFinite(favoriteStart)) return true;
-    return Math.abs(match.start.getTime() - favoriteStart) < 60_000;
-  });
-}
-
-function getDefaultFavoriteMatches(scheduleMatches: Match[]) {
-  const now = Date.now();
-  const upcoming = scheduleMatches
-    .filter((match) => match.start.getTime() >= now)
-    .sort((a, b) => a.start.getTime() - b.start.getTime());
-
-  const featured = upcoming.filter((match) => {
-    const text = [match.summary, match.homeTeam?.name, match.awayTeam?.name, match.homeTeam?.englishName, match.awayTeam?.englishName].join(" ");
-    return FEATURED_TEAM_KEYWORDS.some((keyword) => text.includes(keyword));
-  });
-
-  return (featured.length ? featured : upcoming.length ? upcoming : scheduleMatches).slice(0, 5);
-}
-
 function getStackMatches(matches: FavoriteMatchCard[], activeIndex: number) {
   return [1, 0].flatMap((depth) => {
     if (!matches.length || depth >= matches.length) return [];
@@ -766,10 +600,7 @@ function getNextIndex(current: number, total: number) {
 }
 
 function getTeamCode(team: Team) {
-  const flagCode = team.image.match(/flagcdn\.com\/([^/.]+)\./)?.[1];
-  if (flagCode && FLAG_TO_TEAM_CODE[flagCode]) return FLAG_TO_TEAM_CODE[flagCode];
-  if (/^[A-Z]{2,4}$/.test(team.badge)) return team.badge;
-  return team.name.replace(/[^\p{L}\p{N}]/gu, "").slice(0, 3).toUpperCase() || "TBD";
+  return getFavoriteTeamCode(team);
 }
 
 type FavoriteOddsItem = {
@@ -800,16 +631,6 @@ function getMatchWeatherSummary(match: FavoriteMatchCard) {
   const weather = match.sourceMatch?.weather?.trim();
   if (weather && weather !== "待更新" && !/^https?:\/\//i.test(weather)) return weather;
   return "赛日天气待更新";
-}
-
-function normalizeTitle(value: string) {
-  return value.replace(/\s*\([^)]*\)\s*$/, "").replace(/\s*（[^）]*）\s*$/, "").trim();
-}
-
-function getSortTime(match: FavoriteMatchCard) {
-  if (!match.startsAt) return Number.MAX_SAFE_INTEGER;
-  const value = new Date(match.startsAt).getTime();
-  return Number.isFinite(value) ? value : Number.MAX_SAFE_INTEGER;
 }
 
 function formatTime(date: Date | null) {

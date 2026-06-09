@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { getSiteAnalyticsSessionId, sendSiteAnalytics, type SiteAnalyticsStats } from "@/lib/site-analytics";
 
 const SiteAnalyticsContext = createContext<SiteAnalyticsStats | null>(null);
+const HEARTBEAT_INTERVAL_MS = 90_000;
 
 export function SiteAnalyticsProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -35,7 +36,7 @@ export function SiteAnalyticsProvider({ children }: { children: ReactNode }) {
     };
 
     syncStats("view");
-    const interval = window.setInterval(() => syncStats("heartbeat"), 30_000);
+    const interval = window.setInterval(() => syncStats("heartbeat"), HEARTBEAT_INTERVAL_MS);
     const syncVisibleHeartbeat = () => syncStats("heartbeat");
     document.addEventListener("visibilitychange", syncVisibleHeartbeat);
     window.addEventListener("online", syncVisibleHeartbeat);

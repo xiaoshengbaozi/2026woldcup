@@ -34,7 +34,8 @@ import {
   type UserPreferencePlayer,
   type UserPreferenceTeam,
 } from "@/lib/user-preferences";
-import { userApi, type PublicUser, type UserHomePayload, type UserSessionPayload } from "@/lib/user-system";
+import { useUserSession } from "@/components/user-session-provider";
+import { userApi, type PublicUser, type UserHomePayload } from "@/lib/user-system";
 import { fetchMyPlayerXTimeline, type PlayerXTimelinePayload } from "@/lib/player-x-timeline";
 import { fetchWorldCupTopScorers, type WorldCupTopScorer } from "@/lib/world-cup-top-scorers";
 import { getFlagUrl } from "@/lib/world-cup-2026";
@@ -282,6 +283,7 @@ function MePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedTab = normalizeMeTab(searchParams.get("tab"));
+  const { home: sessionHome, signedIn, loading: sessionLoading, refreshSession, clearSession } = useUserSession();
   const [home, setHome] = useState<UserHomePayload | null>(null);
   const [catalog, setCatalog] = useState<UserPreferenceCatalog>(fallbackUserPreferenceCatalog);
   const [topScorers, setTopScorers] = useState<WorldCupTopScorer[]>(DEFAULT_TOP_SCORERS);
@@ -326,29 +328,7 @@ function MePageContent() {
     }
   }
 
-  async function loadSession() {
-    try {
-      setLoading(true);
-      const payload = await userApi<UserSessionPayload>("/api/me/session", { cache: "no-store" });
-      setHome((current) => ({
-        catalog: current?.catalog,
-        user: payload.user,
-        summary: payload.summary,
-      }));
-      setError("");
-      return true;
-    } catch {
-      setHome(null);
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  }
-
   useEffect(() => {
-    void loadSession().then((signedIn) => {
-      if (signedIn) void loadHome();
-    });
     userApi<UserPreferenceCatalog>("/api/user-preferences", { cache: "no-store" })
       .then((payload) => {
         setCatalog(payload);
@@ -357,6 +337,25 @@ function MePageContent() {
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (sessionLoading) return;
+    setLoading(false);
+
+    if (signedIn === true) {
+      if (sessionHome) {
+        setHome((current) => ({
+          catalog: current?.catalog,
+          user: sessionHome.user,
+          summary: sessionHome.summary,
+        }));
+      }
+      void loadHome();
+      return;
+    }
+
+    setHome(null);
+  }, [sessionHome, sessionLoading, signedIn]);
 
   useEffect(() => {
     if (searchParams.get("emailVerified") !== "success") return;
@@ -441,6 +440,7 @@ function MePageContent() {
         method: "POST",
         body: JSON.stringify({ email, password }),
       });
+      await refreshSession();
       await loadHome();
       closeAuth();
     } catch (err) {
@@ -491,6 +491,7 @@ function MePageContent() {
           favoriteMatches: inferFavoriteMatches(catalog, followedTeams, followedPlayers),
         }),
       });
+      await refreshSession();
       await loadHome();
       closeAuth();
     } catch (err) {
@@ -504,6 +505,7 @@ function MePageContent() {
     setBusy("logout");
     try {
       await userApi("/api/auth/logout", { method: "POST", body: "{}" });
+      clearSession();
       setHome(null);
       setEmailNotice("");
     } finally {
@@ -714,14 +716,23 @@ function ProfileBoard({
                 role="tab"
                 aria-selected={active}
                 onClick={() => setActiveTab(tab.id)}
-                className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition duration-300 ${
+                className={`relative inline-flex items-center gap-2 overflow-hidden rounded-full px-4 py-2 text-sm font-bold transition-colors duration-300 ${
                   active
-                    ? "bg-volt text-black shadow-[0_0_26px_rgba(216,255,62,.2)]"
+                    ? "text-black"
                     : "bg-white/[0.045] text-white/58 ring-1 ring-white/[0.08] hover:bg-white/[0.08] hover:text-white"
                 }`}
               >
-                {tab.icon}
-                {tab.label}
+                {active && (
+                  <motion.span
+                    layoutId="me-tab-pill"
+                    className="absolute inset-0 rounded-full bg-volt shadow-[0_0_26px_rgba(216,255,62,.2)]"
+                    transition={{ type: "spring", stiffness: 420, damping: 34, mass: 0.75 }}
+                  />
+                )}
+                <span className="relative z-10 inline-flex items-center gap-2">
+                  {tab.icon}
+                  {tab.label}
+                </span>
               </button>
             );
           })}
@@ -803,15 +814,22 @@ function ProfileBoard({
                   role="tab"
                   aria-selected={isActive}
                   onClick={() => setActiveTimelineTab(item.key)}
-                  className={`group relative flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-left text-xs font-bold transition duration-300 ${
+                  className={`group relative flex shrink-0 items-center gap-1.5 overflow-hidden rounded-full px-3 py-1.5 text-left text-xs font-bold transition-colors duration-300 ${
                     isActive
-                      ? "bg-volt text-black shadow-[0_0_24px_rgba(216,255,62,.2)]"
+                      ? "text-black"
                       : "bg-white/[0.055] text-white/62 ring-1 ring-white/[0.08] hover:bg-white/[0.09] hover:text-white"
                   }`}
                 >
-                  <span>{item.title}</span>
+                  {isActive && (
+                    <motion.span
+                      layoutId="me-timeline-tab-pill"
+                      className="absolute inset-0 rounded-full bg-volt shadow-[0_0_24px_rgba(216,255,62,.2)]"
+                      transition={{ type: "spring", stiffness: 420, damping: 34, mass: 0.75 }}
+                    />
+                  )}
+                  <span className="relative z-10">{item.title}</span>
                   <span
-                    className={`rounded-full px-1.5 py-0.5 text-[10px] font-black tabular-nums ${
+                    className={`relative z-10 rounded-full px-1.5 py-0.5 text-[10px] font-black tabular-nums transition-colors duration-200 ${
                       isActive
                         ? "bg-black/15 text-black"
                         : "bg-black/25 text-volt/80 group-hover:bg-volt/[0.12]"

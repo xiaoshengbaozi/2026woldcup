@@ -25,10 +25,11 @@ type MobileMeEntryProps = {
   topRightAction?: MobileTopRightAction;
 };
 
-const PRIMARY_PAGES = new Set(["/", "/news", "/data", "/matches", "/favorites", "/players", "/me", "/teams", "/live", "/predict"]);
-const CREATOR_SUPPORT_PAGES = new Set(["/matches", "/players", "/teams"]);
+const PRIMARY_PAGES = new Set(["/", "/news", "/data", "/matches", "/favorites", "/favorites/matches", "/players", "/me", "/teams", "/live", "/predict"]);
+const CREATOR_SUPPORT_PAGES = new Set(["/matches", "/players", "/teams", "/predict"]);
 const PRIMARY_PAGE_WORDMARK_LABELS: Record<string, string> = {
   "/favorites": "FAVORITES",
+  "/favorites/matches": "FAVORITES",
   "/players": "PLAYERS",
   "/teams": "TEAMS",
   "/predict": "PREDICT",
@@ -52,7 +53,7 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
   const primaryPageWordmarkLabel = PRIMARY_PAGE_WORDMARK_LABELS[normalizedPathname];
   const showSearchEntry = pathname === "/" || pathname.startsWith("/news");
   const favoritesTopRightAction: MobileTopRightAction | undefined =
-    normalizedPathname === "/favorites"
+    normalizedPathname === "/favorites" || normalizedPathname === "/favorites/matches"
       ? {
           ariaLabel: "添加收藏",
           icon: <Plus className="h-4 w-4" />,

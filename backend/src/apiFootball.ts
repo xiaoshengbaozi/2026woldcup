@@ -47,6 +47,7 @@ export interface ApiFootballGatewayResponse {
 const DEFAULT_HOST = "https://v3.football.api-sports.io";
 const DEFAULT_CACHE_TTL_MS = 30_000;
 const DEFAULT_STALE_TTL_MS = 24 * 60 * 60_000;
+const DEFAULT_REQUEST_TIMEOUT_MS = 6_000;
 
 const CACHE_TTL_BY_ENDPOINT: Partial<Record<ApiFootballEndpoint, number>> = {
   fixtures: 6 * 60 * 60_000,
@@ -89,6 +90,7 @@ export function createApiFootballService(
   const host = (options.host || process.env.API_FOOTBALL_HOST || DEFAULT_HOST).replace(/\/+$/, "");
   const fallbackTtl = Number(process.env.API_FOOTBALL_CACHE_TTL_MS || options.cacheTtlMs || DEFAULT_CACHE_TTL_MS);
   const staleTtl = Number(process.env.API_FOOTBALL_STALE_CACHE_TTL_MS || DEFAULT_STALE_TTL_MS);
+  const requestTimeoutMs = Number(process.env.API_FOOTBALL_REQUEST_TIMEOUT_MS || DEFAULT_REQUEST_TIMEOUT_MS);
   const cacheFile = resolve(process.env.API_FOOTBALL_CACHE_FILE || resolve(process.cwd(), "data", "api-football-cache.json"));
   const cache = loadCache(cacheFile);
 
@@ -116,11 +118,11 @@ export function createApiFootballService(
       const url = `${host}/${endpoint}${normalizedParams.size ? `?${normalizedParams}` : ""}`;
       let response: Response;
       try {
-        response = await fetch(url, {
+        response = await fetchWithTimeout(url, {
           headers: {
             "x-apisports-key": apiKey,
           },
-        });
+        }, requestTimeoutMs);
       } catch (error) {
         if (cached && cached.staleUntil > Date.now()) {
           return { ...cached.payload, cached: true };
@@ -256,4 +258,18 @@ function createHttpError(statusCode: number, code: string, details?: unknown) {
   error.statusCode = statusCode;
   error.details = details;
   return error;
+}
+
+async function fetchWithTimeout(input: string, init: RequestInit, timeoutMs: number) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
 }

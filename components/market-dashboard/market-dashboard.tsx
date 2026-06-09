@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { motion } from "framer-motion";
 import { Map as MapIcon } from "lucide-react";
 import { useLiveMarketData } from "@/lib/use-live-market-data";
 import { useStore } from "@/lib/store";
@@ -9,7 +10,6 @@ import { ModuleD_Ticker } from "@/components/market-ticker/module-d-ticker";
 import { MarketOddsCard } from "@/components/market-ranking/market-odds-card";
 import { RankingOverflowCard } from "@/components/market-ranking/ranking-overflow-card";
 import { MatchLinesPanel } from "@/components/market-matches/match-lines-panel";
-import { ModuleC_OddsTimeline } from "@/components/market-timeline/module-c-timeline";
 import { ThreeGlobe } from "@/components/market-map/three-globe";
 import { StatusBar } from "./status-bar";
 import { NavBar } from "@/components/nav-bar";
@@ -195,13 +195,20 @@ export function MarketDashboard() {
                     role="tab"
                     aria-selected={isActive}
                     onClick={() => setMobileDataTab(item.key)}
-                    className={`relative rounded-full px-4 py-2 text-sm font-bold transition duration-300 ${
+                    className={`relative overflow-hidden rounded-full px-4 py-2 text-sm font-bold transition-colors duration-300 ${
                       isActive
-                        ? "bg-volt text-black shadow-[0_0_26px_rgba(216,255,62,.2)]"
+                        ? "text-black"
                         : "bg-white/[0.045] text-white/58 ring-1 ring-white/[0.08] hover:bg-white/[0.08] hover:text-white"
                     }`}
                   >
-                    <span>{item.title}</span>
+                    {isActive && (
+                      <motion.span
+                        layoutId="market-mobile-tab-pill"
+                        className="absolute inset-0 rounded-full bg-volt shadow-[0_0_26px_rgba(216,255,62,.2)]"
+                        transition={{ type: "spring", stiffness: 420, damping: 34, mass: 0.75 }}
+                      />
+                    )}
+                    <span className="relative z-10">{item.title}</span>
                   </button>
                 );
               })}
@@ -224,9 +231,6 @@ export function MarketDashboard() {
 
         <div className="hidden lg:block">
           <RankingOverflowCard />
-        </div>
-        <div className="hero-card hidden h-[220px] overflow-hidden p-4 lg:block">
-          <ModuleC_OddsTimeline />
         </div>
         <div className="hidden lg:block">
           <MatchLinesPanel />

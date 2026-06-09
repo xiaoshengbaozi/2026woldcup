@@ -2,10 +2,11 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { Radio, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { MobileLiveMatchesList } from "@/components/mobile-live-matches-list";
 import { mobileFloatingSurfaceStyle } from "@/components/mobile-surface-styles";
 import { getUpcomingMatchesWithinWindow, isMatchInLiveWindow } from "@/lib/live-match-queue";
+import { useNow } from "@/lib/use-now";
 import type { Match } from "@/types/match";
 
 type MobileLiveMatchesEntryProps = {
@@ -14,13 +15,8 @@ type MobileLiveMatchesEntryProps = {
 };
 
 export function MobileLiveMatchesEntry({ matches, variant = "fixed" }: MobileLiveMatchesEntryProps) {
-  const [currentTime, setCurrentTime] = useState(() => Date.now());
+  const currentTime = useNow(30_000);
   const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setCurrentTime(Date.now()), 30000);
-    return () => window.clearInterval(timer);
-  }, []);
 
   const displayMatches = useMemo(
     () => getUpcomingMatchesWithinWindow(matches, currentTime, 24),

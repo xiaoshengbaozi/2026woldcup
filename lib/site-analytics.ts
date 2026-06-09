@@ -1,6 +1,7 @@
 "use client";
 
 import { getUserApiUrl } from "@/lib/user-system";
+import { fetchWithTimeout } from "@/lib/request-cache";
 
 export type SiteAnalyticsStats = {
   todayViews: number;
@@ -10,12 +11,12 @@ export type SiteAnalyticsStats = {
 let fallbackSessionId: string | null = null;
 
 export async function sendSiteAnalytics(action: "view" | "heartbeat", sessionId: string) {
-  const response = await fetch(`${getUserApiUrl()}/api/site-analytics`, {
+  const response = await fetchWithTimeout(`${getUserApiUrl()}/api/site-analytics`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ action, sessionId }),
-  });
+  }, 5_000);
 
   const payload = await response.json().catch(() => null);
   if (!response.ok) throw new Error(payload?.error || `site_analytics_${response.status}`);

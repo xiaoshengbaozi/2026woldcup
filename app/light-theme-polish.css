@@ -591,6 +591,10 @@
   box-shadow: 0 10px 24px rgba(54, 65, 44, 0.16) !important;
 }
 
+[data-theme="light"] .auth-primary-button {
+  box-shadow: 0 8px 16px rgba(54, 65, 44, 0.14) !important;
+}
+
 [data-theme="light"] .avatar-popover .text-volt,
 [data-theme="light"] .avatar-popover .text-volt\/70,
 [data-theme="light"] .avatar-popover .text-volt\/80 {
@@ -1630,6 +1634,29 @@
     linear-gradient(180deg, rgba(255, 254, 250, 0.18), rgba(238, 244, 231, 0.34)) !important;
 }
 
+[data-theme="light"] .predict-page .prediction-topology-header {
+  margin-bottom: 1.45rem !important;
+}
+
+[data-theme="light"] .predict-page .prediction-topology-scroll {
+  padding-top: 0.2rem;
+}
+
+[data-theme="light"] .predict-page .prediction-topology-kicker,
+[data-theme="light"] .predict-page .prediction-topology-statbar {
+  font-size: 0.72rem !important;
+}
+
+[data-theme="light"] .predict-page .prediction-node-eyebrow {
+  font-size: 0.72rem !important;
+}
+
+[data-theme="light"] .predict-page .prediction-node-meta,
+[data-theme="light"] .predict-page .prediction-node-footer,
+[data-theme="light"] .predict-page .prediction-round-index {
+  font-size: 0.68rem !important;
+}
+
 [data-theme="light"] .predict-page .bg-black\/20,
 [data-theme="light"] .predict-page .bg-black\/25,
 [data-theme="light"] .predict-page .bg-black\/30,
@@ -1744,4 +1771,42 @@
 [data-theme="light"] .predict-page .shadow-\[0_0_24px_rgba\(216\,255\,62\,\.1\)\],
 [data-theme="light"] .predict-page .shadow-\[0_0_24px_rgba\(216\,255\,62\,\.2\)\] {
   box-shadow: 0 12px 26px rgba(31, 43, 26, 0.08) !important;
+}
+
+[data-theme="light"] .favorite-match-list-card {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(243, 246, 239, 0.76)),
+    rgba(255, 255, 255, 0.96) !important;
+  box-shadow:
+    0 12px 30px rgba(31, 43, 26, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 0 rgba(54, 65, 44, 0.04) !important;
+}
+
+[data-theme="light"] .favorite-match-list-card::before {
+  background: linear-gradient(135deg, rgba(216, 255, 62, 0.5), rgba(54, 65, 44, 0.1), rgba(255, 255, 255, 0.62)) !important;
+}
+
+[data-theme="light"] .favorite-match-list-card::after {
+  background:
+    radial-gradient(ellipse at 16% 8%, rgba(216, 255, 62, 0.14), transparent 44%),
+    radial-gradient(ellipse at 88% 86%, rgba(54, 65, 44, 0.04), transparent 50%) !important;
+}
+
+[data-theme="light"] .favorites-match-list .divide-white\/\[0\.08\] > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(54, 65, 44, 0.1) !important;
+}
+
+[data-theme="light"] .favorites-match-list .border-white\/\[0\.08\],
+[data-theme="light"] .favorite-match-list-card .ring-white\/\[0\.08\] {
+  border-color: rgba(54, 65, 44, 0.1) !important;
+  --tw-ring-color: rgba(54, 65, 44, 0.1) !important;
+}
+
+[data-theme="light"] .favorite-match-logo-dark {
+  display: none !important;
+}
+
+[data-theme="light"] .favorite-match-logo-light {
+  display: block !important;
 }

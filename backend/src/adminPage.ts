@@ -458,6 +458,8 @@ export function renderAdminPageHtml() {
   <script>
     const fmt = new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 1 });
     const timeFmt = new Intl.DateTimeFormat("zh-CN", { hour: "2-digit", minute: "2-digit" });
+    const FAST_REFRESH_MS = 15000;
+    const SLOW_REFRESH_MS = 60000;
 
     function byId(id) { return document.getElementById(id); }
     function percent(value) { return Number.isFinite(value) ? fmt.format(value) + "%" : "--"; }
@@ -1261,8 +1263,21 @@ export function renderAdminPageHtml() {
       await refreshUsers();
     }
 
+    async function refreshFast() {
+      await Promise.allSettled([refreshStatus(), refreshLive()]);
+    }
+
+    async function refreshSlow() {
+      await Promise.allSettled([refreshFootballDetails(), refreshNews(), refreshNewsTranslationSettings(), refreshLiveChannels(), refreshLiveChannelMatchOptions(), refreshUsers(), refreshInvitations()]);
+    }
+
     async function refreshAll() {
-      await Promise.allSettled([refreshStatus(), refreshLive(), refreshFootballDetails(), refreshNews(), refreshNewsTranslationSettings(), refreshLiveChannels(), refreshLiveChannelMatchOptions(), refreshUsers(), refreshInvitations()]);
+      await Promise.allSettled([refreshFast(), refreshSlow()]);
+    }
+
+    function refreshWhenVisible(task) {
+      if (document.hidden) return;
+      task();
     }
 
     byId("invitationForm").addEventListener("submit", createInvitation);
@@ -1288,7 +1303,11 @@ export function renderAdminPageHtml() {
       updateNewsTranslationSettings({ articleTranslationEnabled: !newsTranslationSettings.articleTranslationEnabled });
     });
     refreshAll();
-    setInterval(refreshAll, 5000);
+    setInterval(function () { refreshWhenVisible(refreshFast); }, FAST_REFRESH_MS);
+    setInterval(function () { refreshWhenVisible(refreshSlow); }, SLOW_REFRESH_MS);
+    document.addEventListener("visibilitychange", function () {
+      if (!document.hidden) refreshFast();
+    });
   </script>
 </body>
 </html>`;

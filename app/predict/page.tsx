@@ -497,7 +497,7 @@ function PredictionTopologyView({ fullscreen = false }: { fullscreen?: boolean }
   return (
     <section
       ref={rootRef}
-      className={`hero-card relative flex flex-col overflow-hidden p-5 sm:p-6 ${
+      className={`prediction-topology-card hero-card relative flex flex-col overflow-hidden p-5 sm:p-6 ${
         fullscreen
           ? "h-[100dvh] w-screen rounded-none border-0 sm:h-[calc(100dvh-32px)] sm:w-[calc(100vw-32px)] sm:rounded-[2rem]"
           : "h-[720px] sm:h-[760px]"
@@ -506,12 +506,12 @@ function PredictionTopologyView({ fullscreen = false }: { fullscreen?: boolean }
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-volt/30 to-transparent" />
       <div className="absolute left-1/2 top-0 h-28 w-80 -translate-x-1/2 bg-volt/10 blur-[100px]" />
 
-      <div className="relative z-10 mb-4 flex flex-wrap items-start justify-between gap-3">
+      <div className="prediction-topology-header relative z-10 mb-4 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="flex items-center gap-2.5 text-lg font-semibold text-white">
             <GitBranch className="h-4 w-4 text-volt" />
             预测拓扑流程
-            <span className="rounded-full border border-volt/20 bg-volt/[0.08] px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-volt/90">
+            <span className="prediction-topology-kicker rounded-full border border-volt/20 bg-volt/[0.08] px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-volt/90">
               SIM FLOW
             </span>
           </h3>
@@ -519,7 +519,7 @@ function PredictionTopologyView({ fullscreen = false }: { fullscreen?: boolean }
             小组比分生成晋级路径，淘汰赛选择会沿流程图逐轮点亮。
           </p>
         </div>
-        <div className="flex shrink-0 items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/36">
+        <div className="prediction-topology-statbar flex shrink-0 items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/36">
           <span className="rounded-full bg-white/[0.045] px-3 py-1.5 ring-1 ring-white/[0.08]">小组 {groupFilled}/72</span>
           <span className="rounded-full bg-white/[0.045] px-3 py-1.5 ring-1 ring-white/[0.08]">淘汰赛 {knockoutFilled}/32</span>
           {championCode && (
@@ -537,7 +537,7 @@ function PredictionTopologyView({ fullscreen = false }: { fullscreen?: boolean }
         onMouseUp={handleMouseUpOrLeave}
         onMouseLeave={handleMouseUpOrLeave}
         onWheel={handleWheel}
-        className="scrollbar-hidden relative z-10 min-h-0 flex-1 cursor-grab select-none overflow-x-auto overflow-y-hidden active:cursor-grabbing"
+        className="prediction-topology-scroll scrollbar-hidden relative z-10 min-h-0 flex-1 cursor-grab select-none overflow-x-auto overflow-y-hidden active:cursor-grabbing"
       >
         <div className="relative" style={{ width: `${canvasWidth * scale}px`, height: `${canvasHeight * scale}px` }}>
           <div
@@ -586,8 +586,8 @@ function PredictionTopologyView({ fullscreen = false }: { fullscreen?: boolean }
               {columns.map((column, index) => (
                 <div key={column.id} className={`relative flex h-full w-[196px] shrink-0 flex-col justify-center ${column.featured ? "w-[220px]" : ""}`}>
                   <div className="mb-3 flex items-center justify-between px-1">
-                    <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-volt/75">{column.label}</span>
-                    <span className="rounded-full bg-white/[0.045] px-2 py-0.5 text-[8px] font-semibold text-white/25 ring-1 ring-white/[0.06]">
+                    <span className="prediction-node-eyebrow text-[10px] font-bold uppercase tracking-[0.14em] text-volt/75">{column.label}</span>
+                    <span className="prediction-round-index rounded-full bg-white/[0.045] px-2 py-0.5 text-[8px] font-semibold text-white/25 ring-1 ring-white/[0.06]">
                       {String(index + 1).padStart(2, "0")}
                     </span>
                   </div>
@@ -661,8 +661,8 @@ function PredictionGroupNode({
         : "border-white/[0.08] bg-black/50"
     }`}>
       <div className="mb-2 flex items-center justify-between border-b border-white/[0.06] pb-2">
-        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-volt/80">{group.id} 组</span>
-        <span className="rounded-full bg-white/[0.04] px-2 py-0.5 text-[8px] font-medium text-white/30">{filled}/6</span>
+        <span className="prediction-node-eyebrow text-[10px] font-bold uppercase tracking-[0.14em] text-volt/80">{group.id} 组</span>
+        <span className="prediction-node-meta rounded-full bg-white/[0.04] px-2 py-0.5 text-[8px] font-medium text-white/30">{filled}/6</span>
       </div>
       <div className="space-y-1">
         {standings.slice(0, 2).map((row, index) => {
@@ -679,7 +679,7 @@ function PredictionGroupNode({
           );
         })}
       </div>
-      <div className="mt-2 flex items-center justify-between border-t border-white/[0.04] pt-2 text-[9px] font-semibold uppercase tracking-[0.08em] text-white/28">
+      <div className="prediction-node-footer mt-2 flex items-center justify-between border-t border-white/[0.04] pt-2 text-[9px] font-semibold uppercase tracking-[0.08em] text-white/28">
         <span>比分 {filled}/6</span>
         <span className={filled === 6 ? "text-volt/80" : "text-white/24"}>{filled === 6 ? "已完成" : "进行中"}</span>
       </div>
@@ -709,10 +709,10 @@ function PredictionKnockoutNode({
         : "border-white/[0.045] bg-black/30 opacity-55"
     } ${featured ? "p-4" : ""}`}>
       <div className="mb-2 flex items-center justify-between">
-        <span className="rounded bg-white/[0.06] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-volt/70">
+        <span className="prediction-node-eyebrow rounded bg-white/[0.06] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-volt/70">
           {match.id}
         </span>
-        <span className="text-[9px] font-semibold uppercase tracking-wider text-white/32">{match.label}</span>
+        <span className="prediction-node-meta text-[9px] font-semibold uppercase tracking-wider text-white/32">{match.label}</span>
       </div>
       <PredictionTeamLine
         code={match.home.teamCode}
@@ -727,11 +727,11 @@ function PredictionKnockoutNode({
         active={pick?.winnerCode === match.away.teamCode}
       />
       {pick ? (
-        <div className="mt-2 border-t border-white/[0.04] pt-1.5 text-right text-[9px] font-semibold text-volt/80">
+        <div className="prediction-node-footer mt-2 border-t border-white/[0.04] pt-1.5 text-right text-[9px] font-semibold text-volt/80">
           晋级 {team(pick.winnerCode)?.nameCn ?? pick.winnerCode}
         </div>
       ) : (
-        <div className="mt-2 border-t border-white/[0.04] pt-1.5 text-right text-[9px] font-medium text-white/24">
+        <div className="prediction-node-footer mt-2 border-t border-white/[0.04] pt-1.5 text-right text-[9px] font-medium text-white/24">
           {ready ? "待选择" : "待定"}
         </div>
       )}
@@ -1443,6 +1443,13 @@ function compactIds(id: string | undefined) {
   return id ? [id] : [];
 }
 
+function SoccerArchiveIcon() {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src="/predict/archive-ball.png" alt="" className="h-9 w-9 object-contain" loading="lazy" />
+  );
+}
+
 function PredictionArchivePanel() {
   const groupScores = usePredictionStore((s) => s.groupScores);
   const knockoutPicks = usePredictionStore((s) => s.knockoutPicks);
@@ -1453,7 +1460,9 @@ function PredictionArchivePanel() {
   const [busy, setBusy] = useState("");
   const [message, setMessage] = useState("");
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [selectedArchiveId, setSelectedArchiveId] = useState<string | null>(null);
   const activeArchive = archives.find((archive) => archive.id === activeArchiveId) ?? null;
+  const selectedArchive = archives.find((archive) => archive.id === selectedArchiveId) ?? null;
 
   useEffect(() => {
     let active = true;
@@ -1508,6 +1517,7 @@ function PredictionArchivePanel() {
     });
     setActiveArchiveId(archive.id);
     setName(archive.name);
+    setSelectedArchiveId(null);
     setMessage(`已载入：${archive.name}`);
   }
 
@@ -1524,6 +1534,7 @@ function PredictionArchivePanel() {
         setActiveArchiveId(null);
         setName("");
       }
+      if (selectedArchiveId === id) setSelectedArchiveId(null);
       setMessage("存档已删除");
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "删除失败");
@@ -1562,11 +1573,12 @@ function PredictionArchivePanel() {
       <AnimatePresence>
         {showSaveDialog && (
           <motion.div
-            initial={{ opacity: 0, y: -8, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.98 }}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
             transition={{ duration: 0.18 }}
-            className="fixed inset-x-4 top-[calc(env(safe-area-inset-top)+7rem)] z-[90] w-auto rounded-3xl bg-black/70 p-3 shadow-[0_28px_70px_rgba(0,0,0,.55)] ring-1 ring-white/10 backdrop-blur-2xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-12 sm:z-30 sm:w-[min(360px,calc(100vw-2rem))]"
+            style={{ x: "-50%", y: "-50%" }}
+            className="fixed left-1/2 top-1/2 z-[150] w-[min(360px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-black/70 p-3 shadow-[0_28px_70px_rgba(0,0,0,.55)] ring-1 ring-white/10 backdrop-blur-2xl"
           >
             <div className="mb-2 flex items-center justify-between gap-3">
               <div>
@@ -1611,63 +1623,77 @@ function PredictionArchivePanel() {
       </AnimatePresence>
 
       {archives.length > 0 && (
-        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {archives.map((archive, index) => {
-            const archiveProgress = getArchiveProgress(archive);
-            const champion = archiveProgress.isComplete ? team(archive.knockoutPicks?.FINAL?.winnerCode) : null;
+        <div className="mt-3 grid grid-cols-4 divide-x divide-white/[0.08]">
+          {archives.map((archive) => {
             const isActive = archive.id === activeArchiveId;
+            const isSelected = archive.id === selectedArchiveId;
 
             return (
-            <div key={archive.id} className={`min-w-0 rounded-3xl p-2.5 ring-1 transition hover:bg-white/[0.055] ${
-              isActive ? "bg-volt/[0.075] ring-volt/25 shadow-[0_0_24px_rgba(216,255,62,.1)]" : "bg-white/[0.035] ring-white/[0.08]"
-            }`}>
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="truncate text-xs font-semibold text-white">{archive.name}</div>
-                  <div className="mt-1 text-[10px] text-white/30">{formatArchiveTime(archive.updatedAt)}</div>
-                </div>
-                <div className="flex shrink-0 items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => loadArchive(archive)}
-                    aria-label={`${isActive ? "正在编辑" : "载入"} ${archive.name}`}
-                    title={isActive ? "正在编辑" : "载入存档"}
-                    className={`grid h-7 w-7 place-items-center rounded-full ring-1 transition ${
-                      isActive
-                        ? "bg-volt/12 text-volt ring-volt/25 shadow-[0_0_18px_rgba(216,255,62,.1)]"
-                        : "bg-white/[0.04] text-white/35 ring-white/[0.08] hover:bg-volt/10 hover:text-volt"
-                    }`}
-                  >
-                    <FolderOpen className="h-3 w-3" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => deleteArchive(archive.id)}
-                    disabled={busy === archive.id}
-                    aria-label={`删除 ${archive.name}`}
-                    title="删除存档"
-                    className="grid h-7 w-7 place-items-center rounded-full bg-white/[0.04] text-white/35 ring-1 ring-white/[0.08] transition hover:bg-red-500/10 hover:text-red-300 disabled:opacity-40"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </button>
-                </div>
-              </div>
-              <div className="mt-2">
-                <div className="flex items-center justify-between gap-2 text-[10px] font-semibold">
-                  <span className={archiveProgress.isComplete ? "text-volt" : "text-white/38"}>
-                    {archiveProgress.isComplete && champion ? `冠军 ${champion.nameCn}` : `进度 ${archiveProgress.filled}/${archiveProgress.total}`}
-                  </span>
-                  <span className="tabular-nums text-white/28">{archiveProgress.percent}%</span>
-                </div>
-                <div className="mt-1">
-                  <PredictionProgressTrack percent={archiveProgress.percent} gradientId={`archive-football-glass-${index}`} />
-                </div>
-              </div>
-            </div>
+              <button
+                key={archive.id}
+                type="button"
+                onClick={() => setSelectedArchiveId(archive.id)}
+                className={`flex min-w-0 flex-col items-center justify-center gap-2 px-2 py-3 text-center transition hover:bg-white/[0.035] ${
+                  isSelected ? "bg-white/[0.045]" : isActive ? "bg-volt/[0.045]" : ""
+                }`}
+                aria-label={`打开存档 ${archive.name}`}
+              >
+                <SoccerArchiveIcon />
+                <span className="w-full truncate text-xs font-bold text-white">{archive.name}</span>
+              </button>
             );
           })}
         </div>
       )}
+
+      <AnimatePresence>
+        {selectedArchive && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.96 }}
+            transition={{ duration: 0.18 }}
+            style={{ x: "-50%", y: "-50%" }}
+            className="fixed left-1/2 top-1/2 z-[150] w-[min(340px,calc(100vw-2rem))] rounded-3xl bg-black/76 p-4 text-center shadow-[0_28px_80px_rgba(0,0,0,.62)] ring-1 ring-white/10 backdrop-blur-2xl"
+            role="dialog"
+            aria-modal="true"
+            aria-label="存档操作"
+          >
+            <button
+              type="button"
+              onClick={() => setSelectedArchiveId(null)}
+              aria-label="关闭存档操作"
+              className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full bg-white/[0.04] text-white/40 ring-1 ring-white/[0.08] transition hover:bg-white/[0.08] hover:text-white"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+            <div className="mx-auto mb-2 grid place-items-center">
+              <SoccerArchiveIcon />
+            </div>
+            <h3 className="truncate text-base font-black text-white">{selectedArchive.name}</h3>
+            <p className="mt-1 text-xs text-white/36">{formatArchiveTime(selectedArchive.updatedAt)}</p>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => loadArchive(selectedArchive)}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-volt text-sm font-black text-black transition hover:scale-[1.01]"
+              >
+                <FolderOpen className="h-4 w-4" />
+                载入
+              </button>
+              <button
+                type="button"
+                onClick={() => deleteArchive(selectedArchive.id)}
+                disabled={busy === selectedArchive.id}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-red-500/12 text-sm font-black text-red-200 ring-1 ring-red-300/15 transition hover:bg-red-500/18 disabled:opacity-45"
+              >
+                <Trash2 className="h-4 w-4" />
+                删除
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {message && <p className="mt-3 text-xs text-white/42">{message}</p>}
     </section>
@@ -1825,7 +1851,49 @@ export default function PredictPage() {
           </div>
         </motion.section>
 
-        <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="sticky top-[calc(env(safe-area-inset-top)+4.125rem)] z-[65] -mx-3 bg-black/58 px-3 py-2 backdrop-blur-2xl lg:hidden">
+          <div className="flex flex-wrap gap-1.5">
+            {([
+              { id: "groups" as TabId, label: "小组赛" },
+              { id: "knockout" as TabId, label: "淘汰赛" },
+            ]).map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`relative shrink-0 overflow-hidden rounded-full px-4 py-2 text-xs font-black transition-colors duration-300 ${
+                    isActive ? "text-black" : "text-white/54 hover:bg-white/[0.06] hover:text-white"
+                  }`}
+                >
+                  {isActive && (
+                    <motion.span
+                      layoutId="predict-mobile-tab-pill"
+                      className="absolute inset-0 rounded-full bg-volt shadow-[0_0_22px_rgba(216,255,62,.18)]"
+                      transition={{ type: "spring", stiffness: 420, damping: 34, mass: 0.75 }}
+                    />
+                  )}
+                  <span className="relative z-10">{tab.label}</span>
+                </button>
+              );
+            })}
+            {championCode && (
+              <button
+                type="button"
+                onClick={() => setChampionPathOpen(true)}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#f3c26c]/18 px-4 py-2 text-xs font-black text-white shadow-[0_0_24px_rgba(243,194,108,.16)] ring-1 ring-[#f3c26c]/28 transition hover:bg-[#f3c26c]/24"
+              >
+                <Trophy size={13} />
+                冠军之路
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="hidden flex-wrap items-center justify-between gap-2 lg:flex">
           <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="比赛阶段">
             {([
               { id: "groups" as TabId, label: "小组赛", count: 72 },
@@ -1844,6 +1912,16 @@ export default function PredictPage() {
                 </button>
               );
             })}
+            {championCode && (
+              <button
+                type="button"
+                onClick={() => setChampionPathOpen(true)}
+                className="group relative flex shrink-0 items-center gap-1.5 rounded-full bg-[#f3c26c]/18 px-3.5 py-2 text-left text-sm font-bold text-white shadow-[0_0_24px_rgba(243,194,108,.14)] ring-1 ring-[#f3c26c]/28 transition duration-300 hover:bg-[#f3c26c]/24"
+              >
+                <Trophy size={14} />
+                冠军之路
+              </button>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -1855,16 +1933,6 @@ export default function PredictPage() {
               拓扑图
               <span className="rounded-full bg-black/15 px-1.5 py-0.5 tabular-nums">{groupFilled + knockoutFilled}</span>
             </button>
-            {championCode && (
-              <button
-                type="button"
-                onClick={() => setChampionPathOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-white/[0.055] px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-[#f3c26c] ring-1 ring-[#f3c26c]/20 transition-all hover:scale-[1.01] hover:bg-[#f3c26c]/10"
-              >
-                <Trophy size={12} />
-                CHAMPION
-              </button>
-            )}
             <button onClick={autoFillRandom} className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-white/30 hover:text-flare px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.06] transition-all"><Shuffle size={12} />随机填充</button>
             <button onClick={resetAll} className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-white/30 hover:text-red-400 px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.06] transition-all"><X size={12} />清空</button>
           </div>

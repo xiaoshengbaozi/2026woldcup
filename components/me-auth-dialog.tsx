@@ -669,7 +669,7 @@ function PrimaryButton({ children, ...props }: React.ButtonHTMLAttributes<HTMLBu
   return (
     <button
       {...props}
-      className="inline-flex h-10 min-w-32 items-center justify-center gap-2 rounded-full border border-transparent bg-volt px-4 text-sm font-bold text-black shadow-[0_0_30px_rgba(216,255,62,.2)] outline-none transition hover:scale-[1.02] focus-visible:border-volt/40 disabled:opacity-60"
+      className="auth-primary-button inline-flex h-10 min-w-32 items-center justify-center gap-2 rounded-full border border-transparent bg-volt px-4 text-sm font-bold text-black shadow-[0_0_30px_rgba(216,255,62,.2)] outline-none transition hover:scale-[1.02] focus-visible:border-volt/40 disabled:opacity-60"
     >
       {children}
     </button>

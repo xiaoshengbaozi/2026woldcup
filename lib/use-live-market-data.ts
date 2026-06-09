@@ -16,6 +16,8 @@ const STALE_AFTER_MS = 15_000;
 const RECONNECT_BASE_MS = 1_000;
 const RECONNECT_MAX_MS = 30_000;
 const SNAPSHOT_STORAGE_KEY = "wc-market-last-snapshot";
+const SNAPSHOT_SAVE_INTERVAL_MS = 15_000;
+let lastSnapshotSavedAt = 0;
 
 function getApiUrl() {
   return getBackendApiUrl();
@@ -40,7 +42,7 @@ function applySnapshot(message: SnapshotMessage, options: { persist?: boolean } 
     store.setDataSource("live");
     store.setStatus("connected");
   });
-  if (persist) saveLastSnapshot(message);
+  if (persist) saveLastSnapshot(message, { force: true });
 }
 
 function applyDelta(message: DeltaMessage) {
@@ -215,8 +217,10 @@ function discardMockMarketData() {
   });
 }
 
-function saveLastSnapshot(message: SnapshotMessage) {
+function saveLastSnapshot(message: SnapshotMessage, options: { force?: boolean } = {}) {
   if (typeof window === "undefined" || !message.countries.length) return;
+  const now = Date.now();
+  if (!options.force && now - lastSnapshotSavedAt < SNAPSHOT_SAVE_INTERVAL_MS) return;
 
   try {
     const compact: SnapshotMessage = {
@@ -226,7 +230,8 @@ function saveLastSnapshot(message: SnapshotMessage) {
       events: message.events,
       history: {},
     };
-    window.localStorage.setItem(SNAPSHOT_STORAGE_KEY, JSON.stringify({ savedAt: Date.now(), snapshot: compact }));
+    window.localStorage.setItem(SNAPSHOT_STORAGE_KEY, JSON.stringify({ savedAt: now, snapshot: compact }));
+    lastSnapshotSavedAt = now;
   } catch {
     // If storage is unavailable, the in-memory store still preserves the current frame.
   }

@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 
 export type MatchTab = "lineup" | "live" | "stats" | "events" | "analysis";
@@ -109,13 +110,20 @@ export function MatchNav({
               role="tab"
               aria-selected={isActive}
               onClick={() => handleTabChange(item.id)}
-              className={`group relative flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-left text-sm font-bold transition duration-300 ${
+              className={`group relative flex shrink-0 items-center gap-1.5 overflow-hidden whitespace-nowrap rounded-full px-4 py-2 text-left text-sm font-bold transition-colors duration-300 ${
                 isActive
-                  ? "bg-volt text-black shadow-[0_0_26px_rgba(216,255,62,.2)]"
+                  ? "text-black"
                 : "bg-white/[0.045] text-white/58 ring-1 ring-white/[0.08] hover:bg-white/[0.08] hover:text-white"
               }`}
             >
-              <span>{item.label}</span>
+              {isActive && (
+                <motion.span
+                  layoutId="match-mobile-tab-pill"
+                  className="absolute inset-0 rounded-full bg-volt shadow-[0_0_26px_rgba(216,255,62,.2)]"
+                  transition={{ type: "spring", stiffness: 420, damping: 34, mass: 0.75 }}
+                />
+              )}
+              <span className="relative z-10">{item.label}</span>
             </button>
           );
         })}

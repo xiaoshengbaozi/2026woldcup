@@ -4,8 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { ExternalLink, Languages, Loader2, Newspaper, X } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { useUserSession } from "@/components/user-session-provider";
 import { cachedJson, fetchWithTimeout } from "@/lib/request-cache";
-import { userApi, type UserSessionPayload } from "@/lib/user-system";
 
 type NewsItem = {
   id: string;
@@ -129,7 +129,7 @@ export default function NewsPage() {
   const [readerLoading, setReaderLoading] = useState(false);
   const [readerError, setReaderError] = useState<string | null>(null);
   const [readerTranslate, setReaderTranslate] = useState(false);
-  const [isSignedIn, setIsSignedIn] = useState(false);
+  const { signedIn } = useUserSession();
   const [activeEditorTab, setActiveEditorTab] = useState("体育");
   const [activeNewsTab, setActiveNewsTab] = useState<NewsTabId>("headline");
   const mobileTabsSentinelRef = useRef<HTMLDivElement>(null);
@@ -143,20 +143,6 @@ export default function NewsPage() {
   const endpoint = useMemo(() => {
     const params = new URLSearchParams({ limit: "72" });
     return `${NEWS_API}/api/news?${params.toString()}`;
-  }, []);
-
-  useEffect(() => {
-    let alive = true;
-
-    userApi<UserSessionPayload>("/api/me/session", { cache: "no-store" })
-      .then(() => {
-        if (alive) setIsSignedIn(true);
-      })
-      .catch(() => {
-        if (alive) setIsSignedIn(false);
-      });
-
-    return () => { alive = false; };
   }, []);
 
   useEffect(() => {
@@ -308,7 +294,7 @@ export default function NewsPage() {
   const listItems = items.slice(14, 21);
   const featureItems = visualItems.slice(14, 17);
   const articleTranslationEnabled = Boolean(payload?.features?.articleTranslationEnabled);
-  const canTranslateReaderArticle = articleTranslationEnabled && isSignedIn && !isChineseNewsItem(readerItem);
+  const canTranslateReaderArticle = articleTranslationEnabled && signedIn === true && !isChineseNewsItem(readerItem);
 
   function openReader(item: NewsItem) {
     setReaderItem(item);
@@ -370,13 +356,20 @@ export default function NewsPage() {
                 aria-selected={isActive}
                 aria-label={`${tab.title}：${tab.label}`}
                 onClick={() => scrollToNewsSection(tab.id)}
-                className={`relative shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold transition duration-300 ${
+                className={`relative shrink-0 overflow-hidden whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold transition-colors duration-300 ${
                   isActive
-                    ? "bg-volt text-black shadow-[0_0_26px_rgba(216,255,62,.2)]"
+                    ? "text-black"
                     : "bg-white/[0.045] text-white/58 ring-1 ring-white/[0.08] hover:bg-white/[0.08] hover:text-white"
                 }`}
               >
-                <span>{tab.label}</span>
+                {isActive && (
+                  <motion.span
+                    layoutId="news-mobile-tab-pill"
+                    className="absolute inset-0 rounded-full bg-volt shadow-[0_0_26px_rgba(216,255,62,.2)]"
+                    transition={{ type: "spring", stiffness: 420, damping: 34, mass: 0.75 }}
+                  />
+                )}
+                <span className="relative z-10">{tab.label}</span>
               </button>
             );
           })}

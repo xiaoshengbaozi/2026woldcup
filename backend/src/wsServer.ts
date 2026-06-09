@@ -47,7 +47,7 @@ export function createWsServer() {
       // Send initial snapshot
       const snapshot = snapshotCache.getLatest();
       if (snapshot) {
-        ws.send(JSON.stringify(snapshot));
+        ws.send(JSON.stringify(toLightweightSnapshot(snapshot)));
       }
 
       ws.on("message", (raw) => {
@@ -108,6 +108,16 @@ export function createWsServer() {
     getSubscribedClientCount() {
       return Array.from(clients.values()).filter((client) => client.subscribed).length;
     },
+  };
+}
+
+function toLightweightSnapshot(snapshot: NonNullable<ReturnType<SnapshotCache["getLatest"]>>) {
+  return {
+    type: "snapshot" as const,
+    timestamp: snapshot.timestamp,
+    countries: snapshot.countries,
+    events: snapshot.events,
+    history: {},
   };
 }
 

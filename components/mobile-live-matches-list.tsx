@@ -2,10 +2,11 @@
 
 import { Radio } from "lucide-react";
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { LiveMatchCard } from "@/components/world-cup-hero/live-match-card";
 import { getUpcomingMatchesWithinWindow, isMatchInLiveWindow } from "@/lib/live-match-queue";
 import { buildMatchRoundLabels } from "@/lib/stage-rounds";
+import { useNow } from "@/lib/use-now";
 import type { Match } from "@/types/match";
 
 type MobileLiveMatchesListProps = {
@@ -21,12 +22,7 @@ export function MobileLiveMatchesList({
   scrollClassName = "pb-6",
   action,
 }: MobileLiveMatchesListProps) {
-  const [currentTime, setCurrentTime] = useState(() => Date.now());
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setCurrentTime(Date.now()), 30000);
-    return () => window.clearInterval(timer);
-  }, []);
+  const currentTime = useNow(30_000);
 
   const displayMatches = useMemo(
     () => getUpcomingMatchesWithinWindow(matches, currentTime, 24),

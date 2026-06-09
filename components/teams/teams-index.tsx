@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { AnimatePresence, motion } from "framer-motion";
-import { ArrowUpRight, ChevronLeft, ChevronRight, Heart, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
+import { ArrowUpRight, ChevronLeft, ChevronRight, Heart } from "lucide-react";
+import { emitUserActionFeedback } from "@/components/user-action-feedback";
+import { useUserSession } from "@/components/user-session-provider";
 import {
   continentOrder,
   qualifiedTeams,
@@ -12,7 +14,7 @@ import {
   type QualifiedTeamCard,
 } from "@/data/teams";
 import { getFlagUrl } from "@/lib/world-cup-2026";
-import { userApi, type PublicUser, type UserSessionPayload } from "@/lib/user-system";
+import { userApi, type PublicUser } from "@/lib/user-system";
 
 const MOBILE_TOP_MODULE_OFFSET = 66;
 const FOLLOWED_TEAMS_STORAGE_KEY = "worldcup-followed-teams";
@@ -30,10 +32,10 @@ type FollowedTeamRailItem = {
 };
 
 export function TeamsIndex() {
+  const { home, signedIn } = useUserSession();
   const [activeContinent, setActiveContinent] = useState(continentOrder[0]);
   const [followedTeamSlugs, setFollowedTeamSlugs] = useState<string[]>([]);
   const [sessionUser, setSessionUser] = useState<PublicUser | null>(null);
-  const [signedIn, setSignedIn] = useState(false);
   const [hasLoadedFollowedTeams, setHasLoadedFollowedTeams] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
@@ -53,8 +55,9 @@ export function TeamsIndex() {
   );
   const activeTab = tabItems.find((item) => item.continent === activeContinent) ?? tabItems[0];
   const teamsBySlug = useMemo(() => new Map(qualifiedTeams.map((team) => [team.slug, team])), []);
+  const isSignedIn = signedIn === true;
   const followedTeamKeys = useMemo(() => {
-    if (signedIn && sessionUser) {
+    if (isSignedIn && sessionUser) {
       return new Set(sessionUser.followedTeams.flatMap((team) => getSavedTeamKeys(team)));
     }
 
@@ -64,44 +67,26 @@ export function TeamsIndex() {
         .filter((team): team is QualifiedTeamCard => Boolean(team))
         .flatMap((team) => getQualifiedTeamKeys(team))
     );
-  }, [followedTeamSlugs, sessionUser, signedIn, teamsBySlug]);
+  }, [followedTeamSlugs, isSignedIn, sessionUser, teamsBySlug]);
   const followedTeams = useMemo(
     () =>
-      signedIn && sessionUser
+      isSignedIn && sessionUser
         ? sessionUser.followedTeams.map((team) => toFollowedRailItem(team)).filter((team): team is FollowedTeamRailItem => Boolean(team))
         : followedTeamSlugs
             .map((slug) => teamsBySlug.get(slug))
             .filter((team): team is QualifiedTeamCard => Boolean(team))
             .map((team) => toFollowedRailItem(team)),
-    [followedTeamSlugs, sessionUser, signedIn, teamsBySlug]
+    [followedTeamSlugs, isSignedIn, sessionUser, teamsBySlug]
   );
 
-  const refreshSession = useCallback(() => {
-    let active = true;
-    userApi<UserSessionPayload>("/api/me/session", { cache: "no-store" })
-      .then((payload) => {
-        if (!active) return;
-        setSessionUser(payload.user);
-        setSignedIn(true);
-      })
-      .catch(() => {
-        if (!active) return;
-        setSessionUser(null);
-        setSignedIn(false);
-      })
-      .finally(() => {
-        if (active) setHasLoadedFollowedTeams(true);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  useEffect(() => refreshSession(), [refreshSession]);
+  useEffect(() => {
+    if (signedIn === null) return;
+    setSessionUser(home?.user ?? null);
+    setHasLoadedFollowedTeams(true);
+  }, [home?.user, signedIn]);
 
   useEffect(() => {
-    if (signedIn) return;
+    if (isSignedIn) return;
     try {
       const stored = window.localStorage.getItem(FOLLOWED_TEAMS_STORAGE_KEY);
       if (!stored) return;
@@ -114,12 +99,12 @@ export function TeamsIndex() {
     } finally {
       setHasLoadedFollowedTeams(true);
     }
-  }, [signedIn, teamsBySlug]);
+  }, [isSignedIn, teamsBySlug]);
 
   useEffect(() => {
-    if (!hasLoadedFollowedTeams || signedIn) return;
+    if (!hasLoadedFollowedTeams || isSignedIn) return;
     window.localStorage.setItem(FOLLOWED_TEAMS_STORAGE_KEY, JSON.stringify(followedTeamSlugs));
-  }, [followedTeamSlugs, hasLoadedFollowedTeams, signedIn]);
+  }, [followedTeamSlugs, hasLoadedFollowedTeams, isSignedIn]);
 
   useEffect(() => {
     const mobileQuery = window.matchMedia("(max-width: 639px)");
@@ -165,7 +150,7 @@ export function TeamsIndex() {
   };
 
   const toggleFollowTeam = async (team: QualifiedTeamCard | string) => {
-    if (!signedIn) {
+    if (!isSignedIn) {
       const target = typeof team === "string" ? teamsBySlug.get(team) : team;
       if (!target) return;
       setFollowedTeamSlugs((current) => (current.includes(target.slug) ? current.filter((item) => item !== target.slug) : [...current, target.slug]));
@@ -233,15 +218,22 @@ export function TeamsIndex() {
                     role="tab"
                     aria-selected={isActive}
                     onClick={() => handleContinentChange(item.continent)}
-                    className={`group relative flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold transition duration-300 ${
+                    className={`group relative flex shrink-0 items-center gap-1.5 overflow-hidden whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold transition-colors duration-300 ${
                       isActive
-                        ? "bg-volt text-black shadow-[0_0_26px_rgba(216,255,62,.2)]"
+                        ? "text-black"
                         : "bg-white/[0.045] text-white/58 ring-1 ring-white/[0.08] hover:bg-white/[0.08] hover:text-white"
                     }`}
                   >
-                    <span>{item.label.title}</span>
+                    {isActive && (
+                      <motion.span
+                        layoutId="teams-mobile-tab-pill"
+                        className="absolute inset-0 rounded-full bg-volt shadow-[0_0_26px_rgba(216,255,62,.2)]"
+                        transition={{ type: "spring", stiffness: 420, damping: 34, mass: 0.75 }}
+                      />
+                    )}
+                    <span className="relative z-10">{item.label.title}</span>
                     <span
-                      className={`grid h-5 w-5 place-items-center rounded-full text-[10px] font-black leading-none tabular-nums ${
+                      className={`relative z-10 grid h-5 w-5 place-items-center rounded-full text-[10px] font-black leading-none tabular-nums transition-colors duration-200 ${
                         isActive
                           ? "bg-black/15 text-black"
                           : "bg-black/25 text-volt/80 group-hover:bg-volt/[0.12]"
@@ -392,6 +384,7 @@ function TeamCard({
   onToggleFollow: (team: QualifiedTeamCard | string) => void | Promise<void>;
 }) {
   const [feedback, setFeedback] = useState<"added" | "removed" | null>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!feedback) return;
@@ -403,6 +396,7 @@ function TeamCard({
     const nextFeedback = isFollowed ? "removed" : "added";
     await onToggleFollow(team);
     setFeedback(nextFeedback);
+    emitUserActionFeedback("team", nextFeedback, buttonRef.current);
   };
 
   return (
@@ -440,6 +434,7 @@ function TeamCard({
         </div>
       </Link>
       <button
+        ref={buttonRef}
         type="button"
         aria-pressed={isFollowed}
         aria-label={`${isFollowed ? "Unfollow" : "Follow"} ${team.nameCn}`}
@@ -458,31 +453,6 @@ function TeamCard({
           <Heart className={`h-4 w-4 ${isFollowed ? "fill-current" : ""}`} />
         </motion.span>
       </button>
-      <AnimatePresence>
-        {feedback && (
-          <>
-            <motion.span
-              aria-hidden="true"
-              className="pointer-events-none absolute right-4 top-4 z-20 h-10 w-10 rounded-full border border-volt/70 shadow-[0_0_30px_rgba(216,255,62,.22)]"
-              initial={{ opacity: 0.72, scale: 0.92 }}
-              animate={{ opacity: 0, scale: 1.75 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.62, ease: "easeOut" }}
-            />
-            <motion.span
-              role="status"
-              className="pointer-events-none absolute right-4 top-2 z-30 inline-flex -translate-y-full items-center gap-1.5 whitespace-nowrap rounded-full border border-volt/35 bg-black/72 px-3 py-1.5 text-[11px] font-black text-volt shadow-[0_18px_44px_rgba(0,0,0,.45),0_0_26px_rgba(216,255,62,.16)] backdrop-blur-2xl"
-              initial={{ opacity: 0, y: 8, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -6, scale: 0.96 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-            >
-              <Sparkles className="h-3 w-3" />
-              {feedback === "added" ? "已关注" : "已取消关注"}
-            </motion.span>
-          </>
-        )}
-      </AnimatePresence>
     </motion.div>
   );
 }

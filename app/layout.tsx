@@ -10,6 +10,7 @@ import { MobileTopBarProvider } from "@/components/mobile-top-bar-provider";
 import { SiteAnalyticsProvider } from "@/components/site-analytics-provider";
 import { SupportCreatorModal } from "@/components/support-creator-modal";
 import { PwaRegister } from "@/components/pwa-register";
+import { UserActionFeedbackLayer } from "@/components/user-action-feedback";
 import { UserSessionProvider } from "@/components/user-session-provider";
 import { WechatShareBridge } from "@/components/wechat-share-bridge";
 
@@ -106,6 +107,7 @@ export default function RootLayout({
               {children}
               <MobileNavBar />
               <SupportCreatorModal />
+              <UserActionFeedbackLayer />
             </MobileTopBarProvider>
           </UserSessionProvider>
         </SiteAnalyticsProvider>

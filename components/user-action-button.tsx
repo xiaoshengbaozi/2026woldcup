@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { Bell, Check, Sparkles, Star } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
+import { Bell, Check, Star } from "lucide-react";
 import { MeAuthDialog, type SharedAuthMode } from "@/components/me-auth-dialog";
 import { mobileFloatingSurfaceStyle } from "@/components/mobile-surface-styles";
+import { emitUserActionFeedback } from "@/components/user-action-feedback";
 import { useUserSession } from "@/components/user-session-provider";
 import { userApi, type PublicUser } from "@/lib/user-system";
 
@@ -50,12 +51,6 @@ const ACTION_COPY: Record<ActionKind, { idle: string; active: string; pending: s
 const topIconButtonClass =
   "mobile-floating-surface grid h-[34px] w-[34px] min-w-[34px] place-items-center rounded-full bg-white/[0.08] shadow-[0_14px_34px_rgba(0,0,0,.38),0_0_20px_rgba(216,255,62,.1),inset_0_1px_0_rgba(255,255,255,.16)] ring-1 backdrop-blur-2xl transition disabled:opacity-60";
 
-const FEEDBACK_COPY: Record<ActionKind, { added: string; removed: string }> = {
-  team: { added: "已关注", removed: "已取消关注" },
-  player: { added: "已关注", removed: "已取消关注" },
-  match: { added: "已收藏", removed: "已取消收藏" },
-};
-
 export function UserActionButton({
   kind,
   payload,
@@ -70,6 +65,7 @@ export function UserActionButton({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [authMode, setAuthMode] = useState<SharedAuthMode | null>(null);
   const [feedback, setFeedback] = useState<"added" | "removed" | null>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const { home, signedIn, refreshSession } = useUserSession();
   const id = String(payload.id || payload.matchId || "");
 
@@ -103,7 +99,10 @@ export function UserActionButton({
       });
       const nextActive = isAlreadySaved(kind, id, result.user);
       setActive(nextActive);
-      if (nextActive) setFeedback("added");
+      if (nextActive) {
+        setFeedback("added");
+        emitUserActionFeedback(kind, "added", buttonRef.current);
+      }
       onChanged?.(nextActive);
       void refreshSession();
     } finally {
@@ -125,6 +124,7 @@ export function UserActionButton({
       const nextActive = isAlreadySaved(kind, id, result.user);
       setActive(nextActive);
       setFeedback(nextActive ? "added" : "removed");
+      emitUserActionFeedback(kind, nextActive ? "added" : "removed", buttonRef.current);
       onChanged?.(nextActive);
       void refreshSession();
       setConfirmOpen(false);
@@ -154,6 +154,7 @@ export function UserActionButton({
     <>
       <span className={`${wrapperPositionClass} inline-flex ${wrapperClassName}`}>
         <button
+          ref={buttonRef}
           type="button"
           aria-label={label}
           onClick={runAction}
@@ -176,32 +177,6 @@ export function UserActionButton({
           </motion.span>
           {!iconOnly && label}
         </button>
-
-        <AnimatePresence>
-          {feedback && (
-            <>
-              <motion.span
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-0 rounded-full border border-volt/70 shadow-[0_0_28px_rgba(216,255,62,.22)]"
-                initial={{ opacity: 0.75, scale: 0.92 }}
-                animate={{ opacity: 0, scale: 1.55 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.62, ease: "easeOut" }}
-              />
-              <motion.span
-                role="status"
-                className="pointer-events-none absolute left-1/2 top-0 z-20 inline-flex -translate-x-1/2 -translate-y-[calc(100%+0.5rem)] items-center gap-1.5 whitespace-nowrap rounded-full border border-volt/35 bg-black/72 px-3 py-1.5 text-[11px] font-black text-volt shadow-[0_18px_44px_rgba(0,0,0,.45),0_0_26px_rgba(216,255,62,.16)] backdrop-blur-2xl"
-                initial={{ opacity: 0, y: 8, scale: 0.9 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -6, scale: 0.96 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-              >
-                <Sparkles className="h-3 w-3" />
-                {FEEDBACK_COPY[kind][feedback]}
-              </motion.span>
-            </>
-          )}
-        </AnimatePresence>
       </span>
 
       {confirmOpen && (

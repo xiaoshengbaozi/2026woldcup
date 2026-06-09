@@ -471,13 +471,20 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, scoutNot
                       key={tab.id}
                       type="button"
                       onClick={() => handleMobilePanelChange(tab.id)}
-                      className={`rounded-2xl px-3 py-1.5 text-xs font-black transition ${
+                      className={`relative overflow-hidden rounded-2xl px-3 py-1.5 text-xs font-black transition-colors duration-300 ${
                         active
-                          ? "bg-volt text-black shadow-[0_0_22px_rgba(216,255,62,.18)]"
+                          ? "text-black"
                           : "text-white/45 hover:bg-white/[0.05] hover:text-white/70"
                       }`}
                     >
-                      {tab.label}
+                      {active && (
+                        <motion.span
+                          layoutId="player-profile-mobile-tab-pill"
+                          className="absolute inset-0 rounded-2xl bg-volt shadow-[0_0_22px_rgba(216,255,62,.18)]"
+                          transition={{ type: "spring", stiffness: 420, damping: 34, mass: 0.75 }}
+                        />
+                      )}
+                      <span className="relative z-10">{tab.label}</span>
                     </button>
                   );
                 })}

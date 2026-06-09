@@ -122,18 +122,25 @@ function DayButton({
       onClick={onClick}
       className={`relative flex h-[68px] w-[50px] shrink-0 flex-col items-center justify-center overflow-hidden rounded-2xl text-center transition duration-300 ${
         active
-          ? "bg-volt text-black shadow-[0_0_24px_rgba(216,255,62,.2)]"
+          ? "text-black"
           : "glass-chip text-white/78 ring-1 ring-white/[0.08] hover:bg-white/[0.09] hover:text-white"
       }`}
       aria-pressed={active}
       aria-label={isAll ? "全部比赛日" : `${meta} ${value}, ${label}`}
     >
+      {active && (
+        <motion.span
+          layoutId="mobile-match-day-pill"
+          className="absolute inset-0 rounded-2xl bg-volt shadow-[0_0_24px_rgba(216,255,62,.2)]"
+          transition={{ type: "spring", stiffness: 420, damping: 34, mass: 0.75 }}
+        />
+      )}
       {isAll ? (
-        <CalendarDays className={`h-4 w-4 ${active ? "text-black" : "text-volt/80"}`} />
+        <CalendarDays className={`relative z-10 h-4 w-4 ${active ? "text-black" : "text-volt/80"}`} />
       ) : (
         <>
           <span
-            className={`absolute top-2 h-1 w-1 rounded-full ${
+            className={`absolute top-2 z-10 h-1 w-1 rounded-full ${
               count
                 ? active
                   ? "bg-black/45"
@@ -143,11 +150,11 @@ function DayButton({
                   : "bg-white/30"
             }`}
           />
-          <span className="mt-2 text-[10px] font-semibold uppercase leading-none tracking-[0.04em]">
+          <span className="relative z-10 mt-2 text-[10px] font-semibold uppercase leading-none tracking-[0.04em]">
             {label}
           </span>
-          <span className="mt-1 text-lg font-semibold leading-none">{value}</span>
-          <span className={`mt-1 max-w-full truncate px-1 text-[9px] font-medium leading-none ${active ? "text-black/52" : "text-white/34"}`}>
+          <span className="relative z-10 mt-1 text-lg font-semibold leading-none">{value}</span>
+          <span className={`relative z-10 mt-1 max-w-full truncate px-1 text-[9px] font-medium leading-none ${active ? "text-black/52" : "text-white/34"}`}>
             {meta}
           </span>
         </>

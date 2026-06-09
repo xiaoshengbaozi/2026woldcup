@@ -134,15 +134,22 @@ function SearchResultTabs({
             role="tab"
             aria-selected={active}
             onClick={() => onChange(tab.id)}
-            className={`group relative flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-left text-xs font-bold transition duration-300 sm:px-3.5 sm:py-2 sm:text-sm ${
+            className={`group relative flex shrink-0 items-center gap-1.5 overflow-hidden rounded-full px-3 py-1.5 text-left text-xs font-bold transition-colors duration-300 sm:px-3.5 sm:py-2 sm:text-sm ${
               active
-                ? "bg-volt text-black shadow-[0_0_24px_rgba(216,255,62,.2)]"
+                ? "text-black"
                 : "bg-white/[0.055] text-white/62 ring-1 ring-white/[0.08] hover:bg-white/[0.09] hover:text-white"
             }`}
           >
-            <span>{tab.label}</span>
+            {active && (
+              <motion.span
+                layoutId="search-tab-pill"
+                className="absolute inset-0 rounded-full bg-volt shadow-[0_0_24px_rgba(216,255,62,.2)]"
+                transition={{ type: "spring", stiffness: 420, damping: 34, mass: 0.75 }}
+              />
+            )}
+            <span className="relative z-10">{tab.label}</span>
             <span
-              className={`rounded-full px-1.5 py-0.5 text-[10px] font-black tabular-nums sm:px-2 sm:text-[11px] ${
+              className={`relative z-10 rounded-full px-1.5 py-0.5 text-[10px] font-black tabular-nums transition-colors duration-200 sm:px-2 sm:text-[11px] ${
                 active ? "bg-black/15 text-black" : "bg-black/25 text-volt/80 group-hover:bg-volt/[0.12]"
               }`}
             >

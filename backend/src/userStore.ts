@@ -1023,7 +1023,7 @@ function rowToReminder(row: Record<string, unknown>): MatchReminder {
     remindBeforeMinutes: Number(row.remind_before_minutes ?? 30),
     channel,
     enabled: row.enabled !== false,
-    lastQueuedAt: dateToMs(row.last_queued_at),
+    lastQueuedAt: dateToMs(row.last_queued_at) ?? undefined,
     createdAt: dateToMs(row.created_at) ?? Date.now(),
   };
 }

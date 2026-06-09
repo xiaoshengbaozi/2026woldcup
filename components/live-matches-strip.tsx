@@ -12,6 +12,7 @@ import { getMatchPhaseLabel, getMatchScore, hasMatchStarted } from "@/lib/match-
 import { formatStageLabel } from "@/lib/stage";
 import { buildMatchRoundLabels } from "@/lib/stage-rounds";
 import { parseTeams } from "@/lib/teams";
+import { useNow } from "@/lib/use-now";
 import { useVisibleRaf } from "@/lib/use-visible-raf";
 import type { Match } from "@/types/match";
 
@@ -23,18 +24,13 @@ const TICKER_SPEED = 50; // px per second, matching the data page ticker
 const TICKER_ITEM_WIDTH = 260;
 
 export function LiveMatchesStrip({ matches }: LiveMatchesStripProps) {
-  const [currentTime, setCurrentTime] = useState(() => Date.now());
+  const currentTime = useNow(30_000);
   const [expanded, setExpanded] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const tickerContainerRef = useRef<HTMLDivElement>(null);
   const streamRef = useRef<HTMLDivElement>(null);
   const offsetRef = useRef(0);
   const lastTimeRef = useRef<number>(0);
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setCurrentTime(Date.now()), 30000);
-    return () => window.clearInterval(timer);
-  }, []);
 
   const { displayMatches, isLive } = useMemo(
     () => getLiveMatchQueue(matches, currentTime),

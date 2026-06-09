@@ -17,6 +17,7 @@ import { formatCountdown, formatDate } from "@/lib/format";
 import { getLiveMatchQueue, isMatchInLiveWindow } from "@/lib/live-match-queue";
 import { generateMatchRouteSlug } from "@/lib/match-detail";
 import { parseTeams } from "@/lib/teams";
+import { useNow } from "@/lib/use-now";
 import { fallbackTopScorerProfiles, fetchWorldCupTopScorers, type WorldCupTopScorer } from "@/lib/world-cup-top-scorers";
 import type { Match } from "@/types/match";
 import { LiveMatchCard } from "./world-cup-hero/live-match-card";
@@ -137,15 +138,10 @@ function ProgressCard({
 }
 
 export function WorldCupHero({ matches, firstMatch, progress, completedCount, ongoingCount, calendarUrl, webcalUrl, matchCount }: WorldCupHeroProps) {
-  const [currentTime, setCurrentTime] = useState(() => Date.now());
+  const currentTime = useNow(1_000);
   const { news: fifaNews, loading: newsLoading } = useFifaNews();
   const popularTeams = usePopularTeams();
   const [topScorers, setTopScorers] = useState<WorldCupTopScorer[]>(fallbackTopScorerProfiles);
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setCurrentTime(Date.now()), 1000);
-    return () => window.clearInterval(timer);
-  }, []);
 
   useEffect(() => {
     let active = true;
