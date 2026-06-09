@@ -369,11 +369,15 @@ button {
   html,
   body {
     background-color: var(--pwa-status-bar-color);
+    height: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 
   body {
     min-height: 100dvh;
-    overscroll-behavior-y: none;
+    touch-action: pan-y pinch-zoom;
+    -webkit-overflow-scrolling: touch;
   }
 }
 

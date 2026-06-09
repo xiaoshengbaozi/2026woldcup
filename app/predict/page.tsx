@@ -10,7 +10,7 @@ import { usePredictionStore } from "@/lib/store/prediction-store";
 import { buildKnockoutMatchesForTopology, type StandingRow, type KnockoutMatch } from "@/lib/store/prediction";
 import { userApi, type PublicUser } from "@/lib/user-system";
 import { fallbackUserPreferenceCatalog, type UserPreferenceCatalog } from "@/lib/user-preferences";
-import { ChevronLeft, Clock3, Download, FolderOpen, GitBranch, LogIn, Maximize2, Minus, Plus, RotateCcw, Save, ShieldCheck, Shuffle, Trash2, Trophy, UserPlus, X } from "lucide-react";
+import { ChevronLeft, Clock3, FolderOpen, GitBranch, LogIn, Maximize2, Minus, Plus, RotateCcw, Save, ShieldCheck, Shuffle, Trash2, Trophy, UserPlus, X } from "lucide-react";
 
 /* ── Helpers ── */
 
@@ -1700,245 +1700,8 @@ function getArchiveProgress(archive: PredictionArchive) {
   };
 }
 
-const CHAMPION_POSTER = {
-  width: 736,
-  height: 1308,
-  bgSrc: "/predict/champion-route-bg.webp",
-};
-
-type PosterTextLayer = {
-  text: string;
-  x: number;
-  y: number;
-  font: string;
-  color: string;
-  tracking: number;
-};
-
-type PosterImageLayer = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  radius: number;
-};
-
-type ChampionPosterLayers = {
-  championLabel: PosterTextLayer;
-  flag: PosterImageLayer;
-  nameCn: PosterTextLayer;
-  nameEn: PosterTextLayer;
-};
-
-function loadPosterImage(src: string, timeoutMs = 7000) {
-  return new Promise<HTMLImageElement>((resolve, reject) => {
-    const img = new Image();
-    const timer = window.setTimeout(() => reject(new Error(`Image load timed out: ${src}`)), timeoutMs);
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      window.clearTimeout(timer);
-      resolve(img);
-    };
-    img.onerror = (event) => {
-      window.clearTimeout(timer);
-      reject(event);
-    };
-    img.src = src;
-  });
-}
-
-function drawRoundedImage(ctx: CanvasRenderingContext2D, img: HTMLImageElement, layer: PosterImageLayer) {
-  const { x, y, width, height, radius } = layer;
-  ctx.save();
-  ctx.beginPath();
-  ctx.moveTo(x + radius, y);
-  ctx.lineTo(x + width - radius, y);
-  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-  ctx.lineTo(x + width, y + height - radius);
-  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-  ctx.lineTo(x + radius, y + height);
-  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-  ctx.lineTo(x, y + radius);
-  ctx.quadraticCurveTo(x, y, x + radius, y);
-  ctx.closePath();
-  ctx.clip();
-  ctx.drawImage(img, x, y, width, height);
-  ctx.restore();
-}
-
-function drawPosterText(ctx: CanvasRenderingContext2D, layer: PosterTextLayer) {
-  ctx.save();
-  ctx.font = layer.font;
-  ctx.fillStyle = layer.color;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.shadowColor = "rgba(0,0,0,.72)";
-  ctx.shadowBlur = 18;
-  ctx.shadowOffsetY = 2;
-
-  if (layer.tracking <= 0) {
-    ctx.fillText(layer.text, layer.x, layer.y);
-    ctx.restore();
-    return;
-  }
-
-  const chars = Array.from(layer.text);
-  const textWidth = chars.reduce((total, char) => total + ctx.measureText(char).width, 0) + layer.tracking * Math.max(0, chars.length - 1);
-  let x = layer.x - textWidth / 2;
-  chars.forEach((char) => {
-    const width = ctx.measureText(char).width;
-    ctx.fillText(char, x + width / 2, layer.y);
-    x += width + layer.tracking;
-  });
-  ctx.restore();
-}
-
-function buildPosterTextLayer(el: HTMLElement, posterRect: DOMRect, scale: number, text: string): PosterTextLayer {
-  const rect = el.getBoundingClientRect();
-  const style = window.getComputedStyle(el);
-  const fontSize = parseFloat(style.fontSize) * scale;
-  const letterSpacing = style.letterSpacing === "normal" ? 0 : parseFloat(style.letterSpacing) * scale;
-
-  return {
-    text,
-    x: (rect.left - posterRect.left + rect.width / 2) * scale,
-    y: (rect.top - posterRect.top + rect.height / 2) * scale,
-    font: `${style.fontStyle} ${style.fontVariant} ${style.fontWeight} ${fontSize}px ${style.fontFamily}`,
-    color: style.color,
-    tracking: Number.isFinite(letterSpacing) ? letterSpacing : 0,
-  };
-}
-
-function buildPosterImageLayer(el: HTMLElement, posterRect: DOMRect, scale: number): PosterImageLayer {
-  const rect = el.getBoundingClientRect();
-  const style = window.getComputedStyle(el);
-  const radius = parseFloat(style.borderTopLeftRadius) * scale;
-
-  return {
-    x: (rect.left - posterRect.left) * scale,
-    y: (rect.top - posterRect.top) * scale,
-    width: rect.width * scale,
-    height: rect.height * scale,
-    radius: Number.isFinite(radius) ? radius : 0,
-  };
-}
-
-async function createChampionPosterDataUrl(champion: GroupTeam, layers: ChampionPosterLayers) {
-  if (document.fonts?.ready) {
-    await document.fonts.ready;
-  }
-
-  const background = await loadPosterImage(CHAMPION_POSTER.bgSrc);
-  const flag = await loadPosterImage(`https://flagcdn.com/w320/${champion.flagCode}.png`, 4500).catch(() => null);
-
-  const canvas = document.createElement("canvas");
-  canvas.width = CHAMPION_POSTER.width;
-  canvas.height = CHAMPION_POSTER.height;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Canvas is not available");
-
-  ctx.drawImage(background, 0, 0, CHAMPION_POSTER.width, CHAMPION_POSTER.height);
-
-  const gradient = ctx.createLinearGradient(0, 0, 0, CHAMPION_POSTER.height);
-  gradient.addColorStop(0, "rgba(0,0,0,.08)");
-  gradient.addColorStop(0.45, "rgba(0,0,0,.05)");
-  gradient.addColorStop(1, "rgba(0,0,0,.58)");
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, CHAMPION_POSTER.width, CHAMPION_POSTER.height);
-
-  drawPosterText(ctx, layers.championLabel);
-
-  ctx.save();
-  ctx.shadowColor = "rgba(255,207,116,.34)";
-  ctx.shadowBlur = 36;
-  ctx.fillStyle = "rgba(0,0,0,.46)";
-  ctx.beginPath();
-  ctx.roundRect(layers.flag.x, layers.flag.y, layers.flag.width, layers.flag.height, layers.flag.radius);
-  ctx.fill();
-  ctx.restore();
-
-  if (flag) {
-    drawRoundedImage(ctx, flag, layers.flag);
-  } else {
-    ctx.save();
-    ctx.beginPath();
-    ctx.roundRect(layers.flag.x, layers.flag.y, layers.flag.width, layers.flag.height, layers.flag.radius);
-    ctx.clip();
-    ctx.fillStyle = "rgba(8,8,8,.58)";
-    ctx.fillRect(layers.flag.x, layers.flag.y, layers.flag.width, layers.flag.height);
-    ctx.font = `900 ${Math.round(layers.flag.height * 0.58)}px system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(champion.flagEmoji, layers.flag.x + layers.flag.width / 2, layers.flag.y + layers.flag.height / 2);
-    ctx.restore();
-  }
-  ctx.strokeStyle = "rgba(243,194,108,.5)";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.roundRect(layers.flag.x + 1, layers.flag.y + 1, layers.flag.width - 2, layers.flag.height - 2, Math.max(0, layers.flag.radius - 1));
-  ctx.stroke();
-
-  drawPosterText(ctx, layers.nameCn);
-  drawPosterText(ctx, layers.nameEn);
-
-  return canvas.toDataURL("image/png");
-}
-
 function ChampionPosterModal({ championCode, onClose }: { championCode: string; onClose: () => void }) {
   const champion = team(championCode);
-  const posterRef = useRef<HTMLDivElement | null>(null);
-  const championLabelRef = useRef<HTMLDivElement | null>(null);
-  const flagRef = useRef<HTMLDivElement | null>(null);
-  const nameCnRef = useRef<HTMLHeadingElement | null>(null);
-  const nameEnRef = useRef<HTMLParagraphElement | null>(null);
-  const [posterDataUrl, setPosterDataUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    if (!champion) return;
-
-    setPosterDataUrl(null);
-    const frame = window.requestAnimationFrame(() => {
-      const posterEl = posterRef.current;
-      const championLabelEl = championLabelRef.current;
-      const flagEl = flagRef.current;
-      const nameCnEl = nameCnRef.current;
-      const nameEnEl = nameEnRef.current;
-      if (!posterEl || !championLabelEl || !flagEl || !nameCnEl || !nameEnEl) return;
-
-      const posterRect = posterEl.getBoundingClientRect();
-      const scale = CHAMPION_POSTER.width / posterRect.width;
-      const layers: ChampionPosterLayers = {
-        championLabel: buildPosterTextLayer(championLabelEl, posterRect, scale, "CHAMPION"),
-        flag: buildPosterImageLayer(flagEl, posterRect, scale),
-        nameCn: buildPosterTextLayer(nameCnEl, posterRect, scale, champion.nameCn),
-        nameEn: buildPosterTextLayer(nameEnEl, posterRect, scale, champion.name.toUpperCase()),
-      };
-
-      createChampionPosterDataUrl(champion, layers)
-        .then((dataUrl) => {
-          if (!cancelled) setPosterDataUrl(dataUrl);
-        })
-        .catch(() => {
-          if (!cancelled) setPosterDataUrl(null);
-        });
-    });
-
-    return () => {
-      cancelled = true;
-      window.cancelAnimationFrame(frame);
-    };
-  }, [champion]);
-
-  const handleDownloadPoster = useCallback(() => {
-    if (!posterDataUrl || !champion) return;
-    const link = document.createElement("a");
-    link.href = posterDataUrl;
-    link.download = `cyberball-champion-${champion.code.toLowerCase()}.png`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-  }, [champion, posterDataUrl]);
 
   if (!champion) return null;
 
@@ -1956,38 +1719,28 @@ function ChampionPosterModal({ championCode, onClose }: { championCode: string; 
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(216,255,62,0.18),transparent_30%),radial-gradient(circle_at_50%_100%,rgba(255,178,72,0.15),transparent_34%)]" />
       <button
         type="button"
-        onClick={handleDownloadPoster}
-        disabled={!posterDataUrl}
-        className="absolute left-4 top-[calc(env(safe-area-inset-top)+1rem)] z-30 inline-flex h-10 items-center gap-2 rounded-full bg-[#f3c26c] px-4 text-xs font-black uppercase tracking-[0.12em] text-black shadow-[0_0_34px_rgba(243,194,108,.28)] ring-1 ring-white/[0.18] transition hover:scale-[1.02] disabled:pointer-events-none disabled:scale-100 disabled:bg-white/14 disabled:text-white/35 sm:left-6"
-        aria-label="下载冠军海报"
-      >
-        <Download className="h-4 w-4" />
-        下载
-      </button>
-      <button
-        type="button"
         onClick={onClose}
         className="absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)] z-30 grid h-10 w-10 place-items-center rounded-full bg-black/58 text-white/70 ring-1 ring-white/[0.14] backdrop-blur-xl transition hover:bg-white/10 hover:text-white sm:right-6"
         aria-label="关闭冠军海报"
       >
         <X className="h-4 w-4" />
       </button>
-      <div ref={posterRef} className="relative z-10 aspect-[736/1308] h-[min(86dvh,760px)] max-h-[calc(100dvh-3rem)] w-auto max-w-[min(92vw,428px)] overflow-hidden rounded-[2rem] bg-black shadow-[0_34px_120px_rgba(0,0,0,.72),0_0_80px_rgba(216,181,93,.18)] ring-1 ring-white/[0.12]">
+      <div className="relative z-10 aspect-[736/1308] h-[min(86dvh,760px)] max-h-[calc(100dvh-3rem)] w-auto max-w-[min(92vw,428px)] overflow-hidden rounded-[2rem] bg-black shadow-[0_34px_120px_rgba(0,0,0,.72),0_0_80px_rgba(216,181,93,.18)] ring-1 ring-white/[0.12]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/predict/champion-route-bg.webp" alt="" className="absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,.08)_0%,rgba(0,0,0,.05)_45%,rgba(0,0,0,.58)_100%)]" />
         <div className="absolute inset-x-0 top-[16%] px-8 text-center">
-          <div ref={championLabelRef} className="mb-2 text-[2.25rem] font-black uppercase tracking-[0.18em] text-[#f3c26c] drop-shadow-[0_2px_18px_rgba(0,0,0,.72)]" style={{ fontFamily: "ScreenMatrix, monospace" }}>
+          <div className="mb-2 text-[2.25rem] font-black uppercase tracking-[0.18em] text-[#f3c26c] drop-shadow-[0_2px_18px_rgba(0,0,0,.72)]" style={{ fontFamily: "ScreenMatrix, monospace" }}>
             CHAMPION
           </div>
-          <div ref={flagRef} className="mx-auto grid h-16 w-24 place-items-center overflow-hidden rounded-[1.15rem] bg-black/46 shadow-[0_0_36px_rgba(255,207,116,.34)] ring-1 ring-[#f3c26c]/50 backdrop-blur-md sm:h-16 sm:w-[6.4rem] sm:rounded-[1.08rem]">
+          <div className="mx-auto grid h-16 w-24 place-items-center overflow-hidden rounded-[1.15rem] bg-black/46 shadow-[0_0_36px_rgba(255,207,116,.34)] ring-1 ring-[#f3c26c]/50 backdrop-blur-md sm:h-16 sm:w-[6.4rem] sm:rounded-[1.08rem]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={`https://flagcdn.com/w160/${champion.flagCode}.png`} alt={champion.name} className="h-full w-full object-cover" />
           </div>
-          <h2 ref={nameCnRef} className="mt-2.5 text-[1.68rem] font-black tracking-normal text-[#f3c26c] drop-shadow-[0_2px_18px_rgba(0,0,0,.72)] sm:text-[1.408rem]">
+          <h2 className="mt-2.5 text-[1.68rem] font-black tracking-normal text-[#f3c26c] drop-shadow-[0_2px_18px_rgba(0,0,0,.72)] sm:text-[1.408rem]">
             {champion.nameCn}
           </h2>
-          <p ref={nameEnRef} className="mt-0.5 text-2xl font-black uppercase tracking-[0.18em] text-[#f3c26c] drop-shadow-[0_2px_18px_rgba(0,0,0,.72)] sm:text-[1.2rem]" style={{ fontFamily: "ScreenMatrix, monospace" }}>
+          <p className="mt-0.5 text-2xl font-black uppercase tracking-[0.18em] text-[#f3c26c] drop-shadow-[0_2px_18px_rgba(0,0,0,.72)] sm:text-[1.2rem]" style={{ fontFamily: "ScreenMatrix, monospace" }}>
             {champion.name}
           </p>
         </div>
