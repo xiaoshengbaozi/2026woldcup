@@ -37,8 +37,10 @@ jobs:
           cat ../android-debug-build.log
           if [ "$status" -ne 0 ]; then
             {
-              echo "Android debug build failed. Last 120 lines:"
-              tail -n 120 ../android-debug-build.log
+              echo "Android debug build failed. Error summary:"
+              grep -n -E "FAILURE:|What went wrong|Execution failed|Could not|A problem occurred|Caused by|ClassNotFoundException|NoClassDefFoundError|Manifest merger failed|Android resource linking failed" ../android-debug-build.log || true
+              echo "Last 80 lines:"
+              tail -n 80 ../android-debug-build.log
             } | while IFS= read -r line; do
               echo "::error file=android/app/build.gradle,line=1::$line"
             done
