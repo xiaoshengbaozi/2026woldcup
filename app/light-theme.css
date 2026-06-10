@@ -670,6 +670,61 @@
   box-shadow: 0 8px 18px rgba(172, 126, 64, 0.18) !important;
 }
 
+/* Mobile right search drawer */
+[data-theme="light"] .mobile-search-drawer {
+  background:
+    radial-gradient(circle at 100% 10%, rgba(216, 255, 62, 0.11), transparent 34%),
+    radial-gradient(circle at 0% 84%, rgba(172, 126, 64, 0.08), transparent 38%),
+    linear-gradient(225deg, rgba(255, 254, 250, 0.94), rgba(242, 247, 236, 0.82)),
+    rgba(255, 254, 250, 0.96) !important;
+  color: var(--lm-text-primary) !important;
+  box-shadow:
+    -22px 0 58px rgba(31, 43, 26, 0.16),
+    0 0 34px -18px rgba(54, 65, 44, 0.24),
+    inset 1px 0 0 rgba(54, 65, 44, 0.08),
+    inset -1px 0 0 rgba(255, 255, 255, 0.82) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.04) !important;
+  backdrop-filter: blur(16px) saturate(1.04) !important;
+}
+
+[data-theme="light"] .mobile-search-drawer .bg-volt\/12,
+[data-theme="light"] .mobile-search-drawer .bg-flare\/10 {
+  opacity: 0.82;
+}
+
+[data-theme="light"] .mobile-search-drawer .border-white\/\[0\.08\] {
+  border-color: rgba(54, 65, 44, 0.1) !important;
+}
+
+[data-theme="light"] .mobile-search-drawer .text-white,
+[data-theme="light"] .mobile-search-drawer .hover\:text-white:hover {
+  color: var(--lm-text-primary) !important;
+}
+
+[data-theme="light"] .mobile-search-drawer .text-white\/70,
+[data-theme="light"] .mobile-search-drawer .text-white\/66,
+[data-theme="light"] .mobile-search-drawer .text-white\/58 {
+  color: var(--lm-text-secondary) !important;
+}
+
+[data-theme="light"] .mobile-search-drawer .text-white\/35,
+[data-theme="light"] .mobile-search-drawer .text-white\/32,
+[data-theme="light"] .mobile-search-drawer .text-white\/30 {
+  color: var(--lm-text-muted) !important;
+}
+
+[data-theme="light"] .mobile-search-drawer .bg-white\/\[0\.06\],
+[data-theme="light"] .mobile-search-drawer .bg-white\/\[0\.055\],
+[data-theme="light"] .mobile-search-drawer .hover\:bg-white\/\[0\.1\]:hover,
+[data-theme="light"] .mobile-search-drawer .hover\:bg-white\/\[0\.08\]:hover {
+  background-color: rgba(54, 65, 44, 0.07) !important;
+}
+
+[data-theme="light"] .mobile-search-drawer .ring-white\/\[0\.1\],
+[data-theme="light"] .mobile-search-drawer .ring-white\/\[0\.08\] {
+  --tw-ring-color: rgba(54, 65, 44, 0.12) !important;
+}
+
 /* Navigation search */
 [data-theme="light"] .global-search-trigger {
   background-color: rgba(255, 254, 250, 0.72) !important;

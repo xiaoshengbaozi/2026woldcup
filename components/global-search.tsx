@@ -96,7 +96,7 @@ export function GlobalSearchDrawerCard({ onNavigate }: { onNavigate?: () => void
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <form
         onSubmit={submitSearch}
-        className="mx-3 mt-3 flex h-12 shrink-0 items-center gap-2 rounded-full bg-white/[0.055] px-3 ring-1 ring-white/[0.1] focus-within:ring-volt/45"
+        className="global-search-form mx-3 mt-3 flex h-12 shrink-0 items-center gap-2 rounded-full bg-white/[0.055] px-3 ring-1 ring-white/[0.1] focus-within:ring-volt/45"
       >
         <Search className="h-4 w-4 shrink-0 text-volt/75" />
         <input
@@ -104,7 +104,7 @@ export function GlobalSearchDrawerCard({ onNavigate }: { onNavigate?: () => void
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="搜索球队 / 球员 / 赛程 / 新闻"
-          className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-white outline-none placeholder:text-white/30"
+          className="global-search-input min-w-0 flex-1 bg-transparent text-sm font-semibold text-white outline-none placeholder:text-white/30"
         />
         {query ? (
           <button
@@ -114,7 +114,7 @@ export function GlobalSearchDrawerCard({ onNavigate }: { onNavigate?: () => void
               setQuery("");
               inputRef.current?.focus();
             }}
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-white/35 transition hover:bg-white/[0.08] hover:text-white"
+            className="global-search-clear grid h-8 w-8 shrink-0 place-items-center rounded-full text-white/35 transition hover:bg-white/[0.08] hover:text-white"
           >
             <X className="h-4 w-4" />
           </button>
@@ -130,7 +130,7 @@ export function GlobalSearchDrawerCard({ onNavigate }: { onNavigate?: () => void
 
       <div className="relative mt-2 min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 pb-5">
         {suggestions.length ? (
-          <div>
+          <div className="global-search-list">
             {suggestions.map((item, index) => (
               <div key={`${item.type}-${item.id}`} className="relative">
                 {index > 0 ? <div className="absolute left-[3.875rem] right-0 top-0 border-t border-white/[0.08]" /> : null}
@@ -139,7 +139,7 @@ export function GlobalSearchDrawerCard({ onNavigate }: { onNavigate?: () => void
             ))}
           </div>
         ) : (
-          <div className="px-5 py-16 text-center">
+          <div className="global-search-empty px-5 py-16 text-center">
             <Search className="mx-auto h-8 w-8 text-white/18" />
             <p className="mt-3 text-sm font-bold text-white/58">没有匹配结果</p>
             <p className="mt-1 text-xs text-white/32">换一个球队、球员或城市试试。</p>

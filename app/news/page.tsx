@@ -345,8 +345,8 @@ export default function NewsPage() {
         ref={mobileTabsRef}
         className={`${
           isMobileTabsPinned
-            ? "news-tabs-rail news-tabs-rail-pinned fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[65] bg-transparent px-3 py-2 shadow-none ring-0 backdrop-blur-0"
-            : "news-tabs-rail news-tabs-rail-inline relative -mx-4 mt-4 bg-black/58 px-4 py-2 backdrop-blur-2xl"
+            ? "news-tabs-rail match-tabs-rail fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[65] px-3 py-2"
+            : "news-tabs-rail match-tabs-rail relative -mx-3 mt-4 px-3 py-2"
         } lg:hidden`}
         aria-label="新闻分类"
       >

@@ -419,7 +419,6 @@ html.theme-switching *::after {
   }
 
   .mobile-floating-surface,
-  .news-tabs-rail-inline,
   [class*="fixed"][class*="backdrop-blur-2xl"],
   [class*="fixed"][class*="backdrop-blur-3xl"],
   [class*="sticky"][class*="backdrop-blur-2xl"],
@@ -446,6 +445,13 @@ html.theme-switching *::after {
     transform: scale(2.5);
     opacity: 0;
   }
+}
+
+.mobile-search-drawer {
+  background:
+    radial-gradient(circle at 100% 10%, rgba(216, 255, 62, 0.1), transparent 34%),
+    radial-gradient(circle at 0% 84%, rgba(255, 154, 31, 0.08), transparent 38%),
+    rgba(5, 5, 5, 0.94);
 }
 
 @keyframes live-dot {
