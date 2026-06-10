@@ -73,14 +73,14 @@ export function MatchDetailClient({ slug }: { slug: string }) {
           <UserActionButton
             kind="match"
             payload={favoritePayload}
-            className="match-hero-favorite-button min-h-8 px-3 py-0 text-[10px]"
+            className="match-hero-favorite-button h-8 px-3 py-0 text-[10px] sm:h-8 sm:px-4 sm:text-[10px]"
           />
         ) : undefined}
       />
       <MatchNav active={activeTab} onTabChange={setActiveTab} />
 
       <div className="space-y-5">
-        {activeTab === "lineup" && <MatchLineup detail={detail} />}
+        {activeTab === "lineup" && <MatchLineup detail={detail} compactMobile={isStarted} />}
         {activeTab === "live" && <LivePlayer detail={detail} />}
         {activeTab === "stats" && (
           <MatchStatsPanel detail={detail} />

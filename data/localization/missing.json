@@ -3,19 +3,25 @@
     "78": "H. Vanaken",
     "409": "N. Bentaleb",
     "417": "A. Schöpf",
+    "840": "A. Sigurðsson",
     "1257": "J. Koundé",
     "1578": "G. Lo Celso",
     "1946": "L. Trossard",
     "4569": "M. Tougai",
+    "15755": "J. Þorsteinsson",
     "27550": "J. Benguché",
+    "28733": "B. Willumsson",
+    "28782": "Hallgrímur Steingrímsson",
     "198352": "M. Touré",
     "271539": "J. Hadjam",
     "296645": "T. Yengi",
+    "321803": "Á. Þorsteinsson",
     "344514": "E. Arzú",
     "350856": "E. Nuamah",
     "417104": "A. Vargas",
     "454964": "D. Moncada",
     "535046": "A. Amaimouni",
+    "544524": "I. Thorvaldsson",
     "593759": "Ala Al Haji",
     "650111": "G. Vandepitte",
     "652784": "E. Puerto"
@@ -60,7 +66,8 @@
     "Club Tijuana": "Club Tijuana",
     "Mexico": "Mexico",
     "Mexico U20": "Mexico U20",
-    "Germany U17": "Germany U17"
+    "Germany U17": "Germany U17",
+    "Palmeiras": "Palmeiras"
   },
   "leagues": {
     "King's Cup": "King's Cup",
@@ -139,6 +146,7 @@
     "S. Lamouchi": "S. Lamouchi",
     "P. Thiaw": "P. Thiaw",
     "S. Beccacece": "S. Beccacece",
-    "J. Sellami": "J. Sellami"
+    "J. Sellami": "J. Sellami",
+    "A. Gunnlaugsson": "A. Gunnlaugsson"
   }
 }

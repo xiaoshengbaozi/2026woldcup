@@ -275,14 +275,9 @@
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.04em;
   color: var(--volt, #D8FF3E);
-  background: rgba(216,255,62,0.1);
-  border: 1px solid rgba(216,255,62,0.2);
-  border-radius: 6px;
-  padding: 3px 10px;
-  align-self: flex-start;
-  box-shadow: 0 0 12px rgba(216,255,62,0.08);
+  white-space: nowrap;
 }
 
 /* 日期 */
@@ -353,14 +348,25 @@
 }
 
 /* 场馆 */
+.tp-fixture-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255,255,255,0.04);
+}
+
 .tp-fixture-venue {
   font-size: 10px;
   color: var(--text-muted, #556677);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding-top: 6px;
-  border-top: 1px solid rgba(255,255,255,0.04);
+  text-align: right;
+  min-width: 0;
+  flex: 1;
 }
 
 /* ══════════════════════════════════════════
@@ -747,6 +753,11 @@
   letter-spacing: 0.08em;
   font-weight: 600;
 }
+
+.tp-outlook-card {
+  margin-top: 24px;
+}
+
 
 /* ══════════════════════════════════════════
    Gallery — 经典瞬间
@@ -1245,7 +1256,7 @@
   padding: 24px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .tp-side-card-title {
@@ -1283,8 +1294,7 @@
 .tp-fixtures-grid {
   grid-template-columns: 1fr;
   gap: 12px;
-  max-height: 366px;
-  overflow: auto;
+  overflow: visible;
   padding-right: 2px;
   scrollbar-width: none;
 }
@@ -1585,14 +1595,61 @@
   }
 
   .tp-content-tabs {
-    padding: 2px 8px 0;
+    position: relative;
+    left: 50%;
+    width: 100vw;
+    transform: translateX(-50%);
+    flex-wrap: nowrap;
     gap: 6px;
+    min-height: 48px;
+    margin: 0 0 8px;
+    padding: 8px 12px;
     overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
     scrollbar-width: none;
+  }
+
+  .tp-content-tabs.fixed {
+    position: fixed;
+    left: 0;
+    width: auto;
+    transform: none;
+    margin: 0;
+    background: transparent;
+    border-bottom: 0;
+    box-shadow: none;
+    backdrop-filter: none;
   }
 
   .tp-content-tabs::-webkit-scrollbar {
     display: none;
+  }
+
+  .tp-content-tab {
+    min-height: 36px;
+    gap: 6px;
+    overflow: hidden;
+    white-space: nowrap;
+    border-radius: 999px;
+    padding: 8px 16px;
+    background: rgba(255,255,255,0.045);
+    color: rgba(255,255,255,0.58);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+    font-size: 14px;
+    font-weight: 800;
+    transition: background 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
+  }
+
+  .tp-content-tab:hover {
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.92);
+  }
+
+  .tp-content-tab.active {
+    background: var(--volt, #D8FF3E);
+    color: #050505;
+    box-shadow: 0 0 26px rgba(216,255,62,0.2);
   }
 
   .tp-story-grid,

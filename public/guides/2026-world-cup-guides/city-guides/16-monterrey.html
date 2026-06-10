@@ -31,7 +31,7 @@
   html,body{width:100%;height:100%;overflow:hidden;background:var(--ink);color:var(--paper);font-family:var(--sans-zh);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 
   /* ============ WebGL 双背景 ============ */
-  canvas.bg{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;display:block;transition:opacity 1.2s ease}
+  canvas.bg{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;display:block;transition:opacity .45s ease}
   canvas#bg-light{opacity:0}
   canvas#bg-dark{opacity:1}
   body.light-bg canvas#bg-light{opacity:1}
@@ -40,7 +40,7 @@
 
   /* ============ Deck 容器 + 翻页 ============ */
   /* width: NSLIDES * 100vw，会在 JS 里动态矫正 */
-  #deck{position:fixed;inset:0;width:10000vw;height:100vh;display:flex;flex-wrap:nowrap;transition:transform .9s cubic-bezier(.77,0,.175,1);z-index:10;will-change:transform}
+  #deck{position:fixed;inset:0;width:10000vw;height:100vh;display:flex;flex-wrap:nowrap;transition:transform .56s cubic-bezier(.22,1,.36,1);z-index:10;will-change:transform}
   .slide{width:100vw;height:100vh;flex:0 0 100vw;position:relative;padding:6vh 6vw 10vh 6vw;display:flex;flex-direction:column;overflow:hidden}
   .slide.light{color:var(--ink);background:var(--paper)}
   .slide.dark{color:var(--paper);background:var(--ink)}
@@ -411,14 +411,10 @@
   .chrome{font-family:var(--mono);font-size:max(11px,.78vw);letter-spacing:.2em;text-transform:uppercase;opacity:.62}
   .foot{font-family:var(--mono);font-size:max(11px,.78vw);letter-spacing:.18em;text-transform:uppercase;opacity:.5}
 
-  /* ============ 动效系统(Motion One 驱动) ============
-     所有 [data-anim] 元素默认隐藏,进入页面时由 JS 逐个揭示。
-     - cascade(默认):按 DOM 顺序 stagger 120ms 淡入 + y:16→0
-     - hero(hero 页自动):慢一点的 stagger 180ms
-     - quote(含 [data-anim="line"]):逐行 600ms 淡入
-     - directional(含 [data-anim="left|right"]):左→分隔线→右
-     - pipeline(data-animate="pipeline"):Space/→ 手动推进
-     Motion One 没加载成功时(CDN 断 + 本地丢),所有 [data-anim] 会兜底显示。
+  /* ============ Native motion system ============
+     Elements marked with [data-anim] are visible by default.
+     When JS is ready, body.motion-ready enables lightweight native enter animations.
+     Re-clicking the current page is ignored so a single slide does not replay repeatedly.
   */
   [data-anim]{opacity:1}
   body.motion-ready [data-anim]{opacity:0}
@@ -488,7 +484,7 @@
 
 <section class="slide hero dark"><div class="chrome"><div>墨西哥 · Host City</div><div>16 / 16</div></div><div class="frame" style="display:grid;gap:4vh;align-content:center;min-height:80vh"><div class="kicker" data-anim>City Guide · Estadio BBVA</div><h1 class="h-hero" style="font-size:8vw;max-width:78vw" data-anim>蒙特雷</h1><h2 class="h-sub" data-anim>钢铁与雪山的球场</h2><p class="lead" style="max-width:62vw" data-anim>Estadio BBVA、烤肉、Rayados/Tigres 文化和雪山地貌构成现代墨西哥体验。</p><div class="meta-row" data-anim><a class="mag-link" href="../index.html">返回总图册</a><span>·</span><a class="mag-link" href="../features/match-map.html">查看赛程地图</a></div></div><div class="foot"><div>蒙特雷 · 杂志风城市页</div><div>City Cover</div></div></section>
 <section class="slide light"><div class="chrome"><div>Quick Facts · 蒙特雷</div><div>02 / 06</div></div><div class="frame" style="padding-top:4vh"><div class="kicker" data-anim>城市速览</div><h2 class="h-xl" style="font-size:5.5vw" data-anim>Estadio BBVA</h2><p class="lead" style="margin-top:1.8vh;max-width:62vw" data-anim>钢铁与雪山的球场 的判断，先由场馆、容量和旅行价值建立。</p><div class="grid-6" style="margin-top:3vh;gap:3vh 4vw"><div class="stat-card" data-anim><div class="stat-label">Country</div><div class="stat-nb">墨西哥</div><div class="stat-note">主办国家</div></div><div class="stat-card" data-anim><div class="stat-label">Capacity</div><div class="stat-nb">53,500</div><div class="stat-note">场馆容量</div></div><div class="stat-card" data-anim><div class="stat-label">Role</div><div class="stat-nb">Focus</div><div class="stat-note">钢铁与雪山的球场</div></div><div class="stat-card" data-anim><div class="stat-label">Guide</div><div class="stat-nb">City</div><div class="stat-note">独立城市攻略</div></div><div class="stat-card" data-anim><div class="stat-label">Route</div><div class="stat-nb">Linked</div><div class="stat-note">连接赛程与签证</div></div><div class="stat-card" data-anim><div class="stat-label">Mode</div><div class="stat-nb">Deck</div><div class="stat-note">横向翻页展示</div></div></div></div><div class="foot"><div>Page 02 · 城市速览</div><div>Facts</div></div></section>
-<section class="slide dark"><div class="chrome"><div>Stadium Lens · Estadio BBVA</div><div>03 / 06</div></div><div class="frame grid-2-7-5" style="padding-top:6vh"><div style="display:flex;flex-direction:column;justify-content:space-between;gap:3vh"><div><div class="kicker" data-anim>看球核心</div><h2 class="h-xl" style="font-size:5.8vw" data-anim>先理解球场，再理解城市。</h2><p class="lead" style="margin-top:3vh" data-anim>Estadio BBVA 是这页攻略的空间锚点，周边交通、住宿和球迷活动都围绕它展开。</p></div><a class="callout mag-card" href="../features/match-map.html" data-anim><strong>关联专题：104 场比赛观赛地图</strong><small>从城市页跳到赛程分布，确认这座城市所在的比赛阶段。</small></a></div><figure class="frame-img r-16x10" data-anim><img src="https://images.unsplash.com/photo-1589553315077-2ec5244272cd?w=1400&h=800&fit=crop" alt="蒙特雷"><figcaption class="img-cap">蒙特雷 · Estadio BBVA</figcaption></figure></div><div class="foot"><div>Page 03 · 场馆与城市关系</div><div>Stadium</div></div></section>
+<section class="slide dark"><div class="chrome"><div>Stadium Lens · Estadio BBVA</div><div>03 / 06</div></div><div class="frame grid-2-7-5" style="padding-top:6vh"><div style="display:flex;flex-direction:column;justify-content:space-between;gap:3vh"><div><div class="kicker" data-anim>看球核心</div><h2 class="h-xl" style="font-size:5.8vw" data-anim>先理解球场，再理解城市。</h2><p class="lead" style="margin-top:3vh" data-anim>Estadio BBVA 是这页攻略的空间锚点，周边交通、住宿和球迷活动都围绕它展开。</p></div><a class="callout mag-card" href="../features/match-map.html" data-anim><strong>关联专题：104 场比赛观赛地图</strong><small>从城市页跳到赛程分布，确认这座城市所在的比赛阶段。</small></a></div><figure class="frame-img r-16x10" data-anim><img src="/team-landscapes/mexico.webp" alt="蒙特雷"><figcaption class="img-cap">蒙特雷 · Estadio BBVA</figcaption></figure></div><div class="foot"><div>Page 03 · 场馆与城市关系</div><div>Stadium</div></div></section>
 <section class="slide light"><div class="chrome"><div>Experience · Travel Layer</div><div>04 / 06</div></div><div class="frame" style="padding-top:5vh"><div class="kicker" data-anim>城市体验</div><h2 class="h-xl" style="font-size:5.5vw" data-anim>钢铁与雪山的球场 之外，还要留下旅行记忆。</h2><div class="mag-grid three" style="margin-top:5vh"><div class="mag-card" data-anim><span>Match Day</span><strong>比赛日动线</strong><small>提前抵达球场，预留安检、交通和球迷聚集时间。</small></div><div class="mag-card" data-anim><span>City Day</span><strong>城市探索</strong><small>Estadio BBVA、烤肉、Rayados/Tigres 文化和雪山地貌构成现代墨西哥体验。</small></div><div class="mag-card" data-anim><span>Budget Day</span><strong>住宿与预算</strong><small>结合签证机票酒店指南，提前锁定可取消住宿。</small></div></div></div><div class="foot"><div>Page 04 · 城市体验层</div><div>Experience</div></div></section>
 <section class="slide dark" data-animate="pipeline"><div class="chrome"><div>Planning Flow · 蒙特雷</div><div>05 / 06</div></div><div class="frame"><div class="kicker">Planning Pipeline</div><h2 class="h-xl" style="font-size:5.6vw">把这座城市放进完整路线。</h2><div class="pipeline-section"><div class="pipeline-label">推荐阅读顺序</div><div class="pipeline"><a class="step deck-step" href="../features/top-10-travel-cities.html" data-anim="step"><div class="step-nb">01</div><div class="step-title">Pick</div><div class="step-desc">先看旅行价值</div></a><a class="step deck-step" href="../features/city-rankings.html" data-anim="step"><div class="step-nb">02</div><div class="step-title">Rank</div><div class="step-desc">比较 16 城</div></a><a class="step deck-step" href="../features/visa-travel-guide.html" data-anim="step"><div class="step-nb">03</div><div class="step-title">Book</div><div class="step-desc">证件与住宿</div></a><a class="step deck-step" href="../features/follow-world-cup.html" data-anim="step"><div class="step-nb">04</div><div class="step-title">Route</div><div class="step-desc">接入跨城路线</div></a></div></div></div><div class="foot"><div>Page 05 · 规划关联</div><div>Planning</div></div></section>
 <section class="slide hero light"><div class="chrome"><div>Related Pages · Keep Moving</div><div>06 / 06</div></div><div class="frame" style="display:grid;gap:4vh;align-content:center;min-height:80vh"><div class="kicker" data-anim>下一站</div><h1 class="h-hero" style="font-size:6.8vw" data-anim>从 蒙特雷<br>继续出发。</h1><div class="mag-grid three" style="margin-top:1vh"><a class="mag-card" href="01-new-york.html" data-anim><span>美国 · 决赛之城</span><strong>纽约/新泽西</strong><small>曼哈顿、时代广场、布鲁克林酒吧和 MetLife Stadium 构成终极决赛旅行。</small></a><a class="mag-card" href="02-los-angeles.html" data-anim><span>美国 · 好莱坞与世界杯</span><strong>洛杉矶</strong><small>把 SoFi Stadium、圣莫尼卡、环球影城和洛杉矶夜生活连成一条巨幕路线。</small></a><a class="mag-card" href="15-guadalajara.html" data-anim><span>墨西哥 · 墨西哥足球文化之都</span><strong>瓜达拉哈拉</strong><small>Chivas、龙舌兰、Mariachi 和 Estadio Akron，是理解墨西哥足球文化的入口。</small></a></div><div class="meta-row" data-anim><a class="mag-link" href="../index.html">回到总图册</a><span>·</span><a class="mag-link" href="../features/visa-travel-guide.html">签证机票酒店指南</a></div></div><div class="foot"><div>Page 06 · 关联城市</div><div>Related</div></div></section>
@@ -642,19 +638,20 @@ slides.forEach((s,i)=>{
   nav.appendChild(b);
 });
 
-function go(n){
-  if(lock)return;
-  idx=Math.max(0,Math.min(total-1,n));
+function go(n, opts={}){
+  const next=Math.max(0,Math.min(total-1,n));
+  if(!opts.force && next===idx) return;
+  if(lock) return;
+  idx=next;
   window.__currentSlideIndex = idx;
   deck.style.transform=`translateX(${-idx*100}vw)`;
   nav.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===idx));
-  /* 主题切换：优先读 data-theme，其次从 class（light/dark）推断 */
   const el=slides[idx];
   const th=el.dataset.theme || (el.classList.contains('light')?'light':(el.classList.contains('dark')?'dark':'dark'));
   document.body.classList.toggle('light-bg',th==='light');
-  /* 动效：翻页过渡中段触发当前页的入场动画（由 motion-boot 注册） */
-  if(window.__playSlide) setTimeout(()=>window.__playSlide(idx), 450);
-  lock=true;setTimeout(()=>lock=false,700);
+  clearTimeout(window.__slideAnimTimer);
+  if(window.__playSlide) window.__slideAnimTimer=setTimeout(()=>window.__playSlide(idx), 90);
+  lock=true;setTimeout(()=>lock=false,440);
 }
 
 /* =============== ESC 索引视图 =============== */
@@ -737,129 +734,116 @@ addEventListener('touchend',e=>{
   }
 },{passive:true});
 
-go(0);
+go(0,{force:true});
 </script>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <script>lucide.createIcons();</script>
 
-<!-- ============ Motion One 动效引擎（本地优先,CDN 兜底） ============
-     加载策略:先 ./assets/motion.min.js(本地,离线可用),失败 fallback 到 jsDelivr CDN
-     加载完成后挂 window.__playSlide / window.__pipeAdvance,
-     导航脚本会在翻页中段调用 __playSlide(idx),键盘/滚轮/触屏会在翻页前调用 __pipeAdvance()
-     双双失败时会兜底把所有 [data-anim] 设为可见,不让动效破坏阅读
--->
-<script type="module">
-let motion;
-try {
-  motion = await import('./assets/motion.min.js');
-} catch(e1) {
-  try {
-    motion = await import('https://cdn.jsdelivr.net/npm/motion@11.11.17/+esm');
-  } catch(e2) {
-    console.warn('[motion] local + CDN both failed, disabling animations', e1, e2);
-    document.querySelectorAll('[data-anim]').forEach(el=>{el.style.opacity='1';el.style.transform='none'});
-    document.querySelectorAll('[data-animate="pipeline"] [data-anim]').forEach(el=>el.style.opacity='1');
+<!-- ============ Lightweight native page motion ============ -->
+<script>
+(()=>{
+  const slides=[...document.querySelectorAll('.slide')];
+  const EASE='cubic-bezier(.22,1,.36,1)';
+  let pipeStep=-1,lastIdx=-1,active=[];
+  const ms=v=>Math.round(v*1000);
+  function remember(anim){
+    active.push(anim);
+    const done=()=>{active=active.filter(a=>a!==anim)};
+    anim.addEventListener?.('finish',done,{once:true});
+    anim.addEventListener?.('cancel',done,{once:true});
+    return anim;
   }
-}
-
-if(motion){
-  const { animate, stagger } = motion;
-  document.body.classList.add('motion-ready');
-  const EASE = [.22, 1, .36, 1];
-  const slides = [...document.querySelectorAll('.slide')];
-  let pipeStep = -1;
-  let lastIdx = -1;
-
+  function cancelActive(){
+    active.forEach(a=>a.cancel());
+    active=[];
+  }
+  function run(el,keyframes,opts={}){
+    if(!el?.animate) return;
+    return remember(el.animate(keyframes,{
+      duration:ms(opts.duration ?? .42),
+      delay:ms(opts.delay ?? 0),
+      easing:opts.easing || EASE,
+      fill:'forwards'
+    }));
+  }
+  function runAll(els,keyframes,opts={}){
+    els.forEach((el,i)=>run(el,keyframes,{...opts,delay:(opts.delay || 0)+i*(opts.stagger || 0)}));
+  }
   function resetAnims(slide){
     slide.querySelectorAll('[data-anim]').forEach(el=>{
+      el.getAnimations?.().forEach(a=>a.cancel());
       el.style.opacity='';
       el.style.transform='';
     });
   }
-
   function revealStatic(slide){
+    cancelActive();
     resetAnims(slide);
-    document.getAnimations?.().forEach(a=>a.cancel());
     slide.querySelectorAll('[data-anim]').forEach(el=>{
       el.style.opacity='1';
       el.style.transform='none';
     });
   }
-
   function playSlide(i){
-    const slide = slides[i];
+    if(i===lastIdx) return;
+    const slide=slides[i];
     if(!slide) return;
-    lastIdx = i;
-    const recipe = slide.dataset.animate || (slide.classList.contains('hero') ? 'hero' : 'cascade');
-
-    if(window.__lowPowerMode){
-      revealStatic(slide);
-      return;
-    }
-
-    if(recipe === 'pipeline'){
-      pipeStep = -1;
+    lastIdx=i;
+    cancelActive();
+    const recipe=slide.dataset.animate || (slide.classList.contains('hero') ? 'hero' : 'cascade');
+    if(window.__lowPowerMode){revealStatic(slide);return;}
+    if(recipe==='pipeline'){
+      pipeStep=-1;
       slide.querySelectorAll('[data-anim]').forEach(el=>{
         el.style.opacity='0.15';
         el.style.transform='none';
       });
       return;
     }
-
     resetAnims(slide);
-    const all = [...slide.querySelectorAll('[data-anim]')];
+    const all=[...slide.querySelectorAll('[data-anim]')];
     if(!all.length) return;
-
-    if(recipe === 'directional'){
-      const lefts  = all.filter(el=>el.dataset.anim==='left');
-      const divs   = all.filter(el=>el.dataset.anim==='divider');
-      const rights = all.filter(el=>el.dataset.anim==='right');
-      const others = all.filter(el=>!['left','right','divider'].includes(el.dataset.anim));
-      if(others.length) animate(others, {opacity:[0,1], y:[12,0]}, {duration:.6, delay:stagger(.1, {start:.15}), easing:EASE});
-      if(lefts.length)  animate(lefts,  {opacity:[0,1], x:[-24,0]}, {duration:.8, delay:.35, easing:EASE});
-      if(divs.length)   animate(divs,   {opacity:[0,.25]},          {duration:.5, delay:.9});
-      if(rights.length) animate(rights, {opacity:[0,1], x:[24,0]},  {duration:.8, delay:1.0, easing:EASE});
+    if(recipe==='directional'){
+      const lefts=all.filter(el=>el.dataset.anim==='left');
+      const divs=all.filter(el=>el.dataset.anim==='divider');
+      const rights=all.filter(el=>el.dataset.anim==='right');
+      const others=all.filter(el=>!['left','right','divider'].includes(el.dataset.anim));
+      runAll(others,[{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'translateY(0)'}],{duration:.38,delay:.04,stagger:.045});
+      runAll(lefts,[{opacity:0,transform:'translateX(-18px)'},{opacity:1,transform:'translateX(0)'}],{duration:.48,delay:.10});
+      runAll(divs,[{opacity:0},{opacity:.25}],{duration:.28,delay:.26});
+      runAll(rights,[{opacity:0,transform:'translateX(18px)'},{opacity:1,transform:'translateX(0)'}],{duration:.48,delay:.18});
       return;
     }
-
-    if(recipe === 'quote'){
-      const lines = all.filter(el=>el.dataset.anim==='line');
-      const others = all.filter(el=>el.dataset.anim!=='line');
-      if(others.length) animate(others, {opacity:[0,1], y:[8,0]},    {duration:.6, delay:stagger(.12, {start:.2}), easing:EASE});
-      if(lines.length)  animate(lines,  {opacity:[.35,1], y:[10,0]}, {duration:.8, delay:stagger(.55, {start:.5}), easing:EASE});
+    if(recipe==='quote'){
+      const lines=all.filter(el=>el.dataset.anim==='line');
+      const others=all.filter(el=>el.dataset.anim!=='line');
+      runAll(others,[{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'translateY(0)'}],{duration:.36,delay:.05,stagger:.055});
+      runAll(lines,[{opacity:.35,transform:'translateY(8px)'},{opacity:1,transform:'translateY(0)'}],{duration:.46,delay:.18,stagger:.16});
       return;
     }
-
-    if(recipe === 'hero'){
-      animate(all, {opacity:[0,1], y:[14,0]}, {duration:.9, delay:stagger(.16, {start:.2}), easing:EASE});
+    if(recipe==='hero'){
+      runAll(all,[{opacity:0,transform:'translateY(12px)'},{opacity:1,transform:'translateY(0)'}],{duration:.52,delay:.06,stagger:.06});
       return;
     }
-
-    // default: cascade
-    animate(all, {opacity:[0,1], y:[16,0]}, {duration:.75, delay:stagger(.1, {start:.15}), easing:EASE});
+    runAll(all,[{opacity:0,transform:'translateY(12px)'},{opacity:1,transform:'translateY(0)'}],{duration:.42,delay:.04,stagger:.045});
   }
-
   function pipeAdvance(){
     if(window.__lowPowerMode) return false;
-    const slide = slides[lastIdx];
-    if(!slide || slide.dataset.animate !== 'pipeline') return false;
-    const steps  = [...slide.querySelectorAll('[data-anim="step"]')];
-    const arrows = [...slide.querySelectorAll('[data-anim="arrow"]')];
-    if(pipeStep >= steps.length - 1) return false;
+    const slide=slides[lastIdx];
+    if(!slide || slide.dataset.animate!=='pipeline') return false;
+    const steps=[...slide.querySelectorAll('[data-anim="step"]')];
+    const arrows=[...slide.querySelectorAll('[data-anim="arrow"]')];
+    if(pipeStep>=steps.length-1) return false;
     pipeStep++;
-    animate(steps[pipeStep], {opacity:[0.15,1], y:[8,0]}, {duration:.5, easing:EASE});
-    if(pipeStep > 0 && arrows[pipeStep-1]){
-      animate(arrows[pipeStep-1], {opacity:[0.15,.7]}, {duration:.3, delay:.15});
-    }
+    run(steps[pipeStep],[{opacity:.15,transform:'translateY(8px)'},{opacity:1,transform:'translateY(0)'}],{duration:.32});
+    if(pipeStep>0 && arrows[pipeStep-1]) run(arrows[pipeStep-1],[{opacity:.15},{opacity:.7}],{duration:.22,delay:.08});
     return true;
   }
-
-  window.__playSlide = playSlide;
-  window.__pipeAdvance = pipeAdvance;
-
-  // 首屏:go(0) 已跑过(同步),没来得及触发动效 → 这里补一下
-  playSlide(0);
-}
+  window.__playSlide=playSlide;
+  window.__pipeAdvance=pipeAdvance;
+  document.body.classList.add('motion-ready');
+  requestAnimationFrame(()=>playSlide(window.__currentSlideIndex || 0));
+})();
 </script>
 </body>
 </html>

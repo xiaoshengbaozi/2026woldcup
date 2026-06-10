@@ -2,8 +2,9 @@
 
 import { FormEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronRight, LogIn, Trophy, UserPlus, UserRound, X } from "lucide-react";
+import { ChevronRight, KeyRound, LogIn, Trophy, UserPlus, UserRound, X } from "lucide-react";
 import {
   fallbackUserPreferenceCatalog,
   getPlayerAvatar,
@@ -37,15 +38,18 @@ type MeAuthDialogProps = {
   mode: SharedAuthMode | null;
   onClose: () => void;
   onAuthenticated?: () => void;
+  resetToken?: string | null;
 };
 
-export function MeAuthDialog({ mode, onClose, onAuthenticated }: MeAuthDialogProps) {
+export function MeAuthDialog({ mode, onClose, onAuthenticated, resetToken }: MeAuthDialogProps) {
   const [currentMode, setCurrentMode] = useState<SharedAuthMode | null>(mode);
+  const [loginView, setLoginView] = useState<"login" | "forgot" | "reset">("login");
   const [catalog, setCatalog] = useState<UserPreferenceCatalog>(fallbackUserPreferenceCatalog);
   const [registerStep, setRegisterStep] = useState<RegisterStep>("account");
   const [email, setEmail] = useState("demo@worldcup.local");
   const [password, setPassword] = useState("worldcup2026");
   const [repeatPassword, setRepeatPassword] = useState("");
+  const [rememberLogin, setRememberLogin] = useState(true);
   const [invitationCode, setInvitationCode] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>(compactIds(fallbackUserPreferenceCatalog.teams[0]?.id));
@@ -65,6 +69,14 @@ export function MeAuthDialog({ mode, onClose, onAuthenticated }: MeAuthDialogPro
   }, [mode]);
 
   useEffect(() => {
+    if (!resetToken) return;
+    setCurrentMode("login");
+    setLoginView("reset");
+    setPassword("");
+    setRepeatPassword("");
+  }, [resetToken]);
+
+  useEffect(() => {
     if (!currentMode) return;
     let active = true;
     userApi<UserPreferenceCatalog>("/api/user-preferences", { cache: "no-store" })
@@ -78,7 +90,7 @@ export function MeAuthDialog({ mode, onClose, onAuthenticated }: MeAuthDialogPro
     return () => {
       active = false;
     };
-  }, [currentMode]);
+  }, [currentMode, resetToken]);
 
   useEffect(() => {
     if (!mode || countryCount > 0) return;
@@ -88,6 +100,7 @@ export function MeAuthDialog({ mode, onClose, onAuthenticated }: MeAuthDialogPro
   useEffect(() => {
     if (!currentMode) return;
     setRegisterStep("account");
+    if (currentMode !== "login" || !resetToken) setLoginView("login");
     setError("");
     if (currentMode === "register") {
       setEmail("");
@@ -98,7 +111,7 @@ export function MeAuthDialog({ mode, onClose, onAuthenticated }: MeAuthDialogPro
       setCustomAvatarUrl("");
       setPostRegisterPrompt(false);
     }
-  }, [currentMode]);
+  }, [currentMode, resetToken]);
 
   const recommendedTeams = useMemo(() => buildRecommendedTeams(catalog, countries), [catalog, countries]);
   const recommendedPlayers = useMemo(() => buildRecommendedPlayers(catalog), [catalog]);
@@ -135,12 +148,55 @@ export function MeAuthDialog({ mode, onClose, onAuthenticated }: MeAuthDialogPro
     try {
       await userApi("/api/auth/login", {
         method: "POST",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, remember: rememberLogin }),
       });
       onAuthenticated?.();
       onClose();
     } catch (err) {
       setError(readableError(err, "登录失败，请检查邮箱和密码"));
+    } finally {
+      setBusy("");
+    }
+  }
+
+  async function submitForgotPassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    if (!email.trim()) return setError("请填写邮箱");
+    if (!isValidEmail(email)) return setError("请输入有效的邮箱地址");
+
+    setBusy("forgot");
+    try {
+      await userApi("/api/auth/forgot-password", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      });
+      setError("如果邮箱存在，重置链接已经发送，请查收邮箱");
+    } catch (err) {
+      setError(readableError(err, "重置邮件发送失败，请稍后再试"));
+    } finally {
+      setBusy("");
+    }
+  }
+
+  async function submitResetPassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    if (!resetToken) return setError("重置链接无效");
+    if (!password) return setError("请填写新密码");
+    if (password.length < 8) return setError("密码至少需要 8 位");
+    if (password !== repeatPassword) return setError("两次输入的密码不一致");
+
+    setBusy("reset");
+    try {
+      await userApi("/api/auth/reset-password", {
+        method: "POST",
+        body: JSON.stringify({ token: resetToken, password }),
+      });
+      onAuthenticated?.();
+      onClose();
+    } catch (err) {
+      setError(readableError(err, "密码重置失败，请重新申请链接"));
     } finally {
       setBusy("");
     }
@@ -211,16 +267,49 @@ export function MeAuthDialog({ mode, onClose, onAuthenticated }: MeAuthDialogPro
     <AnimatePresence>
       {mode && currentMode && (
         <AuthModal mode={currentMode} registerStep={registerStep} onClose={close}>
-          {currentMode === "login" ? (
+          {currentMode === "login" && loginView === "forgot" ? (
+            <ForgotPasswordForm
+              email={email}
+              busy={busy}
+              error={error}
+              onEmailChange={setEmail}
+              onBack={() => {
+                setError("");
+                setLoginView("login");
+              }}
+              onSubmit={submitForgotPassword}
+            />
+          ) : currentMode === "login" && loginView === "reset" ? (
+            <ResetPasswordForm
+              password={password}
+              repeatPassword={repeatPassword}
+              busy={busy}
+              error={error}
+              onPasswordChange={setPassword}
+              onRepeatPasswordChange={setRepeatPassword}
+              onBack={() => {
+                setError("");
+                setLoginView("login");
+              }}
+              onSubmit={submitResetPassword}
+            />
+          ) : currentMode === "login" ? (
             <LoginForm
               email={email}
               password={password}
+              remember={rememberLogin}
               busy={busy}
               error={error}
               onEmailChange={setEmail}
               onPasswordChange={setPassword}
+              onRememberChange={setRememberLogin}
+              onForgotPassword={() => {
+                setError("");
+                setLoginView("forgot");
+              }}
               onSwitchToRegister={() => {
                 setError("");
+                setLoginView("login");
                 setCurrentMode("register");
               }}
               onSubmit={submitLogin}
@@ -304,7 +393,7 @@ function AuthModal({ mode, registerStep, onClose, children }: { mode: SharedAuth
     };
   }, []);
 
-  return (
+  const modal = (
     <motion.div className="fixed inset-0 z-[500] grid place-items-center overflow-hidden bg-black/72 px-4 py-6 backdrop-blur-xl sm:py-10" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <div className="pointer-events-none fixed left-1/2 top-0 h-[360px] w-[min(720px,100vw)] -translate-x-1/2 rounded-full bg-volt/10 blur-[120px]" />
       <motion.div
@@ -329,24 +418,33 @@ function AuthModal({ mode, registerStep, onClose, children }: { mode: SharedAuth
       </motion.div>
     </motion.div>
   );
+
+  if (typeof document === "undefined") return null;
+  return createPortal(modal, document.body);
 }
 
 function LoginForm({
   email,
   password,
+  remember,
   busy,
   error,
   onEmailChange,
   onPasswordChange,
+  onRememberChange,
+  onForgotPassword,
   onSwitchToRegister,
   onSubmit,
 }: {
   email: string;
   password: string;
+  remember: boolean;
   busy: string;
   error: string;
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
+  onRememberChange: (value: boolean) => void;
+  onForgotPassword: () => void;
   onSwitchToRegister: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
@@ -354,6 +452,20 @@ function LoginForm({
     <form onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2">
       <AuthInput label="邮箱" type="email" value={email} required onChange={onEmailChange} />
       <AuthInput label="密码" type="password" value={password} required onChange={onPasswordChange} />
+      <div className="sm:col-span-2 flex flex-wrap items-center justify-between gap-3 text-sm">
+        <label className="inline-flex cursor-pointer items-center gap-2 text-white/58">
+          <input
+            type="checkbox"
+            checked={remember}
+            onChange={(event) => onRememberChange(event.target.checked)}
+            className="h-4 w-4 rounded border-white/20 bg-black/30 accent-volt"
+          />
+          记住登录
+        </label>
+        <button type="button" onClick={onForgotPassword} className="font-semibold text-volt/82 transition hover:text-volt">
+          忘记密码？
+        </button>
+      </div>
       <ModalFooter error={error}>
         <div className="flex flex-wrap items-center gap-3">
           <SecondaryButton type="button" disabled={Boolean(busy)} onClick={onSwitchToRegister}>
@@ -676,6 +788,79 @@ function PrimaryButton({ children, ...props }: React.ButtonHTMLAttributes<HTMLBu
   );
 }
 
+function ForgotPasswordForm({
+  email,
+  busy,
+  error,
+  onEmailChange,
+  onBack,
+  onSubmit,
+}: {
+  email: string;
+  busy: string;
+  error: string;
+  onEmailChange: (value: string) => void;
+  onBack: () => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+}) {
+  return (
+    <form onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2">
+      <div className="sm:col-span-2">
+        <AuthInput label="注册邮箱" type="email" value={email} required onChange={onEmailChange} />
+      </div>
+      <ModalFooter error={error}>
+        <div className="flex flex-wrap items-center gap-3">
+          <SecondaryButton type="button" disabled={Boolean(busy)} onClick={onBack}>
+            返回登录
+          </SecondaryButton>
+          <PrimaryButton type="submit" disabled={Boolean(busy)}>
+            <KeyRound className="h-4 w-4" />
+            {busy === "forgot" ? "发送中" : "发送重置邮件"}
+          </PrimaryButton>
+        </div>
+      </ModalFooter>
+    </form>
+  );
+}
+
+function ResetPasswordForm({
+  password,
+  repeatPassword,
+  busy,
+  error,
+  onPasswordChange,
+  onRepeatPasswordChange,
+  onBack,
+  onSubmit,
+}: {
+  password: string;
+  repeatPassword: string;
+  busy: string;
+  error: string;
+  onPasswordChange: (value: string) => void;
+  onRepeatPasswordChange: (value: string) => void;
+  onBack: () => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+}) {
+  return (
+    <form onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2">
+      <AuthInput label="新密码" type="password" value={password} required onChange={onPasswordChange} />
+      <AuthInput label="重复新密码" type="password" value={repeatPassword} required onChange={onRepeatPasswordChange} />
+      <ModalFooter error={error}>
+        <div className="flex flex-wrap items-center gap-3">
+          <SecondaryButton type="button" disabled={Boolean(busy)} onClick={onBack}>
+            返回登录
+          </SecondaryButton>
+          <PrimaryButton type="submit" disabled={Boolean(busy)}>
+            <KeyRound className="h-4 w-4" />
+            {busy === "reset" ? "保存中" : "设置新密码"}
+          </PrimaryButton>
+        </div>
+      </ModalFooter>
+    </form>
+  );
+}
+
 function SecondaryButton({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
@@ -749,6 +934,8 @@ function readableError(err: unknown, fallback: string) {
     invitation_code_disabled: "这个赛波码已停用",
     invitation_code_expired: "这个赛波码已过期",
     invitation_code_exhausted: "这个赛波码使用次数已满",
+    invalid_password_reset_token: "重置链接无效",
+    password_reset_token_expired: "重置链接已过期，请重新申请",
   };
   return messages[message] ?? fallback;
 }

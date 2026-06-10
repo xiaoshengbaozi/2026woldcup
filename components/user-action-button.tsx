@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { Bell, Check, Star } from "lucide-react";
 import { MeAuthDialog, type SharedAuthMode } from "@/components/me-auth-dialog";
@@ -21,14 +22,25 @@ type UserActionButtonProps = {
   onChanged?: (active: boolean) => void;
 };
 
-const ACTION_COPY: Record<ActionKind, { idle: string; active: string; pending: string; canceling: string; confirmTitle: string; confirmBody: string }> = {
+const ACTION_COPY: Record<
+  ActionKind,
+  {
+    idle: string;
+    active: string;
+    pending: string;
+    canceling: string;
+    confirmTitle: string;
+    confirmBody: string;
+  }
+> = {
   team: {
     idle: "关注球队",
     active: "已关注",
     pending: "写入中",
     canceling: "取消中",
     confirmTitle: "取消关注球队",
-    confirmBody: "确定不再关注这支球队吗？相关比赛收藏不会自动删除，可在比赛页单独取消。",
+    confirmBody:
+      "确定不再关注这支球队吗？相关比赛收藏不会自动删除，可在比赛页单独取消。",
   },
   player: {
     idle: "关注球员",
@@ -36,7 +48,8 @@ const ACTION_COPY: Record<ActionKind, { idle: string; active: string; pending: s
     pending: "写入中",
     canceling: "取消中",
     confirmTitle: "取消关注球员",
-    confirmBody: "确定不再关注这名球员吗？相关比赛收藏不会自动删除，可在比赛页单独取消。",
+    confirmBody:
+      "确定不再关注这名球员吗？相关比赛收藏不会自动删除，可在比赛页单独取消。",
   },
   match: {
     idle: "收藏比赛",
@@ -92,7 +105,12 @@ export function UserActionButton({
 
     setBusy(true);
     try {
-      const path = kind === "team" ? "/api/me/follow/team" : kind === "player" ? "/api/me/follow/player" : "/api/me/favorite-match";
+      const path =
+        kind === "team"
+          ? "/api/me/follow/team"
+          : kind === "player"
+            ? "/api/me/follow/player"
+            : "/api/me/favorite-match";
       const result = await userApi<{ user: PublicUser }>(path, {
         method: "POST",
         body: JSON.stringify(payload),
@@ -120,11 +138,17 @@ export function UserActionButton({
           : kind === "player"
             ? `/api/me/follow/player/${encodeURIComponent(id)}`
             : `/api/me/favorite-match/${encodeURIComponent(id)}`;
-      const result = await userApi<{ user: PublicUser }>(path, { method: "DELETE" });
+      const result = await userApi<{ user: PublicUser }>(path, {
+        method: "DELETE",
+      });
       const nextActive = isAlreadySaved(kind, id, result.user);
       setActive(nextActive);
       setFeedback(nextActive ? "added" : "removed");
-      emitUserActionFeedback(kind, nextActive ? "added" : "removed", buttonRef.current);
+      emitUserActionFeedback(
+        kind,
+        nextActive ? "added" : "removed",
+        buttonRef.current,
+      );
       onChanged?.(nextActive);
       void refreshSession();
       setConfirmOpen(false);
@@ -135,8 +159,18 @@ export function UserActionButton({
 
   const copy = ACTION_COPY[kind];
   const Icon = kind === "match" ? Bell : active ? Check : Star;
-  const label = busy ? (active ? copy.canceling : copy.pending) : active ? copy.active : copy.idle;
-  const wrapperPositionClass = /\b(?:absolute|fixed|sticky|relative)\b/.test(wrapperClassName) ? "" : "relative";
+  const label = busy
+    ? active
+      ? copy.canceling
+      : copy.pending
+    : active
+      ? copy.active
+      : copy.idle;
+  const wrapperPositionClass = /\b(?:absolute|fixed|sticky|relative)\b/.test(
+    wrapperClassName,
+  )
+    ? ""
+    : "relative";
   const textButtonClass =
     variant === "heroGhost"
       ? `inline-flex h-8 items-center justify-center gap-1.5 rounded-full px-3 text-xs font-semibold normal-case tracking-normal transition disabled:opacity-60 ${
@@ -152,7 +186,9 @@ export function UserActionButton({
 
   return (
     <>
-      <span className={`${wrapperPositionClass} inline-flex ${wrapperClassName}`}>
+      <span
+        className={`${wrapperPositionClass} inline-flex ${wrapperClassName}`}
+      >
         <button
           ref={buttonRef}
           type="button"
@@ -163,14 +199,23 @@ export function UserActionButton({
           className={
             iconOnly
               ? `${topIconButtonClass} ${
-                  active ? "text-volt ring-volt/55" : "text-white/72 ring-white/12 hover:text-white hover:ring-volt/35"
+                  active
+                    ? "text-volt ring-volt/55"
+                    : "text-white/72 ring-white/12 hover:text-white hover:ring-volt/35"
                 } ${className}`
               : textButtonClass
           }
         >
           <motion.span
             className="grid place-items-center"
-            animate={feedback ? { scale: [1, 1.26, 1], rotate: feedback === "added" ? [0, -9, 0] : [0, 9, 0] } : { scale: 1, rotate: 0 }}
+            animate={
+              feedback
+                ? {
+                    scale: [1, 1.26, 1],
+                    rotate: feedback === "added" ? [0, -9, 0] : [0, 9, 0],
+                  }
+                : { scale: 1, rotate: 0 }
+            }
             transition={{ duration: 0.42, ease: "easeOut" }}
           >
             <Icon className="h-4 w-4" />
@@ -179,40 +224,52 @@ export function UserActionButton({
         </button>
       </span>
 
-      {confirmOpen && (
-        <div className="fixed inset-0 z-[430] grid place-items-center bg-black/62 px-4 backdrop-blur-xl">
-          <div className="hero-card w-full max-w-[360px] overflow-hidden rounded-[1.75rem] p-5 text-white shadow-[0_30px_90px_rgba(0,0,0,.72),0_0_54px_rgba(216,255,62,.14)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-volt/80">Confirm</p>
-            <h3 className="mt-2 text-xl font-bold">{copy.confirmTitle}</h3>
-            <p className="mt-3 text-sm leading-6 text-white/55">{copy.confirmBody}</p>
-            <div className="mt-5 grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={cancelAction}
-                disabled={busy}
-                className="inline-flex h-11 items-center justify-center rounded-full bg-volt text-sm font-black text-black transition hover:scale-[1.02] disabled:opacity-60"
-              >
-                确定
-              </button>
-              <button
-                type="button"
-                onClick={() => setConfirmOpen(false)}
-                disabled={busy}
-                className="inline-flex h-11 items-center justify-center rounded-full bg-white/[0.06] text-sm font-bold text-white/70 ring-1 ring-white/[0.1] transition hover:bg-white/[0.1] hover:text-white disabled:opacity-60"
-              >
-                放弃
-              </button>
+      {confirmOpen &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className="fixed inset-0 z-[430] grid place-items-center bg-black/68 px-4">
+            <div className="hero-card w-full max-w-[360px] overflow-hidden rounded-[1.75rem] bg-[#080b0b]/92 p-5 text-white shadow-[0_30px_90px_rgba(0,0,0,.72),0_0_54px_rgba(216,255,62,.14)] backdrop-blur-3xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-volt/80">
+                Confirm
+              </p>
+              <h3 className="mt-2 text-xl font-bold">{copy.confirmTitle}</h3>
+              <p className="mt-3 text-sm leading-6 text-white/55">
+                {copy.confirmBody}
+              </p>
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={cancelAction}
+                  disabled={busy}
+                  className="inline-flex h-11 items-center justify-center rounded-full bg-volt text-sm font-black text-black transition hover:scale-[1.02] disabled:opacity-60"
+                >
+                  确定
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmOpen(false)}
+                  disabled={busy}
+                  className="inline-flex h-11 items-center justify-center rounded-full bg-white/[0.06] text-sm font-bold text-white/70 ring-1 ring-white/[0.1] transition hover:bg-white/[0.1] hover:text-white disabled:opacity-60"
+                >
+                  放弃
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
-      <MeAuthDialog mode={authMode} onClose={() => setAuthMode(null)} onAuthenticated={refreshSession} />
+          </div>,
+          document.body,
+        )}
+      <MeAuthDialog
+        mode={authMode}
+        onClose={() => setAuthMode(null)}
+        onAuthenticated={refreshSession}
+      />
     </>
   );
 }
 
 function isAlreadySaved(kind: ActionKind, id: string, user: PublicUser) {
   if (kind === "team") return user.followedTeams.some((item) => item.id === id);
-  if (kind === "player") return user.followedPlayers.some((item) => item.id === id);
+  if (kind === "player")
+    return user.followedPlayers.some((item) => item.id === id);
   return user.favoriteMatches.some((item) => item.id === id);
 }

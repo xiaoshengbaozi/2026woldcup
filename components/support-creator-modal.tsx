@@ -151,13 +151,14 @@ export function SupportCreatorModal() {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.18, ease: "easeOut" }}
+                    className="aspect-square"
                   >
                     <Image
                       src={active.image}
                       alt={active.alt}
-                      width={900}
-                      height={1200}
-                      className="h-auto w-full rounded-[1.05rem] object-contain"
+                      width={1024}
+                      height={1024}
+                      className="h-full w-full rounded-[1.05rem] object-contain"
                       priority={false}
                     />
                   </motion.div>

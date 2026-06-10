@@ -76,6 +76,38 @@
   box-shadow: 0 8px 18px rgba(54, 65, 44, 0.16) !important;
 }
 
+@media (max-width: 860px) {
+  [data-theme="light"] .tp-content-tabs.fixed {
+    background: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+  }
+
+  [data-theme="light"] .tp-content-tab {
+    background: rgba(255, 254, 250, 0.72) !important;
+    color: var(--lm-text-secondary) !important;
+    box-shadow: inset 0 0 0 1px rgba(54, 65, 44, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.78) !important;
+  }
+
+  [data-theme="light"] .tp-content-tab:hover {
+    background: rgba(54, 65, 44, 0.08) !important;
+    color: var(--lm-accent-strong) !important;
+  }
+
+  [data-theme="light"] .tp-content-tab.active {
+    background: var(--volt, #D8FF3E) !important;
+    color: #050505 !important;
+    box-shadow: 0 0 26px rgba(216, 255, 62, 0.2) !important;
+  }
+}
+
+[data-theme="light"] .tp-content-panel.tp-content-panel--bare {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
 [data-theme="light"] .tp-chip {
   background: rgba(232, 242, 232, 0.82) !important;
   border-color: var(--lm-border) !important;
@@ -86,6 +118,7 @@
   background: var(--lm-accent-soft) !important;
   border-color: rgba(54, 65, 44, 0.22) !important;
   color: #36412c !important;
+  box-shadow: none !important;
 }
 
 [data-theme="light"] .tp-hero-stat-val,
@@ -114,6 +147,18 @@
   background: linear-gradient(135deg, rgba(54, 65, 44, 0.18), rgba(255, 255, 255, 0.5), rgba(54, 65, 44, 0.08)) !important;
 }
 
+[data-theme="light"] .tp-fixture-card {
+  box-shadow:
+    0 6px 16px rgba(31, 43, 26, 0.045),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92) !important;
+}
+
+[data-theme="light"] .tp-fixture-card:hover {
+  box-shadow:
+    0 8px 18px rgba(31, 43, 26, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.94) !important;
+}
+
 [data-theme="light"] .tp-hero-banner-img {
   opacity: 0.24 !important;
   filter: saturate(0.82) contrast(1.02) brightness(1.08) !important;
@@ -128,6 +173,7 @@
 [data-theme="light"] .tp-section-hd,
 [data-theme="light"] .tp-content-panel .tp-players,
 [data-theme="light"] .tp-moments,
+[data-theme="light"] .tp-fixture-meta,
 [data-theme="light"] .tp-fixture-venue {
   border-color: rgba(54, 65, 44, 0.1) !important;
 }
@@ -135,8 +181,7 @@
 [data-theme="light"] .tp-section-icon,
 [data-theme="light"] .tp-story-icon,
 [data-theme="light"] .tp-player-avatar,
-[data-theme="light"] .tp-player-photo-wrap,
-[data-theme="light"] .tp-fixture-round {
+[data-theme="light"] .tp-player-photo-wrap {
   background: rgba(54, 65, 44, 0.09) !important;
   border-color: rgba(54, 65, 44, 0.16) !important;
   color: #36412c !important;
@@ -150,6 +195,7 @@
 [data-theme="light"] .tp-player-cell,
 [data-theme="light"] .tp-coach-card,
 [data-theme="light"] .tp-feature-story,
+[data-theme="light"] .tp-roadmap,
 [data-theme="light"] .tp-moment-img-wrap,
 [data-theme="light"] .tp-gallery-img-wrap,
 [data-theme="light"] .tp-empty-state {
@@ -164,8 +210,7 @@
 
 [data-theme="light"] .tp-info-cell:hover,
 [data-theme="light"] .tp-player-cell:hover,
-[data-theme="light"] .tp-story-card:hover,
-[data-theme="light"] .tp-fixture-card:hover {
+[data-theme="light"] .tp-story-card:hover {
   box-shadow:
     0 14px 32px rgba(31, 43, 26, 0.08),
     0 0 28px rgba(54, 65, 44, 0.06),
@@ -198,8 +243,8 @@
 [data-theme="light"] .tp-overview-value,
 [data-theme="light"] .tp-player-name,
 [data-theme="light"] .tp-quote-text,
-[data-theme="light"] .tp-feature-copy h3,
-[data-theme="light"] .tp-coach-copy h3,
+[data-theme="light"] .tp-feature-copy h2,
+[data-theme="light"] .tp-coach-copy h2,
 [data-theme="light"] .tp-roadmap-label {
   color: var(--lm-text-primary) !important;
   text-shadow: none !important;
@@ -218,6 +263,7 @@
 [data-theme="light"] .tp-feature-copy p,
 [data-theme="light"] .tp-feature-source,
 [data-theme="light"] .tp-coach-copy p,
+[data-theme="light"] .tp-module-kicker,
 [data-theme="light"] .tp-roadmap-index {
   color: var(--lm-text-secondary) !important;
 }
@@ -228,6 +274,22 @@
 [data-theme="light"] .tp-moment-year,
 [data-theme="light"] .tp-hero-sub .accent {
   color: #36412c !important;
+}
+
+[data-theme="light"] .tp-fixture-kickoff span,
+[data-theme="light"] .tp-fixture-kickoff span:last-child {
+  color: var(--lm-text-secondary) !important;
+}
+
+[data-theme="light"] .tp-fixture-team-name {
+  color: var(--lm-text-primary) !important;
+}
+
+[data-theme="light"] .tp-coach-highlights span {
+  background: rgba(54, 65, 44, 0.08) !important;
+  border-color: rgba(54, 65, 44, 0.16) !important;
+  color: #36412c !important;
+  box-shadow: none !important;
 }
 
 [data-theme="light"] .tp-tl-vp {
@@ -295,6 +357,20 @@
 
 [data-theme="light"] .tp-tl-node.now .tp-tl-dot::after {
   background: rgba(54, 65, 44, 0.14) !important;
+}
+
+[data-theme="light"] .tp-roadmap-node:not(:last-child)::after {
+  border-color: rgba(54, 65, 44, 0.22) !important;
+}
+
+[data-theme="light"] .tp-roadmap-dot {
+  background: #36412c !important;
+  box-shadow: 0 0 16px rgba(54, 65, 44, 0.18) !important;
+}
+
+[data-theme="light"] .tp-overview-card::after,
+[data-theme="light"] .tp-history-cell::after {
+  background: linear-gradient(90deg, transparent, rgba(54, 65, 44, 0.28), transparent) !important;
 }
 
 [data-theme="light"] .tp-story-cover-overlay {

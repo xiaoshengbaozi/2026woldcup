@@ -1891,6 +1891,24 @@ export default function PredictPage() {
               </button>
             )}
           </div>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={autoFillRandom}
+              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full bg-volt/[0.14] px-3 text-[11px] font-black text-volt shadow-[0_0_22px_rgba(216,255,62,.12)] ring-1 ring-volt/[0.22] transition hover:bg-volt/[0.2]"
+            >
+              <Shuffle size={13} />
+              随机填充
+            </button>
+            <button
+              type="button"
+              onClick={resetAll}
+              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full bg-white/[0.045] px-3 text-[11px] font-black text-white/48 ring-1 ring-white/[0.08] transition hover:bg-red-500/[0.1] hover:text-red-300 hover:ring-red-400/20"
+            >
+              <X size={13} />
+              清空
+            </button>
+          </div>
         </div>
 
         <div className="hidden flex-wrap items-center justify-between gap-2 lg:flex">

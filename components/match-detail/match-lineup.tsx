@@ -153,7 +153,7 @@ function reconcilePlayerPosition(current: PlayerPosition, officialPosition: stri
    Main Lineup Component
    ═══════════════════════════════════════════════ */
 
-export function MatchLineup({ detail }: { detail: MatchDetail }) {
+export function MatchLineup({ detail, compactMobile = false }: { detail: MatchDetail; compactMobile?: boolean }) {
   const teams = parseTeams(detail.match.summary);
   const [activeSide, setActiveSide] = useState<"home" | "away">("home");
 
@@ -168,11 +168,19 @@ export function MatchLineup({ detail }: { detail: MatchDetail }) {
   const accentDark = isHome ? "#8BA824" : "#CC7C19";
 
   return (
+    <>
+    {compactMobile && (
+      <MobileLiveFormationPitch
+        detail={detail}
+        teams={teams}
+      />
+    )}
+
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.08, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      className="hero-card overflow-hidden"
+      className={`hero-card overflow-hidden ${compactMobile ? "hidden lg:block" : ""}`}
     >
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-volt/30 to-transparent" />
 
@@ -213,7 +221,7 @@ export function MatchLineup({ detail }: { detail: MatchDetail }) {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
           transition={{ duration: 0.25 }}
-          className="relative grid grid-cols-1 gap-4 p-4 sm:p-5 md:grid-cols-[2fr_3fr]"
+          className={`relative grid grid-cols-1 gap-4 p-4 sm:p-5 ${compactMobile ? "lg:grid-cols-[2fr_3fr]" : "md:grid-cols-[2fr_3fr]"}`}
         >
           {isSquadList ? (
             <SquadLineupPanel
@@ -232,6 +240,7 @@ export function MatchLineup({ detail }: { detail: MatchDetail }) {
               formation={currentLineup.formation}
               accentHex={accentHex}
               accentDark={accentDark}
+              compactMobile={compactMobile}
             />
           )}
 
@@ -241,11 +250,13 @@ export function MatchLineup({ detail }: { detail: MatchDetail }) {
               separateSubstitutes={currentLineup.listType === "confirmed_lineup" && currentPlayers.some((player) => player.isStarter)}
               accentHex={accentHex}
               accentFrom={isHome ? "rgba(216,255,62," : "rgba(255,154,31,"}
+              className={compactMobile ? "hidden lg:block" : ""}
             />
           )}
         </motion.div>
       </AnimatePresence>
     </motion.div>
+    </>
   );
 }
 
@@ -253,10 +264,145 @@ export function MatchLineup({ detail }: { detail: MatchDetail }) {
    Formation Pitch (left side)
    ═══════════════════════════════════════════════ */
 
-function FormationPitch({
-  coach, players, formation, accentHex, accentDark,
+function MobileLiveFormationPitch({
+  detail,
+  teams,
 }: {
-  coach?: string | null; players: LineupPlayer[]; formation: string; accentHex: string; accentDark: string;
+  detail: MatchDetail;
+  teams: ReturnType<typeof parseTeams>;
+}) {
+  const homePlayers = reconcileLineupPlayers(detail.homeLineup.players, detail.homeTeamCode);
+  const awayPlayers = reconcileLineupPlayers(detail.awayLineup.players, detail.awayTeamCode);
+  const homeStarters = homePlayers.filter((player) => player.isStarter).slice(0, 11);
+  const awayStarters = awayPlayers.filter((player) => player.isStarter).slice(0, 11);
+  const homeLayout = getPlayerPitchCoords(homeStarters, detail.homeLineup.formation);
+  const awayLayout = getPlayerPitchCoords(awayStarters, detail.awayLineup.formation);
+  const hasStarters = homeStarters.length > 0 || awayStarters.length > 0;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.08, duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
+      className="hero-card overflow-hidden p-3 lg:hidden"
+    >
+      <div className="mb-3 grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-1">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-black text-white">{teams.home.name}</p>
+          <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-white/36">{detail.homeLineup.formation}</p>
+        </div>
+        <div className="rounded-full bg-white/[0.06] px-3 py-1 text-xs font-black tabular-nums text-white ring-1 ring-white/[0.08]">
+          {detail.score.home} - {detail.score.away}
+        </div>
+        <div className="min-w-0 text-right">
+          <p className="truncate text-sm font-black text-white">{teams.away.name}</p>
+          <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-white/36">{detail.awayLineup.formation}</p>
+        </div>
+      </div>
+
+      <div className="relative overflow-hidden rounded-[1.35rem] bg-[#486f4d]" style={{ aspectRatio: "68 / 118" }}>
+        <div className="absolute inset-0 bg-gradient-to-b from-[#4f7654] via-[#486f4d] to-[#3f6847]" />
+        <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(to_bottom,rgba(255,255,255,.8)_1px,transparent_1px)] [background-size:100%_8.333%]" />
+        <svg viewBox="0 0 680 1180" className="absolute inset-0 h-full w-full" preserveAspectRatio="none">
+          <rect x="36" y="28" width="608" height="1124" rx="6" fill="none" stroke="rgba(255,255,255,0.34)" strokeWidth="4" />
+          <line x1="36" y1="590" x2="644" y2="590" stroke="rgba(255,255,255,0.32)" strokeWidth="3" />
+          <circle cx="340" cy="590" r="68" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="3" />
+          <circle cx="340" cy="590" r="7" fill="rgba(255,255,255,0.45)" />
+          <rect x="142" y="28" width="396" height="150" fill="none" stroke="rgba(255,255,255,0.28)" strokeWidth="3" />
+          <rect x="230" y="28" width="220" height="58" fill="none" stroke="rgba(255,255,255,0.26)" strokeWidth="3" />
+          <path d="M 260 178 Q 340 216 420 178" fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth="3" />
+          <rect x="142" y="1002" width="396" height="150" fill="none" stroke="rgba(255,255,255,0.28)" strokeWidth="3" />
+          <rect x="230" y="1094" width="220" height="58" fill="none" stroke="rgba(255,255,255,0.26)" strokeWidth="3" />
+          <path d="M 260 1002 Q 340 964 420 1002" fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth="3" />
+        </svg>
+
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(216,255,62,.10),transparent_34%),radial-gradient(circle_at_50%_82%,rgba(255,154,31,.11),transparent_34%)]" />
+
+        {hasStarters ? (
+          <>
+            {homeStarters.map((player, index) => (
+              <MobilePitchPlayer
+                key={`home-${player.id}`}
+                player={player}
+                coord={homeLayout[index] ?? { x: 50, y: 50 }}
+                side="home"
+                delay={index}
+              />
+            ))}
+            {awayStarters.map((player, index) => (
+              <MobilePitchPlayer
+                key={`away-${player.id}`}
+                player={player}
+                coord={awayLayout[index] ?? { x: 50, y: 50 }}
+                side="away"
+                delay={index + 11}
+              />
+            ))}
+          </>
+        ) : (
+          <div className="absolute inset-0 grid place-items-center px-8 text-center">
+            <p className="rounded-2xl bg-black/22 px-4 py-3 text-sm font-bold text-white/68 backdrop-blur-md ring-1 ring-white/[0.08]">
+              官方阵型待更新
+            </p>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+function MobilePitchPlayer({
+  player,
+  coord,
+  side,
+  delay,
+}: {
+  player: LineupPlayer;
+  coord: PitchCoord;
+  side: "home" | "away";
+  delay: number;
+}) {
+  const x = 7 + (coord.x / 100) * 86;
+  const y = side === "home"
+    ? 7 + ((100 - coord.y) / 100) * 40
+    : 53 + (coord.y / 100) * 40;
+  const label = player.number ? `${player.number} ${player.nameCn || player.name}` : player.nameCn || player.name;
+  const fallback = player.number ?? getPlayerInitial(player);
+
+  return (
+    <motion.div
+      className="absolute z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center"
+      style={{ left: `${x}%`, top: `${y}%` }}
+      initial={{ opacity: 0, scale: 0.84, y: 6 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ delay: 0.06 + delay * 0.025, duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+    >
+      <div className="relative grid h-11 w-11 place-items-center overflow-hidden rounded-2xl bg-[#30343d] text-xs font-black text-white shadow-[0_10px_22px_rgba(0,0,0,.26)] ring-1 ring-white/15">
+        <span>{fallback}</span>
+        {player.photo && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={player.photo}
+            alt={player.nameEn || player.name}
+            className="absolute inset-0 h-full w-full object-cover"
+            loading="lazy"
+            onError={(event) => {
+              event.currentTarget.style.display = "none";
+            }}
+          />
+        )}
+      </div>
+      <p className="mt-1 max-w-[5.4rem] truncate rounded-full bg-black/14 px-1.5 text-center text-[10px] font-bold leading-tight text-white/88 backdrop-blur-sm" title={label}>
+        {label}
+      </p>
+    </motion.div>
+  );
+}
+
+function FormationPitch({
+  coach, players, formation, accentHex, accentDark, compactMobile = false,
+}: {
+  coach?: string | null; players: LineupPlayer[]; formation: string; accentHex: string; accentDark: string; compactMobile?: boolean;
 }) {
   const starters = players.filter((p) => p.isStarter).slice(0, 11);
   const layout = getPlayerPitchCoords(starters, formation);
@@ -266,7 +412,7 @@ function FormationPitch({
   return (
     <div className="flex flex-col items-center pt-1 sm:pt-2">
       <div
-        className="mb-5 flex w-full max-w-[320px] items-center justify-between gap-3 rounded-2xl px-4 py-3 ring-1 ring-white/[0.07] backdrop-blur-xl sm:mb-6"
+        className={`${compactMobile ? "mb-5 hidden w-full max-w-[320px] items-center justify-between gap-3 rounded-2xl px-4 py-3 ring-1 ring-white/[0.07] backdrop-blur-xl sm:mb-6 lg:flex" : "mb-5 flex w-full max-w-[320px] items-center justify-between gap-3 rounded-2xl px-4 py-3 ring-1 ring-white/[0.07] backdrop-blur-xl sm:mb-6"}`}
         style={{
           background: `linear-gradient(135deg, ${accentFrom}0.12), rgba(255,255,255,0.025))`,
           boxShadow: `0 18px 42px rgba(0,0,0,0.18), 0 0 24px ${accentFrom}0.08)`,
@@ -288,7 +434,7 @@ function FormationPitch({
       </div>
 
       {/* Formation badge */}
-      <div className="mb-4 flex items-center gap-2 sm:mb-5">
+      <div className={`${compactMobile ? "mb-4 hidden items-center gap-2 sm:mb-5 lg:flex" : "mb-4 flex items-center gap-2 sm:mb-5"}`}>
         <div className="h-5 w-1 rounded-full" style={{ backgroundColor: accentHex }} />
         <span className="text-[10px] font-black uppercase tracking-[0.2em]"
           style={{ color: accentHex }}
@@ -307,8 +453,8 @@ function FormationPitch({
       </div>
 
       {/* Pitch */}
-      <div className="w-full max-w-[320px]">
-        <div className="relative overflow-hidden rounded-2xl" style={{ aspectRatio: "68 / 105" }}>
+      <div className="w-full max-w-[420px] lg:max-w-[320px]">
+        <div className={`relative overflow-hidden rounded-2xl ${compactMobile ? "aspect-[68/108] lg:aspect-[68/105]" : ""}`} style={!compactMobile ? { aspectRatio: "68 / 105" } : undefined}>
           {/* Background */}
           <div className="absolute inset-0 bg-gradient-to-b from-[#1a5c2a] via-[#1d6b30] to-[#1a5c2a]" />
           {/* Grass stripes */}
@@ -891,9 +1037,9 @@ function groupPlayersByPosition(players: LineupPlayer[]): Record<string, LineupP
 }
 
 export function PlayerGrid({
-  players, separateSubstitutes = false, accentHex, accentFrom,
+  players, separateSubstitutes = false, accentHex, accentFrom, className = "",
 }: {
-  players: LineupPlayer[]; separateSubstitutes?: boolean; accentHex: string; accentFrom: string;
+  players: LineupPlayer[]; separateSubstitutes?: boolean; accentHex: string; accentFrom: string; className?: string;
 }) {
   const startingPlayers = separateSubstitutes ? players.filter((player) => player.isStarter) : players;
   const substitutePlayers = separateSubstitutes ? players.filter((player) => !player.isStarter) : [];
@@ -902,7 +1048,7 @@ export function PlayerGrid({
   let globalIndex = 0;
 
   return (
-    <div className="flex flex-col gap-2.5">
+    <div className={`flex flex-col gap-2.5 ${className}`}>
       {POSITION_GROUPS.map((group) => {
         const groupPlayers = grouped[group.key];
         if (!groupPlayers.length) return null;

@@ -28,7 +28,7 @@ import bellinghamImage from "@/assets/players/ENG-england/headshots/jude-belling
 import yamalImage from "@/assets/players/ESP-spain/headshots/lamine-yamal.webp";
 import mbappeImage from "@/assets/players/FRA-france/headshots/kylian-mbappe.webp";
 import musialaImage from "@/assets/players/GER-germany/headshots/jamal-musiala.webp";
-import mitomaImage from "@/assets/players/JPN-japan/headshots/kaoru-mitoma.webp";
+import kuboImage from "@/assets/players/JPN-japan/headshots/takefusa-kubo.webp";
 import sonImage from "@/assets/players/KOR-south-korea/headshots/son-heung-min.webp";
 import hakimiImage from "@/assets/players/MAR-morocco/headshots/achraf-hakimi.webp";
 import gimenezImage from "@/assets/players/MEX-mexico/headshots/santiago-gimenez.webp";
@@ -92,6 +92,7 @@ const PLAYER_ASSETS: Record<string, { src: string; name: string }> = {
   CUW: { src: bacunaImage.src, name: "Juninho Bacuna" },
   CZE: { src: schickImage.src, name: "Patrik Schick" },
   DEN: { src: hojlundImage.src, name: "Rasmus Hojlund" },
+  ALG: { src: mahrezImage.src, name: "Riyad Mahrez" },
   DZA: { src: mahrezImage.src, name: "Riyad Mahrez" },
   ECU: { src: caicedoImage.src, name: "Moises Caicedo" },
   EGY: { src: salahImage.src, name: "Mohamed Salah" },
@@ -103,7 +104,7 @@ const PLAYER_ASSETS: Record<string, { src: string; name: string }> = {
   HAI: { src: nazonImage.src, name: "Duckens Nazon" },
   IRN: { src: taremiImage.src, name: "Mehdi Taremi" },
   IRQ: { src: husseinImage.src, name: "Aymen Hussein" },
-  JPN: { src: mitomaImage.src, name: "Kaoru Mitoma" },
+  JPN: { src: kuboImage.src, name: "Takefusa Kubo" },
   JOR: { src: taamariImage.src, name: "Musa Al-Taamari" },
   KOR: { src: sonImage.src, name: "Son Heung-min" },
   MAR: { src: hakimiImage.src, name: "Achraf Hakimi" },
@@ -144,6 +145,7 @@ const TEAM_ACCENTS: Record<string, { primary: string; secondary: string }> = {
   CUW: { primary: "rgba(38,91,255,0.5)", secondary: "rgba(255,210,0,0.28)" },
   CZE: { primary: "rgba(38,91,255,0.5)", secondary: "rgba(210,30,45,0.28)" },
   DEN: { primary: "rgba(200,30,30,0.5)", secondary: "rgba(255,255,255,0.18)" },
+  ALG: { primary: "rgba(0,160,95,0.48)", secondary: "rgba(255,255,255,0.2)" },
   DZA: { primary: "rgba(0,160,95,0.48)", secondary: "rgba(255,255,255,0.2)" },
   ECU: { primary: "rgba(255,220,0,0.48)", secondary: "rgba(0,80,200,0.3)" },
   EGY: { primary: "rgba(200,30,30,0.48)", secondary: "rgba(216,255,62,0.24)" },
@@ -224,14 +226,16 @@ export function MatchHero({ detail, favoriteAction }: { detail: MatchDetail; fav
   const heroStatusText = formatMatchStatus(detail, adjustedStart);
   const desktopLiveStatusText = detail.status === "finished" ? "已结束" : getMatchPhaseLabel(detail.match);
   const desktopCornerStatus = detail.status === "finished" ? "已结束" : "直播中";
-  const homeAccent = getAccent(detail.homeTeamCode);
-  const awayAccent = getAccent(detail.awayTeamCode);
+  const homeTeamCode = normalizeTeamCode(detail.homeTeamCode);
+  const awayTeamCode = normalizeTeamCode(detail.awayTeamCode);
+  const homeAccent = getAccent(homeTeamCode);
+  const awayAccent = getAccent(awayTeamCode);
   const hidePlayerPosters =
     detail.slug.startsWith("warmup-") ||
     detail.match.uid.startsWith("warmup-") ||
     isWarmupStage(detail.match.stage);
-  const homePlayer = hidePlayerPosters ? undefined : PLAYER_ASSETS[detail.homeTeamCode];
-  const awayPlayer = hidePlayerPosters ? undefined : PLAYER_ASSETS[detail.awayTeamCode];
+  const homePlayer = hidePlayerPosters ? undefined : PLAYER_ASSETS[homeTeamCode];
+  const awayPlayer = hidePlayerPosters ? undefined : PLAYER_ASSETS[awayTeamCode];
   const venueBannerImage = getVenueBannerImage(detail.match);
 
   return (
@@ -284,13 +288,13 @@ export function MatchHero({ detail, favoriteAction }: { detail: MatchDetail; fav
           )}
         </div>
 
-        <div className="relative flex flex-1 items-center justify-center py-2 sm:py-6">
+        <div className="relative flex flex-1 translate-y-3 items-center justify-center py-2 sm:translate-y-0 sm:py-6">
           {!hidePlayerPosters && (
             <>
               <PlayerPosterSide
                 side="left"
                 team={teams.home}
-                teamCode={detail.homeTeamCode}
+                teamCode={homeTeamCode}
                 player={homePlayer}
                 accent={homeAccent}
                 className={isStarted ? "hidden" : ""}
@@ -298,7 +302,7 @@ export function MatchHero({ detail, favoriteAction }: { detail: MatchDetail; fav
               <PlayerPosterSide
                 side="right"
                 team={teams.away}
-                teamCode={detail.awayTeamCode}
+                teamCode={awayTeamCode}
                 player={awayPlayer}
                 accent={awayAccent}
                 className={isStarted ? "hidden" : ""}
@@ -372,16 +376,13 @@ export function MatchHero({ detail, favoriteAction }: { detail: MatchDetail; fav
             </span>
             <div className="mt-2 grid w-[min(100%,560px)] grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:mt-3 sm:gap-4">
               <MatchupTeam team={teams.home} align="left" score={isStarted ? detail.score.home : null} />
-              <span className="relative z-10 rounded-full bg-white/[0.08] px-4 py-2 text-lg font-black uppercase tracking-[0.08em] text-volt shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_0_24px_rgba(216,255,62,0.16)] ring-1 ring-white/[0.1] sm:px-5 sm:text-xl">
-                VS
-              </span>
+              <span className="relative z-10 inline-flex justify-center">{favoriteAction}</span>
               <MatchupTeam team={teams.away} align="right" score={isStarted ? detail.score.away : null} />
             </div>
             <MatchMetaRow
               start={adjustedStart}
               location={detail.match.location}
               stage={detail.match.stage}
-              action={favoriteAction}
             />
           </div>
         </div>
@@ -394,12 +395,10 @@ function MatchMetaRow({
   start,
   location,
   stage,
-  action,
 }: {
   start: Date;
   location: string;
   stage: string;
-  action?: ReactNode;
 }) {
   return (
     <div className="match-meta-row mt-2 flex flex-wrap items-center justify-center gap-2 text-[10px] font-medium uppercase tracking-[0.12em] text-white/50 sm:mt-4 sm:gap-3 sm:text-[11px]">
@@ -423,7 +422,6 @@ function MatchMetaRow({
           冠军争夺战
         </span>
       )}
-      {action && <span className="match-meta-action hidden items-center lg:inline-flex">{action}</span>}
     </div>
   );
 }

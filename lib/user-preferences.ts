@@ -1,4 +1,5 @@
 import officialSquadsData from "@/data/fifa-official-squads.json";
+import mitomaImage from "@/assets/players/JPN-japan/headshots/kaoru-mitoma.webp";
 import { getApiSportsPlayerPhoto } from "@/lib/player-photo-overrides";
 
 export type UserPreferenceTeam = {
@@ -114,7 +115,7 @@ const LEGACY_PLAYER_PHOTOS: Record<string, string> = {
   "moises-caicedo": "/player-stories/26_superstars/avatar-webp/Moises_Caicedo_avatar.webp",
   "michael-olise": "/player-stories/26_superstars/avatar-webp/Michael_Olise_avatar.webp",
   "christian-pulisic": "/player-stories/26_superstars/avatar-webp/Christian_Pulisic_avatar.webp",
-  "kaoru-mitoma": "https://media.api-sports.io/football/players/2911.png",
+  "kaoru-mitoma": mitomaImage.src,
 };
 
 export function getPlayerAvatar(playerId: string | null | undefined, players: UserPreferencePlayer[] = preferencePlayers) {

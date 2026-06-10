@@ -18,6 +18,7 @@ import { getLiveMatchQueue, isMatchInLiveWindow } from "@/lib/live-match-queue";
 import { generateMatchRouteSlug } from "@/lib/match-detail";
 import { parseTeams } from "@/lib/teams";
 import { useNow } from "@/lib/use-now";
+import { getVenueBannerImage } from "@/lib/venue-assets";
 import { fallbackTopScorerProfiles, fetchWorldCupTopScorers, type WorldCupTopScorer } from "@/lib/world-cup-top-scorers";
 import type { Match } from "@/types/match";
 import { LiveMatchCard } from "./world-cup-hero/live-match-card";
@@ -164,6 +165,7 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
   const dateLabel = firstMatch ? formatDate(firstMatch.start) : "等待官方赛程";
   const nextMatchHref = firstMatch ? `/matches/${generateMatchRouteSlug(firstMatch)}` : "/matches";
   const venueLabel = firstMatch ? formatVenueLine(firstMatch.location) : "";
+  const nextMatchBackground = firstMatch ? getVenueBannerImage(firstMatch) : null;
   const homeCode = teams?.home.name.slice(0, 3).toUpperCase() || "FIFA";
   const awayCode = teams?.away.name.slice(0, 3).toUpperCase() || "2026";
   const { displayMatches, isLive } = useMemo(
@@ -223,7 +225,7 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
 
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14, duration: 0.78, ease: [0.16, 1, 0.3, 1] }} className="grid gap-5">
           <div className="next-match-card hero-card relative min-h-[312px] overflow-hidden p-0 sm:min-h-[330px]">
-            <img src="/estadio-azteca-aerial.webp" alt="Aerial view of Estadio Azteca" className="next-match-media absolute inset-0 h-full w-full object-cover object-[78%_50%] opacity-[.82] saturate-[1.08]" />
+            <img src={nextMatchBackground ?? "/estadio-azteca-aerial.webp"} alt="" aria-hidden="true" className="next-match-media absolute inset-0 h-full w-full object-cover object-[78%_50%] opacity-[.82] saturate-[1.08]" />
             <div className="next-match-shade absolute inset-0 bg-[linear-gradient(90deg,rgba(5,8,8,.98)_0%,rgba(5,8,8,.9)_34%,rgba(5,8,8,.42)_58%,rgba(5,8,8,.08)_100%),linear-gradient(0deg,rgba(5,8,8,.72)_0%,rgba(5,8,8,.08)_32%,rgba(5,8,8,.1)_100%),radial-gradient(circle_at_76%_52%,rgba(216,255,62,.2),transparent_26%)]" />
             <div className="next-match-glow absolute inset-0 bg-[radial-gradient(circle_at_24%_20%,rgba(216,255,62,.13),transparent_24%),radial-gradient(circle_at_68%_72%,rgba(255,154,31,.1),transparent_34%)]" />
             <div className="relative z-10 flex min-h-[312px] flex-col items-center justify-between px-5 pb-7 pt-5 sm:min-h-[330px] sm:p-8">
@@ -313,7 +315,9 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
           <div className="hero-card p-5">
             <div className="relative mb-3 flex items-center justify-between border-b border-white/[0.04] pb-3">
               <div className="flex items-center gap-2"><Trophy className="h-4 w-4 text-volt" /><p className="text-sm font-semibold uppercase text-white">射手榜</p></div>
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40">实时数据<ArrowRight className="h-3.5 w-3.5" /></span>
+              <Link href="/players" className="group inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/40 transition hover:text-volt">
+                查看全部<ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
+              </Link>
               <span className="hero-card-corner-label absolute bottom-0 right-0 w-5 translate-y-1/2 whitespace-nowrap bg-[#0b0b0b] text-center text-[9px] uppercase tracking-[0.12em] text-white/40">进球</span>
             </div>
             <div className="divide-y divide-white/[0.04]">

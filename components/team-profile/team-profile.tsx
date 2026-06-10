@@ -6,7 +6,7 @@ import { localizeLocationText } from "@/lib/calendar";
 import { parseTeams } from "@/lib/teams";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
 import Link from "next/link";
-import { formatRoundLabel } from "@/lib/stage";
+import { formatRoundLabel, getStageGroupId } from "@/lib/stage";
 import { formatDate, formatTime } from "@/lib/format";
 import { generateMatchRouteSlug } from "@/lib/match-detail";
 import { fetchWorldCupSquadDetails, type WorldCupSquadDetail } from "@/lib/world-cup-squads";
@@ -23,10 +23,71 @@ interface TeamProfileProps {
 }
 
 const SCROLL_STEP = 300;
-const MOBILE_TOP_MODULE_OFFSET = 54;
+const MOBILE_TOP_MODULE_OFFSET = 66;
 const PROFILE_CODE_ALIASES: Record<string, string> = {
   ALG: "DZA",
   KSA: "SAU",
+};
+
+const TEAM_OUTLOOKS = [
+  { country: "阿根廷", tier: "顶尖夺冠热门", view: "卫冕冠军依然保持着惊人的凝聚力。拥有刻入骨髓的家庭式战术文化，尽管面临更新换代，依然是所有人想要击败的终极标杆。" },
+  { country: "西班牙", tier: "顶尖夺冠热门", view: "新一代斗牛士军团正处在风暴中心。以亚马尔为代表的年轻血液，正在用无与伦比的速度与创造力，颠覆过去传统的控球哲学。" },
+  { country: "法国", tier: "顶尖夺冠热门", view: "阵容深度最可怕的掠夺者" },
+  { country: "英格兰", tier: "顶尖夺冠热门", view: "阵容深度最可怕的掠夺者" },
+  { country: "葡萄牙", tier: "顶尖夺冠热门", view: "这一代天才球员拥有赢得一切的拼图" },
+  { country: "荷兰", tier: "顶尖夺冠热门", view: "阵容深度最可怕的掠夺者" },
+  { country: "德国", tier: "顶尖夺冠热门", view: "本土化突破后迎来了青年才俊的全面爆发" },
+  { country: "巴西", tier: "顶尖夺冠热门", view: "五星底蕴的最高敬意。内马尔、卡塞米罗等老将的经验，是时隔24年再度冲击大力神杯的底气。" },
+  { country: "摩洛哥", tier: "黑马与中坚", view: "不再只是黑马，而是真正具备统治力的非洲王者。保留了高强度防守反击基因，并加入了更多欧洲顶级联赛淬炼过的青年新星。" },
+  { country: "挪威", tier: "黑马与中坚", view: "拥有世界第一终结者（哈兰德）的深水炸弹" },
+  { country: "苏格兰", tier: "黑马与中坚", view: "时隔28年重返世界杯大舞台" },
+  { country: "克罗地亚", tier: "黑马与中坚", view: "永远不能被低估的铁血意志与足坛长青树" },
+  { country: "日本", tier: "黑马与中坚", view: "打破欧美垄断的核心中坚。拥有前所未有的自信心与战术执行力。" },
+  { country: "韩国", tier: "黑马与中坚", view: "打破欧美垄断的核心中坚" },
+  { country: "伊朗", tier: "黑马与中坚", view: "打破欧美垄断的核心中坚" },
+  { country: "沙特", tier: "黑马与中坚", view: "打破欧美垄断的核心中坚" },
+  { country: "埃及", tier: "黑马与中坚", view: "打破欧美垄断的核心中坚" },
+  { country: "塞内加尔", tier: "黑马与中坚", view: "打破欧美垄断的核心中坚" },
+  { country: "乌兹别克斯坦", tier: "历史首秀新军", view: "真正实现了世界的破壁。晋级证明了48队赛制对全球足球普及与激发的积极意义。" },
+  { country: "约旦", tier: "历史首秀新军", view: "真正实现了世界的破壁。晋级证明了48队赛制对全球足球普及与激发的积极意义。" },
+  { country: "佛得角", tier: "历史首秀新军", view: "真正实现了世界的破壁" },
+  { country: "库拉索", tier: "历史首秀新军", view: "真正实现了世界的破壁" },
+  { country: "海地", tier: "时隔多年的回归者（1974后首次）", view: "不仅是足球的胜利，更是关于信仰和坚守的史诗故事" },
+  { country: "伊拉克", tier: "时隔多年的回归者（1986后首次）", view: "不仅是足球的胜利，更是关于信仰和坚守的史诗故事" },
+  { country: "美国", tier: "东道主", view: "朝气蓬勃的星条旗青年军距离真正的世界巨星行列仍有一段路要走，但在主场球迷的狂热加持下，拥有掀翻任何豪门的可能性。" },
+  { country: "墨西哥", tier: "东道主", view: "呈现出极致的\"年龄两极化\"（17岁到43岁），拥有本届最年轻的17岁中场新星，在老辣与青春之间寻找平衡。" },
+  { country: "加拿大", tier: "东道主", view: "北美正在崛起的红色风暴，速度与反击将是主场克敌制胜的法宝。" },
+];
+
+const TEAM_OUTLOOK_BY_CODE: Record<string, (typeof TEAM_OUTLOOKS)[number]> = {
+  ARG: TEAM_OUTLOOKS[0],
+  ESP: TEAM_OUTLOOKS[1],
+  FRA: TEAM_OUTLOOKS[2],
+  ENG: TEAM_OUTLOOKS[3],
+  POR: TEAM_OUTLOOKS[4],
+  NED: TEAM_OUTLOOKS[5],
+  GER: TEAM_OUTLOOKS[6],
+  BRA: TEAM_OUTLOOKS[7],
+  MAR: TEAM_OUTLOOKS[8],
+  NOR: TEAM_OUTLOOKS[9],
+  SCO: TEAM_OUTLOOKS[10],
+  CRO: TEAM_OUTLOOKS[11],
+  JPN: TEAM_OUTLOOKS[12],
+  KOR: TEAM_OUTLOOKS[13],
+  IRN: TEAM_OUTLOOKS[14],
+  SAU: TEAM_OUTLOOKS[15],
+  KSA: TEAM_OUTLOOKS[15],
+  EGY: TEAM_OUTLOOKS[16],
+  SEN: TEAM_OUTLOOKS[17],
+  UZB: TEAM_OUTLOOKS[18],
+  JOR: TEAM_OUTLOOKS[19],
+  CPV: TEAM_OUTLOOKS[20],
+  CUW: TEAM_OUTLOOKS[21],
+  HAI: TEAM_OUTLOOKS[22],
+  IRQ: TEAM_OUTLOOKS[23],
+  USA: TEAM_OUTLOOKS[24],
+  MEX: TEAM_OUTLOOKS[25],
+  CAN: TEAM_OUTLOOKS[26],
 };
 
 export function TeamProfile({ data }: TeamProfileProps) {
@@ -196,16 +257,15 @@ export function TeamProfile({ data }: TeamProfileProps) {
     };
   }, [teamMeta?.id]);
 
-  const { timeline, stories, quote, gallery, deepDive } = data;
+  const { timeline, stories, gallery, deepDive } = data;
   const yearSpan = timeline.length ? `${timeline[0].year} - ${timeline[timeline.length - 1].year}` : "";
   const count = timeline.length;
   const flagImageCode = getFlagImageCode(data);
-  const fixturesGroupLabel = groupMatches[0]
-    ? formatRoundLabel(groupMatches[0].stage, groupMatches[0].summary)
-    : "";
+  const fixturesGroupLabel = groupMatches[0] ? getFixtureGroupLabel(groupMatches[0].stage, groupMatches[0].summary) : "";
   const fallbackCoachName = getCoachName(data);
   const coachName = localizeCoachName(squad?.coach || fallbackCoachName) || fallbackCoachName;
   const profileOverviewStats = deepDive?.overviewStats.slice(2) ?? [];
+  const teamOutlook = TEAM_OUTLOOK_BY_CODE[data.fifaCode] ?? TEAM_OUTLOOKS.find((item) => item.country === data.nameCn);
   const followPayload = {
     id: targetCode,
     name: data.nameCn,
@@ -239,10 +299,11 @@ export function TeamProfile({ data }: TeamProfileProps) {
       </div>
       {groupMatches.length > 0 ? (
         <div className="tp-fixtures-grid">
-          {groupMatches.map((match) => {
+          {groupMatches.map((match, index) => {
             const teams = parseTeams(match.summary);
             const matchDate = formatDate(match.start);
             const matchTime = formatTime(match.start);
+            const matchRoundLabel = getFixtureRoundLabel(match.stage, match.summary, index);
             return (
               <Link
                 key={match.uid}
@@ -279,7 +340,10 @@ export function TeamProfile({ data }: TeamProfileProps) {
                   </div>
                 </div>
                 {match.location && (
-                  <div className="tp-fixture-venue">{localizeLocationText(match.location)}</div>
+                  <div className="tp-fixture-meta">
+                    <span className="tp-fixture-round">{matchRoundLabel}</span>
+                    <span className="tp-fixture-venue">{localizeLocationText(match.location)}</span>
+                  </div>
                 )}
               </Link>
             );
@@ -290,6 +354,26 @@ export function TeamProfile({ data }: TeamProfileProps) {
       )}
     </section>
   );
+
+  const renderOutlookCard = () => {
+    const outlook = teamOutlook;
+    const quote = data.quote;
+
+    if (!outlook && !quote) return null;
+
+    return (
+      <div className="tp-quote tp-outlook-card">
+        {outlook ? (
+          <div className="tp-quote-text">{outlook.view}</div>
+        ) : (
+          <>
+            <div className="tp-quote-text">{quote?.text}</div>
+            <div className="tp-quote-src">— {quote?.source}</div>
+          </>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="tp-wrap">
@@ -360,10 +444,11 @@ export function TeamProfile({ data }: TeamProfileProps) {
             </div>
             {groupMatches.length > 0 ? (
               <div className="tp-fixtures-grid">
-                {groupMatches.map((match) => {
+                {groupMatches.map((match, index) => {
                   const teams = parseTeams(match.summary);
                   const matchDate = formatDate(match.start);
                   const matchTime = formatTime(match.start);
+                  const matchRoundLabel = getFixtureRoundLabel(match.stage, match.summary, index);
                   return (
                     <Link
                       key={match.uid}
@@ -400,7 +485,10 @@ export function TeamProfile({ data }: TeamProfileProps) {
                         </div>
                       </div>
                       {match.location && (
-                        <div className="tp-fixture-venue">{localizeLocationText(match.location)}</div>
+                        <div className="tp-fixture-meta">
+                          <span className="tp-fixture-round">{matchRoundLabel}</span>
+                          <span className="tp-fixture-venue">{localizeLocationText(match.location)}</span>
+                        </div>
                       )}
                     </Link>
                   );
@@ -422,9 +510,10 @@ export function TeamProfile({ data }: TeamProfileProps) {
             ref={contentTabsRef}
             className={`tp-content-tabs ${
               contentTabsPinned
-                ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+3.375rem)] z-[65] !px-3 !py-2"
+                ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[65] !px-3 !py-2"
                 : ""
             }`}
+            role="tablist"
             aria-label="球队内容"
           >
             <button
@@ -530,6 +619,7 @@ export function TeamProfile({ data }: TeamProfileProps) {
                         </div>
                       ))}
                     </div>
+                    {renderOutlookCard()}
                   </div>
                 )}
 
@@ -577,6 +667,7 @@ export function TeamProfile({ data }: TeamProfileProps) {
                         </div>
                       ))}
                     </div>
+                    {renderOutlookCard()}
                   </>
                 )}
               </div>
@@ -598,13 +689,6 @@ export function TeamProfile({ data }: TeamProfileProps) {
         </main>
       </div>
 
-      {quote && (
-        <div className="tp-quote">
-          <div className="tp-quote-text">{quote.text}</div>
-          <div className="tp-quote-src">— {quote.source}</div>
-        </div>
-      )}
-
       <div className="tp-cta">
         <a className="tp-btn tp-btn-primary" href="/matches">查看赛程安排</a>
         <a className="tp-btn tp-btn-ghost" href="/data">进入预测市场</a>
@@ -615,6 +699,21 @@ export function TeamProfile({ data }: TeamProfileProps) {
 
 function isNumericStat(value: string | number) {
   return typeof value === "number" || /^\d+$/.test(String(value));
+}
+
+function getFixtureGroupLabel(stage: string, summary?: string) {
+  const groupId = getStageGroupId([stage, summary].filter(Boolean).join(" ")) ?? getStageGroupId(stage);
+  return groupId ? `${groupId}组` : formatRoundLabel(stage, summary);
+}
+
+function getFixtureRoundLabel(stage: string, summary: string | undefined, index: number) {
+  const source = [stage, summary].filter(Boolean).join(" ");
+  const digitMatch =
+    source.match(/(?:Round|Matchday)\s*(\d+)/i) ??
+    source.match(/Group\s*Stage\s*-\s*(\d+)/i) ??
+    source.match(/第\s*(\d+)\s*轮/);
+
+  return `第 ${digitMatch?.[1] ?? index + 1} 轮`;
 }
 
 function getFlagImageCode(data: TeamProfile) {

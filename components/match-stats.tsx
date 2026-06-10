@@ -63,6 +63,7 @@ export function MatchStats({
           accent
           href="/matches"
           tone="violet"
+          bareIcon
         />
         <StatCard
           label="比赛日"
@@ -71,6 +72,7 @@ export function MatchStats({
           icon={CalendarDays}
           href="/matches"
           tone="emerald"
+          bareIcon
         />
         <StatCard
           label="球队"
@@ -79,6 +81,7 @@ export function MatchStats({
           icon={Flag}
           href="/teams"
           tone="amber"
+          bareIcon
         />
         <StatCard
           label="城市"
@@ -88,6 +91,7 @@ export function MatchStats({
           onClick={() => setGuideOpen(true)}
           ariaLabel="打开城市指南"
           tone="cyan"
+          bareIcon
         />
       </motion.section>
 

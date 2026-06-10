@@ -12,6 +12,7 @@ type StatCardProps = {
   onClick?: () => void;
   ariaLabel?: string;
   tone?: "violet" | "emerald" | "amber" | "cyan";
+  bareIcon?: boolean;
 };
 
 const toneStyles: Record<NonNullable<StatCardProps["tone"]>, { card: string; glow: string; icon: string; value: string }> = {
@@ -41,7 +42,7 @@ const toneStyles: Record<NonNullable<StatCardProps["tone"]>, { card: string; glo
   },
 };
 
-export function StatCard({ label, value, detail: _detail, icon: Icon, accent = false, href, onClick, ariaLabel, tone }: StatCardProps) {
+export function StatCard({ label, value, detail: _detail, icon: Icon, accent = false, href, onClick, ariaLabel, tone, bareIcon = false }: StatCardProps) {
   const parts = typeof value === "string" ? value.split("/") : null;
   const isFraction = parts && parts.length === 2;
   const toneStyle = tone ? toneStyles[tone] : null;
@@ -50,6 +51,11 @@ export function StatCard({ label, value, detail: _detail, icon: Icon, accent = f
     : accent
       ? "bg-volt/16 text-volt"
       : "bg-white/[0.055] text-white/64";
+  const bareIconClassName = toneStyle
+    ? "text-white/88 drop-shadow-[0_0_10px_rgba(255,255,255,.24)]"
+    : accent
+      ? "text-volt"
+      : "text-white/64";
 
   const card = (
     <motion.div
@@ -82,8 +88,8 @@ export function StatCard({ label, value, detail: _detail, icon: Icon, accent = f
 
       <div className="relative hidden sm:flex sm:items-center sm:justify-between sm:gap-4">
         <div className="flex items-center gap-3">
-          <div className={`grid h-10 w-10 place-items-center rounded-2xl ${iconClassName} transition group-hover:shadow-glow`}>
-            <Icon className="h-5 w-5" />
+          <div className={`grid h-10 w-10 place-items-center transition ${bareIcon ? "" : `rounded-2xl ${iconClassName} group-hover:shadow-glow`}`}>
+            <Icon className={`${bareIcon ? "h-6 w-6" : "h-5 w-5"} ${bareIcon ? bareIconClassName : ""}`} />
           </div>
           <p className={`text-xs uppercase tracking-[0.22em] ${toneStyle ? "text-white/76" : "text-white/38"}`}>{label}</p>
         </div>

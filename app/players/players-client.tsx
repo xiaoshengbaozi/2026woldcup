@@ -11,6 +11,7 @@ import { UserActionButton } from "@/components/user-action-button";
 import { useUserSession } from "@/components/user-session-provider";
 import playerArticles from "@/data/player-articles.json";
 import { getOfficialPlayerCatalog, type OfficialPlayerCatalogItem } from "@/lib/official-player-catalog";
+import { fetchWorldCupTopScorers, type WorldCupTopScorer } from "@/lib/world-cup-top-scorers";
 
 type PlayerArticle = (typeof playerArticles.players)[number];
 type PlayerListItem = PlayerArticle | OfficialPlayerCatalogItem;
@@ -38,9 +39,6 @@ const SQUAD_RENDER_BATCH_SIZE = 72;
 const MOBILE_PLAYERS_FILTERS_STICKY_OFFSET = 56;
 
 const officialPlayers = getOfficialPlayerCatalog();
-const scorerPlayers = officialPlayers
-  .filter((player) => player.goals > 0)
-  .sort((a, b) => b.goals - a.goals || (a.age ?? Number.POSITIVE_INFINITY) - (b.age ?? Number.POSITIVE_INFINITY));
 
 const countryNameCn: Record<string, string> = {
   Argentina: "阿根廷",
@@ -76,6 +74,8 @@ export function PlayersClient() {
   const signedInDefaultAppliedRef = useRef(false);
   const [isMobileFiltersPinned, setIsMobileFiltersPinned] = useState(false);
   const [mobileFiltersHeight, setMobileFiltersHeight] = useState(0);
+  const [topScorers, setTopScorers] = useState<WorldCupTopScorer[]>([]);
+  const [topScorersLoading, setTopScorersLoading] = useState(true);
   const { home } = useUserSession();
   const signedIn = Boolean(home);
 
@@ -133,11 +133,44 @@ export function PlayersClient() {
     }));
   }, [home]);
 
+  const topScorerRailItems = useMemo<PlayerRailItem[]>(
+    () =>
+      topScorers.map((player) => ({
+        id: player.id,
+        apiPlayerId: player.id,
+        nameCn: player.name,
+        nameEn: player.name,
+        photo: player.photo,
+        meta: `${player.teamName} · ${player.goals ?? 0}球`,
+      })),
+    [topScorers]
+  );
+
   const visiblePlayers = useMemo((): PlayerRailItem[] => {
     if (activeTab === "following") return followedPlayers;
-    if (activeTab === "squads") return scorerPlayers.map(toRailItem);
+    if (activeTab === "squads") return topScorerRailItems;
     return playerArticles.players.filter((player) => player.category === activeTab).map(toRailItem);
-  }, [activeTab, followedPlayers]);
+  }, [activeTab, followedPlayers, topScorerRailItems]);
+
+  useEffect(() => {
+    let active = true;
+    setTopScorersLoading(true);
+    fetchWorldCupTopScorers()
+      .then((items) => {
+        if (active) setTopScorers(items);
+      })
+      .catch((error) => {
+        console.warn("[PlayersClient] top scorers unavailable:", error);
+        if (active) setTopScorers([]);
+      })
+      .finally(() => {
+        if (active) setTopScorersLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (signedIn && !signedInDefaultAppliedRef.current) {
@@ -234,7 +267,11 @@ export function PlayersClient() {
                 exit={{ opacity: 0, y: -10 }}
                 className="mt-6 min-h-[7.5rem] sm:min-h-[8.75rem]"
               >
-                <PlayerRail players={visiblePlayers} />
+                <PlayerRail
+                  players={visiblePlayers}
+                  loading={activeTab === "squads" && topScorersLoading}
+                  emptyLabel={activeTab === "squads" ? "本届世界杯暂无进球数据" : "暂无球员数据"}
+                />
               </motion.div>
             </AnimatePresence>
           </section>
@@ -302,7 +339,7 @@ export function PlayersClient() {
         </main>
 
         <aside className="space-y-5 lg:sticky lg:top-5 lg:self-start">
-          <ScorerBoard />
+          <ScorerBoard players={topScorers} loading={topScorersLoading} />
           <section className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
             <div className="flex items-center justify-between">
               <h2 className="text-xs font-bold uppercase tracking-wider text-white/50">{"资料覆盖"}</h2>
@@ -456,7 +493,15 @@ function SortControls({
   );
 }
 
-function PlayerRail({ players }: { players: PlayerRailItem[] }) {
+function PlayerRail({
+  players,
+  loading = false,
+  emptyLabel = "暂无球员数据",
+}: {
+  players: PlayerRailItem[];
+  loading?: boolean;
+  emptyLabel?: string;
+}) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -493,8 +538,17 @@ function PlayerRail({ players }: { players: PlayerRailItem[] }) {
       <div className="relative">
         <div
           ref={scrollRef}
-          className="flex gap-4 overflow-x-auto py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className={`flex gap-4 overflow-x-auto py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${loading || players.length === 0 ? "min-h-[7rem] items-center" : ""}`}
         >
+          {loading ? (
+            <div className="w-full rounded-3xl bg-white/[0.025] px-4 py-6 text-center text-xs font-semibold text-white/36 ring-1 ring-white/[0.06]">
+              正在同步本届世界杯进球数据
+            </div>
+          ) : players.length === 0 ? (
+            <div className="w-full rounded-3xl bg-white/[0.025] px-4 py-6 text-center text-xs font-semibold text-white/36 ring-1 ring-white/[0.06]">
+              {emptyLabel}
+            </div>
+          ) : null}
           {players.map((player) => (
             <Link
               key={player.id}
@@ -519,7 +573,7 @@ function PlayerRail({ players }: { players: PlayerRailItem[] }) {
           ))}
         </div>
 
-        {canScrollLeft && (
+        {!loading && players.length > 0 && canScrollLeft && (
           <button
             type="button"
             aria-label="向左滚动"
@@ -530,7 +584,7 @@ function PlayerRail({ players }: { players: PlayerRailItem[] }) {
           </button>
         )}
 
-        {canScrollRight && (
+        {!loading && players.length > 0 && canScrollRight && (
           <button
             type="button"
             aria-label="向右滚动"
@@ -706,7 +760,7 @@ function playerProfileHref(player: Pick<PlayerRailItem, "apiPlayerId" | "id">) {
   return `/players/${player.apiPlayerId || player.id}/`;
 }
 
-function ScorerBoard() {
+function ScorerBoard({ players, loading }: { players: WorldCupTopScorer[]; loading: boolean }) {
   return (
     <section className="rounded-2xl border border-white/[0.06] bg-white/[0.02]">
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
@@ -717,22 +771,33 @@ function ScorerBoard() {
         <Trophy className="h-4 w-4 text-volt/60" />
       </div>
       <div className="divide-y divide-white/[0.04]">
-        {scorerPlayers.slice(0, 8).map((player, index) => (
+        {loading ? (
+          <div className="px-4 py-6 text-center text-xs font-semibold text-white/34">正在同步本届世界杯进球数据</div>
+        ) : players.length === 0 ? (
+          <div className="px-4 py-6 text-center text-xs font-semibold text-white/34">本届世界杯暂无进球数据</div>
+        ) : null}
+        {players.slice(0, 8).map((player, index) => (
           <Link
-            key={player.apiPlayerId}
-            href={"/players/" + player.apiPlayerId + "/"}
+            key={player.id}
+            href={"/players/" + player.id + "/"}
             className="group flex items-center gap-3 px-4 py-2.5 transition hover:bg-white/[0.03]"
           >
             <span className="w-4 text-center text-[11px] font-bold text-white/25 group-hover:text-white/50" style={{ fontFamily: "ScreenMatrix, monospace" }}>{index + 1}</span>
             <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full bg-white/[0.06]">
-              <img src={player.photo} alt={player.nameCn} className="h-full w-full object-cover" />
+              {player.photo ? (
+                <img src={player.photo} alt={player.name} className="h-full w-full object-cover" />
+              ) : (
+                <div className="grid h-full w-full place-items-center text-xs font-black text-volt/70">
+                  {player.name.slice(0, 1)}
+                </div>
+              )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[13px] font-bold text-white/70 group-hover:text-white/90">{player.nameCn}</p>
-              <p className="truncate text-[11px] text-white/30">{player.countryCn}</p>
+              <p className="truncate text-[13px] font-bold text-white/70 group-hover:text-white/90">{player.name}</p>
+              <p className="truncate text-[11px] text-white/30">{player.teamName}</p>
             </div>
             <span className="text-xs font-bold text-volt/60 group-hover:text-volt" style={{ fontFamily: "ScreenMatrix, monospace" }}>
-              {player.goals}
+              {player.goals ?? 0}
             </span>
           </Link>
         ))}

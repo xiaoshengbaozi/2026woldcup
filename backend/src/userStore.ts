@@ -118,11 +118,13 @@ export interface WorldCupUser {
   email: string;
   passwordHash: string;
   passwordSalt: string;
-  wxpusherUid?: string | null;
   emailVerifiedAt?: number | null;
   emailVerificationTokenHash?: string | null;
   emailVerificationExpiresAt?: number | null;
   emailVerificationSentAt?: number | null;
+  passwordResetTokenHash?: string | null;
+  passwordResetExpiresAt?: number | null;
+  passwordResetSentAt?: number | null;
   disabledAt?: number | null;
   createdAt: number;
   updatedAt: number;
@@ -257,11 +259,13 @@ export class UserStore {
       email,
       passwordHash: hashPassword(input.password, salt),
       passwordSalt: salt,
-      wxpusherUid: null,
       emailVerifiedAt: null,
       emailVerificationTokenHash: null,
       emailVerificationExpiresAt: null,
       emailVerificationSentAt: null,
+      passwordResetTokenHash: null,
+      passwordResetExpiresAt: null,
+      passwordResetSentAt: null,
       disabledAt: null,
       createdAt: now,
       updatedAt: now,
@@ -321,6 +325,32 @@ export class UserStore {
     user.emailVerificationTokenHash = null;
     user.emailVerificationExpiresAt = null;
     user.emailVerificationSentAt = null;
+    this.touch(user);
+    return user;
+  }
+
+  setPasswordResetToken(userId: string, tokenHash: string, expiresAt: number) {
+    const user = this.requireUser(userId);
+    user.passwordResetTokenHash = tokenHash;
+    user.passwordResetExpiresAt = expiresAt;
+    user.passwordResetSentAt = Date.now();
+    this.touch(user);
+    return user;
+  }
+
+  resetPasswordWithToken(tokenHash: string, password: string) {
+    if (!password || password.length < 8) throw createUserStoreError("invalid_credentials", 400);
+    const user = this.data.users.find((item) => item.passwordResetTokenHash === tokenHash) ?? null;
+    if (!user) throw createUserStoreError("invalid_password_reset_token", 403);
+    if (user.passwordResetExpiresAt && user.passwordResetExpiresAt <= Date.now()) {
+      throw createUserStoreError("password_reset_token_expired", 403);
+    }
+    const salt = randomBytes(16).toString("hex");
+    user.passwordHash = hashPassword(password, salt);
+    user.passwordSalt = salt;
+    user.passwordResetTokenHash = null;
+    user.passwordResetExpiresAt = null;
+    user.passwordResetSentAt = null;
     this.touch(user);
     return user;
   }
@@ -504,13 +534,6 @@ export class UserStore {
     user.notifications = user.notifications.map((notification) => (
       !idSet || idSet.has(notification.id) ? { ...notification, read: true } : notification
     ));
-    this.touch(user);
-    return user;
-  }
-
-  setWxPusherUid(userId: string, uid: string | null) {
-    const user = this.requireUser(userId);
-    user.wxpusherUid = normalizeWxPusherUid(uid);
     this.touch(user);
     return user;
   }
@@ -800,27 +823,29 @@ async function upsertUserRow(client: PoolClient, user: WorldCupUser) {
     `
     insert into users (
       id, email, password_hash, password_salt,
-      wxpusher_uid,
       email_verified_at, email_verification_token_hash, email_verification_expires_at, email_verification_sent_at,
+      password_reset_token_hash, password_reset_expires_at, password_reset_sent_at,
       disabled_at, display_name, signature, home_team_id, avatar_player_id, avatar_url, timezone, language,
       created_at, updated_at
     )
     values (
       $1, $2, $3, $4,
-      $5,
-      to_timestamp($6::double precision / 1000), $7, to_timestamp($8::double precision / 1000), to_timestamp($9::double precision / 1000),
-      to_timestamp($10::double precision / 1000), $11, $12, $13, $14, $15, $16, $17,
-      to_timestamp($18::double precision / 1000), to_timestamp($19::double precision / 1000)
+      to_timestamp($5::double precision / 1000), $6, to_timestamp($7::double precision / 1000), to_timestamp($8::double precision / 1000),
+      $9, to_timestamp($10::double precision / 1000), to_timestamp($11::double precision / 1000),
+      to_timestamp($12::double precision / 1000), $13, $14, $15, $16, $17, $18, $19,
+      to_timestamp($20::double precision / 1000), to_timestamp($21::double precision / 1000)
     )
     on conflict (id) do update set
       email = excluded.email,
       password_hash = excluded.password_hash,
       password_salt = excluded.password_salt,
-      wxpusher_uid = excluded.wxpusher_uid,
       email_verified_at = excluded.email_verified_at,
       email_verification_token_hash = excluded.email_verification_token_hash,
       email_verification_expires_at = excluded.email_verification_expires_at,
       email_verification_sent_at = excluded.email_verification_sent_at,
+      password_reset_token_hash = excluded.password_reset_token_hash,
+      password_reset_expires_at = excluded.password_reset_expires_at,
+      password_reset_sent_at = excluded.password_reset_sent_at,
       disabled_at = excluded.disabled_at,
       display_name = excluded.display_name,
       signature = excluded.signature,
@@ -836,11 +861,13 @@ async function upsertUserRow(client: PoolClient, user: WorldCupUser) {
       user.email,
       user.passwordHash,
       user.passwordSalt,
-      user.wxpusherUid ?? null,
       user.emailVerifiedAt ?? null,
       user.emailVerificationTokenHash ?? null,
       user.emailVerificationExpiresAt ?? null,
       user.emailVerificationSentAt ?? null,
+      user.passwordResetTokenHash ?? null,
+      user.passwordResetExpiresAt ?? null,
+      user.passwordResetSentAt ?? null,
       user.disabledAt ?? null,
       user.profile.displayName,
       user.profile.signature ?? null,
@@ -952,11 +979,13 @@ function rowToUser(
     email: String(row.email),
     passwordHash: String(row.password_hash),
     passwordSalt: String(row.password_salt),
-    wxpusherUid: nullableString(row.wxpusher_uid),
     emailVerifiedAt: dateToMs(row.email_verified_at),
     emailVerificationTokenHash: nullableString(row.email_verification_token_hash),
     emailVerificationExpiresAt: dateToMs(row.email_verification_expires_at),
     emailVerificationSentAt: dateToMs(row.email_verification_sent_at),
+    passwordResetTokenHash: nullableString(row.password_reset_token_hash),
+    passwordResetExpiresAt: dateToMs(row.password_reset_expires_at),
+    passwordResetSentAt: dateToMs(row.password_reset_sent_at),
     disabledAt: dateToMs(row.disabled_at),
     createdAt: dateToMs(row.created_at) ?? Date.now(),
     updatedAt: dateToMs(row.updated_at) ?? Date.now(),
@@ -1139,7 +1168,7 @@ function parseJsonObject(value: unknown) {
 }
 
 export function toPublicUser(user: WorldCupUser) {
-  const { passwordHash, passwordSalt, emailVerificationTokenHash, emailVerificationExpiresAt, ...publicUser } = user;
+  const { passwordHash, passwordSalt, emailVerificationTokenHash, emailVerificationExpiresAt, passwordResetTokenHash, passwordResetExpiresAt, ...publicUser } = user;
   return publicUser;
 }
 
@@ -1167,12 +1196,6 @@ function normalizeSignature(value: unknown, fallback?: string | null) {
   if (typeof value !== "string") return fallback || pickRandomSignature();
   const signature = value.trim().slice(0, 36);
   return signature || fallback || pickRandomSignature();
-}
-
-function normalizeWxPusherUid(value: unknown) {
-  if (typeof value !== "string") return null;
-  const uid = value.trim();
-  return uid && /^UID_[A-Za-z0-9_-]+$/.test(uid) ? uid : null;
 }
 
 function pickRandomSignature(seed?: string) {
@@ -1211,11 +1234,13 @@ function loadBuiltInSignatures() {
 function normalizeStoredUser(user: WorldCupUser) {
   return {
     ...user,
-    wxpusherUid: normalizeWxPusherUid(user.wxpusherUid),
     emailVerifiedAt: user.emailVerifiedAt ?? null,
     emailVerificationTokenHash: user.emailVerificationTokenHash ?? null,
     emailVerificationExpiresAt: user.emailVerificationExpiresAt ?? null,
     emailVerificationSentAt: user.emailVerificationSentAt ?? null,
+    passwordResetTokenHash: user.passwordResetTokenHash ?? null,
+    passwordResetExpiresAt: user.passwordResetExpiresAt ?? null,
+    passwordResetSentAt: user.passwordResetSentAt ?? null,
     disabledAt: user.disabledAt ?? null,
     profile: {
       ...user.profile,

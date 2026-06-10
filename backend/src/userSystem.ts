@@ -17,7 +17,8 @@ const RATE_LIMIT_MAX_ATTEMPTS = 12;
 const UPLOAD_URL_RATE_LIMIT_MAX_ATTEMPTS = 8;
 const EMAIL_VERIFICATION_EXPIRES_MS = 24 * 60 * 60 * 1000;
 const EMAIL_RESEND_MIN_INTERVAL_MS = 60 * 1000;
-const WXPUSHER_BIND_EXPIRES_MS = 15 * 60 * 1000;
+const PASSWORD_RESET_EXPIRES_MS = 30 * 60 * 1000;
+const PASSWORD_RESET_RESEND_MIN_INTERVAL_MS = 60 * 1000;
 
 const rateLimits = new Map<string, { count: number; resetAt: number }>();
 
@@ -34,14 +35,8 @@ interface UserPreferenceCatalog {
   matches: Array<{ id: string; matchId: string; title: string; stage?: string; startsAt?: string }>;
 }
 
-interface WxPusherBindRecord {
-  userId: string;
-  expiresAt: number;
-}
-
 export class UserSystem {
   private readonly sessions = new Map<string, SessionRecord>();
-  private readonly wxPusherBinds = new Map<string, WxPusherBindRecord>();
   private catalogCache: { expiresAt: number; payload: UserPreferenceCatalog } | null = null;
 
   constructor(
@@ -140,7 +135,32 @@ export class UserSystem {
           sendJson(res, { error: "user_disabled" }, 403);
           return true;
         }
-        this.issueSession(req, res, user);
+        this.issueSession(req, res, user, body.remember === true);
+        sendJson(res, { user: toPublicUser(user) });
+        return true;
+      }
+
+      if (req.method === "POST" && url.pathname === "/api/auth/forgot-password") {
+        enforceRateLimit(req, "forgot-password", RATE_LIMIT_MAX_ATTEMPTS);
+        const body = await readJsonBody(req);
+        const user = this.store.getUserByEmail(String(body.email ?? ""));
+        let passwordResetSent = false;
+        if (user && !user.disabledAt) {
+          if (user.passwordResetSentAt && Date.now() - user.passwordResetSentAt < PASSWORD_RESET_RESEND_MIN_INTERVAL_MS) {
+            sendJson(res, { ok: true, passwordResetSent: true });
+            return true;
+          }
+          passwordResetSent = await createAndSendPasswordReset(req, this.store, user).catch(() => false);
+        }
+        sendJson(res, { ok: true, passwordResetSent });
+        return true;
+      }
+
+      if (req.method === "POST" && url.pathname === "/api/auth/reset-password") {
+        enforceRateLimit(req, "reset-password", RATE_LIMIT_MAX_ATTEMPTS);
+        const body = await readJsonBody(req);
+        const user = this.store.resetPasswordWithToken(hashPasswordResetToken(String(body.token || "")), String(body.password || ""));
+        this.issueSession(req, res, user, true);
         sendJson(res, { user: toPublicUser(user) });
         return true;
       }
@@ -246,25 +266,6 @@ export class UserSystem {
         return true;
       }
 
-      if (req.method === "POST" && url.pathname === "/api/me/wxpusher/bind") {
-        const user = this.requireSessionUser(req, res);
-        if (!user) return true;
-        sendJson(res, this.createWxPusherBindPayload(user));
-        return true;
-      }
-
-      if (req.method === "DELETE" && url.pathname === "/api/me/wxpusher/bind") {
-        const user = this.requireSessionUser(req, res);
-        if (!user) return true;
-        sendJson(res, { user: toPublicUser(this.store.setWxPusherUid(user.id, null)) });
-        return true;
-      }
-
-      if (req.method === "POST" && url.pathname === "/api/wxpusher/callback") {
-        await this.handleWxPusherCallback(req, res, url);
-        return true;
-      }
-
       if (req.method === "DELETE" && url.pathname.startsWith("/api/me/favorite-match/")) {
         const user = this.requireSessionUser(req, res);
         if (!user) return true;
@@ -366,7 +367,7 @@ export class UserSystem {
     return user;
   }
 
-  private issueSession(req: http.IncomingMessage, res: http.ServerResponse, user: WorldCupUser) {
+  private issueSession(req: http.IncomingMessage, res: http.ServerResponse, user: WorldCupUser, remember = true) {
     const sessionId = randomBytes(32).toString("hex");
     this.sessions.set(sessionId, {
       userId: user.id,
@@ -375,60 +376,11 @@ export class UserSystem {
     const cookieOptions = getSessionCookieOptions(req);
     res.setHeader("Set-Cookie", serializeCookie(SESSION_COOKIE, sessionId, {
       httpOnly: true,
-      maxAge: SESSION_MAX_AGE_SECONDS,
+      maxAge: remember ? SESSION_MAX_AGE_SECONDS : undefined,
       sameSite: cookieOptions.sameSite,
       secure: cookieOptions.secure,
       path: "/",
     }));
-  }
-
-  private createWxPusherBindPayload(user: WorldCupUser) {
-    const appToken = process.env.WXPUSHER_APP_TOKEN || "";
-    if (!appToken) {
-      throw Object.assign(new Error("wxpusher_not_configured"), { statusCode: 503 });
-    }
-
-    this.pruneExpiredWxPusherBinds();
-    const bindToken = randomBytes(18).toString("hex");
-    const expiresAt = Date.now() + WXPUSHER_BIND_EXPIRES_MS;
-    this.wxPusherBinds.set(bindToken, { userId: user.id, expiresAt });
-
-    const callbackUrl = buildWxPusherCallbackUrl();
-    return {
-      bindToken,
-      expiresAt,
-      callbackUrl,
-      subscribeUrl: buildWxPusherSubscribeUrl(appToken, bindToken),
-      bound: Boolean(user.wxpusherUid),
-      wxpusherUid: maskWxPusherUid(user.wxpusherUid),
-    };
-  }
-
-  private async handleWxPusherCallback(req: http.IncomingMessage, res: http.ServerResponse, url: URL) {
-    verifyWxPusherCallbackToken(req, url);
-    const body = await readJsonBody(req);
-    const { uid, extra } = parseWxPusherCallback(body);
-    if (!uid || !extra) {
-      sendJson(res, { error: "invalid_wxpusher_callback" }, 400);
-      return;
-    }
-
-    this.pruneExpiredWxPusherBinds();
-    const bind = this.wxPusherBinds.get(extra);
-    if (!bind) {
-      sendJson(res, { error: "wxpusher_bind_expired" }, 410);
-      return;
-    }
-
-    const user = this.store.setWxPusherUid(bind.userId, uid);
-    this.wxPusherBinds.delete(extra);
-    sendJson(res, { ok: true, userId: user.id });
-  }
-
-  private pruneExpiredWxPusherBinds(now = Date.now()) {
-    for (const [token, bind] of this.wxPusherBinds) {
-      if (bind.expiresAt <= now) this.wxPusherBinds.delete(token);
-    }
   }
 
   private async handleAdminRequest(req: http.IncomingMessage, res: http.ServerResponse, url: URL) {
@@ -1174,6 +1126,53 @@ function hashEmailVerificationToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
 }
 
+async function createAndSendPasswordReset(req: http.IncomingMessage, store: UserStore, user: WorldCupUser) {
+  if (!isEmailConfigured()) return false;
+  const token = randomBytes(32).toString("hex");
+  const tokenHash = hashPasswordResetToken(token);
+  store.setPasswordResetToken(user.id, tokenHash, Date.now() + PASSWORD_RESET_EXPIRES_MS);
+  const resetUrl = `${getPublicAppUrl()}/me?auth=login&resetToken=${encodeURIComponent(token)}`;
+  await sendEmail({
+    to: user.email,
+    subject: "重置你的 Cyberball 密码",
+    text: [
+      `你好，${user.profile.displayName}`,
+      "",
+      "请点击下面的链接设置新密码：",
+      resetUrl,
+      "",
+      "链接将在 30 分钟后失效。如果不是你本人操作，请忽略这封邮件。",
+    ].join("\n"),
+    html: buildPasswordResetEmailHtml(user.profile.displayName, resetUrl),
+  });
+  return true;
+}
+
+function buildPasswordResetEmailHtml(displayName: string, resetUrl: string) {
+  const safeName = escapeHtml(displayName);
+  const safeUrl = escapeHtml(resetUrl);
+  return `<!doctype html>
+<html>
+  <body style="margin:0;background:#070a0f;color:#f8fafc;font-family:Arial,'Microsoft YaHei',sans-serif;">
+    <div style="max-width:560px;margin:0 auto;padding:32px 20px;">
+      <div style="border:1px solid rgba(216,255,62,.22);border-radius:28px;background:#0c1117;padding:28px;">
+        <p style="margin:0 0 10px;color:#d8ff3e;font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;">Cyberball</p>
+        <h1 style="margin:0;color:#fff;font-size:28px;line-height:1.25;">重置密码</h1>
+        <p style="margin:18px 0 0;color:rgba(255,255,255,.72);font-size:15px;line-height:1.8;">你好，${safeName}。点击下面的按钮设置新密码。</p>
+        <a href="${safeUrl}" style="display:inline-block;margin-top:24px;border-radius:999px;background:#d8ff3e;color:#05070a;padding:13px 22px;text-decoration:none;font-size:14px;font-weight:800;">设置新密码</a>
+        <p style="margin:22px 0 0;color:rgba(255,255,255,.42);font-size:12px;line-height:1.7;">链接 30 分钟内有效。如果按钮无法打开，请复制下面的链接：</p>
+        <p style="word-break:break-all;color:rgba(255,255,255,.55);font-size:12px;line-height:1.7;">${safeUrl}</p>
+      </div>
+    </div>
+  </body>
+</html>`;
+}
+
+function hashPasswordResetToken(token: string) {
+  if (!token || token.length < 24) throw Object.assign(new Error("invalid_password_reset_token"), { statusCode: 400 });
+  return createHash("sha256").update(token).digest("hex");
+}
+
 function getRequestBaseUrl(req: http.IncomingMessage) {
   const proto = getHeaderValue(req.headers["x-forwarded-proto"]) || ((req.socket as { encrypted?: boolean }).encrypted ? "https" : "http");
   const host = getHeaderValue(req.headers["x-forwarded-host"]) || getHeaderValue(req.headers.host) || "localhost:3001";
@@ -1182,63 +1181,6 @@ function getRequestBaseUrl(req: http.IncomingMessage) {
 
 function getPublicAppUrl() {
   return (process.env.PUBLIC_APP_URL || "https://ball.boyzi.fun").replace(/\/$/, "");
-}
-
-function getPublicApiUrl() {
-  return (process.env.PUBLIC_API_URL || process.env.USER_API_URL || "https://api.boyzi.fun").replace(/\/$/, "");
-}
-
-function buildWxPusherCallbackUrl() {
-  const token = process.env.WXPUSHER_CALLBACK_TOKEN || "";
-  const url = new URL("/api/wxpusher/callback", `${getPublicApiUrl()}/`);
-  if (token) url.searchParams.set("token", token);
-  return url.toString();
-}
-
-function buildWxPusherSubscribeUrl(appToken: string, bindToken: string) {
-  const template = process.env.WXPUSHER_SUBSCRIBE_URL_TEMPLATE;
-  if (template) {
-    return template
-      .replace(/\{appToken\}/g, encodeURIComponent(appToken))
-      .replace(/\{extra\}/g, encodeURIComponent(bindToken));
-  }
-
-  const url = new URL("https://wxpusher.zjiecode.com/wxuser/");
-  url.searchParams.set("type", "1");
-  url.searchParams.set("id", appToken);
-  url.searchParams.set("extra", bindToken);
-  return url.toString();
-}
-
-function verifyWxPusherCallbackToken(req: http.IncomingMessage, url: URL) {
-  const expected = process.env.WXPUSHER_CALLBACK_TOKEN || "";
-  if (!expected) return;
-  const supplied = url.searchParams.get("token") || String(req.headers["x-wxpusher-token"] || "");
-  if (!supplied || supplied !== expected) {
-    throw Object.assign(new Error("invalid_wxpusher_callback_token"), { statusCode: 403 });
-  }
-}
-
-function parseWxPusherCallback(body: Record<string, unknown>) {
-  const data = body.data && typeof body.data === "object" && !Array.isArray(body.data)
-    ? body.data as Record<string, unknown>
-    : body;
-  return {
-    uid: normalizeWxPusherUid(data.uid ?? body.uid),
-    extra: typeof data.extra === "string" ? data.extra : typeof body.extra === "string" ? body.extra : "",
-  };
-}
-
-function normalizeWxPusherUid(value: unknown) {
-  if (typeof value !== "string") return "";
-  const uid = value.trim();
-  return /^UID_[A-Za-z0-9_-]+$/.test(uid) ? uid : "";
-}
-
-function maskWxPusherUid(uid?: string | null) {
-  if (!uid) return null;
-  if (uid.length <= 12) return uid;
-  return `${uid.slice(0, 8)}...${uid.slice(-4)}`;
 }
 
 function getHeaderValue(value: string | string[] | undefined) {

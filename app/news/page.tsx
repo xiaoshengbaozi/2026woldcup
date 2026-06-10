@@ -241,15 +241,19 @@ export default function NewsPage() {
           translate: readerTranslate ? "1" : "0",
         });
         const endpoint = `${NEWS_API}/api/news/article?${params.toString()}`;
-        const data = await cachedJson<ArticleResponse & { error?: string }>(endpoint, 10 * 60 * 1000, async () => {
+        const requestTimeoutMs = readerTranslate ? 180_000 : 12_000;
+        const loadFromNetwork = async () => {
           const response = await fetchWithTimeout(endpoint, {
             cache: "no-store",
             signal: controller.signal,
-          }, 8_000);
+          }, requestTimeoutMs);
           const data = await response.json().catch(() => null);
           if (!response.ok) throw new Error(data?.error || `Article API returned ${response.status}`);
           return data as ArticleResponse & { error?: string };
-        }, { persist: true, staleTtlMs: 24 * 60 * 60 * 1000 });
+        };
+        const data = readerTranslate
+          ? await loadFromNetwork()
+          : await cachedJson<ArticleResponse & { error?: string }>(endpoint, 10 * 60 * 1000, loadFromNetwork, { persist: true, staleTtlMs: 24 * 60 * 60 * 1000 });
         if (alive) setReaderArticle(data);
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") return;
