@@ -4,7 +4,6 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
-import android.view.View;
 import android.webkit.WebView;
 
 import com.getcapacitor.BridgeActivity;
@@ -22,8 +21,9 @@ public class MainActivity extends BridgeActivity {
     private void tuneWebView() {
         WebView webView = bridge.getWebView();
         webView.setBackgroundColor(APP_BACKGROUND);
-        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-        webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        webView.setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
+        webView.setVerticalScrollBarEnabled(true);
+        webView.setScrollbarFadingEnabled(true);
         webView.getSettings().setTextZoom(100);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

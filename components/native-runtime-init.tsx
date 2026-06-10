@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useLayoutEffect } from "react";
 
 declare global {
   interface Window {
@@ -11,9 +11,12 @@ declare global {
 }
 
 export function NativeRuntimeInit() {
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!window.Capacitor?.isNativePlatform?.()) return;
     document.documentElement.dataset.nativeApp = "capacitor";
+    document.body.dataset.nativeApp = "capacitor";
+    document.body.style.overflowX = "hidden";
+    document.body.style.overflowY = "auto";
   }, []);
 
   return null;

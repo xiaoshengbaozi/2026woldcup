@@ -2,6 +2,8 @@ import { create } from "zustand";
 
 type Theme = "dark" | "light";
 
+let themeSwitchTimer: number | null = null;
+
 interface ThemeState {
   theme: Theme;
   setTheme: (theme: Theme) => void;
@@ -17,8 +19,18 @@ function getInitialTheme(): Theme {
 
 function applyTheme(theme: Theme) {
   if (typeof document === "undefined") return;
+  document.documentElement.classList.add("theme-switching");
   document.documentElement.setAttribute("data-theme", theme);
   localStorage.setItem("wc-theme", theme);
+
+  if (themeSwitchTimer) {
+    window.clearTimeout(themeSwitchTimer);
+  }
+
+  themeSwitchTimer = window.setTimeout(() => {
+    document.documentElement.classList.remove("theme-switching");
+    themeSwitchTimer = null;
+  }, 180);
 }
 
 export const useThemeStore = create<ThemeState>((set) => ({

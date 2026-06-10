@@ -129,6 +129,14 @@ button {
   color: #ffffff;
 }
 
+html.theme-switching *,
+html.theme-switching *::before,
+html.theme-switching *::after {
+  transition-duration: 0ms !important;
+  transition-delay: 0ms !important;
+  transition-property: color, background-color, border-color, opacity, transform, fill, stroke !important;
+}
+
 @layer components {
   .glass-panel {
     border-radius: 0.8rem;
@@ -585,19 +593,18 @@ button {
 html[data-native-app="capacitor"] {
   background: #05060a;
   scroll-behavior: auto;
-  min-height: 100%;
-  height: auto;
+  height: 100%;
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: hidden;
   touch-action: pan-y pinch-zoom;
 }
 
 html[data-native-app="capacitor"] body {
   background-color: #05060a;
-  min-height: 100dvh;
-  height: auto;
+  min-height: 100%;
+  height: 100dvh;
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: scroll;
   overscroll-behavior-y: contain;
   touch-action: pan-y pinch-zoom;
   -webkit-overflow-scrolling: touch;
@@ -623,4 +630,8 @@ html[data-native-app="capacitor"] [class*="fixed"] {
 
 html[data-native-app="capacitor"] img {
   content-visibility: auto;
+}
+
+html[data-native-app="capacitor"] body > div:first-child {
+  min-height: 100%;
 }
