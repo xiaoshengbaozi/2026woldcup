@@ -33,6 +33,15 @@ alter table users add column if not exists disabled_at timestamptz;
 alter table users add column if not exists signature text;
 alter table users add column if not exists avatar_player_id text;
 alter table users add column if not exists avatar_url text;
+alter table users add column if not exists telegram_chat_id text;
+alter table users add column if not exists telegram_username text;
+alter table users add column if not exists telegram_first_name text;
+alter table users add column if not exists telegram_linked_at timestamptz;
+alter table users add column if not exists telegram_notifications_enabled boolean not null default false;
+alter table users add column if not exists telegram_last_test_sent_at timestamptz;
+alter table users add column if not exists telegram_binding_code_hash text;
+alter table users add column if not exists telegram_binding_expires_at timestamptz;
+alter table users add column if not exists telegram_binding_created_at timestamptz;
 
 create table if not exists invitation_codes (
   id uuid primary key,

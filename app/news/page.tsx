@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { ExternalLink, Languages, Loader2, Newspaper, X } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { useUserSession } from "@/components/user-session-provider";
+import articleIndex from "@/data/articles.generated.json";
 import { cachedJson, fetchWithTimeout } from "@/lib/request-cache";
 import { useMobilePinnedRail } from "@/lib/use-mobile-pinned-rail";
 
@@ -57,10 +58,22 @@ type ArticleResponse = {
 
 type NewsTabId = "headline" | "editor" | "latest";
 
+type ArticleIndexItem = {
+  slug: string;
+  title: string;
+  summary: string;
+  category: string;
+  tags: string[];
+  cover: string;
+  publishedAt: string;
+  featured: boolean;
+};
+
 const NEWS_API = process.env.NEXT_PUBLIC_NEWS_API_URL || "https://news.20250114.xyz";
 
 const editorTabs = ["体育", "旅游", "文化", "专题"];
 const TRAVEL_EDITOR_TAB = "旅游";
+const ARTICLE_EDITOR_TAB = editorTabs[3];
 const travelGuideFeatures: NewsItem[] = [
   {
     id: "world-cup-travel-top-cities",
@@ -99,6 +112,23 @@ const travelGuideFeatures: NewsItem[] = [
     publishedAt: "2026-06-07T00:00:00+08:00",
   },
 ];
+
+const articleFeatureItems: NewsItem[] = (articleIndex as ArticleIndexItem[])
+  .filter((article) => article.featured)
+  .concat((articleIndex as ArticleIndexItem[]).filter((article) => !article.featured))
+  .slice(0, 6)
+  .map((article) => ({
+    id: `article-${article.slug}`,
+    title: article.title,
+    summary: article.summary,
+    url: `/articles/${article.slug}/`,
+    source: "CYBERBALL",
+    sourceFeed: article.category || "Articles",
+    language: "zh-CN",
+    image: article.cover,
+    tags: article.tags.length > 0 ? article.tags : [article.category || "Article"],
+    publishedAt: article.publishedAt,
+  }));
 
 const mobileNewsTabs: { id: NewsTabId; title: string; label: string }[] = [
   { id: "headline", title: "头条新闻", label: "头条" },
@@ -299,6 +329,13 @@ export default function NewsPage() {
   const latestItems = visualItems.slice(8, 14);
   const listItems = items.slice(14, 21);
   const featureItems = visualItems.slice(14, 17);
+  const activeEditorItems =
+    activeEditorTab === TRAVEL_EDITOR_TAB
+      ? travelGuideFeatures
+      : activeEditorTab === ARTICLE_EDITOR_TAB
+        ? articleFeatureItems
+        : editorItems;
+  const activeEditorOpensReader = activeEditorTab !== TRAVEL_EDITOR_TAB && activeEditorTab !== ARTICLE_EDITOR_TAB;
   const articleTranslationEnabled = Boolean(payload?.features?.articleTranslationEnabled);
   const canTranslateReaderArticle = articleTranslationEnabled && signedIn === true && !isChineseNewsItem(readerItem);
 
@@ -483,7 +520,7 @@ export default function NewsPage() {
       </section>
 
       {/* ── EDITOR'S CHOICE ── */}
-      {(editorItems.length > 0 || travelGuideFeatures.length > 0) && (
+      {(editorItems.length > 0 || travelGuideFeatures.length > 0 || articleFeatureItems.length > 0) && (
         <section ref={editorRef} className="mt-4 scroll-mt-24 sm:mt-8">
           <SectionHeader title="编辑精选" hideOnMobile />
 
@@ -505,11 +542,11 @@ export default function NewsPage() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
-            {(activeEditorTab === TRAVEL_EDITOR_TAB ? travelGuideFeatures : editorItems).map((item) => (
+            {activeEditorItems.map((item) => (
               <EditorChoiceCard
                 key={item.id}
                 item={item}
-                onOpen={activeEditorTab === TRAVEL_EDITOR_TAB ? undefined : openReader}
+                onOpen={activeEditorOpensReader ? openReader : undefined}
               />
             ))}
           </div>

@@ -523,7 +523,7 @@ export function TeamProfile({ data }: TeamProfileProps) {
               className={`tp-content-tab${activeContentTab === "squad" ? " active" : ""}`}
               onClick={() => handleContentTabChange("squad")}
             >
-              本届阵容
+              {"\u672c\u5c4a\u9635\u5bb9"}
             </button>
             <button
               type="button"
@@ -532,7 +532,7 @@ export function TeamProfile({ data }: TeamProfileProps) {
               className={`tp-content-tab${activeContentTab === "profile" ? " active" : ""}`}
               onClick={() => handleContentTabChange("profile")}
             >
-              球队档案
+              {"\u7403\u961f\u6863\u6848"}
             </button>
             <button
               type="button"
@@ -541,7 +541,7 @@ export function TeamProfile({ data }: TeamProfileProps) {
               className={`tp-content-tab tp-content-tab--mobile-only${activeContentTab === "fixtures" ? " active" : ""}`}
               onClick={() => handleContentTabChange("fixtures")}
             >
-              比赛对阵
+              {"\u6bd4\u8d5b\u5bf9\u9635"}
             </button>
           </div>
 

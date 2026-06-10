@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { BarChart3, Calendar, Home, Newspaper, Radio } from "lucide-react";
 import { useEffect, useState, type MouseEvent } from "react";
-import { mobileFloatingSurfaceShadow } from "@/components/mobile-surface-styles";
+import { mobileFloatingSurfaceBlur, mobileFloatingSurfaceShadow } from "@/components/mobile-surface-styles";
 
 const navItems = [
   { label: "首页", href: "/", icon: Home },
@@ -126,16 +126,16 @@ const mobileNavSurfaceStyle = {
   background:
     "linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)), rgba(5,8,8,0.92)",
   boxShadow: mobileFloatingSurfaceShadow,
-  backdropFilter: "blur(32px)",
-  WebkitBackdropFilter: "blur(32px)",
+  backdropFilter: mobileFloatingSurfaceBlur,
+  WebkitBackdropFilter: mobileFloatingSurfaceBlur,
 };
 
 const liveNavSurfaceStyle = {
   background:
     "linear-gradient(135deg, rgba(216,255,62,0.98), rgba(184,214,65,0.92)), rgba(216,255,62,0.96)",
   boxShadow: mobileFloatingSurfaceShadow,
-  backdropFilter: "blur(32px)",
-  WebkitBackdropFilter: "blur(32px)",
+  backdropFilter: mobileFloatingSurfaceBlur,
+  WebkitBackdropFilter: mobileFloatingSurfaceBlur,
 };
 
 function NavTopLine({ compact = false }: { compact?: boolean }) {

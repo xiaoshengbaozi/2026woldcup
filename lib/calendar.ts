@@ -111,11 +111,11 @@ export function extractStage(summary: string, description: string) {
     .map((part) => part.trim())
     .filter(Boolean);
 
-  return parts[1] || "鍏朵粬";
+  return parts[1] || "其他";
 }
 
 export function extractWeather(description: string) {
-  const match = description.match(/鍔ㄦ€佸ぉ姘擻s*(https?:\/\/\S+)/);
+  const match = description.match(/动态天气\s*(https?:\/\/\S+)/);
   return match ? match[1] : "";
 }
 
@@ -177,19 +177,19 @@ export function detailRows(match: Match): DetailRow[] {
     .filter(
       (line) =>
         !line.startsWith("动态天气") &&
-        !line.startsWith("绯荤粺鍦板浘:") &&
-        !line.startsWith("閫氱敤鍦板浘:")
+        !line.startsWith("系统地图:") &&
+        !line.startsWith("通用地图:")
     )
     .map((line) => {
-      if (line.startsWith("馃搷")) {
+      if (line.startsWith("📍")) {
         return { icon: "LOC", text: localizeLocationText(line.slice(2)), type: "venue" };
       }
 
-      if (line.startsWith("馃彑")) {
+      if (line.startsWith("🏟")) {
         return { icon: "STAD", text: line.slice(2).trim(), type: "meta" };
       }
 
-      if (line.startsWith("鍧愭爣:")) {
+      if (line.startsWith("坐标:")) {
         return { icon: "GPS", text: line, type: "meta" };
       }
 

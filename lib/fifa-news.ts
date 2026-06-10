@@ -111,11 +111,16 @@ function mapNewsItem(item: AggregatedNewsItem, index: number): NewsItem {
   };
 }
 
-export function useFifaNews() {
+export function useFifaNews(enabled = true) {
   const [news, setNews] = useState<NewsItem[]>(fallbackNews);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
 
   useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
+
     let alive = true;
 
     async function loadNews() {
@@ -153,7 +158,7 @@ export function useFifaNews() {
       document.removeEventListener("visibilitychange", loadNews);
       window.removeEventListener("online", loadNews);
     };
-  }, []);
+  }, [enabled]);
 
   return { news, loading };
 }

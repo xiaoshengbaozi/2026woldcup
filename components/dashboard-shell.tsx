@@ -7,7 +7,7 @@ import { NavBar } from "./nav-bar";
 import { SiteFooter } from "./site-footer";
 import { UserNotificationToast } from "./user-notification-toast";
 
-const PRIMARY_PAGES = new Set(["/", "/news", "/data", "/matches", "/favorites", "/favorites/matches", "/players", "/me", "/teams", "/live", "/predict"]);
+const PRIMARY_PAGES = new Set(["/", "/news", "/data", "/matches", "/favorites", "/favorites/matches", "/players", "/me", "/notifications", "/teams", "/live", "/predict"]);
 
 export function DashboardShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();

@@ -68,11 +68,19 @@ export interface PublicUser {
     type: "match_reminder" | "system";
     title: string;
     body: string;
-    channel: "site" | "email" | "push";
+    channel: "site" | "email" | "push" | "telegram";
     read: boolean;
     createdAt: number;
     metadata?: Record<string, string | number | boolean | null>;
   }>;
+  telegram?: {
+    chatId: string;
+    username?: string | null;
+    firstName?: string | null;
+    linkedAt: number;
+    notificationsEnabled: boolean;
+    lastTestSentAt?: number | null;
+  } | null;
 }
 
 export interface UserHomePayload {

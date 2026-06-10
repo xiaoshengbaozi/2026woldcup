@@ -4,6 +4,7 @@ import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
 import type { ApiFootballService } from "./apiFootball";
 import { isEmailConfigured, sendEmail } from "./emailService";
+import { getTelegramBotUsername, sendTelegramMessage } from "./telegramService";
 import { getWorldCupFixtures, getWorldCupSquads } from "./worldCupData";
 import { UserStore, toPublicUser } from "./userStore";
 import type { InvitationCode, PredictionArchive, WorldCupUser } from "./userStore";
@@ -19,6 +20,7 @@ const EMAIL_VERIFICATION_EXPIRES_MS = 24 * 60 * 60 * 1000;
 const EMAIL_RESEND_MIN_INTERVAL_MS = 60 * 1000;
 const PASSWORD_RESET_EXPIRES_MS = 30 * 60 * 1000;
 const PASSWORD_RESET_RESEND_MIN_INTERVAL_MS = 60 * 1000;
+const TELEGRAM_BINDING_EXPIRES_MS = 10 * 60 * 1000;
 
 const rateLimits = new Map<string, { count: number; resetAt: number }>();
 
@@ -266,6 +268,63 @@ export class UserSystem {
         return true;
       }
 
+      if (req.method === "POST" && url.pathname === "/api/me/telegram/bind-code") {
+        const user = this.requireSessionUser(req, res);
+        if (!user) return true;
+        const code = generateTelegramBindingCode();
+        const expiresAt = Date.now() + TELEGRAM_BINDING_EXPIRES_MS;
+        this.store.setTelegramBindingCode(user.id, hashTelegramBindingCode(code), expiresAt);
+        const botUsername = getTelegramBotUsername();
+        sendJson(res, {
+          code,
+          expiresAt,
+          botUsername,
+          deepLink: botUsername ? `https://t.me/${botUsername}?start=${encodeURIComponent(code)}` : null,
+        });
+        return true;
+      }
+
+      if (req.method === "DELETE" && url.pathname === "/api/me/telegram") {
+        const user = this.requireSessionUser(req, res);
+        if (!user) return true;
+        sendJson(res, { user: toPublicUser(this.store.unlinkTelegramAccount(user.id)) });
+        return true;
+      }
+
+      if (req.method === "PATCH" && url.pathname === "/api/me/telegram") {
+        const user = this.requireSessionUser(req, res);
+        if (!user) return true;
+        const body = await readJsonBody(req);
+        sendJson(res, { user: toPublicUser(this.store.setTelegramNotificationsEnabled(user.id, body.enabled !== false)) });
+        return true;
+      }
+
+      if (req.method === "POST" && url.pathname === "/api/me/telegram/test") {
+        const user = this.requireSessionUser(req, res);
+        if (!user) return true;
+        if (!user.telegram?.chatId) {
+          sendJson(res, { error: "telegram_not_linked" }, 404);
+          return true;
+        }
+        const delivery = await sendTelegramMessage(
+          user.telegram.chatId,
+          `赛波 CYBERBALL 测试通知已接通。\n\n你好，${user.profile.displayName}。后续比赛提醒会从这里同步给你。`
+        );
+        if (delivery.sent) this.store.markTelegramTestSent(user.id);
+        sendJson(res, {
+          ok: delivery.sent,
+          delivery,
+          user: toPublicUser(this.store.getUserById(user.id) ?? user),
+        });
+        return true;
+      }
+
+      if (req.method === "POST" && url.pathname === "/api/telegram/webhook") {
+        const body = await readJsonBody(req);
+        sendJson(res, await this.handleTelegramWebhook(body));
+        return true;
+      }
+
       if (req.method === "DELETE" && url.pathname.startsWith("/api/me/favorite-match/")) {
         const user = this.requireSessionUser(req, res);
         if (!user) return true;
@@ -488,6 +547,35 @@ export class UserSystem {
     sendJson(res, { error: "admin_invitation_action_not_found" }, 404);
   }
 
+  private async handleTelegramWebhook(body: Record<string, unknown>) {
+    const message = parseTelegramMessage(body);
+    if (!message) return { ok: true, ignored: true };
+
+    const code = parseTelegramStartCode(message.text);
+    if (!code) {
+      await sendTelegramMessage(message.chatId, "请在赛波通知页生成绑定码，然后发送 /start 绑定码。");
+      return { ok: true, ignored: true, reason: "missing_start_code" };
+    }
+
+    const user = this.store.bindTelegramAccount({
+      codeHash: hashTelegramBindingCode(code),
+      chatId: message.chatId,
+      username: message.username,
+      firstName: message.firstName,
+    });
+    const delivery = await sendTelegramMessage(
+      message.chatId,
+      `绑定成功，${user.profile.displayName}。\n\n赛波 CYBERBALL 会把你开启的比赛提醒同步到这里。`
+    );
+
+    return {
+      ok: true,
+      linked: true,
+      userId: user.id,
+      delivery,
+    };
+  }
+
   private async getPreferenceCatalog() {
     if (this.catalogCache && this.catalogCache.expiresAt > Date.now()) return this.catalogCache.payload;
 
@@ -645,6 +733,48 @@ function normalizePopularPlayerId(value: string | undefined) {
     .replace(/['’]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function generateTelegramBindingCode() {
+  return `TG-${randomBytes(3).toString("hex").toUpperCase()}`;
+}
+
+function hashTelegramBindingCode(code: string) {
+  return createHash("sha256").update(normalizeTelegramBindingCode(code)).digest("hex");
+}
+
+function normalizeTelegramBindingCode(code: string) {
+  return code.trim().toUpperCase().replace(/\s+/g, "");
+}
+
+function parseTelegramStartCode(text: string) {
+  const trimmed = text.trim();
+  const match = trimmed.match(/^\/start(?:@\w+)?(?:\s+(.+))?$/i);
+  if (!match) return null;
+  const code = normalizeTelegramBindingCode(match[1] || "");
+  return code || null;
+}
+
+function parseTelegramMessage(body: Record<string, unknown>) {
+  const message = readObject(body.message) || readObject(body.edited_message);
+  const chat = readObject(message?.chat);
+  if (!message || !chat) return null;
+
+  const text = typeof message.text === "string" ? message.text : "";
+  const chatId = chat.id === undefined || chat.id === null ? "" : String(chat.id);
+  if (!text || !chatId) return null;
+
+  const from = readObject(message.from);
+  return {
+    text,
+    chatId,
+    username: typeof from?.username === "string" ? from.username : null,
+    firstName: typeof from?.first_name === "string" ? from.first_name : null,
+  };
+}
+
+function readObject(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
 }
 
 function buildAdminUserListItem(user: WorldCupUser) {

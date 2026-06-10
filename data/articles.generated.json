@@ -1,0 +1,19 @@
+[
+  {
+    "slug": "2026-world-cup-host-cities",
+    "title": "2026 世界杯主办城市观察",
+    "summary": "从城市气质、球场体验和跨城路线，看 2026 世界杯最值得提前关注的主办地。",
+    "category": "专题",
+    "tags": [
+      "World Cup",
+      "Host Cities",
+      "Travel"
+    ],
+    "cover": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1400&h=900&fit=crop",
+    "publishedAt": "2026-06-10",
+    "featured": true,
+    "status": "published",
+    "sourceFile": "content/articles/2026-world-cup-host-cities.md",
+    "readingMinutes": 1
+  }
+]

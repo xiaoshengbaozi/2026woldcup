@@ -312,7 +312,7 @@ export function MobileMeDrawer({
             <div className="relative mt-auto flex items-center justify-between border-t border-white/[0.08] pt-4">
               <ThemeToggle />
               <Link
-                href="/me"
+                href="/notifications"
                 onClick={onClose}
                 aria-label="通知"
                 className="relative grid h-10 w-10 place-items-center rounded-full bg-white/[0.06] text-white/62 ring-1 ring-white/[0.08] transition hover:bg-white/[0.1] hover:text-white"

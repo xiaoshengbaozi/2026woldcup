@@ -22,6 +22,7 @@
   color-scheme: dark;
   background: #050505;
   --pwa-status-bar-color: #05070f;
+  --mobile-surface-blur: 18px;
 
   /* ── Market Prediction OS tokens ── */
   --bg-primary: #0A0A0F;
@@ -153,6 +154,27 @@ html.theme-switching *::after {
     background: rgba(255, 255, 255, 0.055);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(22px);
+  }
+
+  .premium-mobile-surface {
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.016)),
+      rgba(5, 8, 8, 0.9);
+    box-shadow:
+      0 24px 68px rgba(0, 0, 0, 0.42),
+      0 0 44px -18px rgba(216, 255, 62, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      inset 0 -1px 0 rgba(216, 255, 62, 0.055);
+    backdrop-filter: blur(var(--mobile-surface-blur, 18px)) saturate(1.08);
+  }
+
+  .premium-mobile-hairline {
+    pointer-events: none;
+    position: absolute;
+    inset-inline: 2.5rem;
+    top: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(216, 255, 62, 0.32), rgba(255, 255, 255, 0.12), transparent);
   }
 
   .data-page-loading {
@@ -298,6 +320,18 @@ html.theme-switching *::after {
       inset 0 -1px 0 rgba(216, 255, 62, 0.1);
   }
 
+  .hero-card.premium-mobile-surface {
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.016)),
+      rgba(5, 8, 8, 0.9);
+    box-shadow:
+      0 24px 68px rgba(0, 0, 0, 0.42),
+      0 0 44px -18px rgba(216, 255, 62, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      inset 0 -1px 0 rgba(216, 255, 62, 0.055);
+    backdrop-filter: blur(var(--mobile-surface-blur, 18px)) saturate(1.08);
+  }
+
   .me-account-card {
     background:
       radial-gradient(circle at 22% 18%, rgb(213 187 187 / 44%), transparent 30%),
@@ -405,6 +439,10 @@ html.theme-switching *::after {
 }
 
 @media (max-width: 768px) {
+  :root {
+    --mobile-surface-blur: 14px;
+  }
+
   .glass-panel {
     backdrop-filter: blur(18px);
   }
@@ -418,6 +456,15 @@ html.theme-switching *::after {
     backdrop-filter: blur(20px);
   }
 
+  body::before {
+    background-size: 96px 96px;
+    opacity: 0.5;
+  }
+
+  body::after {
+    opacity: 0.14;
+  }
+
   .mobile-floating-surface,
   [class*="fixed"][class*="backdrop-blur-2xl"],
   [class*="fixed"][class*="backdrop-blur-3xl"],
@@ -428,9 +475,38 @@ html.theme-switching *::after {
   }
 
   @media (hover: none) and (pointer: coarse) {
+    :root {
+      --mobile-surface-blur: 12px;
+    }
+
     [class*="hover:shadow"],
     [class*="hover\\:shadow"] {
       transition-property: color, background-color, border-color, opacity, transform;
+    }
+
+    .hero-card:hover {
+      box-shadow:
+        0 24px 64px rgba(0, 0, 0, 0.42),
+        inset 0 1px 0 rgba(255, 255, 255, 0.09),
+        inset 0 -1px 0 rgba(216, 255, 62, 0.06);
+    }
+
+    .next-match-glow {
+      opacity: 0.72;
+    }
+
+    .premium-mobile-surface {
+      box-shadow:
+        0 18px 52px rgba(0, 0, 0, 0.38),
+        0 0 34px -20px rgba(216, 255, 62, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.09),
+        inset 0 -1px 0 rgba(216, 255, 62, 0.045);
+    }
+
+    .countdown-colon,
+    .live-ping,
+    .live-dot {
+      animation-duration: 2.4s;
     }
   }
 }
@@ -598,6 +674,7 @@ html.theme-switching *::after {
 
 html[data-native-app="capacitor"] {
   background: #05060a;
+  --mobile-surface-blur: 10px;
   scroll-behavior: auto;
   height: 100%;
   overflow-x: hidden;

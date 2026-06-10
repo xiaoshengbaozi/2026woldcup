@@ -44,7 +44,7 @@ export interface MatchReminder {
   title: string;
   startsAt?: string;
   remindBeforeMinutes: number;
-  channel: "site" | "email" | "push";
+  channel: NotificationChannel;
   enabled: boolean;
   lastQueuedAt?: number;
   createdAt: number;
@@ -90,10 +90,27 @@ export interface UserNotification {
   type: "match_reminder" | "system";
   title: string;
   body: string;
-  channel: "site" | "email" | "push";
+  channel: NotificationChannel;
   read: boolean;
   createdAt: number;
   metadata?: Record<string, string | number | boolean | null>;
+}
+
+export type NotificationChannel = "site" | "email" | "push" | "telegram";
+
+export interface TelegramAccount {
+  chatId: string;
+  username?: string | null;
+  firstName?: string | null;
+  linkedAt: number;
+  notificationsEnabled: boolean;
+  lastTestSentAt?: number | null;
+}
+
+export interface TelegramBinding {
+  codeHash: string;
+  expiresAt: number;
+  createdAt: number;
 }
 
 export interface InvitationCode {
@@ -138,6 +155,8 @@ export interface WorldCupUser {
   watchHistory: WatchRecord[];
   newsSubscriptions: NewsSubscription[];
   notifications: UserNotification[];
+  telegram?: TelegramAccount | null;
+  telegramBinding?: TelegramBinding | null;
 }
 
 interface UserDatabase {
@@ -292,6 +311,8 @@ export class UserStore {
         updatedAt: now,
       })),
       notifications: [],
+      telegram: null,
+      telegramBinding: null,
     };
 
     this.data.users.push(user);
@@ -538,6 +559,76 @@ export class UserStore {
     return user;
   }
 
+  setTelegramBindingCode(userId: string, codeHash: string, expiresAt: number) {
+    const user = this.requireUser(userId);
+    user.telegramBinding = {
+      codeHash,
+      expiresAt,
+      createdAt: Date.now(),
+    };
+    this.touch(user);
+    return user;
+  }
+
+  bindTelegramAccount(input: { codeHash: string; chatId: string; username?: string | null; firstName?: string | null }) {
+    const now = Date.now();
+    const user = this.data.users.find((item) => (
+      item.telegramBinding?.codeHash === input.codeHash &&
+      item.telegramBinding.expiresAt > now
+    ));
+    if (!user) throw createUserStoreError("invalid_or_expired_telegram_code", 403);
+
+    for (const current of this.data.users) {
+      if (current.id !== user.id && current.telegram?.chatId === input.chatId) {
+        current.telegram = null;
+        current.updatedAt = now;
+        void this.saveUser(current);
+      }
+    }
+
+    user.telegram = {
+      chatId: input.chatId,
+      username: input.username ?? null,
+      firstName: input.firstName ?? null,
+      linkedAt: now,
+      notificationsEnabled: true,
+      lastTestSentAt: null,
+    };
+    user.telegramBinding = null;
+    this.touch(user);
+    return user;
+  }
+
+  unlinkTelegramAccount(userId: string) {
+    const user = this.requireUser(userId);
+    user.telegram = null;
+    user.telegramBinding = null;
+    this.touch(user);
+    return user;
+  }
+
+  setTelegramNotificationsEnabled(userId: string, enabled: boolean) {
+    const user = this.requireUser(userId);
+    if (!user.telegram) throw createUserStoreError("telegram_not_linked", 404);
+    user.telegram = {
+      ...user.telegram,
+      notificationsEnabled: enabled,
+    };
+    this.touch(user);
+    return user;
+  }
+
+  markTelegramTestSent(userId: string, sentAt = Date.now()) {
+    const user = this.requireUser(userId);
+    if (!user.telegram) throw createUserStoreError("telegram_not_linked", 404);
+    user.telegram = {
+      ...user.telegram,
+      lastTestSentAt: sentAt,
+    };
+    this.touch(user);
+    return user;
+  }
+
   setUserDisabled(userId: string, disabled: boolean) {
     const user = this.requireUser(userId);
     user.disabledAt = disabled ? Date.now() : null;
@@ -735,6 +826,10 @@ export class UserStore {
   private async loadNormalizedFromPostgres() {
     if (!this.pool) return false;
 
+    if (!isDatabaseSchemaInitDisabled()) {
+      await ensureUserTelegramColumns(this.pool);
+    }
+
     const [users, invitations] = await Promise.all([
       this.pool.query<Record<string, unknown>>("select * from users order by created_at asc"),
       this.pool.query<Record<string, unknown>>("select * from invitation_codes order by created_at asc"),
@@ -818,6 +913,20 @@ async function withClient<T>(pool: Pool, callback: (client: PoolClient) => Promi
   }
 }
 
+async function ensureUserTelegramColumns(pool: Pool) {
+  await pool.query(`
+    alter table users add column if not exists telegram_chat_id text;
+    alter table users add column if not exists telegram_username text;
+    alter table users add column if not exists telegram_first_name text;
+    alter table users add column if not exists telegram_linked_at timestamptz;
+    alter table users add column if not exists telegram_notifications_enabled boolean not null default false;
+    alter table users add column if not exists telegram_last_test_sent_at timestamptz;
+    alter table users add column if not exists telegram_binding_code_hash text;
+    alter table users add column if not exists telegram_binding_expires_at timestamptz;
+    alter table users add column if not exists telegram_binding_created_at timestamptz;
+  `);
+}
+
 async function upsertUserRow(client: PoolClient, user: WorldCupUser) {
   await client.query(
     `
@@ -826,6 +935,8 @@ async function upsertUserRow(client: PoolClient, user: WorldCupUser) {
       email_verified_at, email_verification_token_hash, email_verification_expires_at, email_verification_sent_at,
       password_reset_token_hash, password_reset_expires_at, password_reset_sent_at,
       disabled_at, display_name, signature, home_team_id, avatar_player_id, avatar_url, timezone, language,
+      telegram_chat_id, telegram_username, telegram_first_name, telegram_linked_at, telegram_notifications_enabled,
+      telegram_last_test_sent_at, telegram_binding_code_hash, telegram_binding_expires_at, telegram_binding_created_at,
       created_at, updated_at
     )
     values (
@@ -833,7 +944,9 @@ async function upsertUserRow(client: PoolClient, user: WorldCupUser) {
       to_timestamp($5::double precision / 1000), $6, to_timestamp($7::double precision / 1000), to_timestamp($8::double precision / 1000),
       $9, to_timestamp($10::double precision / 1000), to_timestamp($11::double precision / 1000),
       to_timestamp($12::double precision / 1000), $13, $14, $15, $16, $17, $18, $19,
-      to_timestamp($20::double precision / 1000), to_timestamp($21::double precision / 1000)
+      $20, $21, $22, to_timestamp($23::double precision / 1000), $24,
+      to_timestamp($25::double precision / 1000), $26, to_timestamp($27::double precision / 1000), to_timestamp($28::double precision / 1000),
+      to_timestamp($29::double precision / 1000), to_timestamp($30::double precision / 1000)
     )
     on conflict (id) do update set
       email = excluded.email,
@@ -854,6 +967,15 @@ async function upsertUserRow(client: PoolClient, user: WorldCupUser) {
       avatar_url = excluded.avatar_url,
       timezone = excluded.timezone,
       language = excluded.language,
+      telegram_chat_id = excluded.telegram_chat_id,
+      telegram_username = excluded.telegram_username,
+      telegram_first_name = excluded.telegram_first_name,
+      telegram_linked_at = excluded.telegram_linked_at,
+      telegram_notifications_enabled = excluded.telegram_notifications_enabled,
+      telegram_last_test_sent_at = excluded.telegram_last_test_sent_at,
+      telegram_binding_code_hash = excluded.telegram_binding_code_hash,
+      telegram_binding_expires_at = excluded.telegram_binding_expires_at,
+      telegram_binding_created_at = excluded.telegram_binding_created_at,
       updated_at = excluded.updated_at
     `,
     [
@@ -876,6 +998,15 @@ async function upsertUserRow(client: PoolClient, user: WorldCupUser) {
       user.profile.avatarUrl ?? null,
       user.profile.timezone,
       user.profile.language,
+      user.telegram?.chatId ?? null,
+      user.telegram?.username ?? null,
+      user.telegram?.firstName ?? null,
+      user.telegram?.linkedAt ?? null,
+      user.telegram?.notificationsEnabled ?? false,
+      user.telegram?.lastTestSentAt ?? null,
+      user.telegramBinding?.codeHash ?? null,
+      user.telegramBinding?.expiresAt ?? null,
+      user.telegramBinding?.createdAt ?? null,
       user.createdAt,
       user.updatedAt,
     ]
@@ -1007,6 +1138,23 @@ function rowToUser(
     watchHistory,
     newsSubscriptions,
     notifications,
+    telegram: nullableString(row.telegram_chat_id)
+      ? {
+          chatId: String(row.telegram_chat_id),
+          username: nullableString(row.telegram_username),
+          firstName: nullableString(row.telegram_first_name),
+          linkedAt: dateToMs(row.telegram_linked_at) ?? Date.now(),
+          notificationsEnabled: row.telegram_notifications_enabled !== false,
+          lastTestSentAt: dateToMs(row.telegram_last_test_sent_at),
+        }
+      : null,
+    telegramBinding: nullableString(row.telegram_binding_code_hash)
+      ? {
+          codeHash: String(row.telegram_binding_code_hash),
+          expiresAt: dateToMs(row.telegram_binding_expires_at) ?? 0,
+          createdAt: dateToMs(row.telegram_binding_created_at) ?? Date.now(),
+        }
+      : null,
   };
 }
 
@@ -1057,7 +1205,7 @@ function rowToFavoriteMatch(row: Record<string, unknown>): FavoriteMatch {
 }
 
 function rowToReminder(row: Record<string, unknown>): MatchReminder {
-  const channel = row.channel === "email" || row.channel === "push" ? row.channel : "site";
+  const channel = normalizeNotificationChannel(row.channel);
   return {
     id: String(row.id),
     matchId: String(row.match_id),
@@ -1117,7 +1265,7 @@ function rowToNewsSubscription(row: Record<string, unknown>): NewsSubscription {
 
 function rowToNotification(row: Record<string, unknown>): UserNotification {
   const type = row.type === "match_reminder" ? "match_reminder" : "system";
-  const channel = row.channel === "email" || row.channel === "push" ? row.channel : "site";
+  const channel = normalizeNotificationChannel(row.channel);
   return {
     id: String(row.id),
     type,
@@ -1168,8 +1316,12 @@ function parseJsonObject(value: unknown) {
 }
 
 export function toPublicUser(user: WorldCupUser) {
-  const { passwordHash, passwordSalt, emailVerificationTokenHash, emailVerificationExpiresAt, passwordResetTokenHash, passwordResetExpiresAt, ...publicUser } = user;
+  const { passwordHash, passwordSalt, emailVerificationTokenHash, emailVerificationExpiresAt, passwordResetTokenHash, passwordResetExpiresAt, telegramBinding, ...publicUser } = user;
   return publicUser;
+}
+
+function normalizeNotificationChannel(value: unknown): NotificationChannel {
+  return value === "email" || value === "push" || value === "telegram" ? value : "site";
 }
 
 export function createUserStoreError(message: string, statusCode: number) {
@@ -1257,6 +1409,10 @@ function normalizeStoredUser(user: WorldCupUser) {
     watchHistory: user.watchHistory ?? [],
     newsSubscriptions: user.newsSubscriptions ?? [],
     notifications: user.notifications ?? [],
+    telegram: user.telegram ?? null,
+    telegramBinding: user.telegramBinding?.expiresAt && user.telegramBinding.expiresAt > Date.now()
+      ? user.telegramBinding
+      : null,
   };
 }
 

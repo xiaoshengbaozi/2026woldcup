@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bell, X } from "lucide-react";
 import { useUserSession } from "@/components/user-session-provider";
@@ -12,6 +13,11 @@ export function UserNotificationToast() {
   const { home, refreshSession } = useUserSession();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [visible, setVisible] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     setNotifications(
@@ -21,7 +27,7 @@ export function UserNotificationToast() {
   }, [home]);
 
   const active = useMemo(() => notifications[0] ?? null, [notifications]);
-  if (!active) return null;
+  if (!mounted || !active) return null;
 
   async function closeAll() {
     setVisible(false);
@@ -38,29 +44,23 @@ export function UserNotificationToast() {
     }
   }
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {visible && (
-        <>
+        <div className="pointer-events-none fixed inset-x-0 top-[calc(env(safe-area-inset-top)+0.75rem)] z-[1000] flex justify-center px-4">
           <motion.div
             initial={{ opacity: 0, y: -18, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -12, scale: 0.98 }}
-            className="fixed right-6 top-6 z-[260] hidden w-[360px] overflow-hidden rounded-[1.5rem] bg-ink-950/88 p-4 text-white shadow-[0_24px_80px_rgba(0,0,0,.46)] ring-1 ring-volt/20 backdrop-blur-2xl lg:block"
+            transition={{ duration: 0.22, ease: "easeOut" }}
+            className="pointer-events-auto w-full max-w-[min(92vw,440px)] overflow-visible rounded-[1.75rem] bg-ink-950/92 p-4 text-white shadow-[0_28px_90px_rgba(0,0,0,.58),0_0_44px_rgba(216,255,62,.14)] ring-1 ring-volt/25 backdrop-blur-2xl sm:p-5"
           >
             <NotificationContent item={active} count={notifications.length} onClose={closeAll} />
           </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: -80 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -80 }}
-            className="fixed inset-x-3 top-[calc(env(safe-area-inset-top)+0.75rem)] z-[260] overflow-hidden rounded-[1.25rem] bg-ink-950/92 p-3 text-white shadow-[0_18px_56px_rgba(0,0,0,.44)] ring-1 ring-volt/20 backdrop-blur-2xl lg:hidden"
-          >
-            <NotificationContent item={active} count={notifications.length} onClose={closeAll} compact />
-          </motion.div>
-        </>
+        </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
 
@@ -72,11 +72,11 @@ function NotificationContent({ item, count, compact, onClose }: { item: Notifica
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
+          <div className="min-w-0 pr-1">
             <p className="text-[10px] font-black uppercase tracking-[0.16em] text-volt/80">
               {count > 1 ? `${count} 条比赛提醒` : "比赛提醒"}
             </p>
-            <h3 className={`${compact ? "mt-0.5 text-sm" : "mt-1 text-base"} truncate font-black text-white`}>{item.title}</h3>
+            <h3 className={`${compact ? "mt-0.5 text-sm" : "mt-1 text-base"} break-words font-black leading-snug text-white`}>{item.title}</h3>
           </div>
           <button
             type="button"
@@ -87,7 +87,7 @@ function NotificationContent({ item, count, compact, onClose }: { item: Notifica
             <X className="h-4 w-4" />
           </button>
         </div>
-        <p className={`${compact ? "mt-1 line-clamp-1 text-xs" : "mt-2 text-sm"} text-white/56`}>{item.body}</p>
+        <p className={`${compact ? "mt-1 text-xs" : "mt-2 text-sm"} whitespace-normal break-words leading-relaxed text-white/62`}>{item.body}</p>
       </div>
     </div>
   );

@@ -13,8 +13,12 @@ export function useMobilePinnedRail(
 
   useEffect(() => {
     const query = window.matchMedia(mediaQuery);
-    let intersectionObserver: IntersectionObserver | null = null;
     let resizeObserver: ResizeObserver | null = null;
+    let animationFrame = 0;
+    let pinnedSnapshot = false;
+
+    const pinBuffer = 12;
+    const unpinBuffer = 28;
 
     const syncHeight = () => {
       if (!query.matches) {
@@ -28,17 +32,49 @@ export function useMobilePinnedRail(
       setHeight((current) => (current === nextHeight ? current : nextHeight));
     };
 
+    const syncPinned = () => {
+      if (!query.matches) {
+        pinnedSnapshot = false;
+        setPinned(false);
+        return;
+      }
+
+      const sentinel = sentinelRef.current;
+      if (!sentinel) return;
+
+      const sentinelTop = sentinel.getBoundingClientRect().top;
+      const shouldPin = pinnedSnapshot
+        ? sentinelTop < offsetPx + unpinBuffer
+        : sentinelTop < offsetPx - pinBuffer;
+
+      if (shouldPin !== pinnedSnapshot) {
+        pinnedSnapshot = shouldPin;
+        setPinned(shouldPin);
+      }
+    };
+
+    const scheduleSyncPinned = () => {
+      if (animationFrame) return;
+      animationFrame = window.requestAnimationFrame(() => {
+        animationFrame = 0;
+        syncPinned();
+      });
+    };
+
     const disconnect = () => {
-      intersectionObserver?.disconnect();
       resizeObserver?.disconnect();
-      intersectionObserver = null;
       resizeObserver = null;
+      if (animationFrame) {
+        window.cancelAnimationFrame(animationFrame);
+        animationFrame = 0;
+      }
     };
 
     const connect = () => {
       disconnect();
 
       if (!query.matches) {
+        pinnedSnapshot = false;
         setPinned(false);
         setHeight(0);
         return;
@@ -49,22 +85,20 @@ export function useMobilePinnedRail(
       if (!sentinel || !rail) return;
 
       syncHeight();
-      intersectionObserver = new IntersectionObserver(
-        ([entry]) => setPinned(!entry?.isIntersecting),
-        { rootMargin: `-${offsetPx}px 0px 0px 0px`, threshold: 0 }
-      );
-      intersectionObserver.observe(sentinel);
+      syncPinned();
 
       resizeObserver = new ResizeObserver(syncHeight);
       resizeObserver.observe(rail);
     };
 
     connect();
+    window.addEventListener("scroll", scheduleSyncPinned, { passive: true });
     window.addEventListener("resize", syncHeight);
     query.addEventListener?.("change", connect);
 
     return () => {
       disconnect();
+      window.removeEventListener("scroll", scheduleSyncPinned);
       window.removeEventListener("resize", syncHeight);
       query.removeEventListener?.("change", connect);
     };

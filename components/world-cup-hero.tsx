@@ -21,6 +21,7 @@ import { useNow } from "@/lib/use-now";
 import { getVenueBannerImage } from "@/lib/venue-assets";
 import { fallbackTopScorerProfiles, fetchWorldCupTopScorers, type WorldCupTopScorer } from "@/lib/world-cup-top-scorers";
 import type { Match } from "@/types/match";
+import { OptimizedImage } from "./optimized-image";
 import { LiveMatchCard } from "./world-cup-hero/live-match-card";
 import { Metric } from "./world-cup-hero/metric";
 import { TeamSignal } from "./world-cup-hero/team-signal";
@@ -52,7 +53,7 @@ function PopularTeamsCard({ popularTeams, className = "" }: { popularTeams: Popu
           const opacities = ["/1", "/0.8", "/0.6", "/0.4", "/0.3"];
           const content = (
             <>
-              <img src={team.flag} alt={team.name} className="h-4 w-6 shrink-0 rounded object-cover ring-1 ring-white/10" loading="lazy" />
+              <OptimizedImage src={team.flag} alt={team.name} className="h-4 w-6 shrink-0 rounded object-cover ring-1 ring-white/10" width={24} height={16} />
               <span className="min-w-0 flex-1 truncate text-sm text-white/82 transition-colors group-hover:text-volt">{team.name}</span>
               <span className="tabular shrink-0 font-semibold" style={{ fontSize: "1rem", color: `rgb(255 154 31 ${opacities[index]})` }}>{team.pct}%</span>
             </>
@@ -140,23 +141,60 @@ function ProgressCard({
 
 export function WorldCupHero({ matches, firstMatch, progress, completedCount, ongoingCount, calendarUrl, webcalUrl, matchCount }: WorldCupHeroProps) {
   const currentTime = useNow(1_000);
-  const { news: fifaNews, loading: newsLoading } = useFifaNews();
+  const [isDesktop, setIsDesktop] = useState(false);
+  const { news: fifaNews, loading: newsLoading } = useFifaNews(isDesktop);
   const popularTeams = usePopularTeams();
   const [topScorers, setTopScorers] = useState<WorldCupTopScorer[]>(fallbackTopScorerProfiles);
 
   useEffect(() => {
-    let active = true;
-    fetchWorldCupTopScorers()
-      .then((items) => {
-        if (active) setTopScorers(items.length ? items.slice(0, 5) : fallbackTopScorerProfiles);
-      })
-      .catch((error) => {
-        console.warn("[WorldCupHero] top scorers unavailable:", error);
-        if (active) setTopScorers(fallbackTopScorerProfiles);
-      })
+    const mediaQuery = window.matchMedia("(min-width: 1024px)");
+    const syncDesktopState = () => setIsDesktop(mediaQuery.matches);
+
+    syncDesktopState();
+    mediaQuery.addEventListener("change", syncDesktopState);
+
+    return () => mediaQuery.removeEventListener("change", syncDesktopState);
+  }, []);
+
+  useEffect(() => {
+    const loadTopScorers = () => {
+      let active = true;
+      fetchWorldCupTopScorers()
+        .then((items) => {
+          if (active) setTopScorers(items.length ? items.slice(0, 5) : fallbackTopScorerProfiles);
+        })
+        .catch((error) => {
+          console.warn("[WorldCupHero] top scorers unavailable:", error);
+          if (active) setTopScorers(fallbackTopScorerProfiles);
+        });
+
+      return () => {
+        active = false;
+      };
+    };
+
+    let cleanup: (() => void) | undefined;
+    const start = () => {
+      cleanup = loadTopScorers();
+    };
+
+    let idleId: number | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    if (typeof window.requestIdleCallback === "function") {
+      idleId = window.requestIdleCallback(start, { timeout: 2_500 });
+    } else {
+      timeoutId = setTimeout(start, 1_200);
+    }
 
     return () => {
-      active = false;
+      if (idleId !== null) {
+        window.cancelIdleCallback(idleId);
+      }
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId);
+      }
+      cleanup?.();
     };
   }, []);
 
@@ -177,7 +215,7 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
   return (
     <section className="space-y-5">
       <div className="grid min-w-0 gap-5 lg:grid-cols-[.78fr_1.45fr_.78fr]">
-        <motion.aside initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08, duration: 0.72, ease: [0.16, 1, 0.3, 1] }} className="grid gap-5">
+        <motion.aside initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08, duration: 0.72, ease: [0.16, 1, 0.3, 1] }} className="order-2 grid gap-5 lg:order-1">
           <div className="world-cup-identity-card hero-card relative h-auto min-h-[230px] overflow-hidden p-5">
             <div className="absolute inset-0 opacity-45 [background-image:radial-gradient(circle_at_78%_62%,rgba(216,255,62,.18),transparent_30%),radial-gradient(circle_at_45%_48%,rgba(255,255,255,.07)_1px,transparent_1px)] [background-size:auto,12px_12px]" />
             <div className="relative flex h-full flex-col justify-between gap-4">
@@ -189,16 +227,22 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
                   <p className="mt-1 text-xs uppercase tracking-[0.1em] text-white/48">美国 · 加拿大 · 墨西哥</p>
                 </div>
                 <div className="flex h-full -translate-x-[15%] items-stretch justify-end sm:hidden">
-                  <img
+                  <OptimizedImage
                     src="/logos/world-cup-2026-inverted.svg"
                     alt=""
                     className="site-logo-dark pointer-events-none h-full w-auto object-contain opacity-90 drop-shadow-[0_12px_34px_rgba(0,0,0,.55)]"
+                    width={72}
+                    height={188}
+                    priority
                     aria-hidden="true"
                   />
-                  <img
+                  <OptimizedImage
                     src="/logos/world-cup-2026-alternate.svg"
                     alt=""
                     className="site-logo-light pointer-events-none h-full w-auto object-contain opacity-90 drop-shadow-[0_12px_34px_rgba(0,0,0,.18)]"
+                    width={72}
+                    height={188}
+                    priority
                     aria-hidden="true"
                   />
                 </div>
@@ -223,9 +267,17 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
           <PopularTeamsCard popularTeams={popularTeams} className="hidden lg:block" />
         </motion.aside>
 
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14, duration: 0.78, ease: [0.16, 1, 0.3, 1] }} className="grid gap-5">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14, duration: 0.78, ease: [0.16, 1, 0.3, 1] }} className="order-1 grid gap-5 lg:order-2">
           <div className="next-match-card hero-card relative min-h-[312px] overflow-hidden p-0 sm:min-h-[330px]">
-            <img src={nextMatchBackground ?? "/estadio-azteca-aerial.webp"} alt="" aria-hidden="true" className="next-match-media absolute inset-0 h-full w-full object-cover object-[78%_50%] opacity-[.82] saturate-[1.08]" />
+            <OptimizedImage
+              src={nextMatchBackground ?? "/estadio-azteca-aerial.webp"}
+              alt=""
+              aria-hidden="true"
+              className="next-match-media absolute inset-0 h-full w-full object-cover object-[78%_50%] opacity-[.82] saturate-[1.08]"
+              width={980}
+              height={420}
+              priority
+            />
             <div className="next-match-shade absolute inset-0 bg-[linear-gradient(90deg,rgba(5,8,8,.98)_0%,rgba(5,8,8,.9)_34%,rgba(5,8,8,.42)_58%,rgba(5,8,8,.08)_100%),linear-gradient(0deg,rgba(5,8,8,.72)_0%,rgba(5,8,8,.08)_32%,rgba(5,8,8,.1)_100%),radial-gradient(circle_at_76%_52%,rgba(216,255,62,.2),transparent_26%)]" />
             <div className="next-match-glow absolute inset-0 bg-[radial-gradient(circle_at_24%_20%,rgba(216,255,62,.13),transparent_24%),radial-gradient(circle_at_68%_72%,rgba(255,154,31,.1),transparent_34%)]" />
             <div className="relative z-10 flex min-h-[312px] flex-col items-center justify-between px-5 pb-7 pt-5 sm:min-h-[330px] sm:p-8">
@@ -290,7 +342,7 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
           </div>
         </motion.div>
 
-        <motion.aside initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.72, ease: [0.16, 1, 0.3, 1] }} className="grid gap-5">
+        <motion.aside initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.72, ease: [0.16, 1, 0.3, 1] }} className="order-3 grid gap-5">
           <div className="hero-card hidden p-5 lg:block">
             <div className="mb-4 flex items-center justify-between gap-3 border-b border-white/[0.04] pb-3">
               <div><div className="flex items-center gap-2"><Newspaper className="h-4 w-4 text-volt" /><p className="text-sm font-semibold uppercase text-white">最新动态</p></div></div>
@@ -302,7 +354,7 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
             <div className="divide-y divide-white/[0.04]">
               {fifaNews.map((item, index) => (
                 <a key={`${item.id}-${item.href || index}`} href={item.href} target="_blank" rel="noreferrer" className="group grid min-h-[84px] grid-cols-[88px_minmax(0,1fr)] gap-3 py-3 transition hover:opacity-80">
-                  {item.thumbnail ? (<img src={item.thumbnail} alt={item.tag} className="h-[58px] w-[88px] shrink-0 rounded-2xl object-cover ring-1 ring-white/10" loading="lazy" />) : (<span className="grid h-[58px] w-[88px] shrink-0 place-items-center rounded-2xl bg-volt/10 text-[10px] font-semibold uppercase tracking-[0.12em] text-volt ring-1 ring-volt/20">{item.tag.slice(0, 8)}</span>)}
+                  {item.thumbnail ? (<OptimizedImage src={item.thumbnail} alt={item.tag} className="h-[58px] w-[88px] shrink-0 rounded-2xl object-cover ring-1 ring-white/10" width={88} height={58} />) : (<span className="grid h-[58px] w-[88px] shrink-0 place-items-center rounded-2xl bg-volt/10 text-[10px] font-semibold uppercase tracking-[0.12em] text-volt ring-1 ring-volt/20">{item.tag.slice(0, 8)}</span>)}
                   <span className="flex min-w-0 flex-col justify-center">
                     <span className="line-clamp-2 min-h-10 text-sm font-medium leading-5 text-white/82 transition group-hover:text-volt">{item.title}</span>
                     <span className="mt-1 block truncate text-[10px] tracking-[0.08em] text-white/32">{item.source} · {item.date}</span>
@@ -325,13 +377,13 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
                 <Link key={player.id} href={`/players/${player.id}/`} className="group flex items-center gap-2 py-2 transition">
                   <span className={`tabular w-5 shrink-0 text-xs font-semibold transition-colors group-hover:text-volt ${index < 3 ? "text-volt" : "text-white/40"}`}>{index + 1}</span>
                   {player.photo ? (
-                    <img src={player.photo} alt={player.name} className="h-7 w-7 shrink-0 rounded-full object-cover ring-1 ring-white/12" loading="lazy" />
+                    <OptimizedImage src={player.photo} alt={player.name} className="h-7 w-7 shrink-0 rounded-full object-cover ring-1 ring-white/12" width={28} height={28} />
                   ) : (
                     <span className="h-7 w-7 shrink-0 rounded-full bg-white/[0.06] ring-1 ring-white/10" />
                   )}
                   <span className="min-w-0 flex-1 truncate text-sm text-white/82 transition-colors group-hover:text-volt">{player.name}</span>
                   <span className="flex w-16 shrink-0 items-center gap-1.5 text-left text-[10px] text-white/40 transition-colors group-hover:text-white/62">
-                    {player.teamLogo && <img src={player.teamLogo} alt={player.teamName} className="h-3.5 w-3.5 shrink-0 rounded-full object-contain" loading="lazy" />}
+                    {player.teamLogo && <OptimizedImage src={player.teamLogo} alt={player.teamName} className="h-3.5 w-3.5 shrink-0 rounded-full object-contain" width={14} height={14} />}
                     <span className="min-w-0 truncate">{player.teamName}</span>
                   </span>
                   <span className="tabular w-5 shrink-0 text-center text-sm font-semibold text-volt transition-colors group-hover:text-white">{player.goals ?? "—"}</span>

@@ -7,7 +7,6 @@ import "./light-theme-polish.css";
 import { ThemeInit } from "@/components/theme-init";
 import { MobileNavBar } from "@/components/mobile-nav-bar";
 import { MobileTopBarProvider } from "@/components/mobile-top-bar-provider";
-import { NativeRuntimeInit } from "@/components/native-runtime-init";
 import { SiteAnalyticsProvider } from "@/components/site-analytics-provider";
 import { SupportCreatorModal } from "@/components/support-creator-modal";
 import { PwaRegister } from "@/components/pwa-register";
@@ -85,6 +84,7 @@ export const viewport: Viewport = {
 };
 
 const themeScript = "(function(){try{var t=localStorage.getItem('wc-theme');if(t!=='light'&&t!=='dark')t='dark';document.documentElement.setAttribute('data-theme',t)}catch(e){document.documentElement.setAttribute('data-theme','dark')}})()";
+const nativeRuntimeScript = "(function(){try{var c=window.Capacitor;if(!c||!c.isNativePlatform||!c.isNativePlatform())return;document.documentElement.dataset.nativeApp='capacitor';document.body.dataset.nativeApp='capacitor';document.body.style.overflowX='hidden';document.body.style.overflowY='auto'}catch(e){}})()";
 
 export default function RootLayout({
   children
@@ -101,7 +101,7 @@ export default function RootLayout({
           <UserSessionProvider>
             <MobileTopBarProvider>
               <ThemeInit />
-              <NativeRuntimeInit />
+              <script dangerouslySetInnerHTML={{ __html: nativeRuntimeScript }} />
               <PwaRegister />
               <Suspense fallback={null}>
                 <WechatShareBridge />

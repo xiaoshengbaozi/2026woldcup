@@ -4,3 +4,5 @@ export const mobileFloatingSurfaceShadow =
 export const mobileFloatingSurfaceStyle = {
   boxShadow: mobileFloatingSurfaceShadow,
 };
+
+export const mobileFloatingSurfaceBlur = "blur(var(--mobile-surface-blur, 18px)) saturate(1.08)";

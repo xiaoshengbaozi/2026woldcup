@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { CalendarDays, ChevronRight, Clock3, MapPin, Star, Zap } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { OptimizedImage } from "@/components/optimized-image";
 import { UserActionButton } from "@/components/user-action-button";
 import { useUserSession } from "@/components/user-session-provider";
 import { buildFavoriteMatchCards, compactFavoriteMatchStage, formatFavoriteVenueLine, getFavoriteTeamCode, type FavoriteMatchCard } from "@/lib/favorite-matches";
@@ -47,9 +48,9 @@ function FavoriteMatchListCard({ match, index }: { match: FavoriteMatchCard; ind
       initial={{ opacity: 0, x: 12, scale: 0.992 }}
       animate={{ opacity: 1, x: 0, scale: 1 }}
       transition={{ duration: 0.24, delay: Math.min(index * 0.035, 0.2), ease: [0.22, 1, 0.36, 1] }}
-      className="favorite-match-list-card hero-card relative overflow-hidden rounded-[2rem] px-4 py-4 transition"
+      className="favorite-match-list-card hero-card premium-mobile-surface relative overflow-hidden rounded-[2rem] px-4 py-4 transition"
     >
-      <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-volt/35 to-transparent" />
+      <div className="premium-mobile-hairline" />
       <div className="relative flex items-center justify-between gap-3 px-1 text-xs font-semibold text-white/48">
         <span className="inline-flex min-w-0 items-center gap-1.5">
           <Zap className="h-3.5 w-3.5 shrink-0 text-volt" />
@@ -72,17 +73,21 @@ function FavoriteMatchListCard({ match, index }: { match: FavoriteMatchCard; ind
         <TeamColumn team={match.home} align="left" />
         <div className="grid place-items-center pb-1">
           <div className="favorite-match-logo-frame relative grid h-[58px] w-[68px] place-items-center">
-            <img
+            <OptimizedImage
               src="/logos/world-cup-2026-inverted.svg"
               alt="FIFA World Cup 2026"
               className="favorite-match-logo-dark h-[58px] w-[66px] object-contain drop-shadow-[0_12px_28px_rgba(0,0,0,.45)]"
-              loading={index < 2 ? "eager" : "lazy"}
+              width={66}
+              height={58}
+              priority={index < 2}
             />
-            <img
+            <OptimizedImage
               src="/logos/world-cup-2026-alternate.svg"
               alt="FIFA World Cup 2026"
               className="favorite-match-logo-light hidden h-[58px] w-[66px] object-contain drop-shadow-[0_10px_22px_rgba(0,0,0,.16)]"
-              loading={index < 2 ? "eager" : "lazy"}
+              width={66}
+              height={58}
+              priority={index < 2}
             />
           </div>
         </div>
@@ -165,7 +170,7 @@ function TeamMark({ team }: { team: Team }) {
   return (
     <div className="grid h-8 w-8 place-items-center overflow-hidden rounded-full bg-white/10 ring-1 ring-white/[0.08]">
       {team.image ? (
-        <img src={team.image} alt="" className="h-full w-full object-cover" loading="lazy" />
+        <OptimizedImage src={team.image} alt="" className="h-full w-full object-cover" width={32} height={32} />
       ) : (
         <span className="text-[10px] font-black text-white">{team.badge}</span>
       )}

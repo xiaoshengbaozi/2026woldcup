@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node scripts/generate-article-index.mjs",
+    "articles:index": "node scripts/generate-article-index.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

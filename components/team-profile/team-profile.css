@@ -1453,6 +1453,7 @@
 }
 
 .tp-content-panel {
+  box-sizing: border-box;
   min-height: 178px;
   width: 100%;
   padding: 26px;
@@ -1616,9 +1617,11 @@
 
   .tp-content-tabs {
     position: relative;
-    left: 50%;
-    width: 100vw;
-    transform: translateX(-50%);
+    left: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    transform: none;
     flex-wrap: nowrap;
     gap: 6px;
     min-height: 40px;
@@ -1633,7 +1636,8 @@
   .tp-content-tabs.fixed {
     position: fixed;
     left: 0;
-    width: auto;
+    right: 0;
+    width: 100vw;
     transform: none;
     margin: 0;
     background: transparent;
@@ -2067,6 +2071,39 @@
 @media (max-width: 520px) {
   .tp-overview-strip {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+    max-width: 100%;
+    gap: 8px;
+    overflow: hidden;
+  }
+
+  .tp-content-panel.tp-content-panel--bare {
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .tp-deep-dive,
+  .tp-stories {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .tp-overview-card {
+    min-width: 0;
+    min-height: 96px;
+    padding: 14px 6px;
+  }
+
+  .tp-overview-value {
+    font-size: clamp(20px, 6vw, 26px);
+    overflow-wrap: anywhere;
+  }
+
+  .tp-overview-label,
+  .tp-overview-note {
+    font-size: 9px;
+    overflow-wrap: anywhere;
   }
 
   .tp-history-grid {
