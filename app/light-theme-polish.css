@@ -1551,6 +1551,115 @@
   color: var(--lm-text-secondary) !important;
 }
 
+[data-theme="light"] .match-odds-panel {
+  color: var(--lm-text-primary) !important;
+}
+
+[data-theme="light"] .match-odds-shell-glow {
+  background:
+    radial-gradient(circle at 18% 0%, rgba(54, 65, 44, 0.08), transparent 32%),
+    radial-gradient(circle at 92% 18%, rgba(172, 126, 64, 0.08), transparent 34%) !important;
+}
+
+[data-theme="light"] .match-odds-section-header,
+[data-theme="light"] .match-odds-footer {
+  border-color: var(--lm-border) !important;
+}
+
+[data-theme="light"] .match-odds-title,
+[data-theme="light"] .match-odds-team-label,
+[data-theme="light"] .match-odds-market-tile .text-white\/70,
+[data-theme="light"] .match-odds-footer-value {
+  color: var(--lm-text-primary) !important;
+}
+
+[data-theme="light"] .match-odds-status,
+[data-theme="light"] .match-odds-status .text-white\/35,
+[data-theme="light"] .match-odds-meta,
+[data-theme="light"] .match-odds-ticker,
+[data-theme="light"] .match-odds-team-code,
+[data-theme="light"] .match-odds-market-label,
+[data-theme="light"] .match-odds-market-depth,
+[data-theme="light"] .match-odds-footer-stat,
+[data-theme="light"] .match-odds-empty-copy {
+  color: var(--lm-text-muted) !important;
+}
+
+[data-theme="light"] .match-odds-card {
+  background:
+    linear-gradient(135deg, rgba(255, 254, 250, 0.94), rgba(243, 247, 237, 0.82)),
+    #fffefa !important;
+  border-color: var(--lm-border-strong) !important;
+  box-shadow:
+    0 16px 34px rgba(31, 43, 26, 0.075),
+    0 0 28px -18px rgba(54, 65, 44, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    inset 0 -1px 0 rgba(54, 65, 44, 0.045) !important;
+}
+
+[data-theme="light"] .match-odds-card-top-glow {
+  background: linear-gradient(to bottom, rgba(54, 65, 44, 0.07), transparent) !important;
+}
+
+[data-theme="light"] .match-odds-vs-icon {
+  background: rgba(54, 65, 44, 0.07) !important;
+  border-color: rgba(54, 65, 44, 0.12) !important;
+  box-shadow: 0 0 20px rgba(54, 65, 44, 0.08) !important;
+}
+
+[data-theme="light"] .match-odds-vs-line {
+  background-color: rgba(54, 65, 44, 0.12) !important;
+}
+
+[data-theme="light"] .match-odds-score-separator {
+  color: rgba(54, 65, 44, 0.28) !important;
+}
+
+[data-theme="light"] .match-odds-divider {
+  background: linear-gradient(to right, transparent, rgba(54, 65, 44, 0.16), transparent) !important;
+}
+
+[data-theme="light"] .match-odds-team-flag {
+  box-shadow: 0 7px 18px rgba(31, 43, 26, 0.1) !important;
+}
+
+[data-theme="light"] .match-odds-team-flag.ring-white\/10,
+[data-theme="light"] .match-odds-team-placeholder {
+  --tw-ring-color: rgba(54, 65, 44, 0.12) !important;
+}
+
+[data-theme="light"] .match-odds-team-placeholder,
+[data-theme="light"] .match-odds-empty {
+  background: rgba(246, 248, 241, 0.82) !important;
+  color: var(--lm-text-muted) !important;
+  --tw-ring-color: rgba(54, 65, 44, 0.12) !important;
+}
+
+[data-theme="light"] .match-odds-empty-title {
+  color: var(--lm-text-primary) !important;
+}
+
+[data-theme="light"] .match-odds-error {
+  background: rgba(255, 154, 31, 0.08) !important;
+  border-color: rgba(172, 126, 64, 0.18) !important;
+  color: #9a5a16 !important;
+}
+
+[data-theme="light"] .match-odds-market-tile {
+  background: rgba(246, 248, 241, 0.82) !important;
+  border-color: var(--lm-border) !important;
+}
+
+[data-theme="light"] .match-odds-market-tile-hot {
+  background: rgba(216, 255, 62, 0.16) !important;
+  border-color: rgba(54, 65, 44, 0.18) !important;
+  box-shadow: 0 0 22px rgba(216, 255, 62, 0.16) !important;
+}
+
+[data-theme="light"] .match-odds-probability-track {
+  background: rgba(54, 65, 44, 0.1) !important;
+}
+
 [data-theme="light"] .favorite-prediction-bolt {
   background: rgba(54, 65, 44, 0.07) !important;
   border-color: rgba(54, 65, 44, 0.12) !important;

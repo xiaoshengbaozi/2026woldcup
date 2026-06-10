@@ -123,6 +123,10 @@ function getFallbackApiUrl() {
   if (typeof window === "undefined") return PRODUCTION_API_URL;
 
   const { hostname, port, protocol } = window.location;
+  if (hostname === "localhost" && protocol === "https:" && !port) {
+    return PRODUCTION_API_URL;
+  }
+
   if (LOCAL_HOSTS.has(hostname)) {
     return LOCAL_API_URL;
   }

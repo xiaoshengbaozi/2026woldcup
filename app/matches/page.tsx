@@ -9,6 +9,7 @@ import { MobileMatchDayStrip, type MatchDayOption } from "@/components/mobile-ma
 import { ScheduleList } from "@/components/schedule-list";
 import { extractCity, groupMatchesByDay } from "@/lib/calendar";
 import { getStageGroupId } from "@/lib/stage";
+import { useMobilePinnedRail } from "@/lib/use-mobile-pinned-rail";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
 
 export type ScheduleLayout = "default" | "waterfall" | "topology" | "calendar";
@@ -26,8 +27,11 @@ export default function MatchesPage() {
   const [selectedDay, setSelectedDay] = useState("");
   const mobileRailSentinelRef = useRef<HTMLDivElement>(null);
   const mobileRailRef = useRef<HTMLDivElement>(null);
-  const [isMobileRailPinned, setIsMobileRailPinned] = useState(false);
-  const [mobileRailHeight, setMobileRailHeight] = useState(0);
+  const { pinned: isMobileRailPinned, height: mobileRailHeight } = useMobilePinnedRail(
+    mobileRailSentinelRef,
+    mobileRailRef,
+    MOBILE_MATCH_RAIL_STICKY_OFFSET
+  );
 
   useEffect(() => {
     const requestedLayout = new URLSearchParams(window.location.search).get("layout");
@@ -94,37 +98,6 @@ export default function MatchesPage() {
   useEffect(() => {
     if (!cities.includes(activeCity)) setActiveCity("全部城市");
   }, [activeCity, cities, setActiveCity]);
-
-  useEffect(() => {
-    const mobileQuery = window.matchMedia("(max-width: 639px)");
-
-    const syncPinnedState = () => {
-      if (!mobileQuery.matches) {
-        setIsMobileRailPinned(false);
-        setMobileRailHeight(0);
-        return;
-      }
-
-      const sentinel = mobileRailSentinelRef.current;
-      const rail = mobileRailRef.current;
-      if (!sentinel || !rail) return;
-
-      const nextHeight = rail.offsetHeight;
-      setMobileRailHeight((current) => (current === nextHeight ? current : nextHeight));
-      setIsMobileRailPinned(sentinel.getBoundingClientRect().top <= MOBILE_MATCH_RAIL_STICKY_OFFSET);
-    };
-
-    syncPinnedState();
-    window.addEventListener("scroll", syncPinnedState, { passive: true });
-    window.addEventListener("resize", syncPinnedState);
-    mobileQuery.addEventListener?.("change", syncPinnedState);
-
-    return () => {
-      window.removeEventListener("scroll", syncPinnedState);
-      window.removeEventListener("resize", syncPinnedState);
-      mobileQuery.removeEventListener?.("change", syncPinnedState);
-    };
-  }, []);
 
   useEffect(() => {
     window.dispatchEvent(new CustomEvent("mobile-top-rail-change", {

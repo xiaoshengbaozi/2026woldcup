@@ -9,6 +9,7 @@ import { DashboardShell } from "@/components/dashboard-shell";
 import { FilterDropdown } from "@/components/match-filters";
 import { UserActionButton } from "@/components/user-action-button";
 import { useUserSession } from "@/components/user-session-provider";
+import { useMobilePinnedRail } from "@/lib/use-mobile-pinned-rail";
 import playerArticles from "@/data/player-articles.json";
 import { getOfficialPlayerCatalog, type OfficialPlayerCatalogItem } from "@/lib/official-player-catalog";
 import { fetchWorldCupTopScorers, type WorldCupTopScorer } from "@/lib/world-cup-top-scorers";
@@ -72,8 +73,11 @@ export function PlayersClient() {
   const mobileFiltersSentinelRef = useRef<HTMLDivElement>(null);
   const mobileFiltersRef = useRef<HTMLDivElement>(null);
   const signedInDefaultAppliedRef = useRef(false);
-  const [isMobileFiltersPinned, setIsMobileFiltersPinned] = useState(false);
-  const [mobileFiltersHeight, setMobileFiltersHeight] = useState(0);
+  const { pinned: isMobileFiltersPinned, height: mobileFiltersHeight } = useMobilePinnedRail(
+    mobileFiltersSentinelRef,
+    mobileFiltersRef,
+    MOBILE_PLAYERS_FILTERS_STICKY_OFFSET
+  );
   const [topScorers, setTopScorers] = useState<WorldCupTopScorer[]>([]);
   const [topScorersLoading, setTopScorersLoading] = useState(true);
   const { home } = useUserSession();
@@ -184,37 +188,6 @@ export function PlayersClient() {
       if (activeTab === "following") setActiveTab("superstars");
     }
   }, [activeTab, signedIn]);
-
-  useEffect(() => {
-    const mobileQuery = window.matchMedia("(max-width: 639px)");
-
-    const syncPinnedState = () => {
-      if (!mobileQuery.matches) {
-        setIsMobileFiltersPinned(false);
-        setMobileFiltersHeight(0);
-        return;
-      }
-
-      const sentinel = mobileFiltersSentinelRef.current;
-      const filters = mobileFiltersRef.current;
-      if (!sentinel || !filters) return;
-
-      const nextHeight = filters.offsetHeight;
-      setMobileFiltersHeight((current) => (current === nextHeight ? current : nextHeight));
-      setIsMobileFiltersPinned(sentinel.getBoundingClientRect().top <= MOBILE_PLAYERS_FILTERS_STICKY_OFFSET);
-    };
-
-    syncPinnedState();
-    window.addEventListener("scroll", syncPinnedState, { passive: true });
-    window.addEventListener("resize", syncPinnedState);
-    mobileQuery.addEventListener?.("change", syncPinnedState);
-
-    return () => {
-      window.removeEventListener("scroll", syncPinnedState);
-      window.removeEventListener("resize", syncPinnedState);
-      mobileQuery.removeEventListener?.("change", syncPinnedState);
-    };
-  }, []);
 
   useEffect(() => {
     window.dispatchEvent(new CustomEvent("mobile-top-rail-change", {

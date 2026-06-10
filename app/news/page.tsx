@@ -6,6 +6,7 @@ import { ExternalLink, Languages, Loader2, Newspaper, X } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { useUserSession } from "@/components/user-session-provider";
 import { cachedJson, fetchWithTimeout } from "@/lib/request-cache";
+import { useMobilePinnedRail } from "@/lib/use-mobile-pinned-rail";
 
 type NewsItem = {
   id: string;
@@ -137,8 +138,13 @@ export default function NewsPage() {
   const headlineRef = useRef<HTMLElement>(null);
   const editorRef = useRef<HTMLElement>(null);
   const latestRef = useRef<HTMLElement>(null);
-  const [isMobileTabsPinned, setIsMobileTabsPinned] = useState(false);
-  const [mobileTabsHeight, setMobileTabsHeight] = useState(0);
+  const activeTabFrameRef = useRef<number | null>(null);
+  const { pinned: isMobileTabsPinned, height: mobileTabsHeight } = useMobilePinnedRail(
+    mobileTabsSentinelRef,
+    mobileTabsRef,
+    MOBILE_TOP_MODULE_OFFSET,
+    "(max-width: 1023px)"
+  );
 
   const endpoint = useMemo(() => {
     const params = new URLSearchParams({ limit: "72" });
@@ -189,32 +195,28 @@ export default function NewsPage() {
       setActiveNewsTab((current) => (current === nextActive ? current : nextActive));
     };
 
-    const syncPinnedState = () => {
-      if (!mobileQuery.matches) {
-        setIsMobileTabsPinned(false);
-        setMobileTabsHeight(0);
-        return;
-      }
+    const scheduleSyncActiveTab = () => {
+      if (activeTabFrameRef.current !== null) return;
+      activeTabFrameRef.current = window.requestAnimationFrame(() => {
+        activeTabFrameRef.current = null;
+        syncActiveTab();
+      });
+    };
 
-      const sentinel = mobileTabsSentinelRef.current;
-      const tabs = mobileTabsRef.current;
-      if (!sentinel || !tabs) return;
-
-      const nextHeight = tabs.offsetHeight;
-      setMobileTabsHeight((current) => (current === nextHeight ? current : nextHeight));
-      setIsMobileTabsPinned(sentinel.getBoundingClientRect().top <= MOBILE_TOP_MODULE_OFFSET);
+    const handleMediaChange = () => {
       syncActiveTab();
     };
 
-    syncPinnedState();
-    window.addEventListener("scroll", syncPinnedState, { passive: true });
-    window.addEventListener("resize", syncPinnedState);
-    mobileQuery.addEventListener?.("change", syncPinnedState);
+    syncActiveTab();
+    window.addEventListener("scroll", scheduleSyncActiveTab, { passive: true });
+    window.addEventListener("resize", scheduleSyncActiveTab);
+    mobileQuery.addEventListener?.("change", handleMediaChange);
 
     return () => {
-      window.removeEventListener("scroll", syncPinnedState);
-      window.removeEventListener("resize", syncPinnedState);
-      mobileQuery.removeEventListener?.("change", syncPinnedState);
+      if (activeTabFrameRef.current !== null) window.cancelAnimationFrame(activeTabFrameRef.current);
+      window.removeEventListener("scroll", scheduleSyncActiveTab);
+      window.removeEventListener("resize", scheduleSyncActiveTab);
+      mobileQuery.removeEventListener?.("change", handleMediaChange);
     };
   }, []);
 

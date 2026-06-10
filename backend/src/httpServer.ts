@@ -36,8 +36,11 @@ const CACHE_PUBLIC_MEDIUM = "public, max-age=300, stale-while-revalidate=900, st
 const CACHE_PUBLIC_LONG = "public, max-age=3600, stale-while-revalidate=86400, stale-if-error=604800";
 const CORS_PREFLIGHT_MAX_AGE_SECONDS = 86400;
 const NEWS_PROXY_TIMEOUT_MS = 5_000;
+const NEWS_PROXY_STALE_TTL_MS = 24 * 60 * 60 * 1000;
+const newsProxyCache = new Map<string, { savedAt: number; payload: Record<string, unknown> }>();
 const DEFAULT_CORS_ORIGINS = [
   "https://ball.boyzi.fun",
+  "https://localhost",
   "https://beta-wzja.world-cup-2026-625.pages.dev",
   "https://world-cup-2026-625.pages.dev",
   "http://localhost:3000",
@@ -476,23 +479,38 @@ function handleNewsRequest(url: URL, res: http.ServerResponse) {
     .replace(/\/+$/, "");
   const params = new URLSearchParams(url.searchParams);
   if (!params.has("limit")) params.set("limit", "24");
+  const cacheKey = `${newsApi}/api/news?${params.toString()}`;
 
-  fetchWithTimeout(`${newsApi}/api/news?${params.toString()}`, { cache: "no-store" }, NEWS_PROXY_TIMEOUT_MS)
+  fetchWithTimeout(cacheKey, { cache: "no-store" }, NEWS_PROXY_TIMEOUT_MS)
     .then(async (response) => {
       const payload = await response.json().catch(() => null);
       if (!response.ok) {
-        sendJson(res, { error: "news_api_request_failed", status: response.status, details: payload }, response.status);
-        return;
+        throw Object.assign(new Error("news_api_request_failed"), {
+          status: response.status,
+          details: payload,
+        });
       }
-      sendCachedJson(res, {
+      const nextPayload = {
         source: "news-api",
         endpoint: newsApi,
         timestamp: Date.now(),
         ...payload,
-      }, CACHE_PUBLIC_MEDIUM);
+      };
+      newsProxyCache.set(cacheKey, { savedAt: Date.now(), payload: nextPayload });
+      sendCachedJson(res, nextPayload, CACHE_PUBLIC_MEDIUM);
     })
-    .catch((error: Error) => {
-      sendJson(res, { error: error.message || "news_api_unavailable" }, 502);
+    .catch((error: Error & { status?: number; details?: unknown }) => {
+      const cached = newsProxyCache.get(cacheKey);
+      if (cached && Date.now() - cached.savedAt <= NEWS_PROXY_STALE_TTL_MS) {
+        sendCachedJson(res, {
+          ...cached.payload,
+          stale: true,
+          staleReason: error.message || "news_api_unavailable",
+        }, CACHE_PUBLIC_SHORT);
+        return;
+      }
+
+      sendJson(res, { error: error.message || "news_api_unavailable", details: error.details }, error.status ?? 502);
     });
 }
 

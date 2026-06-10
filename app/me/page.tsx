@@ -34,6 +34,7 @@ import {
   type UserPreferencePlayer,
   type UserPreferenceTeam,
 } from "@/lib/user-preferences";
+import { useUserPreferenceCatalog } from "@/lib/use-user-preferences";
 import { useUserSession } from "@/components/user-session-provider";
 import { userApi, type PublicUser, type UserHomePayload } from "@/lib/user-system";
 import { fetchMyPlayerXTimeline, type PlayerXTimelinePayload } from "@/lib/player-x-timeline";
@@ -286,7 +287,8 @@ function MePageContent() {
   const resetToken = searchParams.get("resetToken");
   const { home: sessionHome, signedIn, loading: sessionLoading, refreshSession, clearSession } = useUserSession();
   const [home, setHome] = useState<UserHomePayload | null>(null);
-  const [catalog, setCatalog] = useState<UserPreferenceCatalog>(fallbackUserPreferenceCatalog);
+  const sharedCatalog = useUserPreferenceCatalog(true);
+  const [catalog, setCatalog] = useState<UserPreferenceCatalog>(sharedCatalog);
   const [topScorers, setTopScorers] = useState<WorldCupTopScorer[]>(DEFAULT_TOP_SCORERS);
   const [loading, setLoading] = useState(true);
   const [authMode, setAuthMode] = useState<AuthMode | null>(null);
@@ -331,14 +333,10 @@ function MePageContent() {
   }
 
   useEffect(() => {
-    userApi<UserPreferenceCatalog>("/api/user-preferences", { cache: "no-store" })
-      .then((payload) => {
-        setCatalog(payload);
-        setSelectedTeamIds((current) => (current.some((id) => payload.teams.some((team) => team.id === id)) ? current : compactIds(payload.teams[0]?.id)));
-        setSelectedPlayerIds((current) => (current.some((id) => payload.players.some((player) => player.id === id)) ? current : compactIds(payload.players[0]?.id)));
-      })
-      .catch(() => {});
-  }, []);
+    setCatalog(sharedCatalog);
+    setSelectedTeamIds((current) => (current.some((id) => sharedCatalog.teams.some((team) => team.id === id)) ? current : compactIds(sharedCatalog.teams[0]?.id)));
+    setSelectedPlayerIds((current) => (current.some((id) => sharedCatalog.players.some((player) => player.id === id)) ? current : compactIds(sharedCatalog.players[0]?.id)));
+  }, [sharedCatalog]);
 
   useEffect(() => {
     if (sessionLoading) return;

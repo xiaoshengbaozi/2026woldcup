@@ -7,6 +7,7 @@ import "./light-theme-polish.css";
 import { ThemeInit } from "@/components/theme-init";
 import { MobileNavBar } from "@/components/mobile-nav-bar";
 import { MobileTopBarProvider } from "@/components/mobile-top-bar-provider";
+import { NativeRuntimeInit } from "@/components/native-runtime-init";
 import { SiteAnalyticsProvider } from "@/components/site-analytics-provider";
 import { SupportCreatorModal } from "@/components/support-creator-modal";
 import { PwaRegister } from "@/components/pwa-register";
@@ -100,6 +101,7 @@ export default function RootLayout({
           <UserSessionProvider>
             <MobileTopBarProvider>
               <ThemeInit />
+              <NativeRuntimeInit />
               <PwaRegister />
               <Suspense fallback={null}>
                 <WechatShareBridge />

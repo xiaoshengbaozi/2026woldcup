@@ -8,8 +8,10 @@ import { MeAuthDialog } from "@/components/me-auth-dialog";
 import { useUserSession } from "@/components/user-session-provider";
 import { usePredictionStore } from "@/lib/store/prediction-store";
 import { buildKnockoutMatchesForTopology, type StandingRow, type KnockoutMatch } from "@/lib/store/prediction";
-import { userApi, type PublicUser } from "@/lib/user-system";
-import { fallbackUserPreferenceCatalog, type UserPreferenceCatalog } from "@/lib/user-preferences";
+import { setPredictionArchives, usePredictionArchives, type PredictionArchive } from "@/lib/use-prediction-archives";
+import { useUserPreferenceCatalog } from "@/lib/use-user-preferences";
+import { userApi } from "@/lib/user-system";
+import { fallbackUserPreferenceCatalog } from "@/lib/user-preferences";
 import { ChevronLeft, Clock3, FolderOpen, GitBranch, LogIn, Maximize2, Minus, Plus, RotateCcw, Save, ShieldCheck, Shuffle, Trash2, Trophy, UserPlus, X } from "lucide-react";
 
 /* ── Helpers ── */
@@ -1016,7 +1018,6 @@ function PredictionProgressTrack({ percent, gradientId }: { percent: number; gra
 type TabId = "groups" | "knockout";
 type AuthStatus = "checking" | "unauthenticated" | "allowed";
 type AccessMode = "login" | "register";
-type PredictionArchive = PublicUser["predictionArchives"][number];
 const LAST_PREDICTION_ARCHIVE_KEY = "worldcup-last-prediction-archive-id";
 
 function PredictAuthLoading() {
@@ -1090,26 +1091,14 @@ function PredictAccessGate({ onAuthenticated }: { onAuthenticated: () => void })
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [registerStep, setRegisterStep] = useState<"account" | "preferences">("account");
-  const [catalog, setCatalog] = useState<UserPreferenceCatalog>(fallbackUserPreferenceCatalog);
+  const catalog = useUserPreferenceCatalog(true);
   const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>(compactIds(fallbackUserPreferenceCatalog.teams[0]?.id));
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>(compactIds(fallbackUserPreferenceCatalog.players[0]?.id));
 
   useEffect(() => {
-    let active = true;
-
-    userApi<UserPreferenceCatalog>("/api/user-preferences", { cache: "no-store" })
-      .then((payload) => {
-        if (!active) return;
-        setCatalog(payload);
-        setSelectedTeamIds((current) => (current.some((id) => payload.teams.some((team) => team.id === id)) ? current : compactIds(payload.teams[0]?.id)));
-        setSelectedPlayerIds((current) => (current.some((id) => payload.players.some((player) => player.id === id)) ? current : compactIds(payload.players[0]?.id)));
-      })
-      .catch(() => {});
-
-    return () => {
-      active = false;
-    };
-  }, []);
+    setSelectedTeamIds((current) => (current.some((id) => catalog.teams.some((team) => team.id === id)) ? current : compactIds(catalog.teams[0]?.id)));
+    setSelectedPlayerIds((current) => (current.some((id) => catalog.players.some((player) => player.id === id)) ? current : compactIds(catalog.players[0]?.id)));
+  }, [catalog]);
 
   async function submitLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -1454,7 +1443,7 @@ function PredictionArchivePanel() {
   const groupScores = usePredictionStore((s) => s.groupScores);
   const knockoutPicks = usePredictionStore((s) => s.knockoutPicks);
   const progress = usePredictionStore((s) => s.getProgress());
-  const [archives, setArchives] = useState<PredictionArchive[]>([]);
+  const { archives, refresh } = usePredictionArchives(true);
   const [activeArchiveId, setActiveArchiveId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [busy, setBusy] = useState("");
@@ -1465,20 +1454,10 @@ function PredictionArchivePanel() {
   const selectedArchive = archives.find((archive) => archive.id === selectedArchiveId) ?? null;
 
   useEffect(() => {
-    let active = true;
-
-    userApi<{ archives: PredictionArchive[] }>("/api/me/prediction-archives", { cache: "no-store" })
-      .then((payload) => {
-        if (active) setArchives(payload.archives ?? []);
-      })
-      .catch(() => {
-        if (active) setMessage("存档读取失败，请确认后端服务在线");
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
+    void refresh().catch(() => {
+      setMessage("存档读取失败，请确认后端服务在线");
+    });
+  }, [refresh]);
 
   async function saveArchive() {
     setBusy("save");
@@ -1494,7 +1473,7 @@ function PredictionArchivePanel() {
           knockoutPicks,
         }),
       });
-      setArchives(payload.archives ?? (payload.archive ? [payload.archive] : []));
+      setPredictionArchives(payload.archives ?? (payload.archive ? [payload.archive] : []));
       if (payload.archive?.id) {
         setActiveArchiveId(payload.archive.id);
         window.localStorage.setItem(LAST_PREDICTION_ARCHIVE_KEY, payload.archive.id);
@@ -1529,7 +1508,7 @@ function PredictionArchivePanel() {
       const payload = await userApi<{ archives: PredictionArchive[] }>(`/api/me/prediction-archives/${id}`, {
         method: "DELETE",
       });
-      setArchives(payload.archives ?? []);
+      setPredictionArchives(payload.archives ?? []);
       if (activeArchiveId === id) {
         setActiveArchiveId(null);
         setName("");

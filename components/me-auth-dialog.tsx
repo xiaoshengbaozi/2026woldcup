@@ -12,6 +12,7 @@ import {
   type UserPreferencePlayer,
   type UserPreferenceTeam,
 } from "@/lib/user-preferences";
+import { useUserPreferenceCatalog } from "@/lib/use-user-preferences";
 import { injectMockData } from "@/lib/mock-data";
 import { useStore } from "@/lib/store";
 import { getFlagCode } from "@/lib/world-cup-2026";
@@ -44,7 +45,7 @@ type MeAuthDialogProps = {
 export function MeAuthDialog({ mode, onClose, onAuthenticated, resetToken }: MeAuthDialogProps) {
   const [currentMode, setCurrentMode] = useState<SharedAuthMode | null>(mode);
   const [loginView, setLoginView] = useState<"login" | "forgot" | "reset">("login");
-  const [catalog, setCatalog] = useState<UserPreferenceCatalog>(fallbackUserPreferenceCatalog);
+  const catalog = useUserPreferenceCatalog(Boolean(currentMode));
   const [registerStep, setRegisterStep] = useState<RegisterStep>("account");
   const [email, setEmail] = useState("demo@worldcup.local");
   const [password, setPassword] = useState("worldcup2026");
@@ -78,19 +79,9 @@ export function MeAuthDialog({ mode, onClose, onAuthenticated, resetToken }: MeA
 
   useEffect(() => {
     if (!currentMode) return;
-    let active = true;
-    userApi<UserPreferenceCatalog>("/api/user-preferences", { cache: "no-store" })
-      .then((payload) => {
-        if (!active) return;
-        setCatalog(payload);
-        setSelectedTeamIds((value) => (value.length ? value : compactIds(payload.teams[0]?.id)));
-        setSelectedPlayerIds((value) => (value.length ? value : ["lionel-messi"]));
-      })
-      .catch(() => undefined);
-    return () => {
-      active = false;
-    };
-  }, [currentMode, resetToken]);
+    setSelectedTeamIds((value) => (value.length ? value : compactIds(catalog.teams[0]?.id)));
+    setSelectedPlayerIds((value) => (value.length ? value : ["lionel-messi"]));
+  }, [catalog, currentMode]);
 
   useEffect(() => {
     if (!mode || countryCount > 0) return;

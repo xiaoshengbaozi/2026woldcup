@@ -3,12 +3,12 @@
 import { motion } from "framer-motion";
 import { Sparkles, Table } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { GROUPS, getTeamByCode } from "@/data/world-cup-2026-groups";
 import { getStageGroupId } from "@/lib/stage";
 import { getTeamDetailHrefByCode, getTeamDetailHrefByName } from "@/lib/team-links";
 import { parseTeams } from "@/lib/teams";
-import { userApi, type PublicUser } from "@/lib/user-system";
+import { usePredictionArchives } from "@/lib/use-prediction-archives";
 import { fetchWorldCupStandings, type NormalizedWorldCupStandingRow } from "@/lib/world-cup-api";
 import { getFlagUrl } from "@/lib/world-cup-2026";
 import type { Match, Team } from "@/types/match";
@@ -17,7 +17,6 @@ type GroupStandingsProps = {
   matches: Match[];
 };
 
-type PredictionArchive = PublicUser["predictionArchives"][number];
 type PredictionScore = { home: number; away: number } | null;
 
 type StandingTeam = Team & {
@@ -41,7 +40,7 @@ const LAST_PREDICTION_ARCHIVE_KEY = "worldcup-last-prediction-archive-id";
 
 export function GroupStandings({ matches }: GroupStandingsProps) {
   const [remoteStandings, setRemoteStandings] = useState<NormalizedWorldCupStandingRow[]>([]);
-  const [archives, setArchives] = useState<PredictionArchive[]>([]);
+  const { archives, refresh } = usePredictionArchives(true);
   const [activeArchiveId, setActiveArchiveId] = useState<string>("official");
 
   useEffect(() => {
@@ -60,29 +59,24 @@ export function GroupStandings({ matches }: GroupStandingsProps) {
     };
   }, []);
 
-  const loadArchives = useCallback(async (preferredArchiveId?: string | null) => {
-    try {
-      const payload = await userApi<{ archives: PredictionArchive[] }>("/api/me/prediction-archives", { cache: "no-store" });
-      const nextArchives = payload.archives ?? [];
-      setArchives(nextArchives);
-
-      const savedArchiveId = preferredArchiveId ?? window.localStorage.getItem(LAST_PREDICTION_ARCHIVE_KEY);
-      if (savedArchiveId && nextArchives.some((archive) => archive.id === savedArchiveId)) {
-        setActiveArchiveId(savedArchiveId);
-      }
-    } catch {
-      setArchives([]);
+  useEffect(() => {
+    const savedArchiveId = window.localStorage.getItem(LAST_PREDICTION_ARCHIVE_KEY);
+    if (savedArchiveId && archives.some((archive) => archive.id === savedArchiveId)) {
+      setActiveArchiveId(savedArchiveId);
+    } else if (activeArchiveId !== "official" && !archives.some((archive) => archive.id === activeArchiveId)) {
+      setActiveArchiveId("official");
     }
-  }, []);
+  }, [activeArchiveId, archives]);
 
   useEffect(() => {
-    void loadArchives();
+    void refresh().catch(() => undefined);
 
     const handleArchiveUpdate = (event: Event) => {
       const archiveId = (event as CustomEvent<{ archiveId?: string }>).detail?.archiveId;
-      void loadArchives(archiveId);
+      if (archiveId) setActiveArchiveId(archiveId);
+      void refresh().catch(() => undefined);
     };
-    const handleWindowFocus = () => void loadArchives();
+    const handleWindowFocus = () => void refresh().catch(() => undefined);
 
     window.addEventListener("prediction-archives-updated", handleArchiveUpdate);
     window.addEventListener("focus", handleWindowFocus);
@@ -91,7 +85,7 @@ export function GroupStandings({ matches }: GroupStandingsProps) {
       window.removeEventListener("prediction-archives-updated", handleArchiveUpdate);
       window.removeEventListener("focus", handleWindowFocus);
     };
-  }, [loadArchives]);
+  }, [refresh]);
 
   const activeArchive = archives.find((archive) => archive.id === activeArchiveId) ?? null;
   const fallbackGroups = useMemo(() => buildGroupStandings(matches), [matches]);

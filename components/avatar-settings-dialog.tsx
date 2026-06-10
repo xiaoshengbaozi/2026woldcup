@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Save, X } from "lucide-react";
 import { AvatarPicker } from "@/components/avatar-picker";
-import { fallbackUserPreferenceCatalog, type UserPreferenceCatalog } from "@/lib/user-preferences";
+import { useUserPreferenceCatalog } from "@/lib/use-user-preferences";
 import { userApi, type PublicUser } from "@/lib/user-system";
 
 type AvatarSettingsDialogProps = {
@@ -15,7 +15,7 @@ type AvatarSettingsDialogProps = {
 };
 
 export function AvatarSettingsDialog({ open, home, onClose, onSaved }: AvatarSettingsDialogProps) {
-  const [catalog, setCatalog] = useState<UserPreferenceCatalog>(fallbackUserPreferenceCatalog);
+  const catalog = useUserPreferenceCatalog(open);
   const [selectedPlayerId, setSelectedPlayerId] = useState("lionel-messi");
   const [customAvatarUrl, setCustomAvatarUrl] = useState("");
   const [busy, setBusy] = useState(false);
@@ -27,19 +27,6 @@ export function AvatarSettingsDialog({ open, home, onClose, onSaved }: AvatarSet
     setCustomAvatarUrl(home?.user.profile.avatarUrl || "");
     setError("");
   }, [home, open]);
-
-  useEffect(() => {
-    if (!open) return;
-    let active = true;
-    userApi<UserPreferenceCatalog>("/api/user-preferences", { cache: "no-store" })
-      .then((payload) => {
-        if (active) setCatalog(payload);
-      })
-      .catch(() => undefined);
-    return () => {
-      active = false;
-    };
-  }, [open]);
 
   async function saveAvatar() {
     setBusy(true);

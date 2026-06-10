@@ -63,7 +63,7 @@ type StandingsResponse = {
 
 export function getBackendApiUrl() {
   const fallbackUrl =
-    typeof window !== "undefined" && isLocalDevHost(window.location.hostname)
+    typeof window !== "undefined" && isLocalDevHost(window.location)
       ? `${window.location.protocol}//${window.location.hostname}:3001`
       : PRODUCTION_API_URL;
 
@@ -74,7 +74,10 @@ export function getWarmupBackendApiUrl() {
   return (process.env.NEXT_PUBLIC_WARMUP_API_URL || WARMUP_API_URL).replace(/\/$/, "");
 }
 
-function isLocalDevHost(hostname: string) {
+function isLocalDevHost(location: Location) {
+  const { hostname, port, protocol } = location;
+  if (hostname === "localhost" && protocol === "https:" && !port) return false;
+
   return (
     hostname === "localhost" ||
     hostname === "127.0.0.1" ||
