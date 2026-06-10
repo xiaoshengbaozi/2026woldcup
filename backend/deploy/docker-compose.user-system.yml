@@ -62,7 +62,7 @@ services:
       CORS_ORIGIN: https://ball.boyzi.fun,https://beta-wzja.world-cup-2026-625.pages.dev,https://world-cup-2026-625.pages.dev
       API_FOOTBALL_CACHE_FILE: /app/data/api-football-cache.json
     ports:
-      - "3001:3001"
+      - "3002:3001"
     volumes:
       - ../../data:/app/data
 
