@@ -1,7 +1,6 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
 import { ChevronLeft } from "lucide-react";
 import { mobileFloatingSurfaceStyle } from "@/components/mobile-surface-styles";
 
@@ -17,21 +16,6 @@ const topButtonClass =
   "mobile-floating-surface pointer-events-auto absolute top-[calc(env(safe-area-inset-top)+1rem)] grid h-[34px] min-w-[34px] place-items-center rounded-full bg-white/[0.08] text-white/72 shadow-[0_14px_34px_rgba(0,0,0,.38),0_0_20px_rgba(216,255,62,.1),inset_0_1px_0_rgba(255,255,255,.16)] ring-1 ring-white/12 backdrop-blur-2xl transition hover:text-white hover:ring-volt/35";
 
 export function MobileSecondaryPageActions({ backHref, backLabel, title, rightAction, reserveSpace = false }: MobileSecondaryPageActionsProps) {
-  const [topRailExpanded, setTopRailExpanded] = useState(false);
-
-  useEffect(() => {
-    const handleTopRailChange = (event: Event) => {
-      const detail = (event as CustomEvent<{ pinned?: boolean }>).detail;
-      setTopRailExpanded(Boolean(detail?.pinned));
-    };
-
-    window.addEventListener("mobile-top-rail-change", handleTopRailChange);
-    return () => {
-      window.removeEventListener("mobile-top-rail-change", handleTopRailChange);
-      setTopRailExpanded(false);
-    };
-  }, []);
-
   const goBack = () => {
     if (window.history.length > 1) {
       window.history.back();
@@ -43,9 +27,7 @@ export function MobileSecondaryPageActions({ backHref, backLabel, title, rightAc
   return (
     <>
       <div
-        className={`pointer-events-none fixed inset-x-0 top-0 z-[60] bg-black/72 backdrop-blur-2xl transition-[height] duration-200 [mask-image:linear-gradient(to_bottom,black_0%,black_68%,rgba(0,0,0,0)_100%)] lg:hidden ${
-          topRailExpanded ? "h-[calc(env(safe-area-inset-top)+7rem)]" : "h-[calc(env(safe-area-inset-top)+4.125rem)]"
-        }`}
+        className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-[calc(env(safe-area-inset-top)+4.125rem)] bg-black/72 backdrop-blur-2xl [mask-image:linear-gradient(to_bottom,black_0%,black_68%,rgba(0,0,0,0)_100%)] lg:hidden"
       />
       <div className="pointer-events-none fixed inset-x-0 top-0 z-[85] h-[calc(env(safe-area-inset-top)+4.125rem)] lg:hidden">
         <button
