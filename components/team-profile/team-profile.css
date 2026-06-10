@@ -1534,6 +1534,7 @@
   .tp-wrap {
     margin-top: -1rem;
     padding: 0 0 56px;
+    z-index: auto;
   }
 
   .tp-hero {
@@ -1637,6 +1638,7 @@
     position: fixed;
     left: 0;
     right: 0;
+    z-index: 88 !important;
     width: 100vw;
     transform: none;
     margin: 0;
