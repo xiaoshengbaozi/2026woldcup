@@ -10,6 +10,7 @@ const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
 export interface PublicUser {
   id: string;
   email: string;
+  wxpusherUid?: string | null;
   emailVerifiedAt?: number | null;
   emailVerificationSentAt?: number | null;
   createdAt: number;

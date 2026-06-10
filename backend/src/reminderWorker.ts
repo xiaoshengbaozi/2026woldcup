@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
 import { UserStore, type MatchReminder, type WorldCupUser } from "./userStore";
+import { sendWxPusherMessage } from "./wxPusherService";
 
 loadLocalEnv(resolve(process.cwd(), ".env"));
 
@@ -37,6 +38,9 @@ export function createReminderWorker(store = new UserStore(), options: ReminderW
             matchId: job.reminder.matchId,
             startsAt: job.reminder.startsAt ?? null,
           },
+        });
+        await deliverReminder(job.user, job.reminder).catch((error) => {
+          logger.warn(`[ReminderWorker] push delivery failed; user=${job.user.email}; reminder=${job.reminder.id}; error=${error.message}`);
         });
         store.markReminderQueued(job.user.id, job.reminder.id, now());
         logDeliveryHook(logger, job.user, job.reminder);
@@ -82,6 +86,20 @@ export function collectDueReminderJobs(users: WorldCupUser[], now: number) {
   return jobs;
 }
 
+async function deliverReminder(user: WorldCupUser, reminder: MatchReminder) {
+  if (reminder.channel !== "push") return;
+  if (!user.wxpusherUid) {
+    throw Object.assign(new Error("wxpusher_uid_missing"), { statusCode: 400 });
+  }
+
+  await sendWxPusherMessage({
+    uid: user.wxpusherUid,
+    summary: reminder.title,
+    content: buildReminderBody(reminder),
+    url: process.env.PUBLIC_APP_URL ? `${process.env.PUBLIC_APP_URL.replace(/\/$/, "")}/matches` : undefined,
+  });
+}
+
 function isReminderDue(reminder: MatchReminder, now: number) {
   if (!reminder.enabled || !reminder.startsAt || reminder.lastQueuedAt) return false;
   const startsAt = Date.parse(reminder.startsAt);
@@ -97,7 +115,7 @@ function buildReminderBody(reminder: MatchReminder) {
 }
 
 function logDeliveryHook(logger: Pick<Console, "log" | "warn">, user: WorldCupUser, reminder: MatchReminder) {
-  if (reminder.channel === "site") return;
+  if (reminder.channel === "site" || reminder.channel === "push") return;
   logger.warn(
     `[ReminderWorker] ${reminder.channel} delivery adapter pending; user=${user.email}; reminder=${reminder.id}`
   );

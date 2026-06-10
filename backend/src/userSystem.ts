@@ -17,6 +17,7 @@ const RATE_LIMIT_MAX_ATTEMPTS = 12;
 const UPLOAD_URL_RATE_LIMIT_MAX_ATTEMPTS = 8;
 const EMAIL_VERIFICATION_EXPIRES_MS = 24 * 60 * 60 * 1000;
 const EMAIL_RESEND_MIN_INTERVAL_MS = 60 * 1000;
+const WXPUSHER_BIND_EXPIRES_MS = 15 * 60 * 1000;
 
 const rateLimits = new Map<string, { count: number; resetAt: number }>();
 
@@ -33,8 +34,14 @@ interface UserPreferenceCatalog {
   matches: Array<{ id: string; matchId: string; title: string; stage?: string; startsAt?: string }>;
 }
 
+interface WxPusherBindRecord {
+  userId: string;
+  expiresAt: number;
+}
+
 export class UserSystem {
   private readonly sessions = new Map<string, SessionRecord>();
+  private readonly wxPusherBinds = new Map<string, WxPusherBindRecord>();
   private catalogCache: { expiresAt: number; payload: UserPreferenceCatalog } | null = null;
 
   constructor(
@@ -239,6 +246,25 @@ export class UserSystem {
         return true;
       }
 
+      if (req.method === "POST" && url.pathname === "/api/me/wxpusher/bind") {
+        const user = this.requireSessionUser(req, res);
+        if (!user) return true;
+        sendJson(res, this.createWxPusherBindPayload(user));
+        return true;
+      }
+
+      if (req.method === "DELETE" && url.pathname === "/api/me/wxpusher/bind") {
+        const user = this.requireSessionUser(req, res);
+        if (!user) return true;
+        sendJson(res, { user: toPublicUser(this.store.setWxPusherUid(user.id, null)) });
+        return true;
+      }
+
+      if (req.method === "POST" && url.pathname === "/api/wxpusher/callback") {
+        await this.handleWxPusherCallback(req, res, url);
+        return true;
+      }
+
       if (req.method === "DELETE" && url.pathname.startsWith("/api/me/favorite-match/")) {
         const user = this.requireSessionUser(req, res);
         if (!user) return true;
@@ -354,6 +380,55 @@ export class UserSystem {
       secure: cookieOptions.secure,
       path: "/",
     }));
+  }
+
+  private createWxPusherBindPayload(user: WorldCupUser) {
+    const appToken = process.env.WXPUSHER_APP_TOKEN || "";
+    if (!appToken) {
+      throw Object.assign(new Error("wxpusher_not_configured"), { statusCode: 503 });
+    }
+
+    this.pruneExpiredWxPusherBinds();
+    const bindToken = randomBytes(18).toString("hex");
+    const expiresAt = Date.now() + WXPUSHER_BIND_EXPIRES_MS;
+    this.wxPusherBinds.set(bindToken, { userId: user.id, expiresAt });
+
+    const callbackUrl = buildWxPusherCallbackUrl();
+    return {
+      bindToken,
+      expiresAt,
+      callbackUrl,
+      subscribeUrl: buildWxPusherSubscribeUrl(appToken, bindToken),
+      bound: Boolean(user.wxpusherUid),
+      wxpusherUid: maskWxPusherUid(user.wxpusherUid),
+    };
+  }
+
+  private async handleWxPusherCallback(req: http.IncomingMessage, res: http.ServerResponse, url: URL) {
+    verifyWxPusherCallbackToken(req, url);
+    const body = await readJsonBody(req);
+    const { uid, extra } = parseWxPusherCallback(body);
+    if (!uid || !extra) {
+      sendJson(res, { error: "invalid_wxpusher_callback" }, 400);
+      return;
+    }
+
+    this.pruneExpiredWxPusherBinds();
+    const bind = this.wxPusherBinds.get(extra);
+    if (!bind) {
+      sendJson(res, { error: "wxpusher_bind_expired" }, 410);
+      return;
+    }
+
+    const user = this.store.setWxPusherUid(bind.userId, uid);
+    this.wxPusherBinds.delete(extra);
+    sendJson(res, { ok: true, userId: user.id });
+  }
+
+  private pruneExpiredWxPusherBinds(now = Date.now()) {
+    for (const [token, bind] of this.wxPusherBinds) {
+      if (bind.expiresAt <= now) this.wxPusherBinds.delete(token);
+    }
   }
 
   private async handleAdminRequest(req: http.IncomingMessage, res: http.ServerResponse, url: URL) {
@@ -1107,6 +1182,63 @@ function getRequestBaseUrl(req: http.IncomingMessage) {
 
 function getPublicAppUrl() {
   return (process.env.PUBLIC_APP_URL || "https://ball.boyzi.fun").replace(/\/$/, "");
+}
+
+function getPublicApiUrl() {
+  return (process.env.PUBLIC_API_URL || process.env.USER_API_URL || "https://api.boyzi.fun").replace(/\/$/, "");
+}
+
+function buildWxPusherCallbackUrl() {
+  const token = process.env.WXPUSHER_CALLBACK_TOKEN || "";
+  const url = new URL("/api/wxpusher/callback", `${getPublicApiUrl()}/`);
+  if (token) url.searchParams.set("token", token);
+  return url.toString();
+}
+
+function buildWxPusherSubscribeUrl(appToken: string, bindToken: string) {
+  const template = process.env.WXPUSHER_SUBSCRIBE_URL_TEMPLATE;
+  if (template) {
+    return template
+      .replace(/\{appToken\}/g, encodeURIComponent(appToken))
+      .replace(/\{extra\}/g, encodeURIComponent(bindToken));
+  }
+
+  const url = new URL("https://wxpusher.zjiecode.com/wxuser/");
+  url.searchParams.set("type", "1");
+  url.searchParams.set("id", appToken);
+  url.searchParams.set("extra", bindToken);
+  return url.toString();
+}
+
+function verifyWxPusherCallbackToken(req: http.IncomingMessage, url: URL) {
+  const expected = process.env.WXPUSHER_CALLBACK_TOKEN || "";
+  if (!expected) return;
+  const supplied = url.searchParams.get("token") || String(req.headers["x-wxpusher-token"] || "");
+  if (!supplied || supplied !== expected) {
+    throw Object.assign(new Error("invalid_wxpusher_callback_token"), { statusCode: 403 });
+  }
+}
+
+function parseWxPusherCallback(body: Record<string, unknown>) {
+  const data = body.data && typeof body.data === "object" && !Array.isArray(body.data)
+    ? body.data as Record<string, unknown>
+    : body;
+  return {
+    uid: normalizeWxPusherUid(data.uid ?? body.uid),
+    extra: typeof data.extra === "string" ? data.extra : typeof body.extra === "string" ? body.extra : "",
+  };
+}
+
+function normalizeWxPusherUid(value: unknown) {
+  if (typeof value !== "string") return "";
+  const uid = value.trim();
+  return /^UID_[A-Za-z0-9_-]+$/.test(uid) ? uid : "";
+}
+
+function maskWxPusherUid(uid?: string | null) {
+  if (!uid) return null;
+  if (uid.length <= 12) return uid;
+  return `${uid.slice(0, 8)}...${uid.slice(-4)}`;
 }
 
 function getHeaderValue(value: string | string[] | undefined) {

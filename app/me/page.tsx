@@ -11,13 +11,17 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  Bell,
   Globe2,
   LogIn,
   LogOut,
   Pencil,
+  QrCode,
+  RefreshCcw,
   Send,
   Star,
   Trophy,
+  Unlink,
   UserPlus,
   UserRound,
   UsersRound,
@@ -56,6 +60,14 @@ type RegisterStep = "account" | "preferences";
 type ContinentKey = "all" | "asia" | "europe" | "africa" | "americas" | "oceania";
 type MeTab = "players" | "teams" | "matches";
 type TimelineTab = "combined" | "x";
+type WxPusherBindPayload = {
+  bindToken: string;
+  expiresAt: number;
+  callbackUrl: string;
+  subscribeUrl: string;
+  bound: boolean;
+  wxpusherUid?: string | null;
+};
 type TimelineItem = {
   id: string;
   kind: "player" | "team" | "match";
@@ -303,6 +315,8 @@ function MePageContent() {
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const [emailNotice, setEmailNotice] = useState("");
+  const [wxBind, setWxBind] = useState<WxPusherBindPayload | null>(null);
+  const [wxNotice, setWxNotice] = useState("");
   const ignoreAuthParamRef = useRef(false);
   const { matches } = useWorldCupData();
   const popularTeams = usePopularTeams();
@@ -508,6 +522,8 @@ function MePageContent() {
       clearSession();
       setHome(null);
       setEmailNotice("");
+      setWxBind(null);
+      setWxNotice("");
     } finally {
       setBusy("");
     }
@@ -545,6 +561,41 @@ function MePageContent() {
     }
   }
 
+  async function startWxPusherBind() {
+    setBusy("wxpusherBind");
+    setWxNotice("");
+    try {
+      const payload = await userApi<WxPusherBindPayload>("/api/me/wxpusher/bind", {
+        method: "POST",
+        body: "{}",
+      });
+      setWxBind(payload);
+      setWxNotice("Scan the QR code in WeChat, then refresh status.");
+    } catch (err) {
+      setWxNotice(readableError(err, "WeChat binding is not configured yet."));
+    } finally {
+      setBusy("");
+    }
+  }
+
+  async function unbindWxPusher() {
+    setBusy("wxpusherUnbind");
+    setWxNotice("");
+    try {
+      await userApi<{ user: PublicUser }>("/api/me/wxpusher/bind", {
+        method: "DELETE",
+      });
+      setWxBind(null);
+      setWxNotice("WeChat push has been disconnected.");
+      await loadHome();
+      await refreshSession();
+    } catch (err) {
+      setWxNotice(readableError(err, "Failed to disconnect WeChat push."));
+    } finally {
+      setBusy("");
+    }
+  }
+
   return (
     <DashboardShell>
       <section className="me-page grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_310px] xl:grid-cols-[minmax(0,1fr)_340px]">
@@ -563,18 +614,23 @@ function MePageContent() {
           transition={{ duration: 0.45, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
           className="hidden h-fit gap-5 lg:sticky lg:top-5 lg:grid"
         >
-          <section className="hero-card me-account-card grid h-[235px] overflow-hidden p-5 text-black sm:p-6">
+          <section className="hero-card me-account-card grid min-h-[235px] overflow-hidden p-5 text-black sm:p-6">
             <AccountCard
               home={home}
               catalog={catalog}
               avatarPlayerId={avatarPlayerId}
               busy={busy}
               emailNotice={emailNotice}
+              wxBind={wxBind}
+              wxNotice={wxNotice}
               onLogin={() => openAuth("login")}
               onRegister={() => openAuth("register")}
               onLogout={logout}
               onResendVerification={resendEmailVerification}
               onSignatureChange={updateSignature}
+              onWxPusherBind={startWxPusherBind}
+              onWxPusherUnbind={unbindWxPusher}
+              onRefreshHome={loadHome}
             />
           </section>
           <ScorerBoard players={topScorers} />
@@ -1152,22 +1208,32 @@ function AccountCard({
   avatarPlayerId,
   busy,
   emailNotice,
+  wxBind,
+  wxNotice,
   onLogin,
   onRegister,
   onLogout,
   onResendVerification,
   onSignatureChange,
+  onWxPusherBind,
+  onWxPusherUnbind,
+  onRefreshHome,
 }: {
   home: UserHomePayload | null;
   catalog: UserPreferenceCatalog;
   avatarPlayerId: string;
   busy: string;
   emailNotice: string;
+  wxBind: WxPusherBindPayload | null;
+  wxNotice: string;
   onLogin: () => void;
   onRegister: () => void;
   onLogout: () => void;
   onResendVerification: () => void;
   onSignatureChange: (signature: string) => Promise<void>;
+  onWxPusherBind: () => void;
+  onWxPusherUnbind: () => void;
+  onRefreshHome: () => Promise<void>;
 }) {
   const avatar = home
     ? home.user.profile.avatarUrl || getPlayerAvatar(home.user.profile.avatarPlayerId, home.catalog?.players ?? catalog.players)
@@ -1181,6 +1247,7 @@ function AccountCard({
   const signature = home?.user.profile.signature?.trim() || "一脚世界波";
   const [editingSignature, setEditingSignature] = useState(false);
   const [signatureDraft, setSignatureDraft] = useState(signature);
+  const wxBound = Boolean(home?.user.wxpusherUid);
 
   useEffect(() => {
     setSignatureDraft(signature);
@@ -1270,6 +1337,67 @@ function AccountCard({
               <AccountStat value={home.summary.favoriteMatchCount} label="收藏比赛" />
             </div>
           </div>
+          <div className="rounded-[1.4rem] bg-black/[0.055] p-3 text-black ring-1 ring-black/10">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.12em] text-black/72">
+                  <Bell className="h-3.5 w-3.5" />
+                  WeChat Push
+                </p>
+                <p className="mt-1 truncate text-[11px] font-semibold text-black/52">
+                  {wxBound ? `Connected ${home.user.wxpusherUid}` : "Bind WxPusher UID by scanning once."}
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={busy === "wxpusherBind"}
+                onClick={onWxPusherBind}
+                className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-black px-3 text-[11px] font-bold text-white transition hover:opacity-85 disabled:opacity-50"
+              >
+                <QrCode className="h-3.5 w-3.5" />
+                {wxBound ? "Rebind" : "Bind"}
+              </button>
+            </div>
+
+            {wxBind ? (
+              <div className="mt-3 grid gap-3">
+                <div className="grid grid-cols-[92px_minmax(0,1fr)] gap-3">
+                  <div className="relative h-[92px] w-[92px] overflow-hidden rounded-2xl bg-white p-1 ring-1 ring-black/10">
+                    <Image src={getQrImageUrl(wxBind.subscribeUrl)} alt="WxPusher QR code" fill sizes="92px" className="object-contain p-1" unoptimized />
+                  </div>
+                  <div className="min-w-0 space-y-2">
+                    <a href={wxBind.subscribeUrl} target="_blank" rel="noreferrer" className="block truncate rounded-full bg-black/[0.07] px-3 py-2 text-[11px] font-bold text-black/70 ring-1 ring-black/10 transition hover:bg-black/[0.1]">
+                      Open subscribe link
+                    </a>
+                    <button
+                      type="button"
+                      onClick={onRefreshHome}
+                      className="inline-flex h-8 items-center gap-1.5 rounded-full bg-black/[0.07] px-3 text-[11px] font-bold text-black/70 ring-1 ring-black/10 transition hover:bg-black/[0.1]"
+                    >
+                      <RefreshCcw className="h-3 w-3" />
+                      Refresh status
+                    </button>
+                    <p className="truncate text-[10px] font-semibold text-black/38">Callback: {wxBind.callbackUrl}</p>
+                  </div>
+                </div>
+                {wxNotice ? <p className="text-[11px] font-semibold text-black/50">{wxNotice}</p> : null}
+              </div>
+            ) : wxNotice ? (
+              <p className="mt-2 text-[11px] font-semibold text-black/50">{wxNotice}</p>
+            ) : null}
+
+            {wxBound ? (
+              <button
+                type="button"
+                disabled={busy === "wxpusherUnbind"}
+                onClick={onWxPusherUnbind}
+                className="mt-2 inline-flex h-7 items-center gap-1.5 rounded-full bg-black/[0.06] px-2.5 text-[10px] font-bold text-black/52 ring-1 ring-black/10 transition hover:bg-black/[0.1] disabled:opacity-50"
+              >
+                <Unlink className="h-3 w-3" />
+                Disconnect
+              </button>
+            ) : null}
+          </div>
         </div>
       ) : (
         <div className="grid w-full grid-cols-2 gap-3">
@@ -1296,6 +1424,10 @@ function AccountStat({ value, label }: { value: number; label: string }) {
       <span className="text-[12px] font-bold leading-none text-black/78">{label}</span>
     </div>
   );
+}
+
+function getQrImageUrl(value: string) {
+  return `https://api.qrserver.com/v1/create-qr-code/?size=184x184&data=${encodeURIComponent(value)}`;
 }
 
 function AuthModal({ mode, registerStep, onClose, children }: { mode: AuthMode; registerStep: RegisterStep; onClose: () => void; children: ReactNode }) {

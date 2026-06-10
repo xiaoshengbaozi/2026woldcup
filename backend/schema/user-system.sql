@@ -3,6 +3,7 @@ create table if not exists users (
   email text not null unique,
   password_hash text not null,
   password_salt text not null,
+  wxpusher_uid text,
   email_verified_at timestamptz,
   email_verification_token_hash text,
   email_verification_expires_at timestamptz,
@@ -20,6 +21,7 @@ create table if not exists users (
 );
 
 alter table users add column if not exists email_verified_at timestamptz;
+alter table users add column if not exists wxpusher_uid text;
 alter table users add column if not exists email_verification_token_hash text;
 alter table users add column if not exists email_verification_expires_at timestamptz;
 alter table users add column if not exists email_verification_sent_at timestamptz;
