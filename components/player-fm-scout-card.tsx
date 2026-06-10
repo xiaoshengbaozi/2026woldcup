@@ -77,7 +77,7 @@ export function PlayerFmScoutCard({
       )}
 
       {note.tags.length > 0 && (
-        <p className="relative z-10 mt-3 border-t border-white/[0.08] pt-3 text-[11px] font-bold leading-5 text-white/48">
+        <p className="relative z-10 mt-3 text-[11px] font-bold leading-5 text-white/48">
           {note.tags.join(" · ")}
         </p>
       )}

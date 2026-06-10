@@ -273,10 +273,10 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, scoutNot
               <img
                 src={heroLandscape}
                 alt=""
-                className="h-full w-full object-cover object-center opacity-65 saturate-100"
+                className="h-full w-full object-cover object-center opacity-85 saturate-105"
               />
-              <div className="player-profile-hero-shade absolute inset-0 bg-[linear-gradient(135deg,rgba(5,8,8,0.78)_0%,rgba(5,8,8,0.34)_48%,rgba(5,8,8,0.72)_100%),linear-gradient(to_bottom,rgba(5,8,8,0.1)_0%,rgba(5,8,8,0.74)_100%)]" />
-              <div className="player-profile-hero-fade absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-ink-950/70 to-transparent" />
+              <div className="player-profile-hero-shade absolute inset-0 bg-[linear-gradient(135deg,rgba(5,8,8,0.52)_0%,rgba(5,8,8,0.16)_48%,rgba(5,8,8,0.48)_100%),linear-gradient(to_bottom,rgba(5,8,8,0.04)_0%,rgba(5,8,8,0.48)_100%)]" />
+              <div className="player-profile-hero-fade absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-ink-950/42 to-transparent" />
             </div>
           )}
           {/* Top glow line */}
@@ -462,6 +462,7 @@ export function PlayerProfileClient({ playerId, nameHint, row, article, scoutNot
                     ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+3rem)] z-[90]"
                     : "relative -mx-3 bg-black/58 backdrop-blur-2xl"
                 } px-3 py-1.5 lg:static lg:mx-0 lg:bg-transparent lg:px-0 lg:py-0 lg:backdrop-blur-none`}
+                style={{ marginTop: 0 }}
               >
               <div className={`hero-card grid gap-1 p-1 lg:hidden ${visibleProfilePanelTabs.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
                 {visibleProfilePanelTabs.map((tab) => {

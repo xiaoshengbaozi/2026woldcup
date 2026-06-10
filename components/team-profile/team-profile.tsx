@@ -510,7 +510,7 @@ export function TeamProfile({ data }: TeamProfileProps) {
             ref={contentTabsRef}
             className={`tp-content-tabs ${
               contentTabsPinned
-                ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[65] !px-3 !py-2"
+                ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[65] !px-3 !py-1"
                 : ""
             }`}
             role="tablist"

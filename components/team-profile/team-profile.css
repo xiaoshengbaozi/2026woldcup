@@ -140,6 +140,14 @@
   box-shadow: 0 0 16px rgba(216,255,62,0.1);
 }
 
+.tp-hero-tags .tp-chip.volt {
+  background: var(--volt, #D8FF3E);
+  color: #050505;
+  border-color: rgba(216,255,62,0.6);
+  box-shadow: 0 0 22px rgba(216,255,62,0.22);
+  font-weight: 800;
+}
+
 .tp-hero-stats {
   display: flex;
   flex-direction: column;
@@ -1466,6 +1474,18 @@
   backdrop-filter: none;
 }
 
+.team-squad-card .squad-summary-hide-header > div:first-child > .mb-4,
+.team-squad-card > div > div:first-child > .mb-4,
+.team-squad-card .squad-summary-hide-header > div:first-child > h3,
+.team-squad-card > div > div:first-child > h3 {
+  display: none;
+}
+
+.team-squad-card .squad-summary-hide-header > div:first-child > .mt-4,
+.team-squad-card > div > div:first-child > .mt-4 {
+  margin-top: 0;
+}
+
 .tp-content-panel .tp-players {
   margin-top: 24px;
   padding-top: 24px;
@@ -1601,9 +1621,9 @@
     transform: translateX(-50%);
     flex-wrap: nowrap;
     gap: 6px;
-    min-height: 48px;
-    margin: 0 0 8px;
-    padding: 8px 12px;
+    min-height: 40px;
+    margin: 0 0 4px;
+    padding: 4px 12px;
     overflow-x: auto;
     overflow-y: hidden;
     overscroll-behavior-x: contain;
@@ -1627,12 +1647,12 @@
   }
 
   .tp-content-tab {
-    min-height: 36px;
+    min-height: 32px;
     gap: 6px;
     overflow: hidden;
     white-space: nowrap;
     border-radius: 999px;
-    padding: 8px 16px;
+    padding: 6px 16px;
     background: rgba(255,255,255,0.045);
     color: rgba(255,255,255,0.58);
     box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);

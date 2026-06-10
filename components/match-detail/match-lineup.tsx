@@ -95,6 +95,10 @@ function parsePlayerGrid(grid: string | null | undefined) {
   return { row, col };
 }
 
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
 const OFFICIAL_PLAYERS = getOfficialPlayerCatalog();
 const OFFICIAL_PLAYERS_BY_TEAM = OFFICIAL_PLAYERS.reduce((map, player) => {
   const code = player.teamCode.toUpperCase();
@@ -172,7 +176,6 @@ export function MatchLineup({ detail, compactMobile = false }: { detail: MatchDe
     {compactMobile && (
       <MobileLiveFormationPitch
         detail={detail}
-        teams={teams}
       />
     )}
 
@@ -266,17 +269,19 @@ export function MatchLineup({ detail, compactMobile = false }: { detail: MatchDe
 
 function MobileLiveFormationPitch({
   detail,
-  teams,
 }: {
   detail: MatchDetail;
-  teams: ReturnType<typeof parseTeams>;
 }) {
   const homePlayers = reconcileLineupPlayers(detail.homeLineup.players, detail.homeTeamCode);
   const awayPlayers = reconcileLineupPlayers(detail.awayLineup.players, detail.awayTeamCode);
   const homeStarters = homePlayers.filter((player) => player.isStarter).slice(0, 11);
   const awayStarters = awayPlayers.filter((player) => player.isStarter).slice(0, 11);
+  const homeSubstitutes = homePlayers.filter((player) => !player.isStarter);
+  const awaySubstitutes = awayPlayers.filter((player) => !player.isStarter);
   const homeLayout = getPlayerPitchCoords(homeStarters, detail.homeLineup.formation);
   const awayLayout = getPlayerPitchCoords(awayStarters, detail.awayLineup.formation);
+  const homeCoach = localizeCoachName(detail.homeLineup.coach) || "主教练待更新";
+  const awayCoach = localizeCoachName(detail.awayLineup.coach) || "主教练待更新";
   const hasStarters = homeStarters.length > 0 || awayStarters.length > 0;
 
   return (
@@ -288,15 +293,15 @@ function MobileLiveFormationPitch({
     >
       <div className="mb-3 grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-1">
         <div className="min-w-0">
-          <p className="truncate text-sm font-black text-white">{teams.home.name}</p>
-          <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-white/36">{detail.homeLineup.formation}</p>
+          <p className="truncate text-sm font-black text-white">{homeCoach}</p>
+          <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.12em] text-white/45">{detail.homeLineup.formation}</p>
         </div>
         <div className="rounded-full bg-white/[0.06] px-3 py-1 text-xs font-black tabular-nums text-white ring-1 ring-white/[0.08]">
           {detail.score.home} - {detail.score.away}
         </div>
         <div className="min-w-0 text-right">
-          <p className="truncate text-sm font-black text-white">{teams.away.name}</p>
-          <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-white/36">{detail.awayLineup.formation}</p>
+          <p className="truncate text-sm font-black text-white">{awayCoach}</p>
+          <p className="mt-0.5 text-[11px] font-bold uppercase tracking-[0.12em] text-white/45">{detail.awayLineup.formation}</p>
         </div>
       </div>
 
@@ -347,6 +352,13 @@ function MobileLiveFormationPitch({
           </div>
         )}
       </div>
+
+      {(homeSubstitutes.length > 0 || awaySubstitutes.length > 0) && (
+        <div className="mt-3 grid grid-cols-2 gap-3 px-1">
+          <MobileBenchList players={homeSubstitutes} align="left" />
+          <MobileBenchList players={awaySubstitutes} align="right" />
+        </div>
+      )}
     </motion.div>
   );
 }
@@ -362,10 +374,10 @@ function MobilePitchPlayer({
   side: "home" | "away";
   delay: number;
 }) {
-  const x = 7 + (coord.x / 100) * 86;
+  const x = clamp(9 + (coord.x / 100) * 82, 13, 87);
   const y = side === "home"
-    ? 7 + ((100 - coord.y) / 100) * 40
-    : 53 + (coord.y / 100) * 40;
+    ? clamp(6 + ((100 - coord.y) / 100) * 41, 9, 46)
+    : clamp(53 + (coord.y / 100) * 41, 54, 94);
   const label = player.number ? `${player.number} ${player.nameCn || player.name}` : player.nameCn || player.name;
   const fallback = player.number ?? getPlayerInitial(player);
 
@@ -392,10 +404,41 @@ function MobilePitchPlayer({
           />
         )}
       </div>
-      <p className="mt-1 max-w-[5.4rem] truncate rounded-full bg-black/14 px-1.5 text-center text-[10px] font-bold leading-tight text-white/88 backdrop-blur-sm" title={label}>
+      <p className="mt-1 w-[4.8rem] truncate text-center text-[10px] font-black leading-tight text-white/90 [text-shadow:0_1px_5px_rgba(0,0,0,.55)]" title={label}>
         {label}
       </p>
     </motion.div>
+  );
+}
+
+function MobileBenchList({
+  players,
+  align,
+}: {
+  players: LineupPlayer[];
+  align: "left" | "right";
+}) {
+  if (!players.length) return <div />;
+
+  return (
+    <div className={`min-w-0 space-y-1 ${align === "right" ? "text-right" : "text-left"}`}>
+      <p className="text-[10px] font-black text-white/35">替补</p>
+      <div className={`flex flex-col gap-1 ${align === "right" ? "items-end" : "items-start"}`}>
+        {players.slice(0, 9).map((player) => {
+          const label = player.number ? `${player.number} ${player.nameCn || player.name}` : player.nameCn || player.name;
+
+          return (
+            <p
+              key={player.id}
+              className="max-w-full truncate text-[10px] font-bold leading-tight text-white/58"
+              title={label}
+            >
+              {label}
+            </p>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -562,7 +605,7 @@ function FormationPitch({
 }
 
 export function SquadLineupPanel({
-  teamName, teamCode, coach, players, officialWorldCupSquad, accentHex, accentFrom,
+  teamName, teamCode, coach, players, officialWorldCupSquad, accentHex, accentFrom, hideHeader = false,
 }: {
   teamName: string;
   teamCode: string;
@@ -571,6 +614,7 @@ export function SquadLineupPanel({
   officialWorldCupSquad: boolean;
   accentHex: string;
   accentFrom: string;
+  hideHeader?: boolean;
 }) {
   const displayPlayers = reconcileLineupPlayers(players, teamCode);
 
@@ -584,6 +628,7 @@ export function SquadLineupPanel({
         officialWorldCupSquad={officialWorldCupSquad}
         accentHex={accentHex}
         accentFrom={accentFrom}
+        hideHeader={hideHeader}
       />
       <PlayerGrid players={displayPlayers} accentHex={accentHex} accentFrom={accentFrom} />
     </>
@@ -591,7 +636,7 @@ export function SquadLineupPanel({
 }
 
 function FeaturedSquadSummary({
-  teamName, teamCode, coach, players, officialWorldCupSquad, accentHex, accentFrom,
+  teamName, teamCode, coach, players, officialWorldCupSquad, accentHex, accentFrom, hideHeader,
 }: {
   teamName: string;
   teamCode: string;
@@ -600,6 +645,7 @@ function FeaturedSquadSummary({
   officialWorldCupSquad: boolean;
   accentHex: string;
   accentFrom: string;
+  hideHeader: boolean;
 }) {
   const grouped = groupPlayersByPosition(players);
   const availableGroups = POSITION_GROUPS
@@ -609,7 +655,7 @@ function FeaturedSquadSummary({
   const displayCoach = localizeCoachName(coach) || "待更新";
 
   return (
-    <div className="flex min-h-[320px] flex-col justify-between rounded-3xl bg-white/[0.025] p-5 ring-1 ring-white/[0.055]">
+    <div className={`flex min-h-[320px] flex-col justify-between rounded-3xl bg-white/[0.025] p-5 ring-1 ring-white/[0.055]${hideHeader ? " squad-summary-hide-header" : ""}`}>
       <div>
         <div className="mb-4 flex items-center gap-2">
           <div className="h-5 w-1 rounded-full" style={{ backgroundColor: accentHex }} />
@@ -1057,7 +1103,7 @@ export function PlayerGrid({
           <div key={group.key}>
             <div className="mb-2 flex items-center gap-2 pl-0.5">
               <span className="inline-block h-3 w-1.5 rounded-full" style={{ backgroundColor: accentHex, opacity: 0.55 }} />
-              <span className="text-xs font-black uppercase tracking-[0.12em] sm:text-sm" style={{ color: `${accentHex}bb` }}>
+              <span className="squad-position-group-title text-xs font-black uppercase tracking-[0.12em] sm:text-sm" style={{ color: `${accentHex}bb` }}>
                 {group.label}
               </span>
               <span className="text-xs text-white/28 sm:text-sm">({groupPlayers.length})</span>

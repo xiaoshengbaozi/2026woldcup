@@ -121,6 +121,13 @@
   box-shadow: none !important;
 }
 
+[data-theme="light"] .tp-hero-tags .tp-chip.volt {
+  background: var(--volt, #D8FF3E) !important;
+  border-color: rgba(54, 65, 44, 0.18) !important;
+  color: #050505 !important;
+  box-shadow: 0 0 22px rgba(216, 255, 62, 0.28), 0 8px 18px rgba(54, 65, 44, 0.08) !important;
+}
+
 [data-theme="light"] .tp-hero-stat-val,
 [data-theme="light"] .tp-section-badge.volt {
   color: #36412c !important;
@@ -425,6 +432,14 @@
   color: var(--lm-text-secondary) !important;
 }
 
+[data-theme="light"] .team-squad-card .squad-position-group-title {
+  color: var(--lm-text-primary) !important;
+}
+
+[data-theme="light"] .team-squad-card > div > div:nth-child(2) > div > .mb-2.flex > span:nth-child(2) {
+  color: var(--lm-text-primary) !important;
+}
+
 [data-theme="light"] .team-squad-card [style*="rgba(255,255,255,0.025)"] {
   background: linear-gradient(135deg, rgba(54, 65, 44, 0.08), rgba(238, 244, 231, 0.7)) !important;
 }
@@ -443,18 +458,18 @@
 
 [data-theme="light"] .player-profile-hero {
   background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(245, 250, 245, 0.68)),
-    rgba(255, 255, 255, 0.94) !important;
+    linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(245, 250, 245, 0.44)),
+    rgba(255, 255, 255, 0.78) !important;
 }
 
 [data-theme="light"] .player-profile-hero-shade {
   background:
-    linear-gradient(135deg, rgba(245, 250, 245, 0.84), rgba(245, 250, 245, 0.54), rgba(245, 250, 245, 0.8)),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.08), rgba(245, 250, 245, 0.72)) !important;
+    linear-gradient(135deg, rgba(245, 250, 245, 0.5), rgba(245, 250, 245, 0.24), rgba(245, 250, 245, 0.48)),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.02), rgba(245, 250, 245, 0.46)) !important;
 }
 
 [data-theme="light"] .player-profile-hero-fade {
-  background: linear-gradient(to top, rgba(245, 250, 245, 0.72), transparent) !important;
+  background: linear-gradient(to top, rgba(245, 250, 245, 0.38), transparent) !important;
 }
 
 [data-theme="light"] .player-profile-page .ring-offset-ink-950 {
@@ -472,21 +487,81 @@
 [data-theme="light"] .player-profile-page .bg-white\/\[0\.025\],
 [data-theme="light"] .player-profile-page .bg-white\/\[0\.035\],
 [data-theme="light"] .player-profile-page .bg-white\/\[0\.04\],
-[data-theme="light"] .player-profile-page .bg-white\/\[0\.05\] {
+[data-theme="light"] .player-profile-page .bg-white\/\[0\.045\],
+[data-theme="light"] .player-profile-page .bg-white\/\[0\.05\],
+[data-theme="light"] .player-profile-page .bg-white\/\[0\.06\],
+[data-theme="light"] .player-profile-page .bg-white\/\[0\.08\],
+[data-theme="light"] .player-profile-page .bg-white\/10,
+[data-theme="light"] .player-profile-page .bg-black\/58,
+[data-theme="light"] .player-profile-page .bg-black\/60 {
   background-color: rgba(232, 242, 232, 0.72) !important;
 }
 
+[data-theme="light"] .player-profile-page .bg-black\/36,
+[data-theme="light"] .players-page .bg-black\/36,
+[data-theme="light"] .players-page .bg-black\/58,
+[data-theme="light"] .players-page .bg-black\/60 {
+  background-color: rgba(54, 65, 44, 0.1) !important;
+}
+
+[data-theme="light"] .player-profile-page .text-white,
+[data-theme="light"] .player-profile-page .text-white\/90,
+[data-theme="light"] .player-profile-page .text-white\/88,
+[data-theme="light"] .player-profile-page .text-white\/85,
+[data-theme="light"] .player-profile-page .text-white\/82,
+[data-theme="light"] .player-profile-page .text-white\/80,
+[data-theme="light"] .player-profile-page .text-white\/78,
+[data-theme="light"] .player-profile-page .text-white\/70 {
+  color: var(--lm-text-primary) !important;
+}
+
+[data-theme="light"] .player-profile-page .text-white\/68,
+[data-theme="light"] .player-profile-page .text-white\/65,
+[data-theme="light"] .player-profile-page .text-white\/62,
+[data-theme="light"] .player-profile-page .text-white\/60,
 [data-theme="light"] .player-profile-page .text-white\/30,
 [data-theme="light"] .player-profile-page .text-white\/35,
 [data-theme="light"] .player-profile-page .text-white\/38,
 [data-theme="light"] .player-profile-page .text-white\/40,
+[data-theme="light"] .player-profile-page .text-white\/45,
 [data-theme="light"] .player-profile-page .text-white\/50,
 [data-theme="light"] .player-profile-page .text-white\/55 {
+  color: var(--lm-text-secondary) !important;
+}
+
+[data-theme="light"] .player-profile-page .text-white\/20,
+[data-theme="light"] .player-profile-page .text-white\/25,
+[data-theme="light"] .player-profile-page .text-white\/28 {
   color: var(--lm-text-muted) !important;
+}
+
+[data-theme="light"] .player-profile-page .border-white\/\[0\.04\],
+[data-theme="light"] .player-profile-page .border-white\/\[0\.05\],
+[data-theme="light"] .player-profile-page .border-white\/\[0\.06\],
+[data-theme="light"] .player-profile-page .ring-white\/\[0\.04\],
+[data-theme="light"] .player-profile-page .ring-white\/\[0\.05\],
+[data-theme="light"] .player-profile-page .ring-white\/\[0\.06\],
+[data-theme="light"] .player-profile-page .ring-white\/\[0\.07\],
+[data-theme="light"] .player-profile-page .ring-white\/\[0\.08\],
+[data-theme="light"] .player-profile-page .ring-white\/\[0\.1\] {
+  border-color: rgba(54, 65, 44, 0.1) !important;
+  --tw-ring-color: rgba(54, 65, 44, 0.1) !important;
 }
 
 [data-theme="light"] .player-profile-page .current-team-panel h2 {
   color: var(--lm-text-primary) !important;
+}
+
+[data-theme="light"] .player-profile-page .current-team-panel .divide-y {
+  background: transparent !important;
+}
+
+[data-theme="light"] .player-profile-page .current-team-panel .hover\:bg-white\/\[0\.025\] {
+  background-color: transparent !important;
+}
+
+[data-theme="light"] .player-profile-page .current-team-panel .hover\:bg-white\/\[0\.025\]:hover {
+  background-color: transparent !important;
 }
 
 [data-theme="light"] .player-radar {
@@ -866,6 +941,16 @@
   --tw-ring-color: rgba(54, 65, 44, 0.12) !important;
 }
 
+[data-theme="light"] .players-page .bg-white\/\[0\.02\],
+[data-theme="light"] .players-page .bg-white\/\[0\.025\],
+[data-theme="light"] .players-page .bg-white\/\[0\.03\],
+[data-theme="light"] .players-page .bg-white\/\[0\.035\],
+[data-theme="light"] .players-page .bg-white\/\[0\.045\],
+[data-theme="light"] .players-page .bg-white\/\[0\.06\],
+[data-theme="light"] .players-page .bg-white\/\[0\.08\] {
+  background-color: rgba(232, 242, 232, 0.72) !important;
+}
+
 [data-theme="light"] .players-page .text-white,
 [data-theme="light"] .players-page .text-white\/90,
 [data-theme="light"] .players-page .text-white\/82,
@@ -878,8 +963,11 @@
 [data-theme="light"] .players-page .text-white\/60,
 [data-theme="light"] .players-page .text-white\/58,
 [data-theme="light"] .players-page .text-white\/50,
+[data-theme="light"] .players-page .text-white\/45,
 [data-theme="light"] .players-page .text-white\/42,
 [data-theme="light"] .players-page .text-white\/36,
+[data-theme="light"] .players-page .text-white\/35,
+[data-theme="light"] .players-page .text-white\/34,
 [data-theme="light"] .players-page .text-white\/32,
 [data-theme="light"] .players-page .text-white\/30,
 [data-theme="light"] .players-page .text-white\/28,

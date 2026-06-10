@@ -55,6 +55,7 @@ export function TeamSquadCard({ teamName, coach, squad, loading, error }: TeamSq
         officialWorldCupSquad={Boolean(squad?.officialWorldCupSquad)}
         accentHex={error ? "#FF9A1F" : TEAM_PAGE_ACCENT_HEX}
         accentFrom={error ? "rgba(255,154,31," : TEAM_PAGE_ACCENT_FROM}
+        hideHeader
       />
     </motion.div>
   );
