@@ -1514,8 +1514,15 @@ function getSessionCookieOptions(req: http.IncomingMessage): { sameSite: "Lax" |
   try {
     const originUrl = new URL(origin);
     const requestHost = req.headers.host?.split(":")[0];
+    const isCapacitorOrigin =
+      (originUrl.protocol === "https:" || originUrl.protocol === "capacitor:" || originUrl.protocol === "ionic:") &&
+      originUrl.hostname === "localhost";
     const isLocalOrigin = originUrl.hostname === "localhost" || originUrl.hostname === "127.0.0.1" || originUrl.hostname === "::1";
     const isSameHost = Boolean(requestHost && originUrl.hostname === requestHost);
+
+    if (isCapacitorOrigin) {
+      return { sameSite: "None", secure: true };
+    }
 
     if (originUrl.protocol === "https:" && !isLocalOrigin && !isSameHost) {
       return { sameSite: "None", secure: true };

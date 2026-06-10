@@ -41,6 +41,8 @@ const newsProxyCache = new Map<string, { savedAt: number; payload: Record<string
 const DEFAULT_CORS_ORIGINS = [
   "https://ball.boyzi.fun",
   "https://localhost",
+  "capacitor://localhost",
+  "ionic://localhost",
   "https://beta-wzja.world-cup-2026-625.pages.dev",
   "https://world-cup-2026-625.pages.dev",
   "http://localhost:3000",

@@ -584,13 +584,23 @@ button {
 
 html[data-native-app="capacitor"] {
   background: #05060a;
-  overscroll-behavior: none;
   scroll-behavior: auto;
+  min-height: 100%;
+  height: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  touch-action: pan-y pinch-zoom;
 }
 
 html[data-native-app="capacitor"] body {
   background-color: #05060a;
-  overscroll-behavior-y: none;
+  min-height: 100dvh;
+  height: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y pinch-zoom;
+  -webkit-overflow-scrolling: touch;
   -webkit-user-select: none;
   user-select: none;
 }
