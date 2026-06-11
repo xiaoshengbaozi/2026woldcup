@@ -458,7 +458,7 @@ function FavoriteLiveOddsPanel({ match, odds, selection }: { match: FavoriteMatc
           <div className="favorites-probability-card relative overflow-hidden rounded-2xl border border-white/[0.07] bg-black/26 px-4 py-3">
             <div className="relative grid grid-cols-3 gap-2">
               {probabilitySegments.map((segment) => (
-                <div key={segment.label} className="min-w-0">
+                <div key={segment.label} className={`min-w-0 ${segment.alignClass}`}>
                   <p
                     className={`favorites-segment-value text-xl font-black leading-none tabular-nums ${segment.valueClass}`}
                     style={{ fontFamily: "ScreenMatrix, monospace" }}
@@ -494,9 +494,9 @@ function FavoriteLiveOddsPanel({ match, odds, selection }: { match: FavoriteMatc
 
 function buildFavoriteLiveProbabilitySegments(homeOdds: FavoriteOddsItem, drawOdds: FavoriteOddsItem, awayOdds: FavoriteOddsItem) {
   const items = [
-    { label: "主胜", probability: Math.round(homeOdds.value), valueClass: "text-volt", barClass: "bg-volt" },
-    { label: "平局", probability: Math.round(drawOdds.value), valueClass: "text-white/82", barClass: "bg-white/35" },
-    { label: "客胜", probability: Math.round(awayOdds.value), valueClass: "text-flare", barClass: "bg-flare" },
+    { label: "主胜", probability: Math.round(homeOdds.value), valueClass: "text-volt", barClass: "bg-volt", alignClass: "text-left" },
+    { label: "平局", probability: Math.round(drawOdds.value), valueClass: "text-white/82", barClass: "bg-white/35", alignClass: "text-center" },
+    { label: "客胜", probability: Math.round(awayOdds.value), valueClass: "text-flare", barClass: "bg-flare", alignClass: "text-right" },
   ];
   const total = items.reduce((sum, item) => sum + item.probability, 0) || 1;
 

@@ -144,7 +144,7 @@ function FavoriteProbabilityInline({ selection }: { selection: OddsSelection }) 
         <>
           <div className="grid grid-cols-3 gap-3">
             {probabilitySegments.map((segment) => (
-              <div key={segment.label} className="min-w-0">
+              <div key={segment.label} className={`min-w-0 ${segment.alignClass}`}>
                 <p
                   className={`text-xl font-black leading-none tabular-nums ${segment.valueClass}`}
                   style={{ fontFamily: "ScreenMatrix, monospace" }}
@@ -245,9 +245,9 @@ function buildFavoriteProbabilitySegments(selection: OddsSelection) {
     null,
   );
   const items = [
-    { label: "主胜", probability: Math.round(homeOdds.yesPrice), valueClass: "text-volt", barClass: "bg-volt", active: sameOddsMarket(homeOdds, strongest) },
-    { label: "平局", probability: Math.round(drawOdds.yesPrice), valueClass: "text-white/82", barClass: "bg-white/35", active: sameOddsMarket(drawOdds, strongest) },
-    { label: "客胜", probability: Math.round(awayOdds.yesPrice), valueClass: "text-flare", barClass: "bg-flare", active: sameOddsMarket(awayOdds, strongest) },
+    { label: "主胜", probability: Math.round(homeOdds.yesPrice), valueClass: "text-volt", barClass: "bg-volt", alignClass: "text-left", active: sameOddsMarket(homeOdds, strongest) },
+    { label: "平局", probability: Math.round(drawOdds.yesPrice), valueClass: "text-white/82", barClass: "bg-white/35", alignClass: "text-center", active: sameOddsMarket(drawOdds, strongest) },
+    { label: "客胜", probability: Math.round(awayOdds.yesPrice), valueClass: "text-flare", barClass: "bg-flare", alignClass: "text-right", active: sameOddsMarket(awayOdds, strongest) },
   ];
   const total = items.reduce((sum, item) => sum + item.probability, 0) || 1;
 

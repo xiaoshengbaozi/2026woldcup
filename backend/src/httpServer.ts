@@ -40,6 +40,7 @@ const NEWS_PROXY_STALE_TTL_MS = 24 * 60 * 60 * 1000;
 const newsProxyCache = new Map<string, { savedAt: number; payload: Record<string, unknown> }>();
 const DEFAULT_CORS_ORIGINS = [
   "https://ball.boyzi.fun",
+  "https://ball.boyzi.top",
   "https://localhost",
   "capacitor://localhost",
   "ionic://localhost",

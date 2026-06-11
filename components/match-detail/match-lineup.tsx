@@ -67,21 +67,18 @@ function getPlayerPitchCoords(starters: LineupPlayer[], formation: string): Pitc
   if (usableGridCoords.length >= Math.min(starters.length, 8)) {
     const maxRow = Math.max(...usableGridCoords.map((coord) => coord.row), 1);
     const colsByRow = usableGridCoords.reduce((map, coord) => {
-      const current = map.get(coord.row) ?? { min: coord.col, max: coord.col };
-      map.set(coord.row, {
-        min: Math.min(current.min, coord.col),
-        max: Math.max(current.max, coord.col),
-      });
+      const cols = map.get(coord.row) ?? [];
+      cols.push(coord.col);
+      map.set(coord.row, cols);
       return map;
-    }, new Map<number, { min: number; max: number }>());
+    }, new Map<number, number[]>());
 
     return gridCoords.map((coord, index) => {
       if (!coord) return getLayout(formation)[index] ?? { x: 50, y: 50 };
 
-      const rowRange = colsByRow.get(coord.row) ?? { min: coord.col, max: coord.col };
-      const colsInRow = Math.max(rowRange.max - rowRange.min + 1, 1);
-      const normalizedCol = coord.col - rowRange.min + 1;
-      const x = colsInRow === 1 ? 50 : (normalizedCol / (colsInRow + 1)) * 100;
+      const rowCols = [...new Set(colsByRow.get(coord.row) ?? [coord.col])].sort((a, b) => a - b);
+      const rank = Math.max(rowCols.indexOf(coord.col), 0);
+      const x = rowCols.length === 1 ? 50 : ((rank + 1) / (rowCols.length + 1)) * 100;
       const y = maxRow <= 1 ? 50 : 88 - ((coord.row - 1) / (maxRow - 1)) * 64;
       return { x, y };
     });
@@ -141,6 +138,20 @@ function parsePlayerGrid(grid: string | null | undefined) {
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
+}
+
+function getMobilePitchPosition(coord: PitchCoord, layout: PitchCoord[], side: "home" | "away"): PitchCoord {
+  const ys = layout.map((item) => item.y);
+  const minY = Math.min(...ys, coord.y);
+  const maxY = Math.max(...ys, coord.y);
+  const span = Math.max(maxY - minY, 1);
+  const lineProgress = clamp((maxY - coord.y) / span, 0, 1);
+  const x = clamp(50 + (coord.x - 50) * 1.02, 13.5, 86.5);
+  const y = side === "home"
+    ? 13.5 + lineProgress * 32.5
+    : 86.5 - lineProgress * 32.5;
+
+  return { x, y };
 }
 
 const OFFICIAL_PLAYERS = getOfficialPlayerCatalog();
@@ -373,8 +384,7 @@ function MobileLiveFormationPitch({
               <MobilePitchPlayer
                 key={`home-${player.id}`}
                 player={player}
-                coord={homeLayout[index] ?? { x: 50, y: 50 }}
-                side="home"
+                coord={getMobilePitchPosition(homeLayout[index] ?? { x: 50, y: 50 }, homeLayout, "home")}
                 delay={index}
               />
             ))}
@@ -382,8 +392,7 @@ function MobileLiveFormationPitch({
               <MobilePitchPlayer
                 key={`away-${player.id}`}
                 player={player}
-                coord={awayLayout[index] ?? { x: 50, y: 50 }}
-                side="away"
+                coord={getMobilePitchPosition(awayLayout[index] ?? { x: 50, y: 50 }, awayLayout, "away")}
                 delay={index + 11}
               />
             ))}
@@ -410,18 +419,14 @@ function MobileLiveFormationPitch({
 function MobilePitchPlayer({
   player,
   coord,
-  side,
   delay,
 }: {
   player: LineupPlayer;
   coord: PitchCoord;
-  side: "home" | "away";
   delay: number;
 }) {
-  const x = clamp(50 + (coord.x - 50) * 1.08 - 0.75, 10.5, 89.5);
-  const y = side === "home"
-    ? clamp(6 + ((100 - coord.y) / 100) * 41, 9, 46)
-    : clamp(53 + (coord.y / 100) * 41, 54, 94);
+  const x = coord.x;
+  const y = coord.y;
   const label = player.number ? `${player.number} ${player.nameCn || player.name}` : player.nameCn || player.name;
   const fallback = player.number ?? getPlayerInitial(player);
 
@@ -433,7 +438,7 @@ function MobilePitchPlayer({
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ delay: 0.06 + delay * 0.025, duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
     >
-      <div className="relative grid h-11 w-11 place-items-center overflow-hidden rounded-full bg-[#30343d] text-xs font-black text-white shadow-[0_10px_22px_rgba(0,0,0,.26)] ring-1 ring-white/15">
+      <div className="relative grid h-10 w-10 place-items-center overflow-hidden rounded-full bg-[#30343d] text-[11px] font-black text-white shadow-[0_10px_22px_rgba(0,0,0,.26)] ring-1 ring-white/15">
         <span>{fallback}</span>
         {player.photo && (
           // eslint-disable-next-line @next/next/no-img-element
@@ -448,7 +453,7 @@ function MobilePitchPlayer({
           />
         )}
       </div>
-      <p className="mt-1 w-[4.8rem] truncate text-center text-[10px] font-black leading-tight text-white/90 [text-shadow:0_1px_5px_rgba(0,0,0,.55)]" title={label}>
+      <p className="mt-0.5 w-[4.15rem] truncate text-center text-[9px] font-black leading-tight text-white/90 [text-shadow:0_1px_5px_rgba(0,0,0,.65)]" title={label}>
         {label}
       </p>
     </motion.div>
