@@ -199,7 +199,7 @@ export function TeamsIndex() {
               ref={tabsRef}
               className={`${
                 isPinned
-                  ? "teams-tabs-rail teams-tabs-rail-pinned fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[65] px-3 py-2"
+                  ? "teams-tabs-rail teams-tabs-rail-pinned fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[75] px-3 py-2"
                   : "teams-tabs-rail relative -mx-3 px-3 py-2"
               } sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none`}
             >

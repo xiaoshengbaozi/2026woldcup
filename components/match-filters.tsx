@@ -116,13 +116,13 @@ export function MatchFilters({
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.08, duration: 0.65 }}
-        className="scrollbar-hidden relative z-[10000] flex flex-nowrap items-center gap-1.5 overflow-x-auto overscroll-x-contain sm:z-20 sm:flex-wrap sm:gap-3 sm:overflow-visible"
+        className="scrollbar-hidden relative z-[10000] w-full min-w-0 flex flex-nowrap items-center gap-1.5 overflow-x-auto overscroll-x-contain sm:z-20 sm:flex-wrap sm:gap-3 sm:overflow-visible"
       >
         <div className="hidden sm:block">
           <MatchSourceToggle value={matchSource} onChange={onMatchSourceChange} />
         </div>
 
-        <label className="glass-chip order-1 flex h-10 w-[calc(100vw-17rem)] min-w-[6.25rem] max-w-[10rem] shrink-0 items-center gap-2 px-3 text-white/70 transition focus-within:text-white sm:order-none sm:w-auto sm:min-w-0 sm:max-w-none sm:flex-1 sm:basis-auto sm:gap-3 sm:px-5">
+        <label className="glass-chip order-1 flex h-10 min-w-[6.25rem] max-w-[10rem] shrink-0 items-center gap-2 px-3 text-white/70 transition focus-within:text-white sm:order-none sm:w-auto sm:min-w-0 sm:max-w-none sm:flex-1 sm:basis-auto sm:gap-3 sm:px-5">
           <Search className="h-5 w-5 shrink-0 text-volt/80" />
           <input
             value={query}

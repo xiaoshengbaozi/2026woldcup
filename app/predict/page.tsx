@@ -1830,7 +1830,7 @@ export default function PredictPage() {
           </div>
         </motion.section>
 
-        <div className="sticky top-[calc(env(safe-area-inset-top)+4.125rem)] z-[65] -mx-3 bg-black/58 px-3 py-2 backdrop-blur-2xl lg:hidden">
+        <div className="sticky top-[calc(env(safe-area-inset-top)+4.125rem)] z-[75] -mx-3 bg-black/58 px-3 py-2 backdrop-blur-2xl lg:hidden">
           <div className="flex flex-wrap gap-1.5">
             {([
               { id: "groups" as TabId, label: "小组赛" },

@@ -826,7 +826,7 @@ function ProfileBoard({
           ref={timelineTabsRef}
           className={`${
             timelineTabsPinned
-              ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[65] px-4 py-2"
+              ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[75] px-4 py-2"
               : "relative -mx-4 bg-black/58 px-4 py-2 backdrop-blur-2xl sm:-mx-5 sm:px-5"
           } lg:static lg:mx-0 lg:bg-transparent lg:px-0 lg:py-0 lg:backdrop-blur-none`}
         >

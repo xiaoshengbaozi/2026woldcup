@@ -42,8 +42,6 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [avatarSettingsOpen, setAvatarSettingsOpen] = useState(false);
-  const [topRailExpanded, setTopRailExpanded] = useState(false);
-  const [topRailHeight, setTopRailHeight] = useState(88);
   const [authMode, setAuthMode] = useState<SharedAuthMode | null>(null);
   const [emailBusy, setEmailBusy] = useState(false);
   const [emailNotice, setEmailNotice] = useState("");
@@ -82,20 +80,6 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
   useEffect(() => {
     if (home?.user.emailVerifiedAt) setEmailNotice("");
   }, [home?.user.emailVerifiedAt]);
-
-  useEffect(() => {
-    const handleTopRailChange = (event: Event) => {
-      const detail = (event as CustomEvent<{ pinned?: boolean; height?: number }>).detail;
-      setTopRailExpanded(Boolean(detail?.pinned));
-      if (typeof detail?.height === "number" && detail.height > 0) setTopRailHeight(detail.height);
-    };
-
-    window.addEventListener("mobile-top-rail-change", handleTopRailChange);
-    return () => {
-      window.removeEventListener("mobile-top-rail-change", handleTopRailChange);
-      setTopRailExpanded(false);
-    };
-  }, []);
 
   const startEdgeGesture = (event: TouchEvent<HTMLDivElement>) => {
     const touch = event.touches[0];
@@ -157,10 +141,7 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
         onTouchCancel={endEdgeGesture}
       />
       <div
-        className={`pointer-events-none fixed inset-x-0 top-0 z-[60] bg-black/72 backdrop-blur-2xl [mask-image:linear-gradient(to_bottom,black_0%,black_68%,rgba(0,0,0,0)_100%)] lg:hidden ${
-          topRailExpanded ? "" : "h-[calc(env(safe-area-inset-top)+4.125rem)]"
-        }`}
-        style={topRailExpanded ? { height: `calc(env(safe-area-inset-top) + 4.125rem + ${topRailHeight}px)` } : undefined}
+        className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-[calc(env(safe-area-inset-top)+3.5rem)] bg-black/72 backdrop-blur-2xl [mask-image:linear-gradient(to_bottom,black_0%,black_68%,rgba(0,0,0,0)_100%)] lg:hidden"
       />
       <div className="pointer-events-none fixed inset-x-0 top-0 z-[70] h-[calc(env(safe-area-inset-top)+4.125rem)] lg:hidden">
         <button

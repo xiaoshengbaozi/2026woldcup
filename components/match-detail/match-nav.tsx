@@ -91,7 +91,7 @@ export function MatchNav({
       ref={navRef}
       className={`${
         isPinned
-          ? "match-tabs-rail fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[65] px-3 py-2"
+          ? "match-tabs-rail fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[75] px-3 py-2"
           : "match-tabs-rail relative -mx-3 px-3 py-2"
       } mb-5 lg:static lg:mx-0 lg:bg-transparent lg:px-1 lg:py-0 lg:backdrop-blur-none`}
     >

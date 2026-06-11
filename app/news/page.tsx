@@ -382,7 +382,7 @@ export default function NewsPage() {
         ref={mobileTabsRef}
         className={`${
           isMobileTabsPinned
-            ? "news-tabs-rail match-tabs-rail fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[65] px-3 py-2"
+            ? "news-tabs-rail match-tabs-rail fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[75] px-3 py-2"
             : "news-tabs-rail match-tabs-rail relative -mx-3 mt-4 px-3 py-2"
         } lg:hidden`}
         aria-label="新闻分类"

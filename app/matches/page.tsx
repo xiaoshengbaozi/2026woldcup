@@ -199,7 +199,7 @@ export default function MatchesPage() {
           data-mobile-match-rail="true"
           className={`${
             isMobileRailPinned
-              ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+3.5rem)] z-[65]"
+              ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+3.5rem)] z-[75]"
               : "relative -mx-3 bg-black/58 backdrop-blur-2xl"
           } px-3 py-1.5`}
         >
