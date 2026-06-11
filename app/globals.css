@@ -221,6 +221,20 @@ html.theme-switching *::after {
     z-index: 86 !important;
   }
 
+  .match-tabs-rail.fixed [role="tab"][aria-selected="true"] > span.absolute.inset-0.rounded-full.bg-volt,
+  .news-tabs-rail.fixed [role="tab"][aria-selected="true"] > span.absolute.inset-0.rounded-full.bg-volt,
+  .teams-tabs-rail-pinned [role="tab"][aria-selected="true"] > span.absolute.inset-0.rounded-full.bg-volt,
+  [data-mobile-players-filters].fixed [role="tab"][aria-selected="true"] > span.absolute.inset-0.rounded-full.bg-volt,
+  [data-mobile-match-rail].fixed [role="tab"][aria-selected="true"] > span.absolute.inset-0.rounded-full.bg-volt,
+  .fixed.left-0.right-0[class*="safe-area-inset-top"][class*="z-[75]"] [role="tab"][aria-selected="true"] > span.absolute.inset-0.rounded-full.bg-volt,
+  .sticky[class*="safe-area-inset-top"][class*="z-[75]"] [role="tab"][aria-selected="true"] > span.absolute.inset-0.rounded-full.bg-volt {
+    opacity: 0.84;
+  }
+
+  .tp-content-tabs.fixed .tp-content-tab.active {
+    background: rgba(216, 255, 62, 0.84) !important;
+  }
+
   .data-page-loading {
     background:
       radial-gradient(circle at 24% 18%, rgba(216, 255, 62, 0.12), transparent 30%),

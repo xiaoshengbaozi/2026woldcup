@@ -67,21 +67,65 @@ function getPlayerPitchCoords(starters: LineupPlayer[], formation: string): Pitc
   if (usableGridCoords.length >= Math.min(starters.length, 8)) {
     const maxRow = Math.max(...usableGridCoords.map((coord) => coord.row), 1);
     const colsByRow = usableGridCoords.reduce((map, coord) => {
-      map.set(coord.row, Math.max(map.get(coord.row) ?? 0, coord.col));
+      const current = map.get(coord.row) ?? { min: coord.col, max: coord.col };
+      map.set(coord.row, {
+        min: Math.min(current.min, coord.col),
+        max: Math.max(current.max, coord.col),
+      });
       return map;
-    }, new Map<number, number>());
+    }, new Map<number, { min: number; max: number }>());
 
     return gridCoords.map((coord, index) => {
       if (!coord) return getLayout(formation)[index] ?? { x: 50, y: 50 };
 
-      const colsInRow = Math.max(colsByRow.get(coord.row) ?? coord.col, 1);
-      const x = (coord.col / (colsInRow + 1)) * 100;
+      const rowRange = colsByRow.get(coord.row) ?? { min: coord.col, max: coord.col };
+      const colsInRow = Math.max(rowRange.max - rowRange.min + 1, 1);
+      const normalizedCol = coord.col - rowRange.min + 1;
+      const x = colsInRow === 1 ? 50 : (normalizedCol / (colsInRow + 1)) * 100;
       const y = maxRow <= 1 ? 50 : 88 - ((coord.row - 1) / (maxRow - 1)) * 64;
       return { x, y };
     });
   }
 
-  return getLayout(formation);
+  return getPositionAwareLayout(starters, formation);
+}
+
+function getPositionAwareLayout(starters: LineupPlayer[], formation: string): PitchCoord[] {
+  const layout = getLayout(formation);
+  if (starters.length !== 11) return layout;
+
+  const coords: PitchCoord[] = [];
+  starters
+    .map((player, index) => ({ index, rank: getPositionSortRank(player.position) }))
+    .sort((a, b) => a.rank - b.rank || a.index - b.index)
+    .forEach((item, layoutIndex) => {
+      coords[item.index] = layout[layoutIndex] ?? { x: 50, y: 50 };
+    });
+
+  return coords;
+}
+
+function getPositionSortRank(position: PlayerPosition) {
+  const ranks: Record<PlayerPosition, number> = {
+    GK: 0,
+    LWB: 10,
+    LB: 12,
+    CB: 20,
+    RB: 28,
+    RWB: 30,
+    CDM: 40,
+    LM: 48,
+    CM: 54,
+    RM: 60,
+    CAM: 66,
+    LW: 72,
+    LF: 76,
+    ST: 82,
+    CF: 84,
+    RF: 88,
+    RW: 92,
+  };
+  return ranks[position] ?? 54;
 }
 
 function parsePlayerGrid(grid: string | null | undefined) {
@@ -374,7 +418,7 @@ function MobilePitchPlayer({
   side: "home" | "away";
   delay: number;
 }) {
-  const x = clamp(50 + (coord.x - 50) * 1.12 - 1.5, 11, 89);
+  const x = clamp(50 + (coord.x - 50) * 1.08 - 0.75, 10.5, 89.5);
   const y = side === "home"
     ? clamp(6 + ((100 - coord.y) / 100) * 41, 9, 46)
     : clamp(53 + (coord.y / 100) * 41, 54, 94);
@@ -389,7 +433,7 @@ function MobilePitchPlayer({
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ delay: 0.06 + delay * 0.025, duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
     >
-      <div className="relative grid h-11 w-11 place-items-center overflow-hidden rounded-2xl bg-[#30343d] text-xs font-black text-white shadow-[0_10px_22px_rgba(0,0,0,.26)] ring-1 ring-white/15">
+      <div className="relative grid h-11 w-11 place-items-center overflow-hidden rounded-full bg-[#30343d] text-xs font-black text-white shadow-[0_10px_22px_rgba(0,0,0,.26)] ring-1 ring-white/15">
         <span>{fallback}</span>
         {player.photo && (
           // eslint-disable-next-line @next/next/no-img-element
@@ -434,7 +478,7 @@ function MobileBenchList({
               className={`flex max-w-full items-center gap-1.5 rounded-2xl bg-white/[0.035] px-1.5 py-1 ring-1 ring-white/[0.055] ${align === "right" ? "flex-row-reverse" : ""}`}
               title={label}
             >
-              <div className="relative grid h-7 w-7 shrink-0 place-items-center overflow-hidden rounded-xl bg-[#30343d] text-[10px] font-black text-white ring-1 ring-white/12">
+              <div className="relative grid h-7 w-7 shrink-0 place-items-center overflow-hidden rounded-full bg-[#30343d] text-[10px] font-black text-white ring-1 ring-white/12">
                 <span>{player.number ?? getPlayerInitial(player)}</span>
                 {player.photo && (
                   // eslint-disable-next-line @next/next/no-img-element
