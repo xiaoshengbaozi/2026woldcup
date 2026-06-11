@@ -14,12 +14,12 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useFifaNews } from "@/lib/fifa-news";
 import { formatCountdown, formatDate } from "@/lib/format";
-import { getLiveMatchQueue, isMatchInLiveWindow } from "@/lib/live-match-queue";
+import { getLiveMatchQueue, getNextUpcomingMatch, hasMatchInLiveRefreshWindow, isMatchInLiveWindow } from "@/lib/live-match-queue";
 import { generateMatchRouteSlug } from "@/lib/match-detail";
 import { parseTeams } from "@/lib/teams";
 import { useNow } from "@/lib/use-now";
 import { getVenueBannerImage } from "@/lib/venue-assets";
-import { fallbackTopScorerProfiles, fetchWorldCupTopScorers, type WorldCupTopScorer } from "@/lib/world-cup-top-scorers";
+import { fallbackTopScorerProfiles, fetchWorldCupTopScorers, TOP_SCORERS_REFRESH_MS, type WorldCupTopScorer } from "@/lib/world-cup-top-scorers";
 import type { Match } from "@/types/match";
 import { OptimizedImage } from "./optimized-image";
 import { LiveMatchCard } from "./world-cup-hero/live-match-card";
@@ -29,7 +29,6 @@ import { usePopularTeams } from "./world-cup-hero/use-popular-teams";
 
 type WorldCupHeroProps = {
   matches: Match[];
-  firstMatch: Match | null;
   progress: number;
   completedCount: number;
   ongoingCount: number;
@@ -139,12 +138,13 @@ function ProgressCard({
   );
 }
 
-export function WorldCupHero({ matches, firstMatch, progress, completedCount, ongoingCount, calendarUrl, webcalUrl, matchCount }: WorldCupHeroProps) {
+export function WorldCupHero({ matches, progress, completedCount, ongoingCount, calendarUrl, webcalUrl, matchCount }: WorldCupHeroProps) {
   const currentTime = useNow(1_000);
   const [isDesktop, setIsDesktop] = useState(false);
   const { news: fifaNews, loading: newsLoading } = useFifaNews(isDesktop);
   const popularTeams = usePopularTeams();
   const [topScorers, setTopScorers] = useState<WorldCupTopScorer[]>(fallbackTopScorerProfiles);
+  const topScorersRefreshEnabled = hasMatchInLiveRefreshWindow(matches, currentTime);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(min-width: 1024px)");
@@ -157,19 +157,26 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
   }, []);
 
   useEffect(() => {
+    if (!topScorersRefreshEnabled) return;
+
     const loadTopScorers = () => {
       let active = true;
-      fetchWorldCupTopScorers()
-        .then((items) => {
-          if (active) setTopScorers(items.length ? items.slice(0, 5) : fallbackTopScorerProfiles);
-        })
-        .catch((error) => {
-          console.warn("[WorldCupHero] top scorers unavailable:", error);
-          if (active) setTopScorers(fallbackTopScorerProfiles);
-        });
+      const syncTopScorers = (forceRefresh = false) => {
+        fetchWorldCupTopScorers({ forceRefresh })
+          .then((items) => {
+            if (active) setTopScorers(items.length ? items.slice(0, 5) : fallbackTopScorerProfiles);
+          })
+          .catch((error) => {
+            console.warn("[WorldCupHero] top scorers unavailable:", error);
+          });
+      };
+
+      syncTopScorers();
+      const refreshId = window.setInterval(() => syncTopScorers(true), TOP_SCORERS_REFRESH_MS);
 
       return () => {
         active = false;
+        window.clearInterval(refreshId);
       };
     };
 
@@ -196,17 +203,21 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
       }
       cleanup?.();
     };
-  }, []);
+  }, [topScorersRefreshEnabled]);
 
   const hasClientTime = currentTime > 0;
+  const nextMatch = useMemo(
+    () => getNextUpcomingMatch(matches, currentTime),
+    [currentTime, matches]
+  );
   const countdown = hasClientTime
-    ? formatCountdown(firstMatch?.start ?? null, currentTime)
+    ? formatCountdown(nextMatch?.start ?? null, currentTime)
     : formatCountdown(null);
-  const teams = useMemo(() => { if (!firstMatch) return null; return parseTeams(firstMatch.summary); }, [firstMatch]);
-  const dateLabel = firstMatch ? formatDate(firstMatch.start) : "等待官方赛程";
-  const nextMatchHref = firstMatch ? `/matches/${generateMatchRouteSlug(firstMatch)}` : "/matches";
-  const venueLabel = firstMatch ? formatVenueLine(firstMatch.location) : "";
-  const nextMatchBackground = firstMatch ? getVenueBannerImage(firstMatch) : null;
+  const teams = useMemo(() => { if (!nextMatch) return null; return parseTeams(nextMatch.summary); }, [nextMatch]);
+  const dateLabel = nextMatch ? formatDate(nextMatch.start) : "等待官方赛程";
+  const nextMatchHref = nextMatch ? `/matches/${generateMatchRouteSlug(nextMatch)}` : "/matches";
+  const venueLabel = nextMatch ? formatVenueLine(nextMatch.location) : "";
+  const nextMatchBackground = nextMatch ? getVenueBannerImage(nextMatch) : null;
   const homeCode = teams?.home.name.slice(0, 3).toUpperCase() || "FIFA";
   const awayCode = teams?.away.name.slice(0, 3).toUpperCase() || "2026";
   const { displayMatches, isLive } = useMemo(

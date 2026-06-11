@@ -1,6 +1,8 @@
 import { getBackendApiUrl } from "@/lib/world-cup-api";
 import { cachedJson, fetchWithTimeout } from "@/lib/request-cache";
 
+export const TOP_SCORERS_REFRESH_MS = 60_000;
+
 export type WorldCupTopScorer = {
   id: number;
   name: string;
@@ -26,9 +28,9 @@ type TopScorersPayload = {
   error?: string;
 };
 
-export async function fetchWorldCupTopScorers() {
+export async function fetchWorldCupTopScorers(options: { forceRefresh?: boolean } = {}) {
   const url = `${getBackendApiUrl()}/api/worldcup/top-scorers?league=1&season=2026`;
-  const payload = await cachedJson<TopScorersPayload>(url, 10 * 60 * 1000, async () => {
+  const fetchScorers = async () => {
     const response = await fetchWithTimeout(url, { cache: "no-store" }, 6_000);
     const payload = (await response.json()) as TopScorersPayload;
 
@@ -37,7 +39,11 @@ export async function fetchWorldCupTopScorers() {
     }
 
     return payload;
-  }, { persist: true, staleTtlMs: 24 * 60 * 60 * 1000 });
+  };
+
+  const payload = options.forceRefresh
+    ? await fetchScorers()
+    : await cachedJson<TopScorersPayload>(url, 10 * 60 * 1000, fetchScorers, { persist: true, staleTtlMs: 24 * 60 * 60 * 1000 });
 
   return (payload.scorers ?? [])
     .map((item): WorldCupTopScorer | null => {

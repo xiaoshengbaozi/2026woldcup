@@ -9,7 +9,7 @@ import { UserActionButton } from "@/components/user-action-button";
 import { useUserSession } from "@/components/user-session-provider";
 import { buildFavoriteMatchCards, compactFavoriteMatchStage, formatFavoriteVenueLine, getFavoriteTeamCode, type FavoriteMatchCard } from "@/lib/favorite-matches";
 import { buildOddsSelectionForTeams, sameOddsMarket, type OddsSelection } from "@/lib/match-odds-selection";
-import { getMatchLiveDisplay } from "@/lib/match-live-display";
+import { getMatchLiveDisplay, getMatchScore } from "@/lib/match-live-display";
 import { useMatchLines } from "@/lib/use-match-lines";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
 import type { Team } from "@/types/match";
@@ -45,6 +45,9 @@ function FavoriteMatchListCard({ match, index }: { match: FavoriteMatchCard; ind
   const kickoff = match.startsAt ? new Date(match.startsAt) : null;
   const display = match.sourceMatch && kickoff
     ? getMatchLiveDisplay({ match: match.sourceMatch, kickoff, scheduledStageLabel: match.stage })
+    : null;
+  const finishedScore = match.sourceMatch?.status === "finished"
+    ? getMatchScore(match.sourceMatch)
     : null;
   const oddsSelection = buildOddsSelectionForTeams(
     {
@@ -83,7 +86,7 @@ function FavoriteMatchListCard({ match, index }: { match: FavoriteMatchCard; ind
       </div>
 
       <div className="relative mt-4 grid grid-cols-[minmax(0,1fr)_76px_minmax(0,1fr)] items-end gap-3 px-2">
-        <TeamColumn team={match.home} align="left" />
+        <TeamColumn team={match.home} align="left" score={finishedScore?.home} />
         <div className="grid place-items-center pb-1">
           <div className="favorite-match-logo-frame relative grid h-[58px] w-[68px] place-items-center">
             <OptimizedImage
@@ -104,11 +107,11 @@ function FavoriteMatchListCard({ match, index }: { match: FavoriteMatchCard; ind
             />
           </div>
         </div>
-        <TeamColumn team={match.away} align="right" />
+        <TeamColumn team={match.away} align="right" score={finishedScore?.away} />
       </div>
 
       <div className="relative mx-2 mt-4 grid grid-cols-4 divide-x divide-white/[0.08] border-y border-white/[0.08] py-1">
-        <MatchInfo icon={<Clock3 className="h-3 w-3" />} label="开赛" value={display?.centerLabel ?? formatTime(kickoff)} />
+        <MatchInfo icon={<Clock3 className="h-3 w-3" />} label="开赛" value={finishedScore ? formatTime(kickoff) : display?.centerLabel ?? formatTime(kickoff)} />
         <MatchInfo icon={<CalendarDays className="h-3 w-3" />} label="日期" value={formatShortDate(kickoff)} />
         <MatchInfo icon={<MapPin className="h-3 w-3" />} label="城市" value={match.city || "TBD"} />
         <MatchInfo icon={<Star className="h-3 w-3" />} label="阶段" value={compactFavoriteMatchStage(match.stage)} />
@@ -171,9 +174,10 @@ function FavoriteProbabilityInline({ selection }: { selection: OddsSelection }) 
   );
 }
 
-function TeamColumn({ team, align }: { team: Team; align: "left" | "right" }) {
+function TeamColumn({ team, align, score }: { team: Team; align: "left" | "right"; score?: number }) {
   const isRight = align === "right";
   const code = getFavoriteTeamCode(team);
+  const value = typeof score === "number" ? String(score) : code;
 
   return (
     <div className={`flex min-w-0 flex-col ${isRight ? "items-end text-right" : "items-start text-left"}`}>
@@ -181,7 +185,7 @@ function TeamColumn({ team, align }: { team: Team; align: "left" | "right" }) {
       <div className={`flex items-center gap-2 ${isRight ? "justify-end" : "justify-start"}`}>
         {!isRight && <TeamMark team={team} />}
         <p className="truncate text-[2rem] leading-none text-white" style={{ fontFamily: "ScreenMatrix, monospace" }}>
-          {code}
+          {value}
         </p>
         {isRight && <TeamMark team={team} />}
       </div>
