@@ -39,8 +39,8 @@ export default function ArticleDetailPage({ params }: { params: { slug: string }
 
   return (
     <DashboardShell>
-      <main className="mx-auto w-full max-w-5xl">
-        <Link href="/articles/" className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/[0.055] px-4 py-2 text-sm font-semibold text-white/62 ring-1 ring-white/[0.08] transition hover:bg-white/[0.08] hover:text-white">
+      <main className="w-full">
+        <Link href="/articles/" className="mb-4 hidden items-center gap-2 rounded-full bg-white/[0.055] px-4 py-2 text-sm font-semibold text-white/62 ring-1 ring-white/[0.08] transition hover:bg-white/[0.08] hover:text-white lg:inline-flex">
           <ArrowLeft className="h-4 w-4" />
           返回专题库
         </Link>

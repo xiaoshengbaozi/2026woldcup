@@ -243,7 +243,7 @@ export function MatchHero({ detail, favoriteAction }: { detail: MatchDetail; fav
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      className={`match-hero-banner hero-card relative -mx-3 -mt-4 min-h-[280px] overflow-visible rounded-b-[2rem] rounded-t-none shadow-none sm:-mx-6 sm:-mt-5 sm:min-h-[380px] lg:mx-0 lg:rounded-[2rem] ${
+      className={`match-hero-banner hero-card relative -mx-3 -mt-4 min-h-[280px] overflow-hidden rounded-b-[2rem] rounded-t-none shadow-none sm:-mx-6 sm:-mt-5 sm:min-h-[380px] lg:mx-0 lg:overflow-visible lg:rounded-[2rem] ${
         isStarted ? "lg:mt-0 lg:min-h-[216px]" : "lg:mt-14 lg:min-h-[360px]"
       }`}
     >

@@ -8,6 +8,7 @@ import { MeAuthDialog, type SharedAuthMode } from "@/components/me-auth-dialog";
 import { mobileFloatingSurfaceStyle } from "@/components/mobile-surface-styles";
 import { emitUserActionFeedback } from "@/components/user-action-feedback";
 import { useUserSession } from "@/components/user-session-provider";
+import { sameFavoriteMatch } from "@/lib/favorite-match-identity";
 import { userApi, type PublicUser } from "@/lib/user-system";
 
 type ActionKind = "team" | "player" | "match";
@@ -78,13 +79,16 @@ export function UserActionButton({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [authMode, setAuthMode] = useState<SharedAuthMode | null>(null);
   const [feedback, setFeedback] = useState<"added" | "removed" | null>(null);
+  const [savedId, setSavedId] = useState("");
   const buttonRef = useRef<HTMLButtonElement>(null);
   const { home, signedIn, refreshSession } = useUserSession();
   const id = String(payload.id || payload.matchId || "");
 
   useEffect(() => {
-    setActive(Boolean(home && isAlreadySaved(kind, id, home.user)));
-  }, [home, id, kind]);
+    const saved = home ? findSavedAction(kind, payload, home.user) : null;
+    setActive(Boolean(saved));
+    setSavedId(saved?.id ?? "");
+  }, [home, id, kind, payload]);
 
   useEffect(() => {
     if (!feedback) return;
@@ -115,8 +119,10 @@ export function UserActionButton({
         method: "POST",
         body: JSON.stringify(payload),
       });
-      const nextActive = isAlreadySaved(kind, id, result.user);
+      const saved = findSavedAction(kind, payload, result.user);
+      const nextActive = Boolean(saved);
       setActive(nextActive);
+      setSavedId(saved?.id ?? "");
       if (nextActive) {
         setFeedback("added");
         emitUserActionFeedback(kind, "added", buttonRef.current);
@@ -129,7 +135,8 @@ export function UserActionButton({
   }
 
   async function cancelAction() {
-    if (busy || !id) return;
+    const deleteId = savedId || id;
+    if (busy || !deleteId) return;
     setBusy(true);
     try {
       const path =
@@ -137,12 +144,14 @@ export function UserActionButton({
           ? `/api/me/follow/team/${encodeURIComponent(id)}`
           : kind === "player"
             ? `/api/me/follow/player/${encodeURIComponent(id)}`
-            : `/api/me/favorite-match/${encodeURIComponent(id)}`;
+            : `/api/me/favorite-match/${encodeURIComponent(deleteId)}`;
       const result = await userApi<{ user: PublicUser }>(path, {
         method: "DELETE",
       });
-      const nextActive = isAlreadySaved(kind, id, result.user);
+      const saved = findSavedAction(kind, payload, result.user);
+      const nextActive = Boolean(saved);
       setActive(nextActive);
+      setSavedId(saved?.id ?? "");
       setFeedback(nextActive ? "added" : "removed");
       emitUserActionFeedback(
         kind,
@@ -267,9 +276,10 @@ export function UserActionButton({
   );
 }
 
-function isAlreadySaved(kind: ActionKind, id: string, user: PublicUser) {
-  if (kind === "team") return user.followedTeams.some((item) => item.id === id);
+function findSavedAction(kind: ActionKind, payload: Record<string, string | number | null | undefined>, user: PublicUser) {
+  const id = String(payload.id || payload.matchId || "");
+  if (kind === "team") return user.followedTeams.find((item) => item.id === id) ?? null;
   if (kind === "player")
-    return user.followedPlayers.some((item) => item.id === id);
-  return user.favoriteMatches.some((item) => item.id === id);
+    return user.followedPlayers.find((item) => item.id === id) ?? null;
+  return user.favoriteMatches.find((item) => sameFavoriteMatch(payload, item)) ?? null;
 }

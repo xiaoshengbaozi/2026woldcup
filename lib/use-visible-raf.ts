@@ -22,7 +22,7 @@ export function useVisibleRaf(callback: (time: number) => void, options: Visible
   const callbackRef = useRef(callback);
   const onStopRef = useRef(onStop);
   const rafRef = useRef<number | null>(null);
-  const [pageVisible, setPageVisible] = useState(() => typeof document === "undefined" || !document.hidden);
+  const [pageVisible, setPageVisible] = useState(true);
   const [elementVisible, setElementVisible] = useState(true);
 
   useEffect(() => {

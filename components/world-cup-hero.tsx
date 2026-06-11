@@ -198,7 +198,10 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
     };
   }, []);
 
-  const countdown = formatCountdown(firstMatch?.start ?? null);
+  const hasClientTime = currentTime > 0;
+  const countdown = hasClientTime
+    ? formatCountdown(firstMatch?.start ?? null, currentTime)
+    : formatCountdown(null);
   const teams = useMemo(() => { if (!firstMatch) return null; return parseTeams(firstMatch.summary); }, [firstMatch]);
   const dateLabel = firstMatch ? formatDate(firstMatch.start) : "等待官方赛程";
   const nextMatchHref = firstMatch ? `/matches/${generateMatchRouteSlug(firstMatch)}` : "/matches";
@@ -215,7 +218,7 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
   return (
     <section className="space-y-5">
       <div className="grid min-w-0 gap-5 lg:grid-cols-[.78fr_1.45fr_.78fr]">
-        <motion.aside initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08, duration: 0.72, ease: [0.16, 1, 0.3, 1] }} className="order-2 grid gap-5 lg:order-1">
+        <aside className="order-2 grid gap-5 lg:order-1">
           <div className="world-cup-identity-card hero-card relative h-auto min-h-[230px] overflow-hidden p-5">
             <div className="absolute inset-0 opacity-45 [background-image:radial-gradient(circle_at_78%_62%,rgba(216,255,62,.18),transparent_30%),radial-gradient(circle_at_45%_48%,rgba(255,255,255,.07)_1px,transparent_1px)] [background-size:auto,12px_12px]" />
             <div className="relative flex h-full flex-col justify-between gap-4">
@@ -265,9 +268,9 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
           />
 
           <PopularTeamsCard popularTeams={popularTeams} className="hidden lg:block" />
-        </motion.aside>
+        </aside>
 
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14, duration: 0.78, ease: [0.16, 1, 0.3, 1] }} className="order-1 grid gap-5 lg:order-2">
+        <div className="order-1 grid gap-5 lg:order-2">
           <div className="next-match-card hero-card relative min-h-[312px] overflow-hidden p-0 sm:min-h-[330px]">
             <OptimizedImage
               src={nextMatchBackground ?? "/estadio-azteca-aerial.webp"}
@@ -331,7 +334,7 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
             </div>
             {displayMatches.length ? (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {displayMatches.map((match) => (<LiveMatchCard key={match.uid} match={match} isLive={isMatchInLiveWindow(match, currentTime)} />))}
+                {displayMatches.map((match) => (<LiveMatchCard key={match.uid} match={match} isLive={isMatchInLiveWindow(match, currentTime)} currentTime={currentTime} />))}
               </div>
             ) : (
               <div className="rounded-3xl bg-white/[0.035] px-5 py-6 text-center ring-1 ring-white/[0.06]">
@@ -340,9 +343,9 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
               </div>
             )}
           </div>
-        </motion.div>
+        </div>
 
-        <motion.aside initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.72, ease: [0.16, 1, 0.3, 1] }} className="order-3 grid gap-5">
+        <aside className="order-3 grid gap-5">
           <div className="hero-card hidden p-5 lg:block">
             <div className="mb-4 flex items-center justify-between gap-3 border-b border-white/[0.04] pb-3">
               <div><div className="flex items-center gap-2"><Newspaper className="h-4 w-4 text-volt" /><p className="text-sm font-semibold uppercase text-white">最新动态</p></div></div>
@@ -391,7 +394,7 @@ export function WorldCupHero({ matches, firstMatch, progress, completedCount, on
               ))}
             </div>
           </div>
-        </motion.aside>
+        </aside>
       </div>
     </section>
   );

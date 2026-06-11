@@ -1,4 +1,5 @@
 import { detailRows, extractCity, localizeLocationText } from "@/lib/calendar";
+import { sameFavoriteMatch } from "@/lib/favorite-match-identity";
 import { generateMatchRouteSlug, generateMatchSlug } from "@/lib/match-detail";
 import { parseTeams } from "@/lib/teams";
 import type { UserSessionPayload } from "@/lib/user-system";
@@ -86,9 +87,9 @@ const FLAG_TO_TEAM_CODE: Record<string, string> = {
 export function buildFavoriteMatchCards(home: UserSessionPayload | null | undefined, scheduleMatches: Match[]) {
   const saved = home?.user.favoriteMatches ?? [];
   if (saved.length) {
-    return saved
+    return dedupeFavoriteMatchCards(saved
       .map((favorite) => favoritePreferenceToCard(favorite, scheduleMatches))
-      .sort((a, b) => getFavoriteMatchSortTime(a) - getFavoriteMatchSortTime(b));
+      .sort((a, b) => getFavoriteMatchSortTime(a) - getFavoriteMatchSortTime(b)));
   }
 
   return getDefaultFavoriteMatches(scheduleMatches).map((match, index) =>
@@ -101,7 +102,7 @@ export function matchToFavoriteCard(match: Match, tag = "收藏"): FavoriteMatch
   const venue = detailRows(match).find((detail) => detail.type === "venue")?.text || localizeLocationText(match.location);
 
   return {
-    id: match.uid,
+    id: getCanonicalMatchId(match),
     title: normalizeFavoriteMatchTitle(match.summary),
     stage: match.stage,
     startsAt: match.start.toISOString(),
@@ -113,6 +114,19 @@ export function matchToFavoriteCard(match: Match, tag = "收藏"): FavoriteMatch
     away: teams.away,
     tag,
   };
+}
+
+function getCanonicalMatchId(match: Match) {
+  return String(match.apiFixtureId || match.uid);
+}
+
+function dedupeFavoriteMatchCards(cards: FavoriteMatchCard[]) {
+  const result: FavoriteMatchCard[] = [];
+  for (const card of cards) {
+    if (result.some((current) => sameFavoriteMatch(current, card))) continue;
+    result.push(card);
+  }
+  return result;
 }
 
 export function favoritePreferenceToCard(favorite: FavoritePreference, scheduleMatches: Match[]): FavoriteMatchCard {

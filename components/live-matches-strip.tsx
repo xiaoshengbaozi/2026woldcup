@@ -111,10 +111,10 @@ export function LiveMatchesStrip({ matches }: LiveMatchesStripProps) {
                 style={{ width: tickerWidth * 2 }}
               >
                 {displayMatches.map((match) => (
-                  <MatchTickerItem key={match.uid} match={match} isLive={isMatchInLiveWindow(match, currentTime)} stageLabel={roundLabels.get(match.uid)} />
+                  <MatchTickerItem key={match.uid} match={match} isLive={isMatchInLiveWindow(match, currentTime)} stageLabel={roundLabels.get(match.uid)} currentTime={currentTime} />
                 ))}
                 {displayMatches.map((match) => (
-                  <MatchTickerItem key={`dup-${match.uid}`} match={match} isLive={isMatchInLiveWindow(match, currentTime)} stageLabel={roundLabels.get(match.uid)} />
+                  <MatchTickerItem key={`dup-${match.uid}`} match={match} isLive={isMatchInLiveWindow(match, currentTime)} stageLabel={roundLabels.get(match.uid)} currentTime={currentTime} />
                 ))}
               </div>
             </div>
@@ -153,7 +153,7 @@ export function LiveMatchesStrip({ matches }: LiveMatchesStripProps) {
             {displayMatches.length ? (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {displayMatches.map((match) => (
-                  <LiveMatchCard key={match.uid} match={match} isLive={isMatchInLiveWindow(match, currentTime)} stageLabel={roundLabels.get(match.uid)} />
+                  <LiveMatchCard key={match.uid} match={match} isLive={isMatchInLiveWindow(match, currentTime)} stageLabel={roundLabels.get(match.uid)} currentTime={currentTime} />
                 ))}
               </div>
             ) : (
@@ -178,12 +178,14 @@ export function LiveMatchesStrip({ matches }: LiveMatchesStripProps) {
   );
 }
 
-function MatchTickerItem({ match, isLive, stageLabel }: { match: Match; isLive: boolean; stageLabel?: string }) {
+function MatchTickerItem({ match, isLive, stageLabel, currentTime }: { match: Match; isLive: boolean; stageLabel?: string; currentTime: number }) {
   const teams = parseTeams(match.summary);
   const slug = generateMatchRouteSlug(match);
   const isUnlocked = areMatchTeamsConfirmed(match.summary);
   const hasStarted = hasMatchStarted(match) || isLive;
-  const time = hasStarted ? getMatchPhaseLabel(match) : match.start.toLocaleTimeString("zh-CN", {
+  const elapsed = Math.max(0, Math.floor(((currentTime > 0 ? currentTime : match.start.getTime()) - match.start.getTime()) / 60000));
+  const time = hasStarted ? getMatchPhaseLabel({ ...match, elapsed }) : match.start.toLocaleTimeString("zh-CN", {
+    timeZone: "Asia/Shanghai",
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,

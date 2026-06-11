@@ -4,19 +4,13 @@ import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Activity, BarChart3, Clock, Globe2, TrendingUp, Zap } from "lucide-react";
 import { formatDateTime, formatVolume } from "@/lib/format";
-import { getTeamCodeFromName, localizeTeamName } from "@/lib/team-localization";
+import { buildOddsSelectionForTeams, normalizeOddsTeamCode, sameOddsMarket, type OddsSelection } from "@/lib/match-odds-selection";
+import { localizeTeamName } from "@/lib/team-localization";
 import { useMatchLines } from "@/lib/use-match-lines";
 import { getFlagUrl } from "@/lib/world-cup-2026";
 import type { MatchDetail } from "@/types/match";
 import type { MatchLineEvent, MatchLineMarket } from "@/types/messages";
 import type { ReactNode } from "react";
-
-type OddsSelection = {
-  event: MatchLineEvent | null;
-  markets: MatchLineMarket[];
-  source: "api" | "unavailable";
-  updatedAt: number | null;
-};
 
 export function MatchOdds({ detail }: { detail: MatchDetail }) {
   const { events, timestamp, loading, error } = useMatchLines();
@@ -25,8 +19,8 @@ export function MatchOdds({ detail }: { detail: MatchDetail }) {
     [detail, events, timestamp],
   );
 
-  const homeCode = normalizeCode(detail.homeTeamCode);
-  const awayCode = normalizeCode(detail.awayTeamCode);
+  const homeCode = normalizeOddsTeamCode(detail.homeTeamCode);
+  const awayCode = normalizeOddsTeamCode(detail.awayTeamCode);
   const homeName = localizeTeamName(selection.event?.homeTeam ?? homeCode, homeCode);
   const awayName = localizeTeamName(selection.event?.awayTeam ?? awayCode, awayCode);
   const homeMarket = selection.markets[0];
@@ -123,9 +117,9 @@ export function MatchOdds({ detail }: { detail: MatchDetail }) {
             </div>
 
             <div className="mt-5 grid grid-cols-3 gap-2">
-              <MarketTile label="主胜" market={homeMarket} color="volt" isHot={sameMarket(homeMarket, strongest)} />
-              <MarketTile label="平局" market={drawMarket} color="white" isHot={sameMarket(drawMarket, strongest)} />
-              <MarketTile label="客胜" market={awayMarket} color="flare" isHot={sameMarket(awayMarket, strongest)} />
+              <MarketTile label="主胜" market={homeMarket} color="volt" isHot={sameOddsMarket(homeMarket, strongest)} />
+              <MarketTile label="平局" market={drawMarket} color="white" isHot={sameOddsMarket(drawMarket, strongest)} />
+              <MarketTile label="客胜" market={awayMarket} color="flare" isHot={sameOddsMarket(awayMarket, strongest)} />
             </div>
 
             <div className="match-odds-probability-track mt-5 overflow-hidden rounded-full bg-white/[0.06]">
@@ -175,7 +169,7 @@ function TeamNode({
   strongest: MatchLineMarket | null;
   tone: "home" | "away";
 }) {
-  const hot = sameMarket(market, strongest);
+  const hot = sameOddsMarket(market, strongest);
 
   return (
     <div className="match-odds-team flex min-w-0 flex-col items-center gap-1.5">
@@ -252,61 +246,7 @@ function buildOddsSelection(
   events: MatchLineEvent[],
   timestamp: number | null,
 ): OddsSelection {
-  const event = findMatchingEvent(detail, events);
-  if (event) {
-    const markets = pickMoneyline(detail, event);
-    if (markets.length >= 3) {
-      return { event, markets: markets.slice(0, 3), source: "api", updatedAt: timestamp };
-    }
-  }
-
-  return {
-    event: null,
-    markets: [],
-    source: "unavailable",
-    updatedAt: null,
-  };
-}
-
-function findMatchingEvent(detail: MatchDetail, events: MatchLineEvent[]) {
-  const homeCode = normalizeCode(detail.homeTeamCode);
-  const awayCode = normalizeCode(detail.awayTeamCode);
-
-  return events.find((event) => {
-    const eventHomeCode = normalizeCode(getTeamCodeFromName(event.homeTeam));
-    const eventAwayCode = normalizeCode(getTeamCodeFromName(event.awayTeam));
-    return (
-      (eventHomeCode === homeCode && eventAwayCode === awayCode) ||
-      (eventHomeCode === awayCode && eventAwayCode === homeCode)
-    );
-  });
-}
-
-function pickMoneyline(detail: MatchDetail, event: MatchLineEvent) {
-  const markets = event.markets.filter((market) => market.marketType === "moneyline");
-  const home = findMarketByCode(markets, detail.homeTeamCode);
-  const draw = markets.find((market) => normalizeText(market.label) === "draw");
-  const away = findMarketByCode(markets, detail.awayTeamCode);
-  const ordered = [home, draw, away].filter((market): market is MatchLineMarket => Boolean(market));
-
-  return ordered.length >= 3 ? ordered : markets.slice(0, 3);
-}
-
-function findMarketByCode(markets: MatchLineMarket[], code: string) {
-  const normalizedCode = normalizeCode(code);
-  return markets.find((market) => normalizeCode(getTeamCodeFromName(market.label)) === normalizedCode);
-}
-
-function sameMarket(a?: MatchLineMarket | null, b?: MatchLineMarket | null) {
-  return Boolean(a && b && a.id === b.id);
-}
-
-function normalizeCode(code?: string) {
-  return (code ?? "").trim().toUpperCase();
-}
-
-function normalizeText(value: string) {
-  return value.normalize("NFKD").replace(/\p{Diacritic}/gu, "").trim().toLowerCase();
+  return buildOddsSelectionForTeams(detail, events, timestamp);
 }
 
 function sumBy(markets: MatchLineMarket[], key: "liquidity" | "volume24h") {

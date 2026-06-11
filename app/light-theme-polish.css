@@ -1730,6 +1730,111 @@
   background-color: rgba(191, 63, 98, 0.08) !important;
 }
 
+[data-theme="light"] .notification-summary-backdrop,
+[data-theme="light"] .news-reader-backdrop {
+  background:
+    radial-gradient(circle at 50% 22%, rgba(255, 254, 250, 0.72), transparent 40%),
+    linear-gradient(135deg, rgba(250, 253, 244, 0.72), rgba(229, 237, 221, 0.62)),
+    rgba(242, 247, 236, 0.72) !important;
+  -webkit-backdrop-filter: blur(64px) saturate(1.08) brightness(1.03) !important;
+  backdrop-filter: blur(64px) saturate(1.08) brightness(1.03) !important;
+}
+
+[data-theme="light"] .notification-summary-panel,
+[data-theme="light"] .news-reader-panel {
+  background:
+    linear-gradient(135deg, rgba(255, 254, 250, 0.96), rgba(246, 250, 240, 0.9)),
+    rgba(255, 254, 250, 0.94) !important;
+  border-color: rgba(54, 65, 44, 0.13) !important;
+  color: var(--lm-text-primary) !important;
+  box-shadow:
+    0 28px 86px rgba(31, 43, 26, 0.18),
+    0 0 42px -24px rgba(54, 65, 44, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.94),
+    inset 0 -1px 0 rgba(54, 65, 44, 0.045) !important;
+}
+
+[data-theme="light"] .notification-summary-panel .text-white,
+[data-theme="light"] .news-reader-panel .text-white {
+  color: var(--lm-text-primary) !important;
+}
+
+[data-theme="light"] .notification-summary-panel .text-white\/86,
+[data-theme="light"] .notification-summary-panel .text-white\/78,
+[data-theme="light"] .news-reader-panel .text-white\/70 {
+  color: rgba(54, 65, 44, 0.82) !important;
+}
+
+[data-theme="light"] .notification-summary-panel .text-white\/66,
+[data-theme="light"] .notification-summary-panel .text-white\/42,
+[data-theme="light"] .news-reader-panel .text-white\/55,
+[data-theme="light"] .news-reader-panel .text-white\/45,
+[data-theme="light"] .news-reader-panel .text-white\/38 {
+  color: var(--lm-text-secondary) !important;
+}
+
+[data-theme="light"] .notification-summary-panel .bg-white\/\[0\.045\],
+[data-theme="light"] .notification-summary-panel .bg-white\/\[0\.06\],
+[data-theme="light"] .news-reader-panel .bg-white\/\[0\.035\],
+[data-theme="light"] .news-reader-panel .bg-white\/\[0\.045\],
+[data-theme="light"] .news-reader-panel .bg-white\/\[0\.06\] {
+  background-color: rgba(54, 65, 44, 0.065) !important;
+}
+
+[data-theme="light"] .notification-summary-panel .bg-black\/18 {
+  background-color: rgba(54, 65, 44, 0.055) !important;
+}
+
+[data-theme="light"] .notification-summary-panel .border-white\/\[0\.1\],
+[data-theme="light"] .news-reader-panel .border-white\/\[0\.08\] {
+  border-color: rgba(54, 65, 44, 0.11) !important;
+}
+
+[data-theme="light"] .notification-summary-panel .ring-white\/\[0\.06\],
+[data-theme="light"] .notification-summary-panel .ring-white\/\[0\.1\],
+[data-theme="light"] .news-reader-panel .ring-white\/\[0\.08\],
+[data-theme="light"] .news-reader-panel .ring-white\/\[0\.1\] {
+  --tw-ring-color: rgba(54, 65, 44, 0.11) !important;
+}
+
+[data-theme="light"] .news-reader-panel .from-\[\#050708\] {
+  --tw-gradient-from: rgba(255, 254, 250, 0.96) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgba(255, 254, 250, 0) var(--tw-gradient-to-position) !important;
+}
+
+[data-theme="light"] .players-page .filter-dropdown-panel {
+  background:
+    radial-gradient(circle at 28% 12%, rgba(216, 255, 62, 0.18), transparent 34%),
+    linear-gradient(135deg, rgba(255, 254, 250, 0.86), rgba(239, 246, 231, 0.74)),
+    rgba(255, 254, 250, 0.78) !important;
+  -webkit-backdrop-filter: blur(34px) saturate(1.08) brightness(1.02) !important;
+  backdrop-filter: blur(34px) saturate(1.08) brightness(1.02) !important;
+  box-shadow:
+    0 18px 52px rgba(31, 43, 26, 0.16),
+    0 0 0 1px rgba(54, 65, 44, 0.12),
+    0 0 30px rgba(216, 255, 62, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.88) !important;
+}
+
+[data-theme="light"] .players-page .filter-dropdown-panel .divide-white\/\[0\.06\] > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(54, 65, 44, 0.08) !important;
+}
+
+[data-theme="light"] .players-page .filter-dropdown-panel .text-white\/62,
+[data-theme="light"] .players-page .filter-dropdown-panel .text-white\/50 {
+  color: rgba(54, 65, 44, 0.68) !important;
+}
+
+[data-theme="light"] .players-page .filter-dropdown-panel .hover\:text-white\/90:hover,
+[data-theme="light"] .players-page .filter-dropdown-panel .hover\:text-white\/75:hover {
+  color: rgba(24, 32, 20, 0.9) !important;
+}
+
+[data-theme="light"] .players-page .filter-dropdown-panel .hover\:bg-white\/\[0\.055\]:hover,
+[data-theme="light"] .players-page .filter-dropdown-panel .hover\:bg-white\/\[0\.07\]:hover {
+  background-color: rgba(54, 65, 44, 0.07) !important;
+}
+
 [data-theme="light"] .support-badge {
   background-color: rgba(54, 65, 44, 0.07) !important;
   color: #36412c !important;

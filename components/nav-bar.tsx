@@ -26,7 +26,7 @@ import { GlobalSearch } from "./global-search";
 import { MeAuthDialog, type SharedAuthMode } from "./me-auth-dialog";
 import { openCreatorSupportModal } from "./support-creator-modal";
 import { ThemeToggle } from "./theme-toggle";
-import { buildNotificationSummaryGroups, formatNotificationTime, NotificationSummaryDialog } from "@/components/notification-summary";
+import { formatNotificationTime } from "@/components/notification-summary";
 import { useUserSession } from "@/components/user-session-provider";
 import { userApi } from "@/lib/user-system";
 
@@ -46,7 +46,6 @@ export function NavBar() {
   const { home, avatarUrl, signedIn: isSignedIn, refreshSession, clearSession } = useUserSession();
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [notificationSummaryOpen, setNotificationSummaryOpen] = useState(false);
   const [avatarSettingsOpen, setAvatarSettingsOpen] = useState(false);
   const [authMode, setAuthMode] = useState<SharedAuthMode | null>(null);
 
@@ -86,7 +85,6 @@ export function NavBar() {
       .filter((reminder) => reminder.enabled)
       .sort((a, b) => (new Date(a.startsAt ?? 0).getTime() || 0) - (new Date(b.startsAt ?? 0).getTime() || 0))
       .slice(0, 3) ?? [];
-  const notificationGroups = buildNotificationSummaryGroups(home);
 
   const openPopover = () => {
     if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
@@ -190,7 +188,7 @@ export function NavBar() {
               aria-label="我的世界杯"
               aria-expanded={popoverOpen}
               onClick={() => setPopoverOpen((value) => !value)}
-              className={`relative flex h-8 w-8 items-center justify-center overflow-visible rounded-full bg-white/[0.06] text-white/60 ring-1 transition-all duration-200 hover:bg-white/[0.1] hover:text-white ${
+              className={`relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-white/[0.06] text-white/60 ring-1 transition-all duration-200 hover:bg-white/[0.1] hover:text-white ${
                 meActive || popoverOpen ? "ring-volt/55" : "ring-white/[0.08] hover:ring-volt/35"
               }`}
             >
@@ -303,17 +301,14 @@ export function NavBar() {
                             </p>
                           </button>
                         ) : null}
-                        {isSignedIn && (recentNotifications.length > 0 || upcomingReminders.length > 0) ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setPopoverOpen(false);
-                              setNotificationSummaryOpen(true);
-                            }}
+                        {isSignedIn ? (
+                          <Link
+                            href="/notifications"
+                            onClick={() => setPopoverOpen(false)}
                             className="mt-1 inline-flex h-8 w-full max-w-full items-center justify-center rounded-full bg-white/[0.055] px-3 text-[11px] font-semibold text-volt ring-1 ring-white/[0.1] transition hover:bg-volt hover:text-black"
                           >
-                            查看全部
-                          </button>
+                            通知中心 / Telegram
+                          </Link>
                         ) : null}
                       </div>
                     ) : null}
@@ -347,12 +342,6 @@ export function NavBar() {
       </nav>
       <MeAuthDialog mode={authMode} onClose={() => setAuthMode(null)} onAuthenticated={refreshHome} />
       <AvatarSettingsDialog open={avatarSettingsOpen} home={home} onClose={() => setAvatarSettingsOpen(false)} onSaved={refreshHome} />
-      {notificationSummaryOpen ? (
-        <NotificationSummaryDialog
-          groups={notificationGroups}
-          onClose={() => setNotificationSummaryOpen(false)}
-        />
-      ) : null}
     </>
   );
 }

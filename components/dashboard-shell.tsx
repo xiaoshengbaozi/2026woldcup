@@ -7,12 +7,12 @@ import { NavBar } from "./nav-bar";
 import { SiteFooter } from "./site-footer";
 import { UserNotificationToast } from "./user-notification-toast";
 
-const PRIMARY_PAGES = new Set(["/", "/news", "/data", "/matches", "/favorites", "/favorites/matches", "/players", "/me", "/notifications", "/teams", "/live", "/predict"]);
+const PRIMARY_PAGES = new Set(["/", "/news", "/articles", "/data", "/matches", "/favorites", "/favorites/matches", "/players", "/me", "/notifications", "/teams", "/live", "/predict"]);
 
 export function DashboardShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const normalizedPathname = pathname !== "/" ? pathname.replace(/\/$/, "") : pathname;
-  const hasMobileTopBar = PRIMARY_PAGES.has(normalizedPathname);
+  const hasMobileTopBar = PRIMARY_PAGES.has(normalizedPathname) || normalizedPathname.startsWith("/articles/");
 
   return (
     <div

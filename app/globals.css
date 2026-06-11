@@ -177,6 +177,50 @@ html.theme-switching *::after {
     background: linear-gradient(90deg, transparent, rgba(216, 255, 62, 0.32), rgba(255, 255, 255, 0.12), transparent);
   }
 
+  .notification-summary-backdrop,
+  .news-reader-backdrop {
+    background:
+      radial-gradient(circle at 50% 35%, rgba(216, 255, 62, 0.055), transparent 34%),
+      rgba(0, 0, 0, 0.72) !important;
+    -webkit-backdrop-filter: blur(64px) saturate(1.16) brightness(0.68) !important;
+    backdrop-filter: blur(64px) saturate(1.16) brightness(0.68) !important;
+  }
+
+  .players-page .filter-dropdown-panel {
+    width: min(14.5rem, calc(100vw - 2rem));
+    background:
+      linear-gradient(135deg, rgba(216, 255, 62, 0.085), rgba(255, 255, 255, 0.035) 42%, rgba(5, 7, 11, 0.64)),
+      rgba(5, 7, 11, 0.72) !important;
+    -webkit-backdrop-filter: blur(34px) saturate(1.18) brightness(0.86) !important;
+    backdrop-filter: blur(34px) saturate(1.18) brightness(0.86) !important;
+    box-shadow:
+      0 18px 52px rgba(0, 0, 0, 0.48),
+      0 0 0 1px rgba(255, 255, 255, 0.11),
+      0 0 36px rgba(216, 255, 62, 0.09),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+  }
+
+  .mobile-top-blur-mask {
+    transition: height 220ms ease, background-color 220ms ease, backdrop-filter 220ms ease;
+    will-change: height;
+  }
+
+  .match-tabs-rail.fixed,
+  .teams-tabs-rail-pinned,
+  .tp-content-tabs.fixed,
+  .news-tabs-rail.fixed,
+  [data-mobile-players-filters].fixed,
+  [data-mobile-match-rail].fixed {
+    z-index: 86 !important;
+  }
+
+  .fixed[class*="safe-area-inset-top"][class*="z-[75]"],
+  .sticky[class*="safe-area-inset-top"][class*="z-[75]"],
+  [class*="fixed"][class*="safe-area-inset-top"][class*="z-[75]"],
+  [class*="sticky"][class*="safe-area-inset-top"][class*="z-[75]"] {
+    z-index: 86 !important;
+  }
+
   .data-page-loading {
     background:
       radial-gradient(circle at 24% 18%, rgba(216, 255, 62, 0.12), transparent 30%),
@@ -474,6 +518,15 @@ html.theme-switching *::after {
     backdrop-filter: blur(14px) saturate(1.05) !important;
   }
 
+  .notification-summary-backdrop,
+  .news-reader-backdrop {
+    background:
+      radial-gradient(circle at 50% 35%, rgba(216, 255, 62, 0.055), transparent 34%),
+      rgba(0, 0, 0, 0.72) !important;
+    -webkit-backdrop-filter: blur(64px) saturate(1.16) brightness(0.68) !important;
+    backdrop-filter: blur(64px) saturate(1.16) brightness(0.68) !important;
+  }
+
   @media (hover: none) and (pointer: coarse) {
     :root {
       --mobile-surface-blur: 12px;
@@ -508,6 +561,12 @@ html.theme-switching *::after {
     .live-dot {
       animation-duration: 2.4s;
     }
+  }
+}
+
+@media (max-width: 1023px) {
+  .match-hero-banner {
+    overflow: hidden !important;
   }
 }
 

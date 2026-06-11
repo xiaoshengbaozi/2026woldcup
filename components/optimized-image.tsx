@@ -10,14 +10,16 @@ export function OptimizedImage({
   loading,
   decoding,
   fetchPriority,
+  width,
+  height,
   ...props
 }: OptimizedImageProps) {
   return (
     <img
       alt={alt}
-      decoding={decoding ?? "async"}
-      fetchPriority={fetchPriority ?? (priority ? "high" : "auto")}
-      loading={loading ?? (priority ? "eager" : "lazy")}
+      decoding={decoding}
+      fetchPriority={fetchPriority}
+      loading={loading}
       {...props}
     />
   );

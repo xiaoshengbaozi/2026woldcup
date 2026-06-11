@@ -374,7 +374,7 @@ function MobilePitchPlayer({
   side: "home" | "away";
   delay: number;
 }) {
-  const x = clamp(9 + (coord.x / 100) * 82, 13, 87);
+  const x = clamp(50 + (coord.x - 50) * 1.12 - 1.5, 11, 89);
   const y = side === "home"
     ? clamp(6 + ((100 - coord.y) / 100) * 41, 9, 46)
     : clamp(53 + (coord.y / 100) * 41, 54, 94);
@@ -421,20 +421,39 @@ function MobileBenchList({
   if (!players.length) return <div />;
 
   return (
-    <div className={`min-w-0 space-y-1 ${align === "right" ? "text-right" : "text-left"}`}>
+    <div className={`min-w-0 space-y-1.5 ${align === "right" ? "text-right" : "text-left"}`}>
       <p className="text-[10px] font-black text-white/35">替补</p>
-      <div className={`flex flex-col gap-1 ${align === "right" ? "items-end" : "items-start"}`}>
+      <div className={`flex flex-col gap-1.5 ${align === "right" ? "items-end" : "items-start"}`}>
         {players.slice(0, 9).map((player) => {
           const label = player.number ? `${player.number} ${player.nameCn || player.name}` : player.nameCn || player.name;
+          const positionLabel = player.positionCn || player.position;
 
           return (
-            <p
+            <div
               key={player.id}
-              className="max-w-full truncate text-[10px] font-bold leading-tight text-white/58"
+              className={`flex max-w-full items-center gap-1.5 rounded-2xl bg-white/[0.035] px-1.5 py-1 ring-1 ring-white/[0.055] ${align === "right" ? "flex-row-reverse" : ""}`}
               title={label}
             >
-              {label}
-            </p>
+              <div className="relative grid h-7 w-7 shrink-0 place-items-center overflow-hidden rounded-xl bg-[#30343d] text-[10px] font-black text-white ring-1 ring-white/12">
+                <span>{player.number ?? getPlayerInitial(player)}</span>
+                {player.photo && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={player.photo}
+                    alt={player.nameEn || player.name}
+                    className="absolute inset-0 h-full w-full object-cover"
+                    loading="lazy"
+                    onError={(event) => {
+                      event.currentTarget.style.display = "none";
+                    }}
+                  />
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-[10px] font-bold leading-tight text-white/68">{label}</p>
+                <p className="mt-0.5 truncate text-[9px] font-bold leading-tight text-white/34">{positionLabel}</p>
+              </div>
+            </div>
           );
         })}
       </div>
@@ -605,7 +624,7 @@ function FormationPitch({
 }
 
 export function SquadLineupPanel({
-  teamName, teamCode, coach, players, officialWorldCupSquad, accentHex, accentFrom, hideHeader = false,
+  teamCode, coach, players, accentHex, accentFrom, hideHeader = false,
 }: {
   teamName: string;
   teamCode: string;
@@ -621,11 +640,9 @@ export function SquadLineupPanel({
   return (
     <>
       <FeaturedSquadSummary
-        teamName={teamName}
         teamCode={teamCode}
         coach={coach}
         players={displayPlayers}
-        officialWorldCupSquad={officialWorldCupSquad}
         accentHex={accentHex}
         accentFrom={accentFrom}
         hideHeader={hideHeader}
@@ -636,13 +653,11 @@ export function SquadLineupPanel({
 }
 
 function FeaturedSquadSummary({
-  teamName, teamCode, coach, players, officialWorldCupSquad, accentHex, accentFrom, hideHeader,
+  teamCode, coach, players, accentHex, accentFrom, hideHeader,
 }: {
-  teamName: string;
   teamCode: string;
   coach?: string | null;
   players: LineupPlayer[];
-  officialWorldCupSquad: boolean;
   accentHex: string;
   accentFrom: string;
   hideHeader: boolean;
@@ -657,16 +672,8 @@ function FeaturedSquadSummary({
   return (
     <div className={`flex min-h-[320px] flex-col justify-between rounded-3xl bg-white/[0.025] p-5 ring-1 ring-white/[0.055]${hideHeader ? " squad-summary-hide-header" : ""}`}>
       <div>
-        <div className="mb-4 flex items-center gap-2">
-          <div className="h-5 w-1 rounded-full" style={{ backgroundColor: accentHex }} />
-          <span className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: accentHex }}>
-            {officialWorldCupSquad ? "FIFA 官方最终名单" : "FIFA 官方名单待录入"}
-          </span>
-        </div>
-
-        <h3 className="text-xl font-black text-white sm:text-2xl">{teamName}</h3>
         <div
-          className="mt-4 rounded-2xl px-4 py-3 ring-1 ring-white/[0.055]"
+          className="rounded-2xl px-4 py-3 ring-1 ring-white/[0.055]"
           style={{ background: `linear-gradient(135deg, ${accentFrom}0.14), rgba(255,255,255,0.025))` }}
         >
           <p className="text-[10px] font-bold tracking-[0.16em] text-white/35">主教练</p>

@@ -236,10 +236,9 @@ export function getDayStatus(dayMatches: Match[]) {
   return `${days} days later`;
 }
 
-export function getTournamentProgress(matches: Match[]) {
+export function getTournamentProgress(matches: Match[], now = Date.now()) {
   if (!matches.length) return 0;
 
-  const now = Date.now();
   const completed = matches.filter((match) => {
     const end = match.end || match.start;
     return end.getTime() < now;

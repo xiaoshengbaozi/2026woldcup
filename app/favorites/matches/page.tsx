@@ -8,9 +8,12 @@ import { OptimizedImage } from "@/components/optimized-image";
 import { UserActionButton } from "@/components/user-action-button";
 import { useUserSession } from "@/components/user-session-provider";
 import { buildFavoriteMatchCards, compactFavoriteMatchStage, formatFavoriteVenueLine, getFavoriteTeamCode, type FavoriteMatchCard } from "@/lib/favorite-matches";
+import { buildOddsSelectionForTeams, sameOddsMarket, type OddsSelection } from "@/lib/match-odds-selection";
 import { getMatchLiveDisplay } from "@/lib/match-live-display";
+import { useMatchLines } from "@/lib/use-match-lines";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
 import type { Team } from "@/types/match";
+import type { MatchLineMarket } from "@/types/messages";
 
 export default function FavoriteMatchesPage() {
   const { matches, warmupMatches, loading } = useWorldCupData();
@@ -38,10 +41,19 @@ export default function FavoriteMatchesPage() {
 }
 
 function FavoriteMatchListCard({ match, index }: { match: FavoriteMatchCard; index: number }) {
+  const { events, timestamp } = useMatchLines();
   const kickoff = match.startsAt ? new Date(match.startsAt) : null;
   const display = match.sourceMatch && kickoff
     ? getMatchLiveDisplay({ match: match.sourceMatch, kickoff, scheduledStageLabel: match.stage })
     : null;
+  const oddsSelection = buildOddsSelectionForTeams(
+    {
+      homeTeamCode: match.sourceMatch?.homeTeam?.code || getFavoriteTeamCode(match.home),
+      awayTeamCode: match.sourceMatch?.awayTeam?.code || getFavoriteTeamCode(match.away),
+    },
+    events,
+    timestamp,
+  );
 
   return (
     <motion.article
@@ -61,6 +73,7 @@ function FavoriteMatchListCard({ match, index }: { match: FavoriteMatchCard; ind
           iconOnly
           payload={{
             id: match.id,
+            matchId: match.id,
             title: match.title,
             stage: match.stage,
             startsAt: match.startsAt,
@@ -101,7 +114,7 @@ function FavoriteMatchListCard({ match, index }: { match: FavoriteMatchCard; ind
         <MatchInfo icon={<Star className="h-3 w-3" />} label="阶段" value={compactFavoriteMatchStage(match.stage)} />
       </div>
 
-      <FavoriteProbabilityInline match={match} />
+      <FavoriteProbabilityInline selection={oddsSelection} />
 
       <div className="relative mt-4 flex items-center justify-between gap-3">
         <p className="flex min-w-0 items-center gap-1.5 pl-2 text-xs font-medium text-white/50">
@@ -121,29 +134,39 @@ function FavoriteMatchListCard({ match, index }: { match: FavoriteMatchCard; ind
 }
 
 
-function FavoriteProbabilityInline({ match }: { match: FavoriteMatchCard }) {
-  const probabilitySegments = buildFavoriteProbabilitySegments(match);
+function FavoriteProbabilityInline({ selection }: { selection: OddsSelection }) {
+  const probabilitySegments = buildFavoriteProbabilitySegments(selection);
+  const hasLiveOdds = selection.source === "api" && probabilitySegments.length === 3;
 
   return (
     <div className="relative mx-2 border-b border-white/[0.08] px-3 py-3">
-      <div className="grid grid-cols-3 gap-3">
-        {probabilitySegments.map((segment) => (
-          <div key={segment.label} className="min-w-0">
-            <p
-              className={`text-xl font-black leading-none tabular-nums ${segment.valueClass}`}
-              style={{ fontFamily: "ScreenMatrix, monospace" }}
-            >
-              {segment.probability}%
-            </p>
-            <p className="mt-1 truncate text-[9px] font-black uppercase tracking-[0.12em] text-white/34">{segment.label}</p>
+      {hasLiveOdds ? (
+        <>
+          <div className="grid grid-cols-3 gap-3">
+            {probabilitySegments.map((segment) => (
+              <div key={segment.label} className="min-w-0">
+                <p
+                  className={`text-xl font-black leading-none tabular-nums ${segment.valueClass}`}
+                  style={{ fontFamily: "ScreenMatrix, monospace" }}
+                >
+                  {segment.probability}%
+                </p>
+                <p className="mt-1 truncate text-[9px] font-black uppercase tracking-[0.12em] text-white/34">{segment.label}</p>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-      <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-white/[0.08]">
-        {probabilitySegments.map((segment) => (
-          <div key={`${segment.label}-bar`} className={`h-full ${segment.barClass}`} style={{ width: `${segment.width}%` }} />
-        ))}
-      </div>
+          <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-white/[0.08]">
+            {probabilitySegments.map((segment) => (
+              <div key={`${segment.label}-bar`} className={`h-full ${segment.barClass}`} style={{ width: `${segment.width}%` }} />
+            ))}
+          </div>
+        </>
+      ) : (
+        <div className="rounded-2xl bg-black/[0.05] px-3 py-3 text-center ring-1 ring-white/[0.06]">
+          <p className="text-xs font-black text-white/58">暂无真实盘口数据</p>
+          <p className="mt-1 text-[10px] font-semibold text-white/34">未匹配到这场比赛的 Polymarket 市场</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -214,15 +237,17 @@ function formatShortDate(date: Date | null) {
   }).format(date);
 }
 
-function buildFavoriteProbabilitySegments(match: FavoriteMatchCard) {
-  const seed = getStableNumber(match.id || match.title);
-  const homeOdds = 2.05 + (seed % 42) / 100;
-  const awayOdds = 2.18 + ((seed >> 3) % 46) / 100;
-  const drawOdds = 3.05 + ((seed >> 5) % 34) / 100;
+function buildFavoriteProbabilitySegments(selection: OddsSelection) {
+  if (selection.source !== "api" || selection.markets.length < 3) return [];
+  const [homeOdds, drawOdds, awayOdds] = selection.markets;
+  const strongest = selection.markets.reduce<MatchLineMarket | null>(
+    (best, market) => (!best || market.yesPrice > best.yesPrice ? market : best),
+    null,
+  );
   const items = [
-    { label: "\u4e3b\u80dc", probability: getImpliedProbability(homeOdds), valueClass: "text-volt", barClass: "bg-volt" },
-    { label: "\u5e73\u5c40", probability: getImpliedProbability(drawOdds), valueClass: "text-white/82", barClass: "bg-white/35" },
-    { label: "\u5ba2\u80dc", probability: getImpliedProbability(awayOdds), valueClass: "text-flare", barClass: "bg-flare" },
+    { label: "主胜", probability: Math.round(homeOdds.yesPrice), valueClass: "text-volt", barClass: "bg-volt", active: sameOddsMarket(homeOdds, strongest) },
+    { label: "平局", probability: Math.round(drawOdds.yesPrice), valueClass: "text-white/82", barClass: "bg-white/35", active: sameOddsMarket(drawOdds, strongest) },
+    { label: "客胜", probability: Math.round(awayOdds.yesPrice), valueClass: "text-flare", barClass: "bg-flare", active: sameOddsMarket(awayOdds, strongest) },
   ];
   const total = items.reduce((sum, item) => sum + item.probability, 0) || 1;
 
@@ -230,12 +255,4 @@ function buildFavoriteProbabilitySegments(match: FavoriteMatchCard) {
     ...item,
     width: (item.probability / total) * 100,
   }));
-}
-
-function getImpliedProbability(value: number) {
-  return Math.round((1 / value) * 100);
-}
-
-function getStableNumber(value: string) {
-  return value.split("").reduce((total, char) => ((total << 5) - total + char.charCodeAt(0)) >>> 0, 0);
 }

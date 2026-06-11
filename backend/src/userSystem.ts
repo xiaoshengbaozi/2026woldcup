@@ -1354,14 +1354,13 @@ function syncMutualFollowedMatchesForUser(store: UserStore, userId: string, cata
   const groups = buildFollowedTeamGroups(user, catalog);
   if (groups.length < 2) return user;
 
-  const existingIds = new Set(user.favoriteMatches.map((match) => match.id));
   const matches = catalog.matches.filter((match) => isMatchBetweenFollowedGroups(match, groups)).slice(0, 24);
   for (const match of matches) {
     const normalized = normalizeMatch(match);
-    if (existingIds.has(normalized.id)) continue;
+    const latestUser = store.getUserById(userId) ?? user;
+    if (latestUser.favoriteMatches.some((favorite) => sameNormalizedMatch(favorite, normalized))) continue;
     store.upsertFavoriteMatch(userId, normalized);
     addMatchReminderPair(store, userId, normalized);
-    existingIds.add(normalized.id);
   }
 
   return store.getUserById(userId) ?? user;
@@ -1528,6 +1527,26 @@ function normalizeMatch(body: Record<string, unknown>) {
     stage: typeof body.stage === "string" ? body.stage : undefined,
     startsAt: typeof body.startsAt === "string" ? body.startsAt : undefined,
   };
+}
+
+function sameNormalizedMatch(left: { id: string; title: string; startsAt?: string }, right: { id: string; title: string; startsAt?: string }) {
+  if (left.id && right.id && left.id === right.id) return true;
+  const leftKey = getNormalizedMatchKey(left);
+  const rightKey = getNormalizedMatchKey(right);
+  return Boolean(leftKey && rightKey && leftKey === rightKey);
+}
+
+function getNormalizedMatchKey(match: { title: string; startsAt?: string }) {
+  const title = normalizeSearchText(match.title);
+  const start = normalizeMatchStart(match.startsAt);
+  return title && start ? `${title}|${start}` : "";
+}
+
+function normalizeMatchStart(value?: string) {
+  if (!value) return "";
+  const timestamp = new Date(value).getTime();
+  if (!Number.isFinite(timestamp)) return "";
+  return String(Math.floor(timestamp / 60_000));
 }
 
 function normalizeReminder(body: Record<string, unknown>) {

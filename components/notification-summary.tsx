@@ -62,9 +62,9 @@ export function NotificationSummaryDialog({
   onClose: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-[420] hidden items-center justify-center bg-black/62 px-6 backdrop-blur-xl lg:flex" role="dialog" aria-modal="true" aria-label="通知汇总">
+    <div className="notification-summary-backdrop fixed inset-0 z-[420] hidden items-center justify-center bg-black/62 px-6 backdrop-blur-2xl lg:flex" role="dialog" aria-modal="true" aria-label="通知汇总">
       <button type="button" aria-label="关闭通知汇总" className="absolute inset-0 cursor-default" onClick={onClose} />
-      <div className="relative w-full max-w-3xl overflow-hidden rounded-[2rem] border border-white/[0.16] bg-[#070a11]/96 p-6 text-white shadow-[0_34px_110px_rgba(0,0,0,.78),0_0_70px_rgba(216,255,62,.13)]">
+      <div className="notification-summary-panel relative w-full max-w-3xl overflow-hidden rounded-[2rem] border border-white/[0.16] bg-[#070a11]/[0.96] p-6 text-white shadow-[0_34px_110px_rgba(0,0,0,.78),0_0_70px_rgba(216,255,62,.13)] backdrop-blur-3xl">
         <div className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full bg-volt/12 blur-[70px]" />
         <div className="relative flex items-start justify-between gap-5">
           <div>

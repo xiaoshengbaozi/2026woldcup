@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Bell, Radio, Send, Unlink } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
-import { MobileSecondaryPageActions } from "@/components/mobile-secondary-page-actions";
 import { buildNotificationSummaryGroups, formatNotificationTime, NotificationSummaryPanel } from "@/components/notification-summary";
 import { useUserSession } from "@/components/user-session-provider";
 import { userApi, type PublicUser } from "@/lib/user-system";
@@ -70,8 +69,6 @@ export default function NotificationsPage() {
 
   return (
     <DashboardShell>
-      <MobileSecondaryPageActions backHref="/me" backLabel="返回个人中心" title="通知" reserveSpace />
-
       <main className="mx-auto grid w-full max-w-[430px] gap-4 pb-2 sm:max-w-3xl lg:max-w-5xl">
         <section className="relative overflow-hidden rounded-[2rem] border border-white/[0.12] bg-white/[0.055] p-5 text-white shadow-[0_24px_70px_rgba(0,0,0,.42),0_0_42px_rgba(216,255,62,.08)] backdrop-blur-2xl">
           <div className="pointer-events-none absolute -right-12 -top-14 h-36 w-36 rounded-full bg-volt/12 blur-[56px]" />

@@ -4,10 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import { extractCity, getTournamentProgress, parseCalendar } from "@/lib/calendar";
 import { parseTeams } from "@/lib/teams";
 import { cachedText, fetchWithTimeout } from "@/lib/request-cache";
+import { useNow } from "@/lib/use-now";
 import { fetchWorldCupFixtures, fetchWorldCupWarmupFixtures } from "@/lib/world-cup-api";
 import type { Match } from "@/types/match";
 
 export function useWorldCupData() {
+  const currentTime = useNow(30_000);
   const [matches, setMatches] = useState<Match[]>([]);
   const [warmupMatches, setWarmupMatches] = useState<Match[]>([]);
   const [activeCity, setActiveCity] = useState("全部城市");
@@ -98,9 +100,11 @@ export function useWorldCupData() {
   }, [matches]);
 
   const matchStats = useMemo(() => {
-    const now = Date.now();
+    const now = currentTime > 0 ? currentTime : 0;
     let completed = 0;
     let ongoing = 0;
+
+    if (!now) return { completedCount: completed, ongoingCount: ongoing };
 
     for (const match of matches) {
       const started = match.start.getTime() <= now;
@@ -114,7 +118,12 @@ export function useWorldCupData() {
     }
 
     return { completedCount: completed, ongoingCount: ongoing };
-  }, [matches]);
+  }, [currentTime, matches]);
+
+  const progress = useMemo(
+    () => (currentTime > 0 ? getTournamentProgress(matches, currentTime) : 0),
+    [currentTime, matches]
+  );
 
   return {
     matches,
@@ -125,7 +134,7 @@ export function useWorldCupData() {
     webcalUrl: calendarUrl.replace(/^https?:/, "webcal:"),
     cities,
     firstMatch: matches[0] ?? null,
-    progress: getTournamentProgress(matches),
+    progress,
     completedCount: matchStats.completedCount,
     ongoingCount: matchStats.ongoingCount,
     loading,

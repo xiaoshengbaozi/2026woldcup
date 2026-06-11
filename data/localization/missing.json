@@ -102,7 +102,8 @@
     "Hungary": "Hungary",
     "Korea Republic": "Korea Republic",
     "Türkiye": "Türkiye",
-    "China PR": "China PR"
+    "China PR": "China PR",
+    "Tunisia": "Tunisia"
   },
   "transferTypes": {
     "€ 17M": "€ 17M",
@@ -124,7 +125,8 @@
     "Tired": "Tired",
     "Appendicitis": "Appendicitis",
     "Chest Injury": "Chest Injury",
-    "Abdominal Strain": "Abdominal Strain"
+    "Abdominal Strain": "Abdominal Strain",
+    "Inactive": "Inactive"
   },
   "birthPlaces": {
     "London": "London",
@@ -151,6 +153,7 @@
     "S. Beccacece": "S. Beccacece",
     "J. Sellami": "J. Sellami",
     "A. Gunnlaugsson": "A. Gunnlaugsson",
-    "J. Koto": "J. Koto"
+    "J. Koto": "J. Koto",
+    "G. Arnold": "G. Arnold"
   }
 }

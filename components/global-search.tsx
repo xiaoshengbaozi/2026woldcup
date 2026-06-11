@@ -244,7 +244,7 @@ export function GlobalSearch() {
             exit={{ width: 36, opacity: 0, scaleX: 0.78 }}
             transition={{ type: "spring", stiffness: 360, damping: 34 }}
             style={{ transformOrigin: "right center" }}
-            className="global-search-form group absolute right-0 top-0 z-[220] flex h-8 items-center gap-2 overflow-hidden rounded-full bg-[#070a10]/92 px-3 ring-1 ring-white/[0.1] shadow-[0_16px_48px_rgba(0,0,0,.28),0_0_28px_rgba(216,255,62,.08)] backdrop-blur-2xl focus-within:ring-volt/42"
+            className="global-search-form group absolute right-0 top-0 z-[220] flex h-8 items-center gap-2 overflow-hidden rounded-full bg-[#070a10]/[0.92] px-3 ring-1 ring-white/[0.1] shadow-[0_16px_48px_rgba(0,0,0,.28),0_0_28px_rgba(216,255,62,.08)] backdrop-blur-2xl focus-within:ring-volt/42"
           >
             <Search className="h-4 w-4 shrink-0 text-volt/75" />
             <input

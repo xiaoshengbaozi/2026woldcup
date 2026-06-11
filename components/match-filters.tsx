@@ -547,7 +547,7 @@ export function FilterDropdown({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.98 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute right-0 top-full z-50 mt-2 hidden w-40 flex-col overflow-hidden rounded-[1.35rem] bg-black/82 shadow-[0_18px_55px_rgba(0,0,0,.46),0_0_0_1px_rgba(255,255,255,.09),0_0_38px_rgba(216,255,62,.08)] backdrop-blur-2xl sm:flex"
+            className="filter-dropdown-panel absolute right-0 top-full z-50 mt-2 hidden w-40 flex-col overflow-hidden rounded-[1.35rem] bg-black/82 shadow-[0_18px_55px_rgba(0,0,0,.46),0_0_0_1px_rgba(255,255,255,.09),0_0_38px_rgba(216,255,62,.08)] backdrop-blur-2xl sm:flex"
           >
             {panelContent}
           </motion.div>
@@ -636,5 +636,3 @@ function FilterGroupHeader({
     </div>
   );
 }
-
-

@@ -1,5 +1,6 @@
 export function formatDate(date: Date) {
   return new Intl.DateTimeFormat("zh-CN", {
+    timeZone: "Asia/Shanghai",
     month: "long",
     day: "numeric",
     weekday: "long"
@@ -8,16 +9,17 @@ export function formatDate(date: Date) {
 
 export function formatTime(date: Date) {
   return new Intl.DateTimeFormat("zh-CN", {
+    timeZone: "Asia/Shanghai",
     hour: "2-digit",
     minute: "2-digit",
     hour12: false
   }).format(date);
 }
 
-export function formatCountdown(target: Date | null) {
+export function formatCountdown(target: Date | null, now = Date.now()) {
   if (!target) return { days: "--", hours: "--", minutes: "--", seconds: "--" };
 
-  const diff = Math.max(0, target.getTime() - Date.now());
+  const diff = Math.max(0, target.getTime() - now);
   const days = Math.floor(diff / 86400000);
   const hours = Math.floor((diff % 86400000) / 3600000);
   const minutes = Math.floor((diff % 3600000) / 60000);

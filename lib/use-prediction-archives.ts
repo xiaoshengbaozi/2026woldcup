@@ -45,12 +45,13 @@ export function loadPredictionArchives(force = false) {
 }
 
 export function usePredictionArchives(enabled = true) {
-  const [value, setValue] = useState(archives);
+  const [value, setValue] = useState<PredictionArchive[]>([]);
 
   useEffect(() => {
     if (!enabled) return;
 
     const sync = () => setValue(archives);
+    sync();
     subscribers.add(sync);
     void loadPredictionArchives().catch(() => undefined);
 

@@ -52,6 +52,7 @@ export function MobileLiveMatchesList({
                 match={match}
                 isLive={isMatchInLiveWindow(match, currentTime)}
                 stageLabel={roundLabels.get(match.uid)}
+                currentTime={currentTime}
               />
             ))}
           </div>

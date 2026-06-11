@@ -251,11 +251,11 @@ export default function NewsPage() {
   }, []);
 
   useEffect(() => {
-    window.dispatchEvent(new CustomEvent("mobile-top-rail-change", { detail: { pinned: isMobileTabsPinned } }));
+    window.dispatchEvent(new CustomEvent("mobile-top-rail-change", { detail: { pinned: isMobileTabsPinned, height: mobileTabsHeight + 12 } }));
     return () => {
       window.dispatchEvent(new CustomEvent("mobile-top-rail-change", { detail: { pinned: false } }));
     };
-  }, [isMobileTabsPinned]);
+  }, [isMobileTabsPinned, mobileTabsHeight]);
 
   useEffect(() => {
     if (!readerItem) return;
@@ -869,8 +869,8 @@ function NewsReader({
   const showTranslateButton = canTranslate && !translate && article?.translation?.enabled && !article.translation.translated;
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black/72 px-3 py-4 backdrop-blur-2xl sm:px-6" role="dialog" aria-modal="true">
-      <div className="mx-auto flex h-full max-w-5xl flex-col overflow-hidden rounded-[2rem] border border-white/[0.1] bg-[#050708]/92 shadow-[0_30px_120px_rgba(0,0,0,.62)]">
+    <div className="news-reader-backdrop fixed inset-0 z-[1000000] isolate box-border bg-black/72 p-3 backdrop-blur-2xl sm:p-6" role="dialog" aria-modal="true">
+      <div className="news-reader-panel mx-auto flex h-full max-w-5xl flex-col overflow-hidden rounded-[2rem] border border-white/[0.1] bg-[#050708]/[0.94] shadow-[0_30px_120px_rgba(0,0,0,.62)] backdrop-blur-2xl">
         <div className="flex items-center justify-between gap-3 border-b border-white/[0.08] px-4 py-3 sm:px-5">
           <div className="min-w-0">
             <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-volt/70">{source}</div>

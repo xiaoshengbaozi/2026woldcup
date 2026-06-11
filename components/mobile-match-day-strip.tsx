@@ -73,7 +73,7 @@ export function MobileMatchDayStrip({
     >
       <div
         ref={stripRef}
-        className="scrollbar-hidden -mx-3 flex min-w-0 gap-2 overflow-x-auto overscroll-x-contain px-3 py-1.5 scroll-px-3"
+        className="scrollbar-hidden flex min-w-0 gap-2 overflow-x-auto overscroll-x-contain py-1.5 scroll-px-3"
       >
         <DayButton
           active={!selectedDay}

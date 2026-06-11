@@ -12,7 +12,7 @@ const buckets = new Map<number, TimerBucket>();
 
 export function useNow(intervalMs = 30_000) {
   const normalizedInterval = Math.max(1_000, intervalMs);
-  const [now, setNow] = useState(() => Date.now());
+  const [now, setNow] = useState(0);
 
   useEffect(() => {
     const bucket = getBucket(normalizedInterval);

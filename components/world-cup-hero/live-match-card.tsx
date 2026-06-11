@@ -12,15 +12,18 @@ export function LiveMatchCard({
   match,
   isLive = true,
   stageLabel,
+  currentTime = 0,
 }: {
   match: Match;
   isLive?: boolean;
   stageLabel?: string;
+  currentTime?: number;
 }) {
   const teams = parseTeams(match.summary);
   const slug = generateMatchRouteSlug(match);
   const isUnlocked = areMatchTeamsConfirmed(match.summary);
-  const fallbackElapsed = Math.max(0, Math.floor((Date.now() - match.start.getTime()) / 60000));
+  const stableCurrentTime = currentTime > 0 ? currentTime : match.start.getTime();
+  const fallbackElapsed = Math.max(0, Math.floor((stableCurrentTime - match.start.getTime()) / 60000));
   const elapsed = typeof match.elapsed === "number" && match.elapsed > 0 ? match.elapsed : fallbackElapsed;
   const isHT = match.status === "halftime" || (isLive && elapsed >= 45 && elapsed < 60);
   const minute = isLive ? getMatchPhaseLabel({ ...match, elapsed }) : formatKickoff(match.start);
@@ -67,6 +70,7 @@ export function LiveMatchCard({
 
 function formatKickoff(date: Date) {
   return date.toLocaleTimeString("zh-CN", {
+    timeZone: "Asia/Shanghai",
     hour: "2-digit",
     minute: "2-digit",
     hour12: false

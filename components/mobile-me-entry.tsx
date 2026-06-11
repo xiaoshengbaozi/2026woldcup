@@ -25,7 +25,7 @@ type MobileMeEntryProps = {
   topRightAction?: MobileTopRightAction;
 };
 
-const PRIMARY_PAGES = new Set(["/", "/news", "/data", "/matches", "/favorites", "/favorites/matches", "/players", "/me", "/teams", "/live", "/predict"]);
+const PRIMARY_PAGES = new Set(["/", "/news", "/articles", "/data", "/matches", "/favorites", "/favorites/matches", "/players", "/me", "/teams", "/live", "/predict"]);
 const CREATOR_SUPPORT_PAGES = new Set(["/matches", "/players", "/teams", "/predict"]);
 const PRIMARY_PAGE_WORDMARK_LABELS: Record<string, string> = {
   "/favorites": "FAVORITES",
@@ -34,6 +34,7 @@ const PRIMARY_PAGE_WORDMARK_LABELS: Record<string, string> = {
   "/teams": "TEAMS",
   "/predict": "PREDICT",
 };
+const DEFAULT_PINNED_RAIL_HEIGHT = 52;
 
 export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
   const pathname = usePathname();
@@ -45,11 +46,13 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
   const [authMode, setAuthMode] = useState<SharedAuthMode | null>(null);
   const [emailBusy, setEmailBusy] = useState(false);
   const [emailNotice, setEmailNotice] = useState("");
+  const [topRailHeight, setTopRailHeight] = useState(0);
   const { home, avatarUrl, loading, refreshSession } = useUserSession();
   const showHomeWordmark = normalizedPathname === "/";
-  const showFifaWordmark = normalizedPathname === "/news" || normalizedPathname === "/matches" || normalizedPathname === "/data" || normalizedPathname === "/live";
+  const isArticlePage = normalizedPathname === "/articles" || normalizedPathname.startsWith("/articles/");
+  const showFifaWordmark = normalizedPathname === "/news" || isArticlePage || normalizedPathname === "/matches" || normalizedPathname === "/data" || normalizedPathname === "/live";
   const primaryPageWordmarkLabel = PRIMARY_PAGE_WORDMARK_LABELS[normalizedPathname];
-  const showSearchEntry = pathname === "/" || pathname.startsWith("/news");
+  const showSearchEntry = pathname === "/" || pathname.startsWith("/news") || pathname.startsWith("/articles");
   const favoritesTopRightAction: MobileTopRightAction | undefined =
     normalizedPathname === "/favorites" || normalizedPathname === "/favorites/matches"
       ? {
@@ -74,12 +77,24 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
         }
       : undefined;
   const resolvedTopRightAction = topRightAction ?? favoritesTopRightAction ?? matchesTopRightAction;
+  const topMaskHeight = `calc(env(safe-area-inset-top) + 3.5rem${topRailHeight > 0 ? ` + ${topRailHeight}px` : ""})`;
 
   const refreshHome = refreshSession;
 
   useEffect(() => {
     if (home?.user.emailVerifiedAt) setEmailNotice("");
   }, [home?.user.emailVerifiedAt]);
+
+  useEffect(() => {
+    const handleTopRailChange = (event: Event) => {
+      const detail = event instanceof CustomEvent ? event.detail : null;
+      const nextHeight = detail?.pinned ? Number(detail.height || DEFAULT_PINNED_RAIL_HEIGHT) : 0;
+      setTopRailHeight(Number.isFinite(nextHeight) && nextHeight > 0 ? nextHeight : 0);
+    };
+
+    window.addEventListener("mobile-top-rail-change", handleTopRailChange);
+    return () => window.removeEventListener("mobile-top-rail-change", handleTopRailChange);
+  }, []);
 
   const startEdgeGesture = (event: TouchEvent<HTMLDivElement>) => {
     const touch = event.touches[0];
@@ -128,7 +143,7 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
     }
   };
 
-  if (!PRIMARY_PAGES.has(normalizedPathname)) return null;
+  if (!PRIMARY_PAGES.has(normalizedPathname) && !isArticlePage) return null;
 
   return (
     <>
@@ -141,9 +156,10 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
         onTouchCancel={endEdgeGesture}
       />
       <div
-        className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-[calc(env(safe-area-inset-top)+3.5rem)] bg-black/72 backdrop-blur-2xl [mask-image:linear-gradient(to_bottom,black_0%,black_68%,rgba(0,0,0,0)_100%)] lg:hidden"
+        className="mobile-top-blur-mask pointer-events-none fixed inset-x-0 top-0 z-[80] h-[calc(env(safe-area-inset-top)+3.5rem)] bg-black/72 backdrop-blur-2xl [mask-image:linear-gradient(to_bottom,black_0%,black_68%,rgba(0,0,0,0)_100%)] lg:hidden"
+        style={{ height: topMaskHeight }}
       />
-      <div className="pointer-events-none fixed inset-x-0 top-0 z-[70] h-[calc(env(safe-area-inset-top)+4.125rem)] lg:hidden">
+      <div className="pointer-events-none fixed inset-x-0 top-0 z-[90] h-[calc(env(safe-area-inset-top)+4.125rem)] lg:hidden">
         <button
           type="button"
           aria-label="打开我的世界杯"

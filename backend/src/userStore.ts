@@ -424,15 +424,24 @@ export class UserStore {
 
   upsertFavoriteMatch(userId: string, input: Omit<FavoriteMatch, "addedAt">) {
     const user = this.requireUser(userId);
-    user.favoriteMatches = upsertById(user.favoriteMatches, { ...input, addedAt: Date.now() });
+    const match = { ...input, addedAt: Date.now() };
+    const duplicateIds = new Set(user.favoriteMatches.filter((current) => sameFavoriteMatchRecord(current, match)).map((current) => current.id));
+    user.favoriteMatches = upsertFavoriteMatchByIdentity(user.favoriteMatches, match);
+    user.reminders = user.reminders.filter((reminder) => !duplicateIds.has(reminder.matchId));
     this.touch(user);
     return user;
   }
 
   removeFavoriteMatch(userId: string, id: string) {
     const user = this.requireUser(userId);
-    user.favoriteMatches = user.favoriteMatches.filter((item) => item.id !== id);
-    user.reminders = user.reminders.filter((item) => item.matchId !== id);
+    const target = user.favoriteMatches.find((item) => item.id === id);
+    const removedIds = new Set(
+      user.favoriteMatches
+        .filter((item) => item.id === id || (target && sameFavoriteMatchRecord(item, target)))
+        .map((item) => item.id)
+    );
+    user.favoriteMatches = user.favoriteMatches.filter((item) => !removedIds.has(item.id));
+    user.reminders = user.reminders.filter((item) => !removedIds.has(item.matchId));
     this.touch(user);
     return user;
   }
@@ -656,7 +665,7 @@ export class UserStore {
     const before = getUserRecordCounts(user);
     user.followedTeams = uniqueValidById(user.followedTeams);
     user.followedPlayers = uniqueValidById(user.followedPlayers);
-    user.favoriteMatches = uniqueValidById(user.favoriteMatches);
+    user.favoriteMatches = uniqueValidFavoriteMatches(user.favoriteMatches);
     user.reminders = uniqueValidById(user.reminders).filter((item) => Boolean(item.matchId && item.title));
     user.predictions = uniqueValidById(user.predictions).filter((item) => Boolean(item.matchId && item.title));
     user.predictionArchives = uniqueValidById(user.predictionArchives).filter((item) => Boolean(item.name));
@@ -1342,6 +1351,50 @@ function upsertById<T extends { id: string }>(items: T[], item: T) {
   const index = items.findIndex((current) => current.id === item.id);
   if (index === -1) return [item, ...items];
   return items.map((current) => (current.id === item.id ? item : current));
+}
+
+function upsertFavoriteMatchByIdentity(items: FavoriteMatch[], item: FavoriteMatch) {
+  const remaining = items.filter((current) => !sameFavoriteMatchRecord(current, item));
+  return [item, ...remaining];
+}
+
+function uniqueValidFavoriteMatches(items: FavoriteMatch[] = []) {
+  const result: FavoriteMatch[] = [];
+  for (const item of items) {
+    if (!item?.id || result.some((current) => sameFavoriteMatchRecord(current, item))) continue;
+    result.push(item);
+  }
+  return result;
+}
+
+function sameFavoriteMatchRecord(left: Pick<FavoriteMatch, "id" | "title" | "startsAt">, right: Pick<FavoriteMatch, "id" | "title" | "startsAt">) {
+  if (left.id && right.id && left.id === right.id) return true;
+  const leftKey = getFavoriteMatchRecordKey(left);
+  const rightKey = getFavoriteMatchRecordKey(right);
+  return Boolean(leftKey && rightKey && leftKey === rightKey);
+}
+
+function getFavoriteMatchRecordKey(match: Pick<FavoriteMatch, "title" | "startsAt">) {
+  const title = normalizeFavoriteMatchRecordTitle(match.title);
+  const start = normalizeFavoriteMatchRecordStart(match.startsAt);
+  return title && start ? `${title}|${start}` : "";
+}
+
+function normalizeFavoriteMatchRecordTitle(value?: string) {
+  return String(value ?? "")
+    .normalize("NFKD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/\s*\([^)]*\)\s*$/, "")
+    .replace(/[^\p{L}\p{N}]+/gu, "")
+    .trim()
+    .toLowerCase();
+}
+
+function normalizeFavoriteMatchRecordStart(value?: string) {
+  if (!value) return "";
+  const timestamp = new Date(value).getTime();
+  if (!Number.isFinite(timestamp)) return "";
+  return String(Math.floor(timestamp / 60_000));
 }
 
 function normalizeSignature(value: unknown, fallback?: string | null) {
