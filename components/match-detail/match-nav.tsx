@@ -1,23 +1,19 @@
 "use client";
 
 import { motion } from "framer-motion";
-import {
-  Activity,
-  BarChart3,
-  RadioTower,
-  Shield,
-  Swords,
-} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
-export type MatchTab = "lineup" | "odds" | "timeline" | "stats" | "h2h";
+export type MatchTab = "lineup" | "live" | "stats" | "events" | "analysis";
 
-const NAV_ITEMS: { id: MatchTab; label: string; icon: typeof Shield }[] = [
-  { id: "lineup", label: "阵容", icon: Shield },
-  { id: "odds", label: "赔率", icon: Activity },
-  { id: "timeline", label: "事件", icon: RadioTower },
-  { id: "stats", label: "统计", icon: BarChart3 },
-  { id: "h2h", label: "交锋", icon: Swords },
+const NAV_ITEMS: { id: MatchTab; label: string }[] = [
+  { id: "lineup", label: "阵容" },
+  { id: "live", label: "直播" },
+  { id: "stats", label: "统计" },
+  { id: "events", label: "事件" },
+  { id: "analysis", label: "分析" },
 ];
+
+const MOBILE_TOP_MODULE_OFFSET = 66;
 
 export function MatchNav({
   active,
@@ -26,41 +22,113 @@ export function MatchNav({
   active: MatchTab;
   onTabChange: (tab: MatchTab) => void;
 }) {
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const navRef = useRef<HTMLDivElement>(null);
+  const [isPinned, setIsPinned] = useState(false);
+  const [navHeight, setNavHeight] = useState(0);
+
+  useEffect(() => {
+    const mobileQuery = window.matchMedia("(max-width: 1023px)");
+
+    const syncPinnedState = () => {
+      if (!mobileQuery.matches) {
+        setIsPinned(false);
+        setNavHeight(0);
+        return;
+      }
+
+      const sentinel = sentinelRef.current;
+      const nav = navRef.current;
+      if (!sentinel || !nav) return;
+
+      const nextHeight = nav.offsetHeight;
+      setNavHeight((current) => (current === nextHeight ? current : nextHeight));
+      setIsPinned(sentinel.getBoundingClientRect().top <= MOBILE_TOP_MODULE_OFFSET);
+    };
+
+    syncPinnedState();
+    window.addEventListener("scroll", syncPinnedState, { passive: true });
+    window.addEventListener("resize", syncPinnedState);
+    mobileQuery.addEventListener?.("change", syncPinnedState);
+
+    return () => {
+      window.removeEventListener("scroll", syncPinnedState);
+      window.removeEventListener("resize", syncPinnedState);
+      mobileQuery.removeEventListener?.("change", syncPinnedState);
+    };
+  }, []);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("mobile-top-rail-change", { detail: { pinned: isPinned } }));
+    return () => {
+      window.dispatchEvent(new CustomEvent("mobile-top-rail-change", { detail: { pinned: false } }));
+    };
+  }, [isPinned]);
+
+  const scrollToTabHead = () => {
+    if (!window.matchMedia("(max-width: 1023px)").matches) return;
+
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const offset = MOBILE_TOP_MODULE_OFFSET + (navRef.current?.offsetHeight ?? 0) + 12;
+    const target = sentinel.getBoundingClientRect().top + window.scrollY - offset;
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: Math.max(target, 0), behavior: "smooth" });
+    });
+  };
+
+  const handleTabChange = (tab: MatchTab) => {
+    if (tab === active) return;
+    onTabChange(tab);
+    if (!isPinned) scrollToTabHead();
+  };
+
   return (
-    <div className="sticky top-0 z-30 mb-5 -mx-1 overflow-x-auto px-1 py-3 scrollbar-hidden">
-      <nav className="relative mx-auto flex w-max min-w-full items-center gap-1 rounded-[2rem] bg-white/[0.055] p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.22),inset_0_1px_0_rgba(255,255,255,0.08)] ring-1 ring-white/[0.06] backdrop-blur-2xl sm:min-w-0">
-        <div className="pointer-events-none absolute inset-0 rounded-[2rem] bg-[radial-gradient(circle_at_50%_0%,rgba(216,255,62,0.10),transparent_58%)]" />
+    <>
+    <div ref={sentinelRef} className="lg:hidden" style={{ height: isPinned ? navHeight : 0 }} />
+    <div
+      ref={navRef}
+      className={`${
+        isPinned
+          ? "match-tabs-rail fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+4.125rem)] z-[75] px-3 py-2"
+          : "match-tabs-rail relative -mx-3 px-3 py-2"
+      } mb-5 lg:static lg:mx-0 lg:bg-transparent lg:px-1 lg:py-0 lg:backdrop-blur-none`}
+    >
+      <div
+        className="scrollbar-hidden flex flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain"
+        role="tablist"
+        aria-label="比赛详情"
+      >
         {NAV_ITEMS.map((item) => {
-          const Icon = item.icon;
           const isActive = active === item.id;
 
           return (
             <button
               key={item.id}
-              onClick={() => onTabChange(item.id)}
-              className={`relative flex h-11 min-w-[74px] shrink-0 items-center justify-center gap-1.5 rounded-[1.45rem] px-3 text-xs font-semibold transition-colors duration-200 sm:min-w-[96px] sm:px-5 sm:text-sm ${
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => handleTabChange(item.id)}
+              className={`group relative flex shrink-0 items-center gap-1.5 overflow-hidden whitespace-nowrap rounded-full px-4 py-2 text-left text-sm font-bold transition-colors duration-300 ${
                 isActive
-                  ? "text-white"
-                  : "text-white/48 hover:text-white/78"
+                  ? "text-black"
+                : "bg-white/[0.045] text-white/58 ring-1 ring-white/[0.08] hover:bg-white/[0.08] hover:text-white"
               }`}
             >
               {isActive && (
                 <motion.span
-                  layoutId="match-nav-indicator"
-                  className="absolute inset-0 rounded-[1.45rem] bg-[linear-gradient(145deg,rgba(255,255,255,0.12),rgba(8,10,10,0.88)_46%,rgba(216,255,62,0.08))] shadow-[0_6px_20px_rgba(0,0,0,0.28),0_0_18px_rgba(216,255,62,0.08),inset_0_1px_0_rgba(255,255,255,0.12)] ring-1 ring-white/[0.08]"
-                  transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                  layoutId="match-mobile-tab-pill"
+                  className="absolute inset-0 rounded-full bg-volt shadow-[0_0_26px_rgba(216,255,62,.2)]"
+                  transition={{ type: "spring", stiffness: 420, damping: 34, mass: 0.75 }}
                 />
               )}
-              <Icon
-                className={`relative h-4 w-4 shrink-0 transition-colors sm:h-[18px] sm:w-[18px] ${
-                  isActive ? "text-volt" : "text-white/42"
-                }`}
-              />
-              <span className="relative whitespace-nowrap tracking-wide">{item.label}</span>
+              <span className="relative z-10">{item.label}</span>
             </button>
           );
         })}
-      </nav>
+      </div>
     </div>
+    </>
   );
 }

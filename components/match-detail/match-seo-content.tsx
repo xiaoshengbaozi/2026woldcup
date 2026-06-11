@@ -11,7 +11,7 @@ export function MatchSeoContent({ detail }: { detail: MatchDetail }) {
   const home = teams.home.name;
   const away = teams.away.name;
   const date = formatDate(detail.match.start);
-  const stage = formatStageLabel(detail.match.stage);
+  const stage = formatStageLabel(detail.match.stage, detail.match.summary);
 
   return (
     <motion.div

@@ -75,6 +75,7 @@ export function parseTeam(value: string): Team {
     .replace(/[\u{1F1E6}-\u{1F1FF}]/gu, "")
     .replace(/\u{1F3F4}[\u{E0061}-\u{E007A}\u{E007F}]*/gu, "")
     .replace(/\u{1F3F3}\u{FE0F}?/gu, "")
+    .replace(/^[A-Z]{2,3}\s+(?=\p{L})/u, "")
     .trim();
 
   const placeholder = parsePlaceholderTeam(name);
@@ -92,6 +93,16 @@ export function parseTeam(value: string): Team {
 }
 
 function parsePlaceholderTeam(name: string): Team | null {
+  const multiGroupSlot = name.match(/^小组(第一|第二|第三|第四)\(([^)]+)\)$/);
+  if (multiGroupSlot) {
+    return {
+      badge: "TBD",
+      badgeType: "code",
+      image: "",
+      name: `(${multiGroupSlot[2]})第${rankWordToNumber(multiGroupSlot[1])}`
+    };
+  }
+
   if (/^M(\d+)\s*胜者/i.test(name)) {
     return {
       badge: "TBD",
@@ -121,6 +132,14 @@ function parsePlaceholderTeam(name: string): Team | null {
   }
 
   return null;
+}
+
+function rankWordToNumber(value: string) {
+  if (value === "第一") return "1";
+  if (value === "第二") return "2";
+  if (value === "第三") return "3";
+  if (value === "第四") return "4";
+  return value;
 }
 
 function flagToCountryCode(flag: string) {

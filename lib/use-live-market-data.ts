@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
+import { unstable_batchedUpdates } from "react-dom";
+import { fetchWithTimeout } from "@/lib/request-cache";
 import { useStore } from "@/lib/store";
+import { getBackendApiUrl } from "@/lib/world-cup-api";
 import type {
   DeltaMessage,
   HistoryResponseMessage,
@@ -9,19 +12,15 @@ import type {
   SnapshotMessage,
 } from "@/types/messages";
 
-const LOCAL_API_URL = "http://localhost:3001";
-const PRODUCTION_API_URL = "https://api-2026.20250114.xyz";
 const STALE_AFTER_MS = 15_000;
 const RECONNECT_BASE_MS = 1_000;
 const RECONNECT_MAX_MS = 30_000;
+const SNAPSHOT_STORAGE_KEY = "wc-market-last-snapshot";
+const SNAPSHOT_SAVE_INTERVAL_MS = 15_000;
+let lastSnapshotSavedAt = 0;
 
 function getApiUrl() {
-  const fallbackUrl =
-    typeof window !== "undefined" && window.location.hostname === "localhost"
-      ? LOCAL_API_URL
-      : PRODUCTION_API_URL;
-
-  return (process.env.NEXT_PUBLIC_MARKET_API_URL || fallbackUrl).replace(/\/$/, "");
+  return getBackendApiUrl();
 }
 
 function getWsUrl(apiUrl: string) {
@@ -30,35 +29,50 @@ function getWsUrl(apiUrl: string) {
   return apiUrl.replace(/^http:/, "ws:").replace(/^https:/, "wss:");
 }
 
-function applySnapshot(message: SnapshotMessage) {
+function applySnapshot(message: SnapshotMessage, options: { persist?: boolean } = {}) {
+  const persist = options.persist ?? true;
   const store = useStore.getState();
-  store.updateCountries(message.countries);
-  store.setEvents(message.events);
+  unstable_batchedUpdates(() => {
+    store.updateCountries(message.countries);
+    store.setEvents(message.events);
+    store.setAllHistory(message.history ?? {});
 
-  for (const [countryCode, history] of Object.entries(message.history ?? {})) {
-    store.setHistory(countryCode, history);
-  }
-
-  store.recomputeRankings();
-  store.recordUpdate(message.timestamp, Math.max(0, Date.now() - message.timestamp));
-  store.setStatus("connected");
+    store.recomputeRankings();
+    store.recordUpdate(message.timestamp, Math.max(0, Date.now() - message.timestamp));
+    store.setDataSource("live");
+    store.setStatus("connected");
+  });
+  if (persist) saveLastSnapshot(message, { force: true });
 }
 
 function applyDelta(message: DeltaMessage) {
   const store = useStore.getState();
-  store.updateCountriesFromDelta(message.updates);
+  const historyUpdates = message.updates.filter((update) => update.historyPoint);
+  unstable_batchedUpdates(() => {
+    const changedCountryCodes = store.updateCountriesFromDelta(message.updates);
 
-  for (const update of message.updates) {
-    store.appendHistoryPoint(update.countryCode, update.historyPoint);
-  }
+    if (historyUpdates.length) {
+      store.appendHistoryPoints(historyUpdates);
+    }
 
-  if (message.newEvents.length) {
-    store.addEvents(message.newEvents);
-  }
+    if (message.newEvents.length) {
+      store.addEvents(message.newEvents);
+    }
 
-  store.recomputeRankings();
-  store.recordUpdate(message.timestamp, Math.max(0, Date.now() - message.timestamp));
-  store.setStatus("connected");
+    if (changedCountryCodes.length) {
+      store.scheduleRankingsRecompute();
+    }
+    store.recordUpdate(message.timestamp, Math.max(0, Date.now() - message.timestamp));
+    store.setDataSource("live");
+    store.setStatus("connected");
+  });
+  saveLastSnapshot({
+    type: "snapshot",
+    timestamp: message.timestamp,
+    countries: useStore.getState().getAllCountries(),
+    events: useStore.getState().events,
+    history: {},
+  });
 }
 
 function applyHistoryResponse(message: HistoryResponseMessage) {
@@ -88,11 +102,34 @@ export function useLiveMarketData() {
 
     async function loadSnapshot() {
       try {
-        const response = await fetch(`${apiUrl}/api/snapshot`, { cache: "no-store" });
+        const response = await fetchWithTimeout(`${apiUrl}/api/snapshot`, { cache: "no-store" }, 5_000);
         if (!response.ok) throw new Error(`Snapshot returned ${response.status}`);
-        applySnapshot((await response.json()) as SnapshotMessage);
+        const snapshot = (await response.json()) as SnapshotMessage;
+        if (snapshot.countries.length) {
+          applySnapshot(snapshot);
+          return;
+        }
+
+        const lastSnapshot = readLastSnapshot();
+        if (lastSnapshot) {
+          applySnapshot(lastSnapshot, { persist: false });
+          useStore.getState().setStatus("stale");
+          return;
+        }
+
+        applySnapshot(snapshot, { persist: false });
       } catch (err) {
         console.warn("[MarketData] Snapshot request failed:", err);
+        const lastSnapshot = readLastSnapshot();
+        if (lastSnapshot) {
+          applySnapshot(lastSnapshot, { persist: false });
+          useStore.getState().setStatus("stale");
+          return;
+        }
+        if (useStore.getState().countries.size) {
+          useStore.getState().setStatus("stale");
+          return;
+        }
         useStore.getState().setStatus("disconnected");
       }
     }
@@ -132,11 +169,12 @@ export function useLiveMarketData() {
 
       ws.onclose = () => {
         if (stopped) return;
-        useStore.getState().setStatus("disconnected");
+        useStore.getState().setStatus(useStore.getState().countries.size ? "stale" : "disconnected");
         scheduleReconnect();
       };
     }
 
+    discardMockMarketData();
     useStore.getState().setStatus("initializing");
     void loadSnapshot();
     connect();
@@ -159,4 +197,56 @@ export function useLiveMarketData() {
       ws?.close();
     };
   }, []);
+}
+
+function discardMockMarketData() {
+  const store = useStore.getState();
+  if (store.dataSource !== "mock") return;
+
+  useStore.setState({
+    countries: new Map(),
+    history: new Map(),
+    events: [],
+    rankings: [],
+    squeezePairs: [],
+    vibrationTriggers: [],
+    lastUpdateTimestamp: null,
+    updateCount: 0,
+    latency: 0,
+    dataSource: "empty",
+  });
+}
+
+function saveLastSnapshot(message: SnapshotMessage, options: { force?: boolean } = {}) {
+  if (typeof window === "undefined" || !message.countries.length) return;
+  const now = Date.now();
+  if (!options.force && now - lastSnapshotSavedAt < SNAPSHOT_SAVE_INTERVAL_MS) return;
+
+  try {
+    const compact: SnapshotMessage = {
+      type: "snapshot",
+      timestamp: message.timestamp,
+      countries: message.countries,
+      events: message.events,
+      history: {},
+    };
+    window.localStorage.setItem(SNAPSHOT_STORAGE_KEY, JSON.stringify({ savedAt: now, snapshot: compact }));
+    lastSnapshotSavedAt = now;
+  } catch {
+    // If storage is unavailable, the in-memory store still preserves the current frame.
+  }
+}
+
+function readLastSnapshot() {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = window.localStorage.getItem(SNAPSHOT_STORAGE_KEY);
+    if (!raw) return null;
+    const payload = JSON.parse(raw) as { snapshot?: SnapshotMessage };
+    if (!payload.snapshot?.countries?.length) return null;
+    return payload.snapshot;
+  } catch {
+    return null;
+  }
 }

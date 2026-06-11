@@ -11,7 +11,9 @@ export interface HistorySlice {
   historyResolution: TimeResolution;
 
   setHistory: (countryCode: string, data: HistoryPoint[]) => void;
+  setAllHistory: (data: Record<string, HistoryPoint[]>) => void;
   appendHistoryPoint: (countryCode: string, point: HistoryPoint) => void;
+  appendHistoryPoints: (updates: Array<{ countryCode: string; historyPoint: HistoryPoint }>) => void;
   getHistory: (countryCode: string) => HistoryPoint[];
   setTimePreset: (preset: TimePreset) => void;
 }
@@ -22,6 +24,13 @@ const PRESET_RESOLUTION: Record<TimePreset, TimeResolution> = {
   "7D": "1h",
   "30D": "1d",
 };
+const MAX_CLIENT_HISTORY_POINTS = 2880;
+
+function trimHistory(data: HistoryPoint[]) {
+  return data.length > MAX_CLIENT_HISTORY_POINTS
+    ? data.slice(-MAX_CLIENT_HISTORY_POINTS)
+    : data;
+}
 
 export const createHistorySlice: StateCreator<
   StoreState, [], [], HistorySlice
@@ -33,16 +42,41 @@ export const createHistorySlice: StateCreator<
   setHistory: (countryCode, data) => {
     set((state) => {
       const next = new Map(state.history);
-      next.set(countryCode, data);
+      next.set(countryCode, trimHistory(data));
+      return { history: next };
+    });
+  },
+
+  setAllHistory: (data) => {
+    set(() => {
+      const next = new Map<string, HistoryPoint[]>();
+      for (const [countryCode, history] of Object.entries(data)) {
+        next.set(countryCode, trimHistory(history));
+      }
       return { history: next };
     });
   },
 
   appendHistoryPoint: (countryCode, point) => {
+    if (!point) return;
+
     set((state) => {
       const next = new Map(state.history);
       const existing = next.get(countryCode) ?? [];
-      next.set(countryCode, [...existing, point]);
+      next.set(countryCode, trimHistory([...existing, point]));
+      return { history: next };
+    });
+  },
+
+  appendHistoryPoints: (updates) => {
+    if (!updates.length) return;
+
+    set((state) => {
+      const next = new Map(state.history);
+      for (const update of updates) {
+        const existing = next.get(update.countryCode) ?? [];
+        next.set(update.countryCode, trimHistory([...existing, update.historyPoint]));
+      }
       return { history: next };
     });
   },

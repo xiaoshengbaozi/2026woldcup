@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback, useState } from "react";
 import { useStore } from "@/lib/store";
 import type { HistoryPoint } from "@/types/country";
 
@@ -21,6 +21,7 @@ interface CanvasSize {
 
 export function TimelineCanvas({ size }: { size: CanvasSize }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [themeVersion, setThemeVersion] = useState(0);
   const history = useStore((s) => s.history);
   const selectedCountry = useStore((s) => s.selectedCountry);
   const selectCountry = useStore((s) => s.selectCountry);
@@ -28,19 +29,23 @@ export function TimelineCanvas({ size }: { size: CanvasSize }) {
   const lineGeosRef = useRef<LineGeometry[]>([]);
 
   const draw = useCallback(() => {
+    void themeVersion;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     const { width, height } = size;
+    const isLightTheme =
+      typeof document !== "undefined" &&
+      document.documentElement.getAttribute("data-theme") === "light";
     const dpr = typeof window !== "undefined" ? window.devicePixelRatio : 1;
     canvas.width = width * dpr;
     canvas.height = height * dpr;
     ctx.scale(dpr, dpr);
 
     // Clear with site background
-    ctx.fillStyle = "rgba(5,8,8,0.6)";
+    ctx.fillStyle = isLightTheme ? "rgba(255,253,247,0.52)" : "rgba(5,8,8,0.6)";
     ctx.fillRect(0, 0, width, height);
 
     const padding = { top: 20, right: 20, bottom: 30, left: 50 };
@@ -66,7 +71,7 @@ export function TimelineCanvas({ size }: { size: CanvasSize }) {
     }
 
     if (entries.length === 0) {
-      ctx.fillStyle = "rgba(255,255,255,0.3)";
+      ctx.fillStyle = isLightTheme ? "rgba(35,45,31,0.48)" : "rgba(255,255,255,0.3)";
       ctx.font = "12px 'JetBrains Mono', monospace";
       ctx.textAlign = "center";
       ctx.fillText("等待数据...", width / 2, height / 2);
@@ -102,7 +107,7 @@ export function TimelineCanvas({ size }: { size: CanvasSize }) {
     const toY = (p: number) => padding.top + (1 - (p - pMin) / pTotal) * chartH;
 
     // Grid
-    drawGrid(ctx, padding, chartW, chartH, tMin, tMax, pMin, pMax);
+    drawGrid(ctx, padding, chartW, chartH, tMin, tMax, pMin, pMax, isLightTheme);
 
     // Lines with glow
     const lineGeos: LineGeometry[] = [];
@@ -132,9 +137,19 @@ export function TimelineCanvas({ size }: { size: CanvasSize }) {
     });
 
     lineGeosRef.current = lineGeos;
-  }, [size, history, selectedCountry, activeTimePreset]);
+  }, [size, history, selectedCountry, activeTimePreset, themeVersion]);
 
   useEffect(() => { draw(); }, [draw]);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const observer = new MutationObserver(() => setThemeVersion((value) => value + 1));
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+    return () => observer.disconnect();
+  }, []);
 
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -195,9 +210,10 @@ function drawGrid(
   ctx: CanvasRenderingContext2D,
   padding: { top: number; right: number; bottom: number; left: number },
   chartW: number, chartH: number,
-  tMin: number, tMax: number, pMin: number, pMax: number
+  tMin: number, tMax: number, pMin: number, pMax: number,
+  isLightTheme: boolean
 ) {
-  ctx.strokeStyle = "rgba(255,255,255,0.04)";
+  ctx.strokeStyle = isLightTheme ? "rgba(60,75,52,0.12)" : "rgba(255,255,255,0.04)";
   ctx.lineWidth = 1;
 
   const pStep = (pMax - pMin) / 5;
@@ -209,7 +225,7 @@ function drawGrid(
     ctx.lineTo(padding.left + chartW, y);
     ctx.stroke();
 
-    ctx.fillStyle = "rgba(255,255,255,0.28)";
+    ctx.fillStyle = isLightTheme ? "rgba(38,50,34,0.62)" : "rgba(255,255,255,0.28)";
     ctx.font = "10px 'JetBrains Mono', monospace";
     ctx.textAlign = "right";
     ctx.fillText(`${p.toFixed(1)}%`, padding.left - 6, y + 3);
@@ -224,7 +240,7 @@ function drawGrid(
     ctx.lineTo(x, padding.top + chartH);
     ctx.stroke();
 
-    ctx.fillStyle = "rgba(255,255,255,0.28)";
+    ctx.fillStyle = isLightTheme ? "rgba(38,50,34,0.62)" : "rgba(255,255,255,0.28)";
     ctx.font = "10px 'JetBrains Mono', monospace";
     ctx.textAlign = "center";
     const d = new Date(t);

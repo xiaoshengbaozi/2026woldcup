@@ -50,7 +50,7 @@ export function DetailOverlay() {
           animate={{ x: 0 }}
           exit={{ x: "100%" }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="absolute inset-0 z-50 flex flex-col"
+          className="detail-overlay-panel absolute inset-0 z-50 flex flex-col"
           style={{
             background: "linear-gradient(135deg, rgba(255,255,255,0.045), rgba(255,255,255,0.015)), rgba(5,8,8,0.98)",
           }}

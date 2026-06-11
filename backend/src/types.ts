@@ -48,19 +48,18 @@ export interface DeltaMessage {
   type: "delta";
   timestamp: number;
   sequenceNumber: number;
-  updates: Array<{
-    countryCode: string;
-    yesPrice: number;
-    impliedProbability: number;
-    delta1m: number;
-    delta5m: number;
-    delta1h: number;
-    delta24h: number;
-    volume24h: number;
-    volume5m: number;
-    spread: number;
-    historyPoint: HistoryPoint;
-  }>;
+  updates: Array<Partial<Pick<
+    CountryData,
+    | "yesPrice"
+    | "impliedProbability"
+    | "delta1m"
+    | "delta5m"
+    | "delta1h"
+    | "delta24h"
+    | "volume24h"
+    | "volume5m"
+    | "spread"
+  >> & { countryCode: string; historyPoint: HistoryPoint }>;
   newEvents: ChartEvent[];
 }
 

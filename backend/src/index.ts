@@ -8,7 +8,10 @@ import { createEventDetector } from "./eventDetector";
 import { createHistoryBuffer } from "./historyBuffer";
 import { createHttpServer } from "./httpServer";
 import { createMatchLinesService } from "./matchLines";
+import { createPlayerXTimelineService } from "./playerXTimeline";
 import { createSnapshotCache } from "./snapshotCache";
+import { UserStore } from "./userStore";
+import { createUserSystem } from "./userSystem";
 import { createWsServer } from "./wsServer";
 import type { CountryData, HistoryPoint } from "./types";
 
@@ -16,6 +19,7 @@ loadLocalEnv(resolve(process.cwd(), ".env"));
 
 const PORT = parseInt(process.env.PORT || "3001");
 const POLYMARKET_API_KEY = process.env.POLYMARKET_API_KEY || "";
+const SNAPSHOT_CACHE_INTERVAL_MS = 15_000;
 
 function loadLocalEnv(path: string) {
   if (!existsSync(path)) return;
@@ -48,6 +52,10 @@ async function main() {
   const wsServer = createWsServer();
   const matchLines = createMatchLinesService();
   const apiFootball = createApiFootballService();
+  const playerXTimeline = createPlayerXTimelineService();
+  const userStore = new UserStore();
+  await userStore.ready();
+  const userSystem = createUserSystem(userStore, apiFootball, playerXTimeline);
   matchLines.start();
 
   // 2. Connect to Polymarket
@@ -57,6 +65,7 @@ async function main() {
   let currentCountries: Map<string, CountryData> = new Map();
   let sequenceNumber = 0;
   let lastPolymarketUpdate: number | null = null;
+  let lastSnapshotCacheAt = 0;
   const startedAt = Date.now();
 
   polymarket.on("countryUpdate", (country: CountryData) => {
@@ -109,41 +118,31 @@ async function main() {
     // Detect events
     const newEvents = eventDetector.detect(currentCountries, withDeltas);
 
-    // Broadcast delta to all clients
-    const snapshotHistory: Record<string, HistoryPoint[]> = {};
-    for (const c of withDeltas) {
-      snapshotHistory[c.countryCode] = historyBuffer.getHistory(
-        c.countryCode,
-        now - 24 * 60 * 60 * 1000,
-        now
-      );
-    }
+    if (now - lastSnapshotCacheAt >= SNAPSHOT_CACHE_INTERVAL_MS || !snapshotCache.getLatest()) {
+      const snapshotHistory: Record<string, HistoryPoint[]> = {};
+      for (const c of withDeltas) {
+        snapshotHistory[c.countryCode] = historyBuffer.getHistory(
+          c.countryCode,
+          now - 24 * 60 * 60 * 1000,
+          now
+        );
+      }
 
-    snapshotCache.update({
-      type: "snapshot",
-      timestamp: now,
-      countries: withDeltas,
-      events: newEvents,
-      history: snapshotHistory,
-    });
+      snapshotCache.update({
+        type: "snapshot",
+        timestamp: now,
+        countries: withDeltas,
+        events: newEvents,
+        history: snapshotHistory,
+      });
+      lastSnapshotCacheAt = now;
+    }
 
     wsServer.broadcast({
       type: "delta",
       timestamp: now,
       sequenceNumber: ++sequenceNumber,
-      updates: withDeltas.map((c) => ({
-        countryCode: c.countryCode,
-        yesPrice: c.yesPrice,
-        impliedProbability: c.impliedProbability,
-        delta1m: c.delta1m,
-        delta5m: c.delta5m,
-        delta1h: c.delta1h,
-        delta24h: c.delta24h,
-        volume24h: c.volume24h,
-        volume5m: c.volume5m,
-        spread: c.spread,
-        historyPoint: historySnapshot.get(c.countryCode)!,
-      })),
+      updates: withDeltas.map((c) => buildCountryDelta(currentCountries.get(c.countryCode), c, historySnapshot.get(c.countryCode)!)),
       newEvents,
     });
 
@@ -157,6 +156,8 @@ async function main() {
     historyBuffer,
     wsServer,
     apiFootball,
+    playerXTimeline,
+    userSystem,
     getState: () => ({
       countries: Array.from(currentCountries.values()),
       sequenceNumber,
@@ -167,10 +168,10 @@ async function main() {
     }),
   });
 
-  const wss = new WebSocketServer({ server });
+  const wss = new WebSocketServer({ server, maxPayload: 16 * 1024 });
 
-  wss.on("connection", (ws) => {
-    wsServer.handleConnection(ws, snapshotCache, historyBuffer);
+  wss.on("connection", (ws, req) => {
+    wsServer.handleConnection(ws, snapshotCache, historyBuffer, req);
   });
 
   server.listen(PORT, () => {
@@ -185,3 +186,41 @@ main().catch((err) => {
   console.error("[Backend] Fatal error:", err);
   process.exit(1);
 });
+
+function buildCountryDelta(previous: CountryData | undefined, current: CountryData, historyPoint: HistoryPoint) {
+  const update: Partial<Pick<
+    CountryData,
+    | "yesPrice"
+    | "impliedProbability"
+    | "delta1m"
+    | "delta5m"
+    | "delta1h"
+    | "delta24h"
+    | "volume24h"
+    | "volume5m"
+    | "spread"
+  >> & { countryCode: string; historyPoint: HistoryPoint } = {
+    countryCode: current.countryCode,
+    historyPoint,
+  };
+
+  const keys = [
+    "yesPrice",
+    "impliedProbability",
+    "delta1m",
+    "delta5m",
+    "delta1h",
+    "delta24h",
+    "volume24h",
+    "volume5m",
+    "spread",
+  ] as const;
+
+  for (const key of keys) {
+    if (!previous || previous[key] !== current[key]) {
+      update[key] = current[key];
+    }
+  }
+
+  return update;
+}

@@ -1,0 +1,94 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: worldcup-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: worldcup
+      POSTGRES_USER: worldcup
+      POSTGRES_PASSWORD: worldcup_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - worldcup_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U worldcup -d worldcup"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: worldcup-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - worldcup_redis_data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+
+  migrate:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    env_file:
+      - ../.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://worldcup:worldcup_dev_password@postgres:5432/worldcup
+    command: ["bun", "src/migrate.ts"]
+
+  backend:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: worldcup-backend
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      PORT: "3001"
+      DATABASE_URL: postgres://worldcup:worldcup_dev_password@postgres:5432/worldcup
+      REDIS_URL: redis://redis:6379
+      CORS_ORIGIN: https://ball.boyzi.fun,https://localhost,capacitor://localhost,ionic://localhost,https://beta-wzja.world-cup-2026-625.pages.dev,https://world-cup-2026-625.pages.dev
+      API_FOOTBALL_CACHE_FILE: /app/data/api-football-cache.json
+    ports:
+      - "3002:3001"
+    volumes:
+      - ../../data:/app/data
+
+  reminder-worker:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: worldcup-reminder-worker
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgres://worldcup:worldcup_dev_password@postgres:5432/worldcup
+      REDIS_URL: redis://redis:6379
+      REMINDER_WORKER_INTERVAL_MS: "30000"
+    volumes:
+      - ../../data:/app/data
+    command: ["bun", "src/reminderWorker.ts"]
+
+volumes:
+  worldcup_postgres_data:
+  worldcup_redis_data:

@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { Clock } from "lucide-react";
 import { MatchCard } from "@/components/match-card";
 import { MatchCardCompact } from "@/components/match-card-compact";
@@ -6,6 +6,8 @@ import { MatchCalendarView } from "@/components/match-calendar-view";
 import { TopologyBracket } from "@/components/topology-bracket";
 import { getDayStatus } from "@/lib/calendar";
 import { formatDate } from "@/lib/format";
+import { getStageGroupId } from "@/lib/stage";
+import { buildMatchRoundLabels } from "@/lib/stage-rounds";
 import type { Match } from "@/types/match";
 import type { ScheduleLayout } from "@/app/matches/page";
 
@@ -14,17 +16,16 @@ type DaySectionProps = {
   matches: Match[];
   index: number;
   timezoneOffset: number;
+  roundLabels: Map<string, string>;
 };
 
-export function DaySection({ day, matches, index, timezoneOffset }: DaySectionProps) {
+export function DaySection({ day, matches, index, timezoneOffset, roundLabels }: DaySectionProps) {
   const firstStart = new Date(matches[0].start.getTime() + timezoneOffset * 3600000);
 
   return (
     <motion.section
-      layout
-      initial={{ opacity: 0, y: 20, filter: "blur(14px)" }}
-      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-      exit={{ opacity: 0, y: -10, filter: "blur(12px)" }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{
         delay: Math.min(index * 0.035, 0.28),
         duration: 0.55
@@ -52,14 +53,14 @@ export function DaySection({ day, matches, index, timezoneOffset }: DaySectionPr
               )}
               <div className="grid grid-cols-1 gap-0 md:grid-cols-[1fr_1px_1fr]">
                 <div className="md:pr-5">
-                  <MatchCard match={left} timezoneOffset={timezoneOffset} />
+                  <MatchCard match={left} timezoneOffset={timezoneOffset} stageLabel={roundLabels.get(left.uid)} />
                 </div>
                 {right ? (
                   <>
                     <div className="h-px w-full bg-gradient-to-r from-transparent via-white/[0.04] to-transparent my-3 md:hidden" />
                     <div className="hidden md:block w-px self-stretch bg-gradient-to-b from-transparent via-white/[0.06] to-transparent" />
                     <div className="md:pl-5">
-                      <MatchCard match={right} timezoneOffset={timezoneOffset} />
+                      <MatchCard match={right} timezoneOffset={timezoneOffset} stageLabel={roundLabels.get(right.uid)} />
                     </div>
                   </>
                 ) : null}
@@ -72,22 +73,19 @@ export function DaySection({ day, matches, index, timezoneOffset }: DaySectionPr
   );
 }
 
-type DayCardProps = {
-  day: string;
+type GroupCardProps = {
+  group: string;
   matches: Match[];
   index: number;
   timezoneOffset: number;
+  roundLabels: Map<string, string>;
 };
 
-function DayCard({ day, matches, index, timezoneOffset }: DayCardProps) {
-  const firstStart = new Date(matches[0].start.getTime() + timezoneOffset * 3600000);
-
+function GroupCard({ group, matches, index, timezoneOffset, roundLabels }: GroupCardProps) {
   return (
     <motion.section
-      layout
-      initial={{ opacity: 0, y: 16, filter: "blur(12px)" }}
-      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-      exit={{ opacity: 0, y: -8, filter: "blur(10px)" }}
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{
         delay: Math.min(index * 0.025, 0.22),
         duration: 0.45
@@ -96,7 +94,7 @@ function DayCard({ day, matches, index, timezoneOffset }: DayCardProps) {
     >
       <div className="mb-2 flex items-center justify-center gap-2">
         <h2 className="text-sm font-medium text-white sm:text-base">
-          {formatDate(firstStart)}
+          {formatGroupTitle(group)}
         </h2>
       </div>
 
@@ -109,6 +107,7 @@ function DayCard({ day, matches, index, timezoneOffset }: DayCardProps) {
             <MatchCardCompact
               match={match}
               timezoneOffset={timezoneOffset}
+              stageLabel={roundLabels.get(match.uid)}
             />
           </div>
         ))}
@@ -124,6 +123,7 @@ type ScheduleListProps = {
   isEmpty: boolean;
   timezoneOffset: number;
   layout: ScheduleLayout;
+  matchesForRoundLabels: Match[];
 };
 
 export function ScheduleList({
@@ -132,9 +132,13 @@ export function ScheduleList({
   error,
   isEmpty,
   timezoneOffset,
-  layout
+  layout,
+  matchesForRoundLabels
 }: ScheduleListProps) {
   const days = [...grouped.entries()];
+  const flatMatches = Array.from(grouped.values()).flat();
+  const roundLabels = buildMatchRoundLabels(matchesForRoundLabels);
+  const groupSections = groupMatchesByStageGroup(flatMatches);
 
   return (
     <main className="space-y-5">
@@ -157,7 +161,7 @@ export function ScheduleList({
       )}
 
       {layout === "default" && (
-        <AnimatePresence mode="popLayout">
+        <>
           {days.map(([day, dayMatches], index) => (
             <DaySection
               key={day}
@@ -165,36 +169,67 @@ export function ScheduleList({
               matches={dayMatches}
               index={index}
               timezoneOffset={timezoneOffset}
+              roundLabels={roundLabels}
             />
           ))}
-        </AnimatePresence>
+        </>
       )}
 
       {layout === "waterfall" && (
         <div className="grid grid-cols-1 gap-2 sm:gap-3 md:grid-cols-2 lg:grid-cols-3">
-          {days.map(([day, dayMatches], index) => (
-            <DayCard
-              key={day}
-              day={day}
-              matches={dayMatches}
+          {groupSections.map(([group, groupMatches], index) => (
+            <GroupCard
+              key={group}
+              group={group}
+              matches={groupMatches}
               index={index}
               timezoneOffset={timezoneOffset}
+              roundLabels={roundLabels}
             />
           ))}
         </div>
       )}
       {layout === "topology" && (
         <TopologyBracket
-          matches={Array.from(grouped.values()).flat()}
+          matches={flatMatches}
           timezoneOffset={timezoneOffset}
         />
       )}
       {layout === "calendar" && (
         <MatchCalendarView
-          matches={Array.from(grouped.values()).flat()}
+          matches={flatMatches}
           timezoneOffset={timezoneOffset}
         />
       )}
     </main>
   );
+}
+
+function groupMatchesByStageGroup(matches: Match[]) {
+  const grouped = matches.reduce<Map<string, Match[]>>((acc, match) => {
+    const groupId = getStageGroupId(match.stage) ?? getKnockoutStageGroupId(match.stage);
+    if (!acc.has(groupId)) acc.set(groupId, []);
+    acc.get(groupId)?.push(match);
+    return acc;
+  }, new Map());
+
+  return [...grouped.entries()].sort(([left], [right]) => rankGroup(left) - rankGroup(right));
+}
+
+function getKnockoutStageGroupId(stage: string) {
+  if (/1\/16|1\/8|1\/4|round\s+of\s+(?:32|16)|8th\s+finals|quarter-?\s*finals?/i.test(stage)) return "knockout";
+  if (/半决赛|三四名|季军|决赛|semi-?\s*finals?|final|third-?\s*place/i.test(stage)) return "final-week";
+  return "knockout";
+}
+
+function formatGroupTitle(group: string) {
+  if (group === "knockout") return "淘汰赛";
+  if (group === "final-week") return "决赛周";
+  return `${group} 组`;
+}
+
+function rankGroup(group: string) {
+  if (group === "knockout") return 99;
+  if (group === "final-week") return 100;
+  return group.charCodeAt(0) - 64;
 }

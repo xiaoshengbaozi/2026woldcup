@@ -1,0 +1,95 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Build web assets
+        env:
+          NEXT_PUBLIC_MARKET_API_URL: https://api.boyzi.fun
+          NEXT_PUBLIC_MARKET_WS_URL: wss://api.boyzi.fun
+          NEXT_PUBLIC_NEWS_API_URL: ${{ vars.NEXT_PUBLIC_NEWS_API_URL || secrets.NEXT_PUBLIC_NEWS_API_URL }}
+          NEXT_PUBLIC_USER_API_URL: https://api.boyzi.fun
+          NEXT_PUBLIC_WARMUP_API_URL: https://api.boyzi.fun
+        run: npm run build
+
+      - name: Sync Capacitor Android project
+        run: npx cap sync android
+
+      - name: Build debug APK
+        working-directory: android
+        run: |
+          chmod +x ./gradlew
+          set +e
+          ./gradlew --no-daemon --stacktrace :app:assembleDebug > ../android-debug-build.log 2>&1
+          status=$?
+          cat ../android-debug-build.log
+          if [ "$status" -ne 0 ]; then
+            {
+              echo "Android debug build failed. Error summary:"
+              grep -n -E "FAILURE:|What went wrong|Execution failed|Could not|A problem occurred|Caused by|ClassNotFoundException|NoClassDefFoundError|Manifest merger failed|Android resource linking failed" ../android-debug-build.log || true
+              echo "Last 80 lines:"
+              tail -n 80 ../android-debug-build.log
+            } | while IFS= read -r line; do
+              echo "::error file=android/app/build.gradle,line=1::$line"
+            done
+            exit "$status"
+          fi
+
+      - name: Build release APK
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/cyberball-release.keystore
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "ANDROID_KEYSTORE_BASE64 is not configured. Skipping release APK."
+            exit 0
+          fi
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$ANDROID_KEYSTORE_PATH"
+          chmod +x ./gradlew
+          ./gradlew --no-daemon --stacktrace :app:assembleRelease
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: cyberball-debug-apk
+          path: android/app/build/outputs/apk/debug/*.apk
+
+      - name: Upload release APK
+        if: ${{ hashFiles('android/app/build/outputs/apk/release/*.apk') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: cyberball-release-apk
+          path: android/app/build/outputs/apk/release/*.apk

@@ -1,5 +1,11 @@
 import type { ApiFootballService } from "./apiFootball";
-import { localizePlayer as localizeFootballPlayer, localizePosition as localizeFootballPosition } from "./footballLocalization";
+import fs from "node:fs";
+import path from "node:path";
+import {
+  localizeCoachName,
+  localizePlayer as localizeFootballPlayer,
+  localizePosition as localizeFootballPosition,
+} from "./footballLocalization";
 import { localizePlayerName } from "./playerTranslations";
 
 export interface NormalizedWorldCupFixture {
@@ -65,13 +71,70 @@ export interface NormalizedSquadPlayer {
 
 export interface NormalizedSquad {
   team: NormalizedTeam;
-  listType: "squad_pool";
-  officialWorldCupSquad: false;
+  coach: string | null;
+  listType: "final_squad" | "squad_pool";
+  officialWorldCupSquad: boolean;
+  officialSquad: {
+    source: "fifa_official";
+    status: "imported" | "missing_official_list";
+    sourceUrl: string;
+    publishedAt: string;
+    expectedPlayers: number;
+    matchedPlayers: number;
+    unmatchedOfficialPlayers: number;
+    filteredApiFootballPlayers: number;
+  };
   players: NormalizedSquadPlayer[];
 }
 
 const DEFAULT_LEAGUE = "1";
 const DEFAULT_SEASON = "2026";
+const DEFAULT_FRIENDLIES_LEAGUE = "10";
+const DEFAULT_WARMUP_WINDOW_DAYS = 45;
+const FIFA_OFFICIAL_EXPECTED_SQUAD_SIZE = 26;
+const PLAYER_PHOTO_OVERRIDES: Record<number, string> = {
+  304229: "https://img.a.transfermarkt.technology/portrait/big/534398-1692797432.jpg?lm=1",
+};
+const BLANK_API_SPORTS_PLAYER_PHOTO_IDS = new Set<number>([
+  163908,
+  542710,
+  542768,
+  542822,
+  568556,
+  575283,
+  651096,
+  664028,
+]);
+
+type FifaOfficialSquadsFile = {
+  source?: string;
+  sourceUrl?: string;
+  publishedAt?: string;
+  squads?: Record<string, FifaOfficialTeamSquad>;
+};
+
+type FifaOfficialTeamSquad = {
+  sourceUrl?: string;
+  players?: FifaOfficialSquadPlayer[];
+};
+
+type FifaOfficialSquadPlayer = {
+  name: string;
+  number?: number | null;
+  apiFootballId?: number | null;
+  position?: string;
+  officialName?: string;
+  firstNames?: string;
+  lastNames?: string;
+  shirtName?: string;
+  aliases?: string[];
+};
+
+type FifaOfficialSquadFilterResult = NormalizedSquad["officialSquad"] & {
+  players: NormalizedSquadPlayer[];
+};
+
+let cachedFifaOfficialSquads: FifaOfficialSquadsFile | null = null;
 
 export async function getWorldCupFixtures(apiFootball: ApiFootballService, url: URL) {
   const params = getTournamentParams(url);
@@ -195,6 +258,30 @@ export async function getWorldCupMatchDetail(apiFootball: ApiFootballService, ur
   };
 }
 
+export async function getWorldCupWarmupFixtures(apiFootball: ApiFootballService, url: URL) {
+  const params = getWarmupParams(url);
+  const payload = await apiFootball.request("fixtures", params);
+  const upstream = payload.upstream as ApiFootballFixturesResponse;
+  assertNoApiFootballErrors(upstream);
+
+  const fixtures = (upstream.response ?? [])
+    .map(normalizeWarmupFixture)
+    .filter(isWorldCupTeamFixture);
+
+  return {
+    source: "api-football",
+    normalized: true,
+    cached: payload.cached,
+    timestamp: payload.timestamp,
+    league: Number(params.get("league") || DEFAULT_FRIENDLIES_LEAGUE),
+    season: Number(params.get("season") || DEFAULT_SEASON),
+    from: params.get("from"),
+    to: params.get("to"),
+    count: fixtures.length,
+    fixtures,
+  };
+}
+
 export async function getWorldCupSquads(apiFootball: ApiFootballService, url: URL) {
   const teamIds = url.searchParams
     .getAll("team")
@@ -206,12 +293,18 @@ export async function getWorldCupSquads(apiFootball: ApiFootballService, url: UR
     throw createHttpError(400, "missing_team");
   }
 
+  const teamLimit = clampNumber(process.env.API_FOOTBALL_SQUAD_TEAM_LIMIT, 1, 48, 48);
   const squads = await Promise.all(
-    [...new Set(teamIds)].slice(0, 8).map(async (teamId) => {
-      const payload = await apiFootball.request("players/squads", new URLSearchParams({ team: String(teamId) }));
-      const upstream = payload.upstream as ApiFootballSquadsResponse;
-      assertNoApiFootballErrors(upstream);
-      return normalizeSquad(upstream.response?.[0]);
+    [...new Set(teamIds)].slice(0, teamLimit).map(async (teamId) => {
+      const coach = await getCurrentCoachName(apiFootball, teamId);
+      try {
+        const payload = await apiFootball.request("players/squads", new URLSearchParams({ team: String(teamId) }));
+        const upstream = payload.upstream as ApiFootballSquadsResponse;
+        assertNoApiFootballErrors(upstream);
+        return attachCoach(normalizeSquad(upstream.response?.[0]), coach);
+      } catch {
+        return attachCoach(normalizeOfficialOnlySquad(teamId), coach);
+      }
     })
   );
 
@@ -228,6 +321,23 @@ function getTournamentParams(url: URL) {
   const params = new URLSearchParams(url.searchParams);
   if (!params.has("league")) params.set("league", DEFAULT_LEAGUE);
   if (!params.has("season")) params.set("season", DEFAULT_SEASON);
+  return params;
+}
+
+function getWarmupParams(url: URL) {
+  const params = new URLSearchParams(url.searchParams);
+  if (!params.has("league")) params.set("league", process.env.API_FOOTBALL_FRIENDLIES_LEAGUE || DEFAULT_FRIENDLIES_LEAGUE);
+  if (!params.has("season")) params.set("season", DEFAULT_SEASON);
+  if (!params.has("timezone")) params.set("timezone", "Asia/Shanghai");
+
+  if (!params.has("from")) {
+    params.set("from", formatApiFootballDate(new Date()));
+  }
+
+  if (!params.has("to")) {
+    params.set("to", formatApiFootballDate(addUtcDays(new Date(), DEFAULT_WARMUP_WINDOW_DAYS)));
+  }
+
   return params;
 }
 
@@ -353,27 +463,291 @@ function normalizePlayers(items: unknown[]) {
   }));
 }
 
-function normalizeSquad(raw: ApiFootballSquad | undefined): NormalizedSquad | null {
-  if (!raw?.team) return null;
+function normalizeWarmupFixture(raw: ApiFootballFixture): NormalizedWorldCupFixture {
+  const fixture = normalizeFixture(raw);
+  const stage = "\u70ed\u8eab\u8d5b";
 
   return {
-    team: normalizeTeam(raw.team),
-    listType: "squad_pool",
-    officialWorldCupSquad: false,
-    players: (raw.players ?? []).map((player) => {
-      const localized = localizeFootballPlayer(player);
-      return {
-        id: player.id ?? null,
-        nameEn: localized?.nameEn ?? player.name ?? "TBD",
-        nameCn: localized?.nameCn ?? localizePlayerName(player.id, player.name ?? ""),
-        age: player.age ?? null,
-        number: player.number ?? null,
-        position: localized?.positionEn ?? player.position ?? "Unknown",
-        positionCn: localized?.position ?? localizeFootballPosition(player.position),
-        photo: player.photo ?? "",
-      };
-    }),
+    ...fixture,
+    uid: `warmup-${fixture.uid}`,
+    summary: `${fixture.homeTeam.name} vs ${fixture.awayTeam.name}\uff08${stage}\uff09`,
+    description: buildWarmupDescription(fixture),
+    stage,
   };
+}
+
+function buildWarmupDescription(fixture: NormalizedWorldCupFixture) {
+  const date = fixture.startIso
+    ? new Date(fixture.startIso).toLocaleString("zh-CN", {
+        timeZone: "Asia/Shanghai",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "\u65f6\u95f4\u5f85\u5b9a";
+  const venue = fixture.location || "\u573a\u9986\u5f85\u5b9a";
+  return `${fixture.homeTeam.name} \u5bf9\u9635 ${fixture.awayTeam.name}\uff0c\u70ed\u8eab\u8d5b\uff0c\u5317\u4eac\u65f6\u95f4 ${date}\uff0c${venue}`;
+}
+
+function isWorldCupTeamFixture(fixture: NormalizedWorldCupFixture) {
+  return WORLD_CUP_TEAM_CODES.has(fixture.homeTeam.code) || WORLD_CUP_TEAM_CODES.has(fixture.awayTeam.code);
+}
+
+function addUtcDays(date: Date, days: number) {
+  const next = new Date(date);
+  next.setUTCDate(next.getUTCDate() + days);
+  return next;
+}
+
+function formatApiFootballDate(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
+async function getCurrentCoachName(apiFootball: ApiFootballService, teamId: number): Promise<string | null> {
+  try {
+    const payload = await apiFootball.request("coachs", new URLSearchParams({ team: String(teamId) }));
+    const upstream = payload.upstream as ApiFootballCoachsResponse;
+    assertNoApiFootballErrors(upstream);
+    const coaches = upstream.response ?? [];
+    const current = coaches.find((coach) =>
+      (coach.career ?? []).some((entry) => entry.team?.id === teamId && !entry.end)
+    );
+    const name = current?.name ?? coaches[0]?.name ?? null;
+    return name ? localizeCoachName(name) : null;
+  } catch {
+    return null;
+  }
+}
+
+function attachCoach(squad: NormalizedSquad | null, coach: string | null): NormalizedSquad | null {
+  return squad ? { ...squad, coach } : null;
+}
+
+function normalizeSquad(raw: ApiFootballSquad | undefined): NormalizedSquad | null {
+  if (!raw?.team) return null;
+  const team = normalizeTeam(raw.team);
+  const apiPlayers = (raw.players ?? []).map(normalizeSquadPlayer);
+  const officialFilter = filterOfficialSquadPlayers(team, apiPlayers);
+
+  return {
+    team,
+    coach: null,
+    listType: officialFilter.status === "imported" ? "final_squad" : "squad_pool",
+    officialWorldCupSquad: officialFilter.status === "imported",
+    officialSquad: toOfficialSquadMeta(officialFilter),
+    players: officialFilter.players,
+  };
+}
+
+function normalizeOfficialOnlySquad(teamId: number): NormalizedSquad | null {
+  const teamMeta = TEAM_ID_TO_OFFICIAL_TEAM[teamId];
+  if (!teamMeta) return null;
+  const [code, englishName] = teamMeta;
+  const team: NormalizedTeam = {
+    id: teamId,
+    code,
+    englishName,
+    name: TEAM_CODE_TO_CN[code] ?? englishName,
+    logo: `https://media.api-sports.io/football/teams/${teamId}.png`,
+  };
+  const officialFilter = filterOfficialSquadPlayers(team, []);
+  if (officialFilter.status !== "imported") return null;
+  return {
+    team,
+    coach: null,
+    listType: "final_squad",
+    officialWorldCupSquad: true,
+    officialSquad: toOfficialSquadMeta(officialFilter),
+    players: officialFilter.players,
+  };
+}
+
+function normalizeSquadPlayer(player: NonNullable<ApiFootballSquad["players"]>[number]): NormalizedSquadPlayer {
+  const localized = localizeFootballPlayer(player);
+  return {
+    id: player.id ?? null,
+    nameEn: localized?.nameEn ?? player.name ?? "TBD",
+    nameCn: localized?.nameCn ?? localizePlayerName(player.id, player.name ?? ""),
+    age: player.age ?? null,
+    number: player.number ?? null,
+    position: localized?.positionEn ?? player.position ?? "Unknown",
+    positionCn: localized?.position ?? localizeFootballPosition(player.position),
+    photo: getPlayerPhoto(player.id, player.photo ?? ""),
+  };
+}
+
+function toOfficialSquadMeta(filter: FifaOfficialSquadFilterResult): NormalizedSquad["officialSquad"] {
+  return {
+    source: filter.source,
+    status: filter.status,
+    sourceUrl: filter.sourceUrl,
+    publishedAt: filter.publishedAt,
+    expectedPlayers: filter.expectedPlayers,
+    matchedPlayers: filter.matchedPlayers,
+    unmatchedOfficialPlayers: filter.unmatchedOfficialPlayers,
+    filteredApiFootballPlayers: filter.filteredApiFootballPlayers,
+  };
+}
+
+function filterOfficialSquadPlayers(
+  team: NormalizedTeam,
+  apiPlayers: NormalizedSquadPlayer[]
+): FifaOfficialSquadFilterResult {
+  const officialFile = getFifaOfficialSquads();
+  const sourceUrl = officialFile.sourceUrl ?? "";
+  const publishedAt = officialFile.publishedAt ?? "";
+  const officialSquad = team.code ? officialFile.squads?.[team.code] : undefined;
+  const officialPlayers = officialSquad?.players ?? [];
+
+  if (!officialPlayers.length) {
+    return {
+      source: "fifa_official",
+      status: "missing_official_list",
+      sourceUrl: officialSquad?.sourceUrl ?? sourceUrl,
+      publishedAt,
+      expectedPlayers: FIFA_OFFICIAL_EXPECTED_SQUAD_SIZE,
+      matchedPlayers: 0,
+      unmatchedOfficialPlayers: 0,
+      filteredApiFootballPlayers: apiPlayers.length,
+      players: [],
+    };
+  }
+
+  const apiById = new Map<number, NormalizedSquadPlayer>();
+  const apiByName = new Map<string, NormalizedSquadPlayer>();
+  for (const player of apiPlayers) {
+    if (typeof player.id === "number") apiById.set(player.id, player);
+    for (const key of getApiPlayerKeys(player)) apiByName.set(key, player);
+  }
+
+  let apiMatchedPlayers = 0;
+  const matchedApiIds = new Set<number>();
+  const players = officialPlayers.map((officialPlayer) => {
+    const byId =
+      typeof officialPlayer.apiFootballId === "number"
+        ? apiById.get(officialPlayer.apiFootballId)
+        : undefined;
+    const byName = getOfficialPlayerKeys(officialPlayer)
+      .map((key) => apiByName.get(key))
+      .find(isUnusedApiPlayer(matchedApiIds));
+    const matched = byId ?? byName;
+    if (matched) {
+      apiMatchedPlayers += 1;
+      if (typeof matched.id === "number") matchedApiIds.add(matched.id);
+      return mergeOfficialPlayerWithApi(officialPlayer, matched);
+    }
+    return officialPlayerToNormalized(officialPlayer);
+  });
+
+  return {
+    source: "fifa_official",
+    status: "imported",
+    sourceUrl: officialSquad?.sourceUrl ?? sourceUrl,
+    publishedAt,
+    expectedPlayers: officialPlayers.length,
+    matchedPlayers: apiMatchedPlayers,
+    unmatchedOfficialPlayers: Math.max(0, officialPlayers.length - apiMatchedPlayers),
+    filteredApiFootballPlayers: Math.max(0, apiPlayers.length - matchedApiIds.size),
+    players,
+  };
+}
+
+function isUnusedApiPlayer(matchedApiIds: Set<number>) {
+  return (player: NormalizedSquadPlayer | undefined): player is NormalizedSquadPlayer =>
+    Boolean(player) && (typeof player?.id !== "number" || !matchedApiIds.has(player.id));
+}
+
+function mergeOfficialPlayerWithApi(
+  officialPlayer: FifaOfficialSquadPlayer,
+  apiPlayer: NormalizedSquadPlayer
+): NormalizedSquadPlayer {
+  const position = officialPositionToApiPosition(officialPlayer.position);
+  const localizedOfficialName = localizePlayerName(officialPlayer.apiFootballId ?? apiPlayer.id, officialPlayer.name);
+  return {
+    ...apiPlayer,
+    nameCn: hasCjk(localizedOfficialName) ? localizedOfficialName : apiPlayer.nameCn,
+    number: typeof officialPlayer.number === "number" ? officialPlayer.number : apiPlayer.number,
+    position,
+    positionCn: localizeFootballPosition(position),
+    photo: getPlayerPhoto(officialPlayer.apiFootballId ?? apiPlayer.id, apiPlayer.photo),
+  };
+}
+
+function officialPlayerToNormalized(player: FifaOfficialSquadPlayer): NormalizedSquadPlayer {
+  const apiFootballId = typeof player.apiFootballId === "number" ? player.apiFootballId : null;
+  return {
+    id: apiFootballId,
+    nameEn: player.name,
+    nameCn: localizePlayerName(apiFootballId, player.name),
+    age: null,
+    number: typeof player.number === "number" ? player.number : null,
+    position: officialPositionToApiPosition(player.position),
+    positionCn: localizeFootballPosition(officialPositionToApiPosition(player.position)),
+    photo: getPlayerPhoto(apiFootballId, apiFootballId ? `https://media.api-sports.io/football/players/${apiFootballId}.png` : ""),
+  };
+}
+
+function getPlayerPhoto(playerId: number | null | undefined, fallback = "") {
+  if (typeof playerId === "number" && BLANK_API_SPORTS_PLAYER_PHOTO_IDS.has(playerId)) return "";
+  return typeof playerId === "number" ? PLAYER_PHOTO_OVERRIDES[playerId] ?? fallback : fallback;
+}
+
+function hasCjk(value: string | null | undefined) {
+  return /[\u3400-\u9fff]/.test(value ?? "");
+}
+
+function officialPositionToApiPosition(position: string | null | undefined) {
+  const normalized = position ?? "";
+  if (normalized === "GK") return "Goalkeeper";
+  if (normalized === "DF") return "Defender";
+  if (normalized === "MF") return "Midfielder";
+  if (normalized === "FW") return "Attacker";
+  return "Unknown";
+}
+
+function getOfficialPlayerKeys(player: FifaOfficialSquadPlayer) {
+  return [
+    player.name,
+    player.officialName,
+    player.firstNames,
+    player.lastNames,
+    player.shirtName,
+    ...(player.aliases ?? []),
+  ].filter((value): value is string => Boolean(value)).map(normalizeName).filter(Boolean);
+}
+
+function getApiPlayerKeys(player: NormalizedSquadPlayer) {
+  return [player.nameEn, player.nameCn].map(normalizeName).filter(Boolean);
+}
+
+function getFifaOfficialSquads(): FifaOfficialSquadsFile {
+  if (cachedFifaOfficialSquads) return cachedFifaOfficialSquads;
+
+  const candidates = [
+    path.resolve(process.cwd(), "../data/fifa-official-squads.json"),
+    path.resolve(process.cwd(), "data/fifa-official-squads.json"),
+  ];
+  const filePath = candidates.find((candidate) => fs.existsSync(candidate));
+  if (!filePath) {
+    cachedFifaOfficialSquads = { squads: {} };
+    return cachedFifaOfficialSquads;
+  }
+
+  try {
+    cachedFifaOfficialSquads = JSON.parse(fs.readFileSync(filePath, "utf8")) as FifaOfficialSquadsFile;
+  } catch {
+    cachedFifaOfficialSquads = { squads: {} };
+  }
+  cachedFifaOfficialSquads.squads ??= {};
+  return cachedFifaOfficialSquads;
+}
+
+function clampNumber(value: unknown, min: number, max: number, fallback: number) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  return Math.max(min, Math.min(max, Math.round(number)));
 }
 
 function normalizeTeam(team: ApiFootballTeam | undefined): NormalizedTeam {
@@ -694,6 +1068,59 @@ const TEAM_CODE_TO_CN: Record<string, string> = {
   WAL: "威尔士",
 };
 
+const TEAM_ID_TO_OFFICIAL_TEAM: Record<number, [string, string]> = {
+  1: ["BEL", "Belgium"],
+  2: ["FRA", "France"],
+  3: ["CRO", "Croatia"],
+  5: ["SWE", "Sweden"],
+  6: ["BRA", "Brazil"],
+  7: ["URU", "Uruguay"],
+  8: ["COL", "Colombia"],
+  9: ["ESP", "Spain"],
+  10: ["ENG", "England"],
+  11: ["PAN", "Panama"],
+  12: ["JPN", "Japan"],
+  13: ["SEN", "Senegal"],
+  15: ["SUI", "Switzerland"],
+  16: ["MEX", "Mexico"],
+  17: ["KOR", "South Korea"],
+  20: ["AUS", "Australia"],
+  22: ["IRN", "Iran"],
+  23: ["KSA", "Saudi Arabia"],
+  25: ["GER", "Germany"],
+  26: ["ARG", "Argentina"],
+  27: ["POR", "Portugal"],
+  28: ["TUN", "Tunisia"],
+  31: ["MAR", "Morocco"],
+  32: ["EGY", "Egypt"],
+  770: ["CZE", "Czech Republic"],
+  775: ["AUT", "Austria"],
+  777: ["TUR", "Türkiye"],
+  1090: ["NOR", "Norway"],
+  1108: ["SCO", "Scotland"],
+  1113: ["BIH", "Bosnia & Herzegovina"],
+  1118: ["NED", "Netherlands"],
+  1501: ["CIV", "Ivory Coast"],
+  1504: ["GHA", "Ghana"],
+  1508: ["COD", "Congo DR"],
+  1531: ["RSA", "South Africa"],
+  1532: ["ALG", "Algeria"],
+  1533: ["CPV", "Cape Verde Islands"],
+  1548: ["JOR", "Jordan"],
+  1567: ["IRQ", "Iraq"],
+  1568: ["UZB", "Uzbekistan"],
+  1569: ["QAT", "Qatar"],
+  2380: ["PAR", "Paraguay"],
+  2382: ["ECU", "Ecuador"],
+  2384: ["USA", "USA"],
+  2386: ["HAI", "Haiti"],
+  4673: ["NZL", "New Zealand"],
+  5529: ["CAN", "Canada"],
+  5530: ["CUW", "Curaçao"],
+};
+
+const WORLD_CUP_TEAM_CODES = new Set(Object.keys(TEAM_ID_TO_OFFICIAL_TEAM).map((teamId) => TEAM_ID_TO_OFFICIAL_TEAM[Number(teamId)][0]));
+
 const TEAM_NAME_TO_CODE: Record<string, string> = {
   argentina: "ARG",
   algeria: "ALG",
@@ -783,6 +1210,11 @@ interface ApiFootballSquadsResponse {
   errors?: unknown;
 }
 
+interface ApiFootballCoachsResponse {
+  response?: ApiFootballCoach[];
+  errors?: unknown;
+}
+
 interface ApiFootballFixture {
   fixture?: {
     id?: number;
@@ -831,6 +1263,16 @@ interface ApiFootballSquad {
     number?: number | null;
     position?: string;
     photo?: string;
+  }>;
+}
+
+interface ApiFootballCoach {
+  id?: number;
+  name?: string;
+  career?: Array<{
+    team?: ApiFootballTeam;
+    start?: string | null;
+    end?: string | null;
   }>;
 }
 

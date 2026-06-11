@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 import { CalendarDays, Clock, MapPin, Trophy } from "lucide-react";
 import carrasquillaImage from "@/assets/players/PAN-panama/headshots/adalberto-carrasquilla.webp";
@@ -27,7 +28,7 @@ import bellinghamImage from "@/assets/players/ENG-england/headshots/jude-belling
 import yamalImage from "@/assets/players/ESP-spain/headshots/lamine-yamal.webp";
 import mbappeImage from "@/assets/players/FRA-france/headshots/kylian-mbappe.webp";
 import musialaImage from "@/assets/players/GER-germany/headshots/jamal-musiala.webp";
-import mitomaImage from "@/assets/players/JPN-japan/headshots/kaoru-mitoma.webp";
+import kuboImage from "@/assets/players/JPN-japan/headshots/takefusa-kubo.webp";
 import sonImage from "@/assets/players/KOR-south-korea/headshots/son-heung-min.webp";
 import hakimiImage from "@/assets/players/MAR-morocco/headshots/achraf-hakimi.webp";
 import gimenezImage from "@/assets/players/MEX-mexico/headshots/santiago-gimenez.webp";
@@ -54,6 +55,8 @@ import valverdeImage from "@/assets/players/URU-uruguay/headshots/federico-valve
 import pulisicImage from "@/assets/players/USA-united-states/headshots/christian-pulisic.webp";
 import wissaImage from "@/assets/players/COD-dr-congo/headshots/yoane-wissa.webp";
 import { formatTime } from "@/lib/format";
+import { localizeLocationText } from "@/lib/calendar";
+import { getMatchPhaseLabel } from "@/lib/match-live-display";
 import { formatStageLabel } from "@/lib/stage";
 import { parseTeams } from "@/lib/teams";
 import { getVenueBannerImage } from "@/lib/venue-assets";
@@ -73,27 +76,6 @@ const STATUS_COLOR: Record<string, string> = {
   finished: "text-white/40",
 };
 
-const STAGE_LABEL: Record<string, string> = {
-  "小组赛A组": "A 组",
-  "小组赛B组": "B 组",
-  "小组赛C组": "C 组",
-  "小组赛D组": "D 组",
-  "小组赛E组": "E 组",
-  "小组赛F组": "F 组",
-  "小组赛G组": "G 组",
-  "小组赛H组": "H 组",
-  "小组赛I组": "I 组",
-  "小组赛J组": "J 组",
-  "小组赛K组": "K 组",
-  "小组赛L组": "L 组",
-  "1/16决赛": "1/16 决赛",
-  "1/8决赛": "1/8 决赛",
-  "1/4决赛": "1/4 决赛",
-  "半决赛": "半决赛",
-  "决赛": "决赛",
-  "三/四名决赛": "三四名决赛",
-};
-
 const PLAYER_ASSETS: Record<string, { src: string; name: string }> = {
   ARG: { src: messiImage.src, name: "Lionel Messi" },
   AUS: { src: ryanImage.src, name: "Mathew Ryan" },
@@ -110,6 +92,7 @@ const PLAYER_ASSETS: Record<string, { src: string; name: string }> = {
   CUW: { src: bacunaImage.src, name: "Juninho Bacuna" },
   CZE: { src: schickImage.src, name: "Patrik Schick" },
   DEN: { src: hojlundImage.src, name: "Rasmus Hojlund" },
+  ALG: { src: mahrezImage.src, name: "Riyad Mahrez" },
   DZA: { src: mahrezImage.src, name: "Riyad Mahrez" },
   ECU: { src: caicedoImage.src, name: "Moises Caicedo" },
   EGY: { src: salahImage.src, name: "Mohamed Salah" },
@@ -121,7 +104,7 @@ const PLAYER_ASSETS: Record<string, { src: string; name: string }> = {
   HAI: { src: nazonImage.src, name: "Duckens Nazon" },
   IRN: { src: taremiImage.src, name: "Mehdi Taremi" },
   IRQ: { src: husseinImage.src, name: "Aymen Hussein" },
-  JPN: { src: mitomaImage.src, name: "Kaoru Mitoma" },
+  JPN: { src: kuboImage.src, name: "Takefusa Kubo" },
   JOR: { src: taamariImage.src, name: "Musa Al-Taamari" },
   KOR: { src: sonImage.src, name: "Son Heung-min" },
   MAR: { src: hakimiImage.src, name: "Achraf Hakimi" },
@@ -162,6 +145,7 @@ const TEAM_ACCENTS: Record<string, { primary: string; secondary: string }> = {
   CUW: { primary: "rgba(38,91,255,0.5)", secondary: "rgba(255,210,0,0.28)" },
   CZE: { primary: "rgba(38,91,255,0.5)", secondary: "rgba(210,30,45,0.28)" },
   DEN: { primary: "rgba(200,30,30,0.5)", secondary: "rgba(255,255,255,0.18)" },
+  ALG: { primary: "rgba(0,160,95,0.48)", secondary: "rgba(255,255,255,0.2)" },
   DZA: { primary: "rgba(0,160,95,0.48)", secondary: "rgba(255,255,255,0.2)" },
   ECU: { primary: "rgba(255,220,0,0.48)", secondary: "rgba(0,80,200,0.3)" },
   EGY: { primary: "rgba(200,30,30,0.48)", secondary: "rgba(216,255,62,0.24)" },
@@ -213,17 +197,45 @@ function fadeToTransparent(color: string) {
   return color.replace(/rgba\((\s*\d+\s*,\s*\d+\s*,\s*\d+)\s*,\s*[\d.]+\s*\)/, "rgba($1,0)");
 }
 
-export function MatchHero({ detail }: { detail: MatchDetail }) {
+function isWarmupStage(stage?: string) {
+  return stage === "热身赛";
+}
+
+function formatMatchStatus(detail: MatchDetail, start: Date) {
+  if (detail.status === "not_started") return formatTime(start);
+  if (detail.status === "halftime") return "中场";
+  if (detail.status === "finished") return "已结束";
+
+  const elapsed = detail.match.elapsed;
+  if (typeof elapsed === "number" && elapsed > 0) {
+    const phase = elapsed <= 45 ? "上半场" : "下半场";
+    return `${phase} ${elapsed}'`;
+  }
+
+  return "比赛中";
+}
+
+export function MatchHero({ detail, favoriteAction }: { detail: MatchDetail; favoriteAction?: ReactNode }) {
   const teams = parseTeams(detail.match.summary);
-  const stageLabel = formatStageLabel(STAGE_LABEL[detail.match.stage] ?? detail.match.stage);
+  const stageLabel = formatStageLabel(detail.match.stage, detail.match.summary);
   const statusLabel = STATUS_LABEL[detail.status];
   const statusColor = STATUS_COLOR[detail.status];
   const adjustedStart = detail.match.start;
   const isLive = detail.status === "live" || detail.status === "halftime";
-  const homeAccent = getAccent(detail.homeTeamCode);
-  const awayAccent = getAccent(detail.awayTeamCode);
-  const homePlayer = PLAYER_ASSETS[detail.homeTeamCode];
-  const awayPlayer = PLAYER_ASSETS[detail.awayTeamCode];
+  const isStarted = detail.status !== "not_started";
+  const heroStatusText = formatMatchStatus(detail, adjustedStart);
+  const desktopLiveStatusText = detail.status === "finished" ? "已结束" : getMatchPhaseLabel(detail.match);
+  const desktopCornerStatus = detail.status === "finished" ? "已结束" : "直播中";
+  const homeTeamCode = normalizeTeamCode(detail.homeTeamCode);
+  const awayTeamCode = normalizeTeamCode(detail.awayTeamCode);
+  const homeAccent = getAccent(homeTeamCode);
+  const awayAccent = getAccent(awayTeamCode);
+  const hidePlayerPosters =
+    detail.slug.startsWith("warmup-") ||
+    detail.match.uid.startsWith("warmup-") ||
+    isWarmupStage(detail.match.stage);
+  const homePlayer = hidePlayerPosters ? undefined : PLAYER_ASSETS[homeTeamCode];
+  const awayPlayer = hidePlayerPosters ? undefined : PLAYER_ASSETS[awayTeamCode];
   const venueBannerImage = getVenueBannerImage(detail.match);
 
   return (
@@ -231,7 +243,9 @@ export function MatchHero({ detail }: { detail: MatchDetail }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      className="hero-card relative mt-0 min-h-[280px] overflow-visible rounded-[2rem] shadow-none sm:mt-14 sm:min-h-[380px] lg:min-h-[360px]"
+      className={`match-hero-banner hero-card relative -mx-3 -mt-4 min-h-[280px] overflow-hidden rounded-b-[2rem] rounded-t-none shadow-none sm:-mx-6 sm:-mt-5 sm:min-h-[380px] lg:mx-0 lg:overflow-visible lg:rounded-[2rem] ${
+        isStarted ? "lg:mt-0 lg:min-h-[216px]" : "lg:mt-14 lg:min-h-[360px]"
+      }`}
     >
       <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">
         {venueBannerImage && (
@@ -239,13 +253,13 @@ export function MatchHero({ detail }: { detail: MatchDetail }) {
             src={venueBannerImage}
             alt=""
             aria-hidden="true"
-            className="absolute inset-0 h-full w-full object-cover opacity-55 saturate-[1.08]"
+            className="match-hero-bg-image absolute inset-0 h-full w-full object-cover opacity-55 saturate-[1.08]"
             loading="eager"
           />
         )}
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,3,3,0.20),rgba(2,3,3,0.70)),radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.08),transparent_52%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.07),rgba(255,255,255,0.015)_34%,rgba(0,0,0,0.24))]" />
-        <div className="absolute inset-0 opacity-[0.18] [background-image:linear-gradient(rgba(255,255,255,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.09)_1px,transparent_1px)] [background-size:42px_42px]" />
+        <div className="match-hero-bg-shade absolute inset-0 bg-[linear-gradient(180deg,rgba(2,3,3,0.20),rgba(2,3,3,0.70)),radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.08),transparent_52%)]" />
+        <div className="match-hero-bg-glass absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.07),rgba(255,255,255,0.015)_34%,rgba(0,0,0,0.24))]" />
+        <div className="match-hero-grid absolute inset-0 opacity-[0.18] [background-image:linear-gradient(rgba(255,255,255,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.09)_1px,transparent_1px)] [background-size:42px_42px]" />
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-volt/35 to-transparent" />
 
         <PosterWedge side="left" accent={homeAccent} />
@@ -253,8 +267,12 @@ export function MatchHero({ detail }: { detail: MatchDetail }) {
         <div className="absolute left-1/2 top-12 hidden h-64 w-[520px] -translate-x-1/2 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.13),transparent_68%)] blur-2xl sm:block" />
       </div>
 
-      <div className="relative z-10 flex min-h-[280px] flex-col justify-between pb-0 pt-1 sm:min-h-[380px] sm:pb-0 sm:pt-7 lg:min-h-[360px]">
-        <div className="flex items-center justify-end gap-3">
+      <div
+        className={`relative z-10 flex min-h-[280px] flex-col justify-between pb-0 pt-1 sm:min-h-[380px] sm:pb-0 sm:pt-7 ${
+          isStarted ? "lg:min-h-[216px] lg:justify-center lg:py-5" : "lg:min-h-[360px]"
+        }`}
+      >
+        <div className={`flex items-center justify-end gap-3 ${isStarted ? "lg:hidden" : ""}`}>
           {detail.status !== "not_started" && (
             <div className="flex items-center gap-2">
               {isLive && (
@@ -265,29 +283,82 @@ export function MatchHero({ detail }: { detail: MatchDetail }) {
               )}
               <span className={`glass-chip px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] ${statusColor}`}>
                 {statusLabel}
-                {detail.status === "live" && " 63'"}
               </span>
             </div>
           )}
         </div>
 
-        <div className="relative flex flex-1 items-center justify-center py-2 sm:py-6">
-          <PlayerPosterSide
-            side="left"
-            team={teams.home}
-            teamCode={detail.homeTeamCode}
-            player={homePlayer}
-            accent={homeAccent}
-          />
-          <PlayerPosterSide
-            side="right"
-            team={teams.away}
-            teamCode={detail.awayTeamCode}
-            player={awayPlayer}
-            accent={awayAccent}
-          />
+        <div className="relative flex flex-1 translate-y-3 items-center justify-center py-2 sm:translate-y-0 sm:py-6">
+          {!hidePlayerPosters && (
+            <>
+              <PlayerPosterSide
+                side="left"
+                team={teams.home}
+                teamCode={homeTeamCode}
+                player={homePlayer}
+                accent={homeAccent}
+                className={isStarted ? "hidden" : ""}
+              />
+              <PlayerPosterSide
+                side="right"
+                team={teams.away}
+                teamCode={awayTeamCode}
+                player={awayPlayer}
+                accent={awayAccent}
+                className={isStarted ? "hidden" : ""}
+              />
+            </>
+          )}
 
-          <div className="relative z-20 flex max-w-[580px] -translate-y-1 flex-col items-center text-center sm:-translate-y-5">
+          {isStarted && (
+            <div className="relative z-20 hidden w-full max-w-[760px] flex-col items-center text-center lg:flex">
+              <div className="absolute left-0 top-0 inline-flex items-center gap-2 rounded-full bg-white/[0.055] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-volt ring-1 ring-white/[0.08]">
+                {isLive && (
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="live-ping absolute inline-flex h-full w-full rounded-full bg-volt opacity-75" />
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-volt" />
+                  </span>
+                )}
+                {desktopCornerStatus}
+              </div>
+              <div className="absolute right-0 top-0 rounded-full bg-white/[0.055] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/56 ring-1 ring-white/[0.08]">
+                {formatTime(adjustedStart)}
+              </div>
+              <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/56">
+                {stageLabel}
+              </span>
+              <div className="mt-2 text-xl font-semibold text-white/88">
+                {desktopLiveStatusText}
+              </div>
+              <StartedScoreLine
+                home={teams.home}
+                away={teams.away}
+                homeScore={detail.score.home}
+                awayScore={detail.score.away}
+              />
+              <MatchMetaRow
+                start={adjustedStart}
+                location={detail.match.location}
+                stage={detail.match.stage}
+              />
+            </div>
+          )}
+
+          {isStarted && (
+            <StartedMobileBannerContent
+              home={teams.home}
+              away={teams.away}
+              homeScore={detail.score.home}
+              awayScore={detail.score.away}
+              stageLabel={stageLabel}
+              phaseLabel={desktopLiveStatusText}
+              start={adjustedStart}
+              location={detail.match.location}
+              stage={detail.match.stage}
+            />
+          )}
+
+          <div className={`relative z-20 flex max-w-[580px] -translate-y-1 flex-col items-center text-center sm:-translate-y-5 ${isStarted ? "hidden lg:hidden" : ""}`}>
             <img
               src="https://digitalhub.fifa.com/transform/157d23bf-7e13-4d7b-949e-5d27d340987e/WC26_Logo?&io=transform:fill&quality=75"
               alt="FIFA World Cup 2026"
@@ -295,53 +366,336 @@ export function MatchHero({ detail }: { detail: MatchDetail }) {
               loading="eager"
             />
             <div
-              className="mt-2 text-4xl font-bold tabular-nums text-white sm:mt-3 sm:text-5xl lg:text-6xl"
+              className="mt-2 text-3xl font-bold tabular-nums text-white sm:mt-3 sm:text-5xl lg:text-6xl"
               style={{ fontFamily: "ScreenMatrix, monospace" }}
             >
-              {detail.status === "not_started" ? (
-                formatTime(adjustedStart)
-              ) : (
-                <>
-                  {detail.score.home}<span className="mx-3 text-white/25">:</span>{detail.score.away}
-                </>
-              )}
+              {heroStatusText}
             </div>
             <span className="glass-chip mt-2 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/62">
               {stageLabel}
             </span>
             <div className="mt-2 grid w-[min(100%,560px)] grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:mt-3 sm:gap-4">
-              <MatchupTeam team={teams.home} align="left" />
-              <span className="relative z-10 rounded-full bg-white/[0.08] px-4 py-2 text-lg font-black uppercase tracking-[0.08em] text-volt shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_0_24px_rgba(216,255,62,0.16)] ring-1 ring-white/[0.1] sm:px-5 sm:text-xl">
-                VS
-              </span>
-              <MatchupTeam team={teams.away} align="right" />
+              <MatchupTeam team={teams.home} align="left" score={isStarted ? detail.score.home : null} />
+              <span className="relative z-10 inline-flex justify-center">{favoriteAction}</span>
+              <MatchupTeam team={teams.away} align="right" score={isStarted ? detail.score.away : null} />
             </div>
-            <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-[10px] font-medium uppercase tracking-[0.12em] text-white/50 sm:mt-4 sm:gap-3 sm:text-[11px]">
-              <span className="inline-flex items-center gap-1.5">
-                <CalendarDays className="h-3.5 w-3.5 text-volt/70" />
-                {adjustedStart.toLocaleDateString("zh-CN", { month: "2-digit", day: "2-digit" })}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5 text-flare/70" />
-                {formatTime(adjustedStart)}
-              </span>
-              {detail.match.location && (
-                <span className="inline-flex min-w-0 items-center gap-1.5">
-                  <MapPin className="h-3.5 w-3.5 shrink-0 text-flare/70" />
-                  <span className="max-w-[230px] truncate">{detail.match.location}</span>
-                </span>
-              )}
-              {detail.match.stage.includes("决赛") && (
-                <span className="inline-flex items-center gap-1.5 text-volt/75">
-                  <Trophy className="h-3.5 w-3.5" />
-                  冠军争夺战
-                </span>
-              )}
-            </div>
+            <MatchMetaRow
+              start={adjustedStart}
+              location={detail.match.location}
+              stage={detail.match.stage}
+            />
           </div>
         </div>
       </div>
     </motion.div>
+  );
+}
+
+function MatchMetaRow({
+  start,
+  location,
+  stage,
+}: {
+  start: Date;
+  location: string;
+  stage: string;
+}) {
+  return (
+    <div className="match-meta-row mt-2 flex flex-wrap items-center justify-center gap-2 text-[10px] font-medium uppercase tracking-[0.12em] text-white/50 sm:mt-4 sm:gap-3 sm:text-[11px]">
+      <span className="inline-flex items-center gap-1.5">
+        <CalendarDays className="h-3.5 w-3.5 text-volt/70" />
+        {start.toLocaleDateString("zh-CN", { month: "2-digit", day: "2-digit" })}
+      </span>
+      <span className="inline-flex items-center gap-1.5">
+        <Clock className="h-3.5 w-3.5 text-flare/70" />
+        {formatTime(start)}
+      </span>
+      {location && (
+        <span className="inline-flex min-w-0 items-center gap-1.5">
+          <MapPin className="h-3.5 w-3.5 shrink-0 text-flare/70" />
+          <span className="max-w-[230px] truncate">{localizeLocationText(location)}</span>
+        </span>
+      )}
+      {stage.includes("决赛") && (
+        <span className="inline-flex items-center gap-1.5 text-volt/75">
+          <Trophy className="h-3.5 w-3.5" />
+          冠军争夺战
+        </span>
+      )}
+    </div>
+  );
+}
+
+function StartedScoreLine({
+  home,
+  away,
+  homeScore,
+  awayScore,
+}: {
+  home: { badge: string; image: string; name: string };
+  away: { badge: string; image: string; name: string };
+  homeScore: number;
+  awayScore: number;
+}) {
+  return (
+    <div className="mt-3 grid w-full grid-cols-[minmax(0,1fr)_auto_auto_auto_minmax(0,1fr)] items-center gap-2">
+      <span className="min-w-0 truncate text-right text-base font-bold uppercase tracking-[0.08em] text-white/82">
+        {home.name}
+      </span>
+      <MiniFlag team={home} compact />
+      <span
+        className="px-1 text-4xl font-bold leading-none tabular-nums text-white drop-shadow-[0_0_22px_rgba(255,255,255,0.2)]"
+        style={{ fontFamily: "ScreenMatrix, monospace" }}
+      >
+        {homeScore} - {awayScore}
+      </span>
+      <MiniFlag team={away} compact />
+      <span className="min-w-0 truncate text-left text-base font-bold uppercase tracking-[0.08em] text-white/82">
+        {away.name}
+      </span>
+    </div>
+  );
+}
+
+function StartedMobileBannerContent({
+  home,
+  away,
+  homeScore,
+  awayScore,
+  stageLabel,
+  phaseLabel,
+  start,
+  location,
+  stage,
+}: {
+  home: { badge: string; image: string; name: string };
+  away: { badge: string; image: string; name: string };
+  homeScore: number;
+  awayScore: number;
+  stageLabel: string;
+  phaseLabel: string;
+  start: Date;
+  location: string;
+  stage: string;
+}) {
+  const [phase, minute] = splitPhaseLabel(phaseLabel);
+
+  return (
+    <div className="relative z-20 flex w-full max-w-[22rem] flex-col items-center px-3 py-4 text-center lg:hidden">
+      <div className="grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-3">
+        <div className="flex min-w-0 flex-col items-center">
+          <span
+            className="text-5xl font-bold leading-none tabular-nums text-white drop-shadow-[0_0_22px_rgba(255,255,255,0.18)]"
+            style={{ fontFamily: "ScreenMatrix, monospace" }}
+          >
+            {homeScore}
+          </span>
+          <div className="mt-5 flex items-center gap-2 self-start">
+            <span className="min-w-0 max-w-[5.2rem] truncate text-sm font-semibold text-white/82">
+              {home.name}
+            </span>
+            <MiniFlag team={home} compact />
+          </div>
+        </div>
+
+        <div className="flex min-w-[5.25rem] flex-col items-center pt-1">
+          <span className="text-lg font-semibold leading-none text-white/90">
+            {phase}
+          </span>
+          {minute && <span className="mt-1 text-xs font-semibold text-white/68">{minute}</span>}
+          <span className="mt-12 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/62">
+            {stageLabel}
+          </span>
+        </div>
+
+        <div className="flex min-w-0 flex-col items-center">
+          <span
+            className="text-5xl font-bold leading-none tabular-nums text-white drop-shadow-[0_0_22px_rgba(255,255,255,0.18)]"
+            style={{ fontFamily: "ScreenMatrix, monospace" }}
+          >
+            {awayScore}
+          </span>
+          <div className="mt-5 flex items-center gap-2 self-end">
+            <MiniFlag team={away} compact />
+            <span className="min-w-0 max-w-[5.2rem] truncate text-sm font-semibold text-white/82">
+              {away.name}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <MatchMetaRow start={start} location={location} stage={stage} />
+    </div>
+  );
+}
+
+function splitPhaseLabel(label: string) {
+  const match = label.match(/^(.+?)\s+(\d+'(?:\+\d+')?)$/);
+  if (!match) return [label, ""] as const;
+  return [match[1], match[2]] as const;
+}
+
+export function MatchTimelineBanner({
+  home,
+  away,
+  startsAt,
+  stage,
+}: {
+  home: { name: string; image?: string; code?: string };
+  away: { name: string; image?: string; code?: string };
+  startsAt?: string;
+  stage?: string;
+}) {
+  const homeCode = normalizeTeamCode(home.code);
+  const awayCode = normalizeTeamCode(away.code);
+  const homeAccent = getAccent(homeCode);
+  const awayAccent = getAccent(awayCode);
+  const hidePlayerPosters = isWarmupStage(stage);
+  const homePlayer = hidePlayerPosters ? undefined : PLAYER_ASSETS[homeCode];
+  const awayPlayer = hidePlayerPosters ? undefined : PLAYER_ASSETS[awayCode];
+  const startDate = startsAt ? new Date(startsAt) : null;
+  const displayTime = startDate && Number.isFinite(startDate.getTime()) ? formatTime(startDate) : "TBD";
+
+  return (
+    <div className="relative min-h-[15rem] overflow-hidden bg-[#070b08] ring-1 ring-white/[0.08] sm:min-h-[17rem]">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,3,3,0.08),rgba(2,3,3,0.76)),radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.08),transparent_54%)]" />
+        <div className="absolute inset-0 opacity-[0.16] [background-image:linear-gradient(rgba(255,255,255,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.09)_1px,transparent_1px)] [background-size:34px_34px]" />
+        <CompactPosterWedge side="left" accent={homeAccent} />
+        <CompactPosterWedge side="right" accent={awayAccent} />
+        <div className="absolute left-1/2 top-7 h-40 w-[360px] -translate-x-1/2 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.13),transparent_68%)] blur-2xl" />
+      </div>
+
+      {!hidePlayerPosters && (
+        <>
+          <CompactPosterSide
+            side="left"
+            team={{ badge: homeCode, image: home.image || "", name: home.name }}
+            teamCode={homeCode}
+            player={homePlayer}
+            accent={homeAccent}
+          />
+          <CompactPosterSide
+            side="right"
+            team={{ badge: awayCode, image: away.image || "", name: away.name }}
+            teamCode={awayCode}
+            player={awayPlayer}
+            accent={awayAccent}
+          />
+        </>
+      )}
+
+      <div className="relative z-20 flex min-h-[15rem] flex-col items-center justify-center px-4 py-7 text-center sm:min-h-[17rem]">
+        <span className="glass-chip px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/58">
+          {formatStageLabel(stage || "Match")}
+        </span>
+        <div
+          className="mt-3 text-4xl font-bold tabular-nums text-white sm:text-5xl"
+          style={{ fontFamily: "ScreenMatrix, monospace" }}
+        >
+          {displayTime}
+        </div>
+        <div className="mt-4 grid w-full max-w-[520px] grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-4">
+          <CompactMatchupTeam team={{ badge: homeCode, image: home.image || "", name: home.name }} align="left" />
+          <span className="rounded-full bg-white/[0.08] px-4 py-2 text-base font-black uppercase tracking-[0.08em] text-volt shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_0_24px_rgba(216,255,62,0.16)] ring-1 ring-white/[0.1]">
+            VS
+          </span>
+          <CompactMatchupTeam team={{ badge: awayCode, image: away.image || "", name: away.name }} align="right" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CompactPosterWedge({
+  side,
+  accent,
+}: {
+  side: "left" | "right";
+  accent: { primary: string; secondary: string };
+}) {
+  const isLeft = side === "left";
+
+  return (
+    <div
+      className={`absolute inset-y-0 w-[46%] ${isLeft ? "left-0" : "right-0"}`}
+      style={{
+        background: isLeft
+          ? `linear-gradient(90deg, ${accent.primary}, ${fadeToTransparent(accent.secondary)})`
+          : `linear-gradient(90deg, ${fadeToTransparent(accent.secondary)}, ${accent.primary})`,
+      }}
+    />
+  );
+}
+
+function normalizeTeamCode(code?: string) {
+  const value = (code || "").trim().toUpperCase();
+  if (value === "ALG") return "DZA";
+  if (value === "KSA") return "SAU";
+  return value;
+}
+
+function CompactPosterSide({
+  side,
+  team,
+  teamCode,
+  player,
+  accent,
+}: {
+  team: { badge: string; image: string; name: string };
+  teamCode: string;
+  side: "left" | "right";
+  player?: { src: string; name: string };
+  accent: { primary: string; secondary: string };
+}) {
+  const isRight = side === "right";
+
+  return (
+    <div className={`pointer-events-none absolute inset-y-0 z-10 w-[42%] ${isRight ? "right-0" : "left-0"}`}>
+      <div
+        className={`absolute top-8 h-24 w-24 rounded-full blur-[54px] sm:h-36 sm:w-36 sm:blur-[70px] ${
+          isRight ? "right-4 sm:right-9" : "left-4 sm:left-9"
+        }`}
+        style={{ backgroundColor: accent.primary }}
+      />
+      {player ? (
+        <img
+          src={player.src}
+          alt={player.name}
+          className={`absolute bottom-0 h-[92%] w-auto max-w-[76%] object-contain object-bottom drop-shadow-[0_14px_22px_rgba(0,0,0,0.42)] sm:h-[98%] ${
+            isRight ? "right-0" : "left-0"
+          }`}
+          loading="lazy"
+        />
+      ) : (
+        <div
+          className={`absolute bottom-4 grid h-32 w-24 place-items-center rounded-[1.25rem] bg-black/22 p-3 ring-1 ring-white/[0.1] backdrop-blur-xl sm:h-40 sm:w-32 ${
+            isRight ? "right-4 sm:right-8" : "left-4 sm:left-8"
+          }`}
+        >
+          <MiniFlag team={team} />
+          <span className="mt-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/42">{teamCode}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CompactMatchupTeam({
+  team,
+  align,
+}: {
+  team: { badge: string; image: string; name: string };
+  align: "left" | "right";
+}) {
+  const isRight = align === "right";
+
+  return (
+    <div className={`flex min-w-0 items-center gap-2 ${isRight ? "justify-start text-left" : "justify-end text-right"}`}>
+      {!isRight && <span className="hidden min-w-0 truncate text-sm font-bold uppercase tracking-[0.08em] text-white/78 sm:block">{team.name}</span>}
+      <MiniFlag team={team} />
+      {isRight && <span className="hidden min-w-0 truncate text-sm font-bold uppercase tracking-[0.08em] text-white/78 sm:block">{team.name}</span>}
+    </div>
   );
 }
 
@@ -374,12 +728,14 @@ function PlayerPosterSide({
   teamCode,
   player,
   accent,
+  className = "",
 }: {
   team: { badge: string; image: string; name: string };
   teamCode: string;
   side: "left" | "right";
   player?: { src: string; name: string };
   accent: { primary: string; secondary: string };
+  className?: string;
 }) {
   const isRight = side === "right";
 
@@ -390,7 +746,7 @@ function PlayerPosterSide({
       transition={{ delay: 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       className={`absolute inset-y-0 z-10 w-[30%] sm:w-[42%] ${
         isRight ? "right-0" : "left-0"
-      }`}
+      } ${className}`}
     >
       <div
         className={`absolute top-10 h-28 w-28 rounded-full blur-[60px] sm:h-44 sm:w-44 sm:blur-[80px] ${
@@ -436,11 +792,14 @@ function PlayerPosterSide({
 function MatchupTeam({
   team,
   align,
+  score,
 }: {
   team: { badge: string; image: string; name: string };
   align: "left" | "right";
+  score?: number | null;
 }) {
   const isRight = align === "right";
+  const hasScore = typeof score === "number";
 
   return (
     <div
@@ -453,7 +812,17 @@ function MatchupTeam({
           {team.name}
         </span>
       )}
-      <MiniFlag team={team} />
+      <div className="flex shrink-0 flex-col items-center gap-1">
+        {hasScore && (
+          <span
+            className="text-2xl font-bold leading-none tabular-nums text-white drop-shadow-[0_0_18px_rgba(255,255,255,0.24)] sm:text-3xl"
+            style={{ fontFamily: "ScreenMatrix, monospace" }}
+          >
+            {score}
+          </span>
+        )}
+        <MiniFlag team={team} />
+      </div>
       {isRight && (
         <span className="min-w-0 truncate text-sm font-bold uppercase tracking-[0.08em] text-white/78 sm:text-base">
           {team.name}
@@ -466,14 +835,16 @@ function MatchupTeam({
 function MiniFlag({
   team,
   large = false,
+  compact = false,
 }: {
   team: { badge: string; image: string; name: string };
   large?: boolean;
+  compact?: boolean;
 }) {
   return (
     <div
       className={`grid shrink-0 place-items-center overflow-hidden rounded-xl bg-white/[0.07] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] ring-1 ring-white/[0.1] ${
-        large ? "h-24 w-36" : "h-12 w-16 sm:h-14 sm:w-20"
+        large ? "h-24 w-36" : compact ? "h-10 w-14" : "h-12 w-16 sm:h-14 sm:w-20"
       }`}
     >
       {team.image ? (

@@ -1,4 +1,5 @@
 import { getBackendApiUrl } from "@/lib/world-cup-api";
+import { cachedJson, fetchWithTimeout } from "@/lib/request-cache";
 import type { LineupPlayer, MatchTeamMeta, PlayerPosition } from "@/types/match";
 
 type SquadPlayerResponse = {
@@ -10,37 +11,81 @@ type SquadPlayerResponse = {
   position: string;
   positionCn: string;
   photo: string;
+  rating?: number | string | null;
 };
 
 type SquadResponse = {
   team: MatchTeamMeta;
   players: SquadPlayerResponse[];
-  listType?: "squad_pool";
+  coach?: string | null;
+  listType?: "final_squad" | "squad_pool";
   officialWorldCupSquad?: boolean;
+  officialSquad?: OfficialSquadMeta;
 };
 
 type SquadsPayload = {
   squads?: SquadResponse[];
 };
 
+export type OfficialSquadMeta = {
+  source: "fifa_official";
+  status: "imported" | "missing_official_list";
+  sourceUrl: string;
+  publishedAt: string;
+  expectedPlayers: number;
+  matchedPlayers: number;
+  unmatchedOfficialPlayers: number;
+  filteredApiFootballPlayers: number;
+};
+
+export type WorldCupSquadDetail = {
+  team: MatchTeamMeta;
+  coach: string | null;
+  players: LineupPlayer[];
+  listType: "final_squad" | "squad_pool";
+  officialWorldCupSquad: boolean;
+  officialSquad: OfficialSquadMeta | null;
+};
+
 export async function fetchWorldCupSquads(teamIds: number[]) {
+  const details = await fetchWorldCupSquadDetails(teamIds);
+  const squads = new Map<number, LineupPlayer[]>();
+  for (const [teamId, squad] of details) {
+    squads.set(teamId, squad.players);
+  }
+  return squads;
+}
+
+export async function fetchWorldCupSquadDetails(teamIds: number[]) {
   const ids = [...new Set(teamIds.filter((id) => Number.isFinite(id) && id > 0))];
-  if (!ids.length) return new Map<number, LineupPlayer[]>();
+  if (!ids.length) return new Map<number, WorldCupSquadDetail>();
 
   const params = new URLSearchParams();
   ids.forEach((id) => params.append("team", String(id)));
 
-  const response = await fetch(`${getBackendApiUrl()}/api/worldcup/squads?${params}`, { cache: "no-store" });
-  const payload = (await response.json()) as SquadsPayload & { error?: string };
+  const url = `${getBackendApiUrl()}/api/worldcup/squads?${params}`;
+  const payload = await cachedJson<SquadsPayload & { error?: string }>(url, 10 * 60 * 1000, async () => {
+    const response = await fetchWithTimeout(url, { cache: "no-store" }, 6_000);
+    const payload = (await response.json()) as SquadsPayload & { error?: string };
 
-  if (!response.ok) {
-    throw new Error(payload.error || `World Cup squads returned ${response.status}`);
-  }
+    if (!response.ok) {
+      throw new Error(payload.error || `World Cup squads returned ${response.status}`);
+    }
 
-  const squads = new Map<number, LineupPlayer[]>();
+    return payload;
+  }, { persist: true, staleTtlMs: 7 * 24 * 60 * 60 * 1000 });
+
+  const squads = new Map<number, WorldCupSquadDetail>();
   for (const squad of payload.squads ?? []) {
     if (!squad.team.id) continue;
-    squads.set(squad.team.id, squad.players.map(toLineupPlayer));
+    squads.set(squad.team.id, {
+      team: squad.team,
+      coach: squad.coach || null,
+      players: squad.players.map(toLineupPlayer),
+      listType: squad.listType ?? "squad_pool",
+      officialWorldCupSquad: Boolean(squad.officialWorldCupSquad),
+      officialSquad: squad.officialSquad ?? null,
+    });
   }
 
   return squads;
@@ -60,7 +105,14 @@ function toLineupPlayer(player: SquadPlayerResponse, index: number): LineupPlaye
     country: "",
     club: "国家队",
     age: player.age ?? 0,
+    rating: parseRating(player.rating),
   };
+}
+
+function parseRating(value: number | string | null | undefined) {
+  if (value == null) return undefined;
+  const rating = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(rating) ? Math.round(rating * 10) / 10 : undefined;
 }
 
 function toPlayerPosition(position: string): PlayerPosition {

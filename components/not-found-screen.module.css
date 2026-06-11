@@ -1,0 +1,216 @@
+.root {
+  color: #ffffff;
+  background: #010401;
+}
+
+.aura {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(124, 255, 36, 0.09), transparent 32%),
+    linear-gradient(180deg, rgba(3, 14, 4, 0.82), #010401 58%, #000000 100%);
+}
+
+.splatters {
+  background-image:
+    radial-gradient(circle at 8% 36%, rgba(94, 255, 38, 0.72) 0 8px, transparent 9px),
+    radial-gradient(circle at 18% 18%, rgba(75, 255, 28, 0.42) 0 3px, transparent 4px),
+    radial-gradient(circle at 32% 9%, rgba(69, 255, 27, 0.42) 0 6px, transparent 7px),
+    radial-gradient(circle at 88% 28%, rgba(98, 255, 37, 0.46) 0 5px, transparent 6px),
+    radial-gradient(circle at 92% 74%, rgba(78, 255, 30, 0.58) 0 16px, transparent 17px),
+    radial-gradient(circle at 14% 78%, rgba(67, 255, 29, 0.42) 0 11px, transparent 12px),
+    radial-gradient(circle at 70% 38%, rgba(92, 255, 37, 0.54) 0 7px, transparent 8px),
+    radial-gradient(circle at 55% 20%, rgba(50, 206, 28, 0.34) 0 4px, transparent 5px),
+    radial-gradient(circle at 38% 58%, rgba(109, 255, 35, 0.28) 0 15px, transparent 16px),
+    radial-gradient(circle at 76% 88%, rgba(86, 255, 32, 0.34) 0 5px, transparent 6px);
+}
+
+.sparks {
+  background-image:
+    radial-gradient(circle at 20% 46%, rgba(83, 255, 29, 0.7) 0 2px, transparent 3px),
+    radial-gradient(circle at 30% 74%, rgba(83, 255, 29, 0.5) 0 2px, transparent 3px),
+    radial-gradient(circle at 44% 26%, rgba(83, 255, 29, 0.56) 0 2px, transparent 3px),
+    radial-gradient(circle at 62% 14%, rgba(83, 255, 29, 0.42) 0 2px, transparent 3px),
+    radial-gradient(circle at 78% 52%, rgba(83, 255, 29, 0.7) 0 2px, transparent 3px),
+    radial-gradient(circle at 86% 65%, rgba(83, 255, 29, 0.5) 0 2px, transparent 3px),
+    radial-gradient(circle at 10% 90%, rgba(83, 255, 29, 0.48) 0 2px, transparent 3px);
+}
+
+.scanlines {
+  background-image: linear-gradient(rgba(137, 255, 36, 0.05) 1px, transparent 1px);
+  background-size: 100% 8px;
+}
+
+.centerGlow {
+  background: radial-gradient(ellipse at center, rgba(140, 255, 20, 0.18), transparent 68%);
+}
+
+.signal,
+.errorText,
+.digit {
+  color: #befc45;
+}
+
+.signalIcon {
+  color: #befc45;
+  background: rgba(190, 252, 69, 0.1);
+  box-shadow: 0 0 32px rgba(132, 255, 19, 0.28);
+}
+
+.errorText {
+  filter: drop-shadow(0 0 18px rgba(132, 255, 19, 0.85));
+}
+
+.digit {
+  filter: drop-shadow(0 0 28px rgba(132, 255, 19, 0.86));
+}
+
+.ghostDigit::after {
+  color: rgba(84, 214, 29, 0.3);
+}
+
+.zero {
+  border-color: #befc45;
+  box-shadow: 0 0 32px rgba(132, 255, 19, 0.62);
+}
+
+.slash {
+  background: #befc45;
+  box-shadow: 0 0 18px rgba(132, 255, 19, 0.95);
+}
+
+.title {
+  color: #ffffff;
+}
+
+.copy {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.primaryLink {
+  color: #000000;
+  background: #befc45;
+  box-shadow: 0 0 34px rgba(132, 255, 19, 0.38);
+}
+
+.primaryLink:hover {
+  background: #ffffff;
+}
+
+.secondaryLink {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.secondaryLink:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+:global([data-theme="light"]) .root {
+  color: #182014;
+  background: #f5f8ef;
+}
+
+:global([data-theme="light"]) .aura {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(87, 134, 32, 0.16), transparent 34%),
+    linear-gradient(180deg, rgba(247, 252, 239, 0.94), #eef5e7 58%, #fbfaf5 100%);
+}
+
+:global([data-theme="light"]) .splatters {
+  opacity: 0.46;
+  background-image:
+    radial-gradient(circle at 8% 36%, rgba(82, 152, 37, 0.42) 0 8px, transparent 9px),
+    radial-gradient(circle at 18% 18%, rgba(91, 166, 42, 0.32) 0 3px, transparent 4px),
+    radial-gradient(circle at 32% 9%, rgba(84, 148, 39, 0.28) 0 6px, transparent 7px),
+    radial-gradient(circle at 88% 28%, rgba(91, 166, 42, 0.32) 0 5px, transparent 6px),
+    radial-gradient(circle at 92% 74%, rgba(83, 147, 36, 0.36) 0 16px, transparent 17px),
+    radial-gradient(circle at 14% 78%, rgba(84, 148, 39, 0.3) 0 11px, transparent 12px),
+    radial-gradient(circle at 70% 38%, rgba(91, 166, 42, 0.34) 0 7px, transparent 8px),
+    radial-gradient(circle at 55% 20%, rgba(82, 152, 37, 0.22) 0 4px, transparent 5px),
+    radial-gradient(circle at 38% 58%, rgba(89, 150, 40, 0.18) 0 15px, transparent 16px),
+    radial-gradient(circle at 76% 88%, rgba(83, 147, 36, 0.2) 0 5px, transparent 6px);
+}
+
+:global([data-theme="light"]) .sparks {
+  opacity: 0.38;
+  background-image:
+    radial-gradient(circle at 20% 46%, rgba(69, 124, 34, 0.48) 0 2px, transparent 3px),
+    radial-gradient(circle at 30% 74%, rgba(69, 124, 34, 0.34) 0 2px, transparent 3px),
+    radial-gradient(circle at 44% 26%, rgba(69, 124, 34, 0.38) 0 2px, transparent 3px),
+    radial-gradient(circle at 62% 14%, rgba(69, 124, 34, 0.28) 0 2px, transparent 3px),
+    radial-gradient(circle at 78% 52%, rgba(69, 124, 34, 0.46) 0 2px, transparent 3px),
+    radial-gradient(circle at 86% 65%, rgba(69, 124, 34, 0.34) 0 2px, transparent 3px),
+    radial-gradient(circle at 10% 90%, rgba(69, 124, 34, 0.32) 0 2px, transparent 3px);
+}
+
+:global([data-theme="light"]) .scanlines {
+  background-image: linear-gradient(rgba(54, 65, 44, 0.045) 1px, transparent 1px);
+}
+
+:global([data-theme="light"]) .centerGlow {
+  background: radial-gradient(ellipse at center, rgba(101, 166, 38, 0.2), transparent 70%);
+}
+
+:global([data-theme="light"]) .signal,
+:global([data-theme="light"]) .errorText,
+:global([data-theme="light"]) .digit {
+  color: #4d7f22;
+}
+
+:global([data-theme="light"]) .signalIcon {
+  color: #4d7f22;
+  background: rgba(77, 127, 34, 0.1);
+  box-shadow: 0 0 28px rgba(77, 127, 34, 0.16);
+}
+
+:global([data-theme="light"]) .errorText {
+  filter: drop-shadow(0 0 12px rgba(77, 127, 34, 0.24));
+}
+
+:global([data-theme="light"]) .digit {
+  filter: drop-shadow(0 0 18px rgba(77, 127, 34, 0.22));
+}
+
+:global([data-theme="light"]) .ghostDigit::after {
+  color: rgba(77, 127, 34, 0.16);
+}
+
+:global([data-theme="light"]) .zero {
+  border-color: #4d7f22;
+  box-shadow: 0 0 24px rgba(77, 127, 34, 0.18);
+}
+
+:global([data-theme="light"]) .slash {
+  background: #4d7f22;
+  box-shadow: 0 0 14px rgba(77, 127, 34, 0.22);
+}
+
+:global([data-theme="light"]) .title {
+  color: #182014;
+}
+
+:global([data-theme="light"]) .copy {
+  color: rgba(24, 32, 20, 0.66);
+}
+
+:global([data-theme="light"]) .primaryLink {
+  color: #fffefa;
+  background: #36412c;
+  box-shadow: 0 12px 28px rgba(54, 65, 44, 0.16);
+}
+
+:global([data-theme="light"]) .primaryLink:hover {
+  background: #283120;
+}
+
+:global([data-theme="light"]) .secondaryLink {
+  color: #283120;
+  background: rgba(255, 254, 250, 0.72);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 0 1px rgba(54, 65, 44, 0.1);
+}
+
+:global([data-theme="light"]) .secondaryLink:hover {
+  background: rgba(255, 254, 250, 0.94);
+}

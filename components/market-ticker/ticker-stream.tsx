@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef, useEffect, useCallback, useState } from "react";
+import { useRef, useCallback, useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
+import { useVisibleRaf } from "@/lib/use-visible-raf";
 import { TickerItem } from "./ticker-item";
 
 const BASE_SPEED = 50; // px per second
@@ -9,24 +10,23 @@ const ITEM_WIDTH = 180;
 
 export function TickerStream() {
   const countries = useStore((s) => s.countries);
-  const allCountries = Array.from(countries.values());
   const [isPaused, setIsPaused] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const streamRef = useRef<HTMLDivElement>(null);
   const offsetRef = useRef(0);
-  const rafRef = useRef<number>(0);
   const lastTimeRef = useRef<number>(0);
 
-  // Sort by probability descending
-  const sorted = [...allCountries].sort(
-    (a, b) => b.impliedProbability - a.impliedProbability
+  const sorted = useMemo(
+    () => Array.from(countries.values()).sort((a, b) => b.impliedProbability - a.impliedProbability),
+    [countries]
   );
+  const shouldAnimate = !isPaused && sorted.length > 0;
 
   const animate = useCallback(
     (time: number) => {
-      if (!streamRef.current || isPaused) {
-        rafRef.current = requestAnimationFrame(animate);
+      if (!streamRef.current || !shouldAnimate) {
+        lastTimeRef.current = 0;
         return;
       }
 
@@ -43,16 +43,17 @@ export function TickerStream() {
       }
 
       streamRef.current.style.transform = `translateX(${offsetRef.current}px)`;
-      rafRef.current = requestAnimationFrame(animate);
     },
-    [isPaused, sorted.length]
+    [shouldAnimate, sorted.length]
   );
 
-  useEffect(() => {
-    lastTimeRef.current = 0;
-    rafRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [animate]);
+  useVisibleRaf(animate, {
+    enabled: shouldAnimate,
+    elementRef: containerRef,
+    onStop: () => {
+      lastTimeRef.current = 0;
+    },
+  });
 
   return (
     <div

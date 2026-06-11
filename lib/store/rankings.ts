@@ -25,12 +25,62 @@ export interface RankingsSlice {
   sortMode: "probability" | "momentum";
 
   recomputeRankings: () => void;
+  scheduleRankingsRecompute: () => void;
   triggerVibration: (countryCode: string) => void;
   clearVibration: (countryCode: string) => void;
   setSortMode: (mode: "probability" | "momentum") => void;
 }
 
 const SQUEEZE_THRESHOLD = 2.0; // percentage points
+const RANKING_RECOMPUTE_DELAY_MS = 180;
+
+let rankingRecomputeTimer: ReturnType<typeof setTimeout> | null = null;
+
+function areRankingsEqual(a: RankingEntry[], b: RankingEntry[]) {
+  if (a.length !== b.length) return false;
+
+  for (let i = 0; i < a.length; i++) {
+    const next = a[i];
+    const prev = b[i];
+    if (
+      next.countryCode !== prev.countryCode ||
+      next.rank !== prev.rank ||
+      next.previousRank !== prev.previousRank ||
+      next.probability !== prev.probability ||
+      next.delta1h !== prev.delta1h ||
+      next.volume24h !== prev.volume24h
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function areSqueezePairsEqual(a: SqueezePair[], b: SqueezePair[]) {
+  if (a.length !== b.length) return false;
+
+  for (let i = 0; i < a.length; i++) {
+    if (
+      a[i].countryA !== b[i].countryA ||
+      a[i].countryB !== b[i].countryB ||
+      a[i].gap !== b[i].gap ||
+      a[i].threshold !== b[i].threshold
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function areStringArraysEqual(a: string[], b: string[]) {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
 
 export const createRankingsSlice: StateCreator<
   StoreState, [], [], RankingsSlice
@@ -93,11 +143,25 @@ export const createRankingsSlice: StateCreator<
       }
     }
 
-    set({
-      rankings,
-      squeezePairs,
-      vibrationTriggers: newTriggers,
-    });
+    const current = get();
+    if (
+      areRankingsEqual(rankings, current.rankings) &&
+      areSqueezePairsEqual(squeezePairs, current.squeezePairs) &&
+      areStringArraysEqual(newTriggers, current.vibrationTriggers)
+    ) {
+      return;
+    }
+
+    set({ rankings, squeezePairs, vibrationTriggers: newTriggers });
+  },
+
+  scheduleRankingsRecompute: () => {
+    if (rankingRecomputeTimer) return;
+
+    rankingRecomputeTimer = setTimeout(() => {
+      rankingRecomputeTimer = null;
+      get().recomputeRankings();
+    }, RANKING_RECOMPUTE_DELAY_MS);
   },
 
   triggerVibration: (countryCode) => {
@@ -115,6 +179,10 @@ export const createRankingsSlice: StateCreator<
   },
 
   setSortMode: (mode) => {
+    if (rankingRecomputeTimer) {
+      clearTimeout(rankingRecomputeTimer);
+      rankingRecomputeTimer = null;
+    }
     set({ sortMode: mode });
     get().recomputeRankings();
   },

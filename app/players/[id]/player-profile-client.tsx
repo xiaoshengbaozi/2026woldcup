@@ -9,7 +9,6 @@ import {
   Crown,
   Dribbble,
   ExternalLink,
-  Footprints,
   GitCompareArrows,
   Shield,
   Sparkles,
@@ -21,15 +20,20 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BackToTopButton } from "@/components/back-to-top-button";
-import { MobileNavBar } from "@/components/mobile-nav-bar";
+import { MobileSecondaryPageActions } from "@/components/mobile-secondary-page-actions";
 import { NavBar } from "@/components/nav-bar";
+import { PlayerFmScoutCard } from "@/components/player-fm-scout-card";
+import { SiteFooter } from "@/components/site-footer";
+import { UserActionButton } from "@/components/user-action-button";
+import { localizeClubName, localizeCountryName } from "@/lib/football-localization-client";
+import { getTeamLandscapePathByCode } from "@/lib/team-landscapes";
 import {
   fetchApiFootballPlayerProfileData,
-  fetchOneVsOnePlayerSummary,
   type PlayerProfileData,
 } from "@/lib/player-profile";
+import type { PlayerScoutNote } from "@/lib/player-scout-notes";
 
 /* ────────────────────────────────────────────
    Types
@@ -46,47 +50,100 @@ type PlayerRow = {
   photo: string;
 };
 
+type PlayerArticle = {
+  apiPlayerId: number;
+  nameEn: string;
+  nameCn: string;
+  countryCn: string;
+  teamCode: string;
+  photo: string;
+  sourceUrl: string;
+  title: string;
+  published: string;
+  deck: string;
+  birthDate: string;
+  teams: string;
+  position: string;
+  skills: string;
+  excerpt: string;
+  coverImage?: string;
+  storyImages?: string[];
+  articleCn: {
+    title: string;
+    published: string;
+    sections: Array<{
+      heading: string;
+      paragraphs: string[];
+    }>;
+  } | null;
+};
+
 type Props = {
   playerId: string;
   nameHint: string;
   row: PlayerRow | null;
+  article?: PlayerArticle | null;
+  scoutNote?: PlayerScoutNote | null;
+};
+
+type ProfilePanelTab = "overview" | "story" | "career";
+
+const profilePanelTabs: { id: ProfilePanelTab; label: string }[] = [
+  { id: "overview", label: "概览" },
+  { id: "story", label: "故事" },
+  { id: "career", label: "轨迹" },
+];
+
+const MOBILE_TOP_MODULE_OFFSET = 48;
+
+const FIFA_CODE_TO_FLAG: Record<string, string> = {
+  MEX:"mx",USA:"us",CAN:"ca",ARG:"ar",BRA:"br",COL:"co",ECU:"ec",PAR:"py",URU:"uy",
+  JPN:"jp",IRN:"ir",UZB:"uz",KOR:"kr",JOR:"jo",AUS:"au",QAT:"qa",SAU:"sa",IRQ:"iq",
+  MAR:"ma",TUN:"tn",EGY:"eg",DZA:"dz",GHA:"gh",CPV:"cv",RSA:"za",SEN:"sn",CIV:"ci",
+  COD:"cd",NZL:"nz",CUW:"cw",HAI:"ht",PAN:"pa",ENG:"gb-eng",FRA:"fr",GER:"de",ESP:"es",
+  POR:"pt",NED:"nl",BEL:"be",CRO:"hr",SUI:"ch",AUT:"at",NOR:"no",SCO:"gb-sct",SWE:"se",
+  TUR:"tr",CZE:"cz",BIH:"ba",SRB:"rs",POL:"pl",UKR:"ua",DEN:"dk",ITA:"it",MLI:"ml",
+  BFA:"bf",CMR:"cm",CGO:"cd",ZAM:"zm",NIG:"ng",GUI:"gn",BEN:"bn",RWA:"rw",CDF:"cd",
+  SUR:"sr",JAM:"jm",GUY:"gy",HON:"hn",SLV:"sv",GUA:"gt",NIC:"ni",BAR:"bb",TRI:"tt",
+  DMA:"dm",GRN:"gd",LCA:"lc",VIN:"vc",SKN:"kn",MAG:"mg",COM:"km",LBR:"lr",LES:"ls",
+  BOT:"bw",SWZ:"sz",NAM:"na",MOZ:"mz",ANG:"ao",ETH:"et",ERI:"er",SUD:"sd",SSD:"ss",
+  SOM:"so",KEN:"ke",UGA:"ug",TAN:"tz",BDI:"bi",CHA:"td",CAF:"cf",GAB:"ga",GNQ:"gq",
+  STP:"st",PRK:"kp",CHN:"cn",TWN:"tw",HKG:"hk",MAS:"my",SIN:"sg",PHI:"ph",THA:"th",
+  VIE:"vn",MYA:"mm",LAO:"la",CAM:"kh",BRN:"bn",TLS:"tl",IND:"in",PAK:"pk",BAN:"bd",
+  SRI:"lk",NEP:"np",AFG:"af",SYR:"sy",YEM:"ye",LBN:"lb",PSE:"ps",
+  KUW:"kw",BHR:"bh",OMA:"om",UAE:"ae",ALB:"al",ARM:"am",AZE:"az",BLR:"by",
+  GEO:"ge",KAZ:"kz",KGZ:"kg",TJK:"tj",TKM:"tm",MDA:"md",ISL:"is",LUX:"lu",MLT:"mt",
+  CYP:"cy",AND:"ad",LIE:"li",SMR:"sr",MCO:"mc",VAT:"va",GIB:"gi",FRO:"fo",EST:"ee",
+  LAT:"lv",LTU:"lt",
 };
 
 /* ────────────────────────────────────────────
    Main Component
    ──────────────────────────────────────────── */
 
-export function PlayerProfileClient({ playerId, nameHint, row }: Props) {
+export function PlayerProfileClient({ playerId, nameHint, row, article, scoutNote }: Props) {
   const [data, setData] = useState<PlayerProfileData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [oneVsOneLoading, setOneVsOneLoading] = useState(false);
+  const [activeMobilePanel, setActiveMobilePanel] = useState<ProfilePanelTab>("overview");
+  const panelTabsSentinelRef = useRef<HTMLDivElement>(null);
+  const panelTabsRef = useRef<HTMLDivElement>(null);
+  const [panelTabsPinned, setPanelTabsPinned] = useState(false);
+  const [panelTabsHeight, setPanelTabsHeight] = useState(0);
+  const hasFifaStory = Boolean(article);
+  const visibleProfilePanelTabs = useMemo(
+    () => profilePanelTabs.filter((tab) => tab.id !== "story" || hasFifaStory),
+    [hasFifaStory]
+  );
 
   useEffect(() => {
     let active = true;
     setLoading(true);
-    setOneVsOneLoading(false);
     fetchApiFootballPlayerProfileData(playerId)
       .then((payload) => {
         if (!active) return;
 
         setData(payload);
         setLoading(false);
-
-        const player = payload.player;
-        const fullName = [player?.firstname, player?.lastname].filter(Boolean).join(" ") || player?.name || nameHint;
-        if (!fullName) return;
-
-        setOneVsOneLoading(true);
-        fetchOneVsOnePlayerSummary(fullName)
-          .then((oneVsOne) => {
-            if (active) setData((current) => current ? { ...current, oneVsOne } : current);
-          })
-          .catch((error) => {
-            console.warn("[PlayerProfile] 1vs1 unavailable:", error);
-          })
-          .finally(() => {
-            if (active) setOneVsOneLoading(false);
-          });
       })
       .catch((error) => {
         console.warn("[PlayerProfile] unavailable:", error);
@@ -99,130 +156,267 @@ export function PlayerProfileClient({ playerId, nameHint, row }: Props) {
     };
   }, [playerId, nameHint]);
 
+  useEffect(() => {
+    const mobileQuery = window.matchMedia("(max-width: 1023px)");
+
+    const syncPinnedState = () => {
+      if (!mobileQuery.matches) {
+        setPanelTabsPinned(false);
+        setPanelTabsHeight(0);
+        return;
+      }
+
+      const sentinel = panelTabsSentinelRef.current;
+      const tabs = panelTabsRef.current;
+      if (!sentinel || !tabs) return;
+
+      const nextHeight = tabs.offsetHeight;
+      setPanelTabsHeight((current) => (current === nextHeight ? current : nextHeight));
+      setPanelTabsPinned(sentinel.getBoundingClientRect().top <= MOBILE_TOP_MODULE_OFFSET);
+    };
+
+    syncPinnedState();
+    window.addEventListener("scroll", syncPinnedState, { passive: true });
+    window.addEventListener("resize", syncPinnedState);
+    mobileQuery.addEventListener?.("change", syncPinnedState);
+
+    return () => {
+      window.removeEventListener("scroll", syncPinnedState);
+      window.removeEventListener("resize", syncPinnedState);
+      mobileQuery.removeEventListener?.("change", syncPinnedState);
+    };
+  }, []);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("mobile-top-rail-change", { detail: { pinned: panelTabsPinned } }));
+    return () => {
+      window.dispatchEvent(new CustomEvent("mobile-top-rail-change", { detail: { pinned: false } }));
+    };
+  }, [panelTabsPinned]);
+
+  useEffect(() => {
+    if (!hasFifaStory && activeMobilePanel === "story") setActiveMobilePanel("overview");
+  }, [activeMobilePanel, hasFifaStory]);
+
+  const scrollToPanelHead = () => {
+    if (!window.matchMedia("(max-width: 1023px)").matches) return;
+
+    const sentinel = panelTabsSentinelRef.current;
+    if (!sentinel) return;
+
+    const offset = MOBILE_TOP_MODULE_OFFSET + (panelTabsRef.current?.offsetHeight ?? 0) + 12;
+    const target = sentinel.getBoundingClientRect().top + window.scrollY - offset;
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: Math.max(target, 0), behavior: "smooth" });
+    });
+  };
+
+  const handleMobilePanelChange = (tab: ProfilePanelTab) => {
+    if (tab === activeMobilePanel) return;
+    setActiveMobilePanel(tab);
+    if (!panelTabsPinned) scrollToPanelHead();
+  };
+
   const player = data?.player;
   const displayName = row?.nameCn || player?.name || nameHint || `#${playerId}`;
   const englishName = player?.name || row?.nameEn || nameHint;
   const fullName = [player?.firstname, player?.lastname].filter(Boolean).join(" ");
-  const photo = player?.photo || row?.photo || data?.oneVsOne?.player?.image || "";
-  const currentTeam = data?.currentTeam?.name || data?.oneVsOne?.player?.teamName || "暂无俱乐部数据";
+  const photo = player?.photo || row?.photo || "";
+  const currentTeam = localizeClubName(data?.currentTeam?.name) || "暂无俱乐部数据";
+  const currentTeamLogo = data?.currentTeam?.logo || "";
   const total = useMemo(() => summarizeStats(data?.seasonStats ?? []), [data?.seasonStats]);
+  const profileRating = getProfileRating(total.rating, scoutNote);
   const latestTransfers = (data?.transfers ?? []).slice(0, 5);
   const trophies = (data?.trophies ?? []).slice(0, 8);
   const sidelined = (data?.sidelined ?? []).slice(0, 4);
+  const heroLandscape = getTeamLandscapePathByCode(row?.teamCode);
+  const followPayload = {
+    id: playerId,
+    name: displayName,
+    team: row?.countryCn || row?.teamCode,
+    position: row?.positionCn || player?.position,
+    photo,
+  };
 
   const radarStats = useMemo(() => buildRadarStats(data), [data]);
+  const careerTimeline = useMemo(() => buildCareerTimeline(latestTransfers, trophies), [latestTransfers, trophies]);
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-ink-950 text-white">
+    <main className="player-profile-page relative min-h-screen overflow-hidden bg-ink-950 text-white">
+      <MobileSecondaryPageActions
+        backHref="/players/"
+        backLabel="返回球员"
+        title={panelTabsPinned ? displayName : undefined}
+        rightAction={
+          <UserActionButton
+            kind="player"
+            payload={followPayload}
+            iconOnly
+          />
+        }
+      />
       {/* ── Background Effects ── */}
       <div className="pointer-events-none fixed inset-0">
         <div className="absolute left-1/2 top-0 h-[420px] w-[min(800px,100vw)] -translate-x-1/2 rounded-full bg-volt/[0.07] blur-[140px]" />
         <div className="absolute bottom-0 right-0 h-[340px] w-[min(460px,80vw)] rounded-full bg-volt/[0.04] blur-[120px]" />
         <div className="absolute bottom-0 left-0 h-[280px] w-[min(380px,80vw)] rounded-full bg-flare/[0.04] blur-[100px]" />
       </div>
-
-      <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-5 px-3 py-4 pb-28 sm:px-6 sm:py-5 sm:pb-28 lg:px-8 lg:pb-5">
+      <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-5 px-3 pb-28 pt-0 sm:px-6 sm:pb-28 sm:pt-0 lg:px-8 lg:pb-5 lg:pt-5">
         {/* ── Site Navigation ── */}
-        <NavBar />
-
-        {/* ── Player Sub-Navigation ── */}
-        <div className="flex items-center justify-between">
-          <Link
-            href="/matches/"
-            className="group inline-flex items-center gap-2.5 rounded-xl bg-volt/[0.08] px-4 py-2.5 text-sm font-semibold text-volt/80 ring-1 ring-volt/20 transition-all hover:bg-volt/[0.14] hover:text-volt hover:shadow-[0_0_24px_rgba(216,255,62,0.15)]"
-          >
-            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-            返回赛程
-          </Link>
-
-          <div className="hidden items-center gap-2 text-xs font-medium uppercase tracking-[0.22em] text-volt/40 sm:flex">
-            <Sparkles className="h-4 w-4" />
-            Player Intelligence
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="flex h-9 items-center gap-2 rounded-full bg-volt/10 px-4 text-xs font-bold uppercase tracking-wider text-volt shadow-[0_0_20px_rgba(216,255,62,0.15)] ring-1 ring-volt/25">
-              <span className="h-1.5 w-1.5 rounded-full bg-volt shadow-[0_0_10px_rgba(216,255,62,0.9)]" />
-              LIVE
-            </span>
-          </div>
-        </div>
+        <div className="relative z-10 hidden lg:block"><NavBar /></div>
 
         {/* ── Profile Hero Card ── */}
-        <section className="relative overflow-hidden rounded-[1.75rem] bg-white/[0.04] p-6 ring-1 ring-white/[0.08] backdrop-blur-3xl sm:p-8">
+        <section className="player-profile-hero hero-card relative left-1/2 z-0 mt-0 w-screen -translate-x-1/2 overflow-hidden rounded-b-[1.65rem] rounded-t-none px-5 pb-6 pt-48 sm:mt-0 sm:px-8 sm:pb-8 sm:pt-52 lg:left-auto lg:mt-16 lg:w-auto lg:translate-x-0 lg:overflow-visible lg:rounded-[1.65rem] lg:pt-20">
+          {heroLandscape && (
+            <div className="absolute inset-0 z-0 overflow-hidden rounded-[inherit]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={heroLandscape}
+                alt=""
+                className="h-full w-full object-cover object-center opacity-85 saturate-105"
+              />
+              <div className="player-profile-hero-shade absolute inset-0 bg-[linear-gradient(135deg,rgba(5,8,8,0.52)_0%,rgba(5,8,8,0.16)_48%,rgba(5,8,8,0.48)_100%),linear-gradient(to_bottom,rgba(5,8,8,0.04)_0%,rgba(5,8,8,0.48)_100%)]" />
+              <div className="player-profile-hero-fade absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-ink-950/42 to-transparent" />
+            </div>
+          )}
           {/* Top glow line */}
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-volt/40 to-transparent" />
+          <div className="absolute inset-x-0 top-0 z-10 h-px bg-gradient-to-r from-transparent via-volt/40 to-transparent" />
 
-          <div className="flex flex-col items-center gap-8 lg:flex-row lg:items-end">
-            {/* Avatar Section */}
-            <div className="relative flex-shrink-0">
-              {/* Glow ring behind avatar */}
+          {/* Top-left: Back button */}
+          <Link
+            href="/players/"
+            className="group absolute left-4 top-4 z-10 hidden h-8 items-center gap-1.5 rounded-full bg-white/[0.06] px-3 text-xs font-semibold text-white/60 ring-1 ring-white/[0.08] backdrop-blur-md transition-all hover:bg-volt/[0.1] hover:text-volt hover:ring-volt/20 sm:left-6 sm:top-5 lg:inline-flex"
+          >
+            <ArrowLeft className="h-3 w-3 transition-transform group-hover:-translate-x-0.5" />
+            返回球员
+          </Link>
+
+          <UserActionButton
+            kind="player"
+            payload={followPayload}
+            variant="heroGhost"
+            wrapperClassName="absolute right-4 top-4 z-10 hidden sm:right-6 sm:top-5 lg:inline-flex"
+          />
+
+          {/* Avatar — overlapping top edge */}
+          <div className="absolute left-1/2 top-[4.75rem] z-10 -translate-x-1/2 lg:top-0 lg:-translate-y-1/2">
+            <div className="relative">
               <div className="absolute -inset-3 rounded-full bg-gradient-to-br from-volt/25 via-volt/10 to-transparent blur-xl" />
-              <div className="relative h-36 w-36 overflow-hidden rounded-full ring-[3px] ring-volt/30 ring-offset-4 ring-offset-ink-950 sm:h-44 sm:w-44 sm:ring-[4px]">
-                {photo ? (
+              <div className="relative grid h-[5.6rem] w-[5.6rem] place-items-center overflow-hidden rounded-full bg-white/[0.06] ring-[3px] ring-volt/30 ring-offset-4 ring-offset-ink-950 sm:h-[6.4rem] sm:w-[6.4rem] sm:ring-[4px] lg:h-32 lg:w-32">
+                <UserRound className="h-12 w-12 text-white/20" />
+                {photo && (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={photo} alt={englishName} className="h-full w-full object-cover" />
-                ) : (
-                  <div className="grid h-full w-full place-items-center bg-white/[0.06]">
-                    <UserRound className="h-16 w-16 text-white/20" />
-                  </div>
-                )}
-                {/* Online indicator */}
-                <span className="absolute bottom-1 right-1 h-4 w-4 rounded-full border-[3px] border-ink-950 bg-volt shadow-[0_0_12px_rgba(216,255,62,0.8)]" />
-              </div>
-            </div>
-
-            {/* Player Info */}
-            <div className="flex-1 text-center lg:text-left">
-              <div className="mb-3 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
-                <span className="rounded-full bg-volt/10 px-3 py-1 text-xs font-bold text-volt ring-1 ring-volt/20">
-                  {row?.countryCn || player?.nationality || "国家队"}
-                </span>
-                <span className="rounded-full bg-white/[0.07] px-3 py-1 text-xs font-semibold text-white/50 ring-1 ring-white/[0.08]">
-                  {row?.positionCn || player?.position || "位置待更新"}
-                </span>
-                {row?.number && (
-                  <span className="rounded-full bg-flare/10 px-3 py-1 text-xs font-bold text-flare ring-1 ring-flare/20">
-                    #{row.number}
-                  </span>
+                  <img
+                    src={photo}
+                    alt={englishName}
+                    className="absolute inset-0 h-full w-full object-cover"
+                    onError={(event) => {
+                      event.currentTarget.style.display = "none";
+                    }}
+                  />
                 )}
               </div>
-
-              <h1 className="text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
-                {displayName}
-              </h1>
-              <p className="mt-2 text-base text-white/45 sm:text-lg">{fullName || englishName}</p>
             </div>
+          </div>
 
-            {/* Key Metrics */}
-            <div className="grid w-full grid-cols-3 gap-3 sm:w-auto sm:grid-cols-1">
-              <MetricCard
-                icon={Shield}
-                label="俱乐部"
-                value={currentTeam}
-              />
-              <MetricCard
-                icon={UserRound}
-                label="年龄"
-                value={player?.age ? `${player.age}岁` : "暂无"}
-              />
-              <MetricCard
-                icon={TrendingUp}
-                label="综合评分"
-                value={total.rating || "暂无"}
-                accent
-              />
+          {/* Names — centered */}
+          <div className="relative z-10 text-center">
+            <h1 className="text-2xl font-black tracking-tight text-white sm:text-4xl">
+              {displayName}
+            </h1>
+            <p className="mt-1.5 text-sm text-white/40 sm:text-base">{fullName || englishName}</p>
+          </div>
+
+          {/* Info Row */}
+          <div className="relative z-10 mt-5 space-y-3">
+            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-white/55">
+              <span className="inline-flex items-center gap-1.5">
+                {row?.teamCode && FIFA_CODE_TO_FLAG[row.teamCode] && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={`https://flagcdn.com/${FIFA_CODE_TO_FLAG[row.teamCode]}.svg`}
+                    alt=""
+                    className="h-3.5 w-5 rounded-sm object-cover"
+                  />
+                )}
+                {row?.countryCn || localizeCountryName(player?.nationality) || "国家队"}
+              </span>
+              <span className="text-white/20">|</span>
+              <span>{row?.positionCn || player?.position || "位置待更新"}</span>
+              {row?.number && (
+                <>
+                  <span className="text-white/20">|</span>
+                  <span>{row.number}号</span>
+                </>
+              )}
+              <span className="text-white/20">|</span>
+              <span className="inline-flex items-center gap-1.5 text-white/65">
+                {currentTeamLogo && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={currentTeamLogo}
+                    alt=""
+                    className="h-4 w-4 rounded-full bg-white/[0.08] object-contain ring-1 ring-white/[0.08]"
+                  />
+                )}
+                {currentTeam}
+              </span>
+              {player?.height && (
+                <>
+                  <span className="text-white/20">|</span>
+                  <span>身高 <span className="font-mono text-white/65">{player.height}</span></span>
+                </>
+              )}
+              {player?.weight && (
+                <>
+                  <span className="text-white/20">|</span>
+                  <span>体重 <span className="font-mono text-white/65">{player.weight}</span></span>
+                </>
+              )}
+              {player?.birth?.date && (
+                <>
+                  <span className="text-white/20">|</span>
+                  <span>生日 <span className="font-mono text-white/65">{player.birth.date}</span></span>
+                </>
+              )}
             </div>
+            {profileRating && (
+              <div className="flex items-center justify-center gap-1.5">
+                <span className="flex gap-0.5">
+                  {[1,2,3,4,5].map((i) => {
+                    const starScore = profileRating.score / 20;
+                    const filled = starScore >= i;
+                    const half = !filled && starScore >= i - 0.5;
+                    const halfGradientId = `profile-half-star-${i}`;
+                    return (
+                      <svg key={i} className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="none">
+                        <defs>
+                          <linearGradient id={halfGradientId} x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="50%" stopColor="rgb(216,255,62)" />
+                            <stop offset="50%" stopColor="rgba(255,255,255,0.1)" />
+                          </linearGradient>
+                        </defs>
+                        <path d="M10 1.5l2.47 5.01 5.53.8-4 3.9.94 5.5L10 14.26l-4.94 2.45.94-5.5-4-3.9 5.53-.8L10 1.5z"
+                          fill={filled ? "rgb(216,255,62)" : half ? `url(#${halfGradientId})` : "rgba(255,255,255,0.1)"}
+                          stroke={filled || half ? "rgb(216,255,62)" : "rgba(255,255,255,0.15)"}
+                          strokeWidth="1" />
+                      </svg>
+                    );
+                  })}
+                </span>
+                <span className="font-mono text-sm font-bold text-volt/80">{profileRating.label}</span>
+              </div>
+            )}
           </div>
         </section>
 
         {/* ── Quick Access Icon Row ── */}
-        <div className="grid grid-cols-4 gap-3 sm:grid-cols-8">
+        <div className="hidden gap-3 lg:grid lg:grid-cols-8">
           {quickAccessItems.map((item) => (
             <motion.div
               key={item.label}
               whileHover={{ y: -2, scale: 1.04 }}
-              className="group flex flex-col items-center gap-2 rounded-2xl bg-white/[0.04] p-3 ring-1 ring-white/[0.06] transition-colors hover:bg-volt/[0.08] hover:ring-volt/20 cursor-pointer"
+                className="player-quick-card group flex flex-col items-center gap-2 rounded-2xl bg-white/[0.04] p-3 ring-1 ring-white/[0.06] transition-colors hover:bg-volt/[0.08] hover:ring-volt/20 cursor-pointer"
             >
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-volt/[0.1] text-volt/70 transition-colors group-hover:bg-volt/20 group-hover:text-volt">
                 <item.icon className="h-5 w-5" />
@@ -236,13 +430,13 @@ export function PlayerProfileClient({ playerId, nameHint, row }: Props) {
 
         {/* ── Main Content Area ── */}
         <AnimatePresence mode="wait">
-          {loading ? (
+          {loading && !scoutNote ? (
             <motion.div
               key="loading"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="rounded-[1.75rem] bg-white/[0.035] p-12 text-center ring-1 ring-white/[0.08]"
+              className="hero-card p-12 text-center"
             >
               <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-volt/30 border-t-volt" />
               <p className="text-sm text-white/50">正在同步球员数据...</p>
@@ -256,36 +450,80 @@ export function PlayerProfileClient({ playerId, nameHint, row }: Props) {
               className="space-y-5"
             >
               {/* ── Three Column Layout ── */}
-              <div className="grid gap-5 lg:grid-cols-[1fr_1.2fr_0.8fr]">
-                {/* Left Column: Team & Matches */}
-                <div className="space-y-5">
-                  <DashPanel title="当前效力" icon={Shield} accent>
-                    <div className="rounded-2xl bg-white/[0.03] p-4 ring-1 ring-white/[0.05]">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-volt/10">
+              <div
+                ref={panelTabsSentinelRef}
+                className="lg:hidden"
+                style={{ height: panelTabsPinned ? panelTabsHeight : 0 }}
+              />
+              <div
+                ref={panelTabsRef}
+                className={`${
+                  panelTabsPinned
+                    ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+3rem)] z-[90]"
+                    : "relative -mx-3 bg-black/58 backdrop-blur-2xl"
+                } px-3 py-1.5 lg:static lg:mx-0 lg:bg-transparent lg:px-0 lg:py-0 lg:backdrop-blur-none`}
+                style={{ marginTop: 0 }}
+              >
+              <div className={`hero-card grid gap-1 p-1 lg:hidden ${visibleProfilePanelTabs.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
+                {visibleProfilePanelTabs.map((tab) => {
+                  const active = activeMobilePanel === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => handleMobilePanelChange(tab.id)}
+                      className={`relative overflow-hidden rounded-2xl px-3 py-1.5 text-xs font-black transition-colors duration-300 ${
+                        active
+                          ? "text-black"
+                          : "text-white/45 hover:bg-white/[0.05] hover:text-white/70"
+                      }`}
+                    >
+                      {active && (
+                        <motion.span
+                          layoutId="player-profile-mobile-tab-pill"
+                          className="absolute inset-0 rounded-2xl bg-volt shadow-[0_0_22px_rgba(216,255,62,.18)]"
+                          transition={{ type: "spring", stiffness: 420, damping: 34, mass: 0.75 }}
+                        />
+                      )}
+                      <span className="relative z-10">{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              </div>
+
+              <div className="grid items-start gap-5 lg:grid-cols-[.78fr_1.45fr_.78fr]">
+                <div className={`${activeMobilePanel === "overview" ? "flex" : "hidden"} flex-col gap-5 lg:flex lg:self-start`}>
+                  {scoutNote && <PlayerFmScoutCard note={scoutNote} className="lg:hidden" />}
+
+                  <DashPanel title="当前效力" icon={Shield} accent className="current-team-panel">
+                    <div className="flex items-center gap-3 border-b border-white/[0.05] pb-4">
+                      <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-volt/10 ring-1 ring-white/[0.06]">
+                        {currentTeamLogo ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={currentTeamLogo} alt="" className="h-8 w-8 object-contain" />
+                        ) : (
                           <Shield className="h-6 w-6 text-volt/70" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-white/88">{currentTeam}</p>
-                          <p className="mt-0.5 text-xs text-white/40">俱乐部</p>
-                        </div>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-bold text-white/88">{currentTeam}</p>
+                        <p className="mt-0.5 text-xs text-white/40">俱乐部</p>
                       </div>
                     </div>
 
-                    <div className="mt-4 grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-4 divide-x divide-white/[0.05] border-b border-white/[0.05] py-3">
                       <StatBlock label="出场" value={total.appearances} />
                       <StatBlock label="分钟" value={total.minutes} />
                       <StatBlock label="进球" value={total.goals} accent />
                       <StatBlock label="助攻" value={total.assists} accent />
                     </div>
-                  </DashPanel>
 
-                  <DashPanel title="赛季数据" icon={Footprints}>
-                    <div className="space-y-2">
+                    <div className="divide-y divide-white/[0.05]">
                       {(data?.seasonStats ?? []).slice(0, 4).map((item, index) => (
                         <div
                           key={`${item.league?.id}-${index}`}
-                          className="flex items-center justify-between rounded-xl bg-white/[0.035] px-4 py-3 ring-1 ring-white/[0.05] transition-colors hover:bg-white/[0.055]"
+                          className="flex items-center justify-between py-3 transition-colors hover:bg-white/[0.025]"
                         >
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-semibold text-white/78">
@@ -299,7 +537,7 @@ export function PlayerProfileClient({ playerId, nameHint, row }: Props) {
                             <span className="text-xs text-white/40">
                               {item.games?.appearences ?? 0}场
                             </span>
-                            <span className="rounded-lg bg-volt/10 px-2.5 py-1 font-mono text-xs font-bold text-volt">
+                            <span className="font-mono text-xs font-bold text-volt">
                               {item.games?.minutes ?? 0}&#x2032;
                             </span>
                           </div>
@@ -308,103 +546,19 @@ export function PlayerProfileClient({ playerId, nameHint, row }: Props) {
                       {!(data?.seasonStats ?? []).length && <EmptyState text="暂无赛季统计数据" />}
                     </div>
                   </DashPanel>
-                </div>
 
-                {/* Center Column: Radar Chart */}
-                <div className="space-y-5">
-                  <DashPanel title="能力雷达" icon={BarChart3} center>
-                    <div className="flex justify-center py-4">
+                  <DashPanel title="能力雷达" icon={BarChart3}>
+                    <div className="flex justify-center py-1">
                       <PlayerRadar stats={radarStats} />
                     </div>
-                    <div className="mt-2 grid grid-cols-3 gap-2">
+                    <div className="player-radar-stats mt-1 grid grid-cols-5 divide-x divide-white/[0.05] border-t border-white/[0.05] pt-3">
                       {radarStats.map((stat) => (
-                        <div
-                          key={stat.label}
-                          className="rounded-xl bg-white/[0.03] px-3 py-2 text-center ring-1 ring-white/[0.04]"
-                        >
-                          <p className="font-mono text-lg font-bold text-volt">{stat.value}</p>
-                          <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-white/35">
-                            {stat.label}
-                          </p>
-                        </div>
+                        <StatBlock key={stat.label} label={stat.label} value={stat.value} accent />
                       ))}
-                    </div>
-                  </DashPanel>
-
-                  <DashPanel title="荣誉陈列" icon={Trophy}>
-                    <div className="grid grid-cols-2 gap-2">
-                      {trophies.map((item, index) => (
-                        <div
-                          key={`${item.league}-${item.season}-${index}`}
-                          className="rounded-xl bg-gradient-to-br from-volt/[0.06] to-transparent p-3 ring-1 ring-volt/10"
-                        >
-                          <div className="flex items-center gap-2">
-                            <Crown className="h-3.5 w-3.5 text-volt/50" />
-                            <p className="text-sm font-semibold text-white/78">{item.league || "赛事"}</p>
-                          </div>
-                          <p className="mt-1.5 text-xs text-white/38">
-                            {item.season || "赛季"} &middot; {item.place || "荣誉"}
-                          </p>
-                        </div>
-                      ))}
-                      {!trophies.length && <EmptyState text="暂无荣誉数据" />}
-                    </div>
-                  </DashPanel>
-                </div>
-
-                {/* Right Column: Timeline & Info */}
-                <div className="space-y-5">
-                  <DashPanel title="职业轨迹" icon={CalendarClock}>
-                    <div className="space-y-2">
-                      {latestTransfers.map((item, index) => (
-                        <div
-                          key={`${item.date}-${index}`}
-                          className="relative rounded-xl bg-white/[0.035] p-3.5 ring-1 ring-white/[0.05]"
-                        >
-                          {/* Timeline dot */}
-                          {index < latestTransfers.length - 1 && (
-                            <div className="absolute -bottom-2.5 left-5 h-2.5 w-px bg-white/10" />
-                          )}
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="text-xs font-bold text-white/70">{item.date || "日期待更新"}</p>
-                            <span className="rounded-md bg-white/[0.06] px-2 py-0.5 text-[10px] font-semibold text-white/40">
-                              {item.type || "转会"}
-                            </span>
-                          </div>
-                          <p className="mt-2 text-xs text-white/50">
-                            {item.teams?.out?.name || "未知"}{" "}
-                            <span className="mx-1 text-volt/60">&rarr;</span>{" "}
-                            {item.teams?.in?.name || "未知"}
-                          </p>
-                        </div>
-                      ))}
-                      {!latestTransfers.length && <EmptyState text="暂无转会记录" />}
                     </div>
                   </DashPanel>
 
                   <DashPanel title="扩展档案" icon={Star}>
-                    {data?.oneVsOne?.found ? (
-                      <a
-                        href={data.oneVsOne.url || "https://one-versus-one.com/"}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="group mb-3 flex items-center justify-between rounded-xl bg-volt/[0.06] p-3.5 ring-1 ring-volt/12 transition-all hover:bg-volt/[0.1] hover:ring-volt/20"
-                      >
-                        <div>
-                          <p className="text-sm font-bold text-white/80">1vs1 档案</p>
-                          <p className="mt-0.5 text-xs text-white/38">
-                            {data.oneVsOne.player?.nationality || player?.nationality || ""}
-                            {data.oneVsOne.player?.teamName ? ` · ${data.oneVsOne.player.teamName}` : ""}
-                          </p>
-                        </div>
-                        <ExternalLink className="h-4 w-4 text-volt/50 transition-transform group-hover:translate-x-0.5 group-hover:text-volt" />
-                      </a>
-                    ) : oneVsOneLoading ? (
-                      <EmptyState text="正在同步 1vs1 扩展档案" />
-                    ) : (
-                      <EmptyState text="暂无 1vs1 扩展档案" />
-                    )}
-
                     <div className="rounded-xl bg-white/[0.03] p-3.5 ring-1 ring-white/[0.05]">
                       <div className="mb-2 flex items-center gap-2 text-sm font-bold text-white/68">
                         <BadgeAlert className="h-4 w-4 text-rose-300/60" />
@@ -424,42 +578,123 @@ export function PlayerProfileClient({ playerId, nameHint, row }: Props) {
                     </div>
                   </DashPanel>
                 </div>
+
+                {(hasFifaStory || scoutNote) ? (
+                  <div className={`${hasFifaStory && activeMobilePanel === "story" ? "flex" : "hidden"} flex-col gap-5 lg:flex lg:self-start`}>
+                    {scoutNote && <PlayerFmScoutCard note={scoutNote} className="hidden lg:block" />}
+                    {article?.articleCn ? (
+                      <PlayerArticleTimeline article={article} />
+                    ) : article ? (
+                      <PlayerArticlePreview article={article} />
+                    ) : null}
+                  </div>
+                ) : null}
+
+                <div className={`${activeMobilePanel === "career" ? "flex" : "hidden"} flex-col gap-5 lg:flex lg:self-start`}>
+                  <DashPanel title="职业轨迹" icon={CalendarClock}>
+                    <div className="space-y-2">
+                      {careerTimeline.map((item, index) => (
+                        <div
+                          key={`${item.kind}-${item.date}-${index}`}
+                          className="relative rounded-xl bg-white/[0.035] p-3.5 ring-1 ring-white/[0.05]"
+                        >
+                          {index < careerTimeline.length - 1 && (
+                            <div className="absolute -bottom-2.5 left-5 h-2.5 w-px bg-white/10" />
+                          )}
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex min-w-0 items-center gap-2">
+                              <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full ${item.kind === "honor" ? "bg-volt/[0.12] text-volt" : "bg-white/[0.06] text-white/45"}`}>
+                                {item.kind === "honor" ? <Crown className="h-3.5 w-3.5" /> : <CalendarClock className="h-3.5 w-3.5" />}
+                              </span>
+                              <p className="truncate text-xs font-bold text-white/70">{item.date}</p>
+                            </div>
+                            <span className="rounded-md bg-white/[0.06] px-2 py-0.5 text-[10px] font-semibold text-white/40">
+                              {item.kind === "honor" ? "荣誉" : "转会"}
+                            </span>
+                          </div>
+                          {item.kind === "transfer" && item.outTeam && item.inTeam ? (
+                            <div className="mt-2 flex min-w-0 items-center gap-2 text-xs font-semibold text-white/62">
+                              <TeamLogoName name={item.outTeam.name} logo={item.outTeam.logo} className="flex-1" />
+                              <span className="shrink-0 text-white/28">→</span>
+                              <TeamLogoName name={item.inTeam.name} logo={item.inTeam.logo} className="flex-1" />
+                            </div>
+                          ) : (
+                            <p className="mt-2 text-xs font-semibold text-white/62">{item.title}</p>
+                          )}
+                          {item.detail && <p className="mt-1 text-xs text-white/38">{item.detail}</p>}
+                        </div>
+                      ))}
+                      {!careerTimeline.length && <EmptyState text="暂无职业轨迹数据" />}
+                    </div>
+                  </DashPanel>
+                </div>
               </div>
 
-              {/* ── Bottom Info Row ── */}
-              <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-white/[0.03] px-6 py-4 ring-1 ring-white/[0.06]">
-                <div className="flex items-center gap-6 text-xs text-white/35">
-                  <span>
-                    API ID: <span className="font-mono text-white/55">{playerId}</span>
-                  </span>
-                  {player?.height && (
-                    <span>
-                      身高: <span className="font-mono text-white/55">{player.height}</span>
-                    </span>
-                  )}
-                  {player?.weight && (
-                    <span>
-                      体重: <span className="font-mono text-white/55">{player.weight}kg</span>
-                    </span>
-                  )}
-                  {player?.birth?.date && (
-                    <span>
-                      生日: <span className="font-mono text-white/55">{player.birth.date}</span>
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wider text-volt/30">
-                  <Sparkles className="h-3 w-3" />
-                  Powered by API-Football
-                </div>
-              </div>
+              <SiteFooter />
+
             </motion.div>
           )}
         </AnimatePresence>
       </div>
-      <MobileNavBar />
       <BackToTopButton />
     </main>
+  );
+}
+
+function PlayerArticleTimeline({ article }: { article: PlayerArticle }) {
+  const sections = article.articleCn?.sections ?? [];
+  const storyImages = article.storyImages ?? [];
+  const inlineImages = [article.coverImage || article.photo, ...storyImages].filter(Boolean);
+
+  return (
+    <section className="hero-card overflow-hidden p-5 sm:p-6">
+      <div>
+        <div className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-volt">
+          <Sparkles className="h-3.5 w-3.5" />
+          FIFA Story
+        </div>
+        <h2 className="mt-4 text-xl font-black leading-snug text-white sm:text-2xl">{article.title}</h2>
+        <p className="mt-2 text-xs text-white/38">{article.published}</p>
+      </div>
+
+      <div className="mt-6 space-y-7">
+        {sections.slice(0, 6).map((section, index) => {
+          const image = inlineImages[index % inlineImages.length];
+          return (
+            <article key={`${section.heading}-${index}`}>
+              {image && index < inlineImages.length && (
+                <div className="-mx-5 mb-5 sm:-mx-6">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={image}
+                    alt={`${article.title} ${index + 1}`}
+                    className="h-auto w-full transition duration-700 hover:scale-[1.02]"
+                  />
+                </div>
+              )}
+              <div className="grid grid-cols-[2.25rem_1fr] gap-4 sm:grid-cols-[2.75rem_1fr] sm:gap-5">
+                <div className="flex flex-col items-center">
+                  <span className="grid h-7 w-7 place-items-center rounded-full bg-volt/[0.1] text-[11px] font-black text-volt">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <span className="mt-4 min-h-24 flex-1 border-l border-dashed border-white/35" />
+                </div>
+                <div className="pb-6">
+                  <h3 className="text-sm font-black text-white/82 sm:text-base">{section.heading}</h3>
+                  <div className="mt-3 space-y-4">
+                    {section.paragraphs.slice(0, 3).map((paragraph) => (
+                      <p key={paragraph} className="text-sm leading-7 text-white/55">
+                        {paragraph}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
@@ -467,13 +702,80 @@ export function PlayerProfileClient({ playerId, nameHint, row }: Props) {
    Radar Chart Component (SVG Pentagon)
    ──────────────────────────────────────────── */
 
+function PlayerArticlePreview({ article }: { article: PlayerArticle }) {
+  const storyImages = [article.coverImage || article.photo, ...(article.storyImages ?? [])].filter(Boolean);
+
+  return (
+    <section className="hero-card overflow-hidden p-5 sm:p-6">
+      <div>
+        <div className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-volt">
+          <Sparkles className="h-3.5 w-3.5" />
+          FIFA Story
+        </div>
+        <h2 className="mt-4 text-xl font-black leading-snug text-white sm:text-2xl">{article.title}</h2>
+        <p className="mt-2 text-xs text-white/38">{article.published}</p>
+      </div>
+
+      {storyImages[0] && (
+        <div className="-mx-5 mt-6 sm:-mx-6">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={storyImages[0]}
+            alt={article.title}
+            className="h-auto w-full transition duration-700 hover:scale-[1.02]"
+          />
+        </div>
+      )}
+
+      <div className="mt-5 grid grid-cols-[2.25rem_1fr] gap-4 sm:grid-cols-[2.75rem_1fr] sm:gap-5">
+        <div className="flex flex-col items-center">
+          <span className="grid h-7 w-7 place-items-center rounded-full bg-volt/[0.1] text-[11px] font-black text-volt">
+            01
+          </span>
+          <span className="mt-4 min-h-24 flex-1 border-l border-dashed border-white/35" />
+        </div>
+        <div className="pb-6">
+          <h3 className="text-sm font-black text-white/82 sm:text-base">官方故事已接入</h3>
+          <p className="mt-3 text-sm leading-7 text-white/55">{article.deck || article.excerpt}</p>
+        {article.sourceUrl && (
+          <a
+            href={article.sourceUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="group mt-4 inline-flex items-center gap-2 rounded-full bg-white/[0.045] px-4 py-2 text-xs font-black text-white/70 ring-1 ring-white/[0.07] transition hover:bg-volt/[0.1] hover:text-volt hover:ring-volt/20"
+          >
+            查看 FIFA 原文
+            <ExternalLink className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+          </a>
+        )}
+        </div>
+      </div>
+
+      {storyImages.length > 1 && (
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {storyImages.slice(1, 3).map((image, index) => (
+            <div key={image}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={image}
+                alt={`${article.title} ${index + 2}`}
+                className="h-auto w-full transition duration-700 hover:scale-[1.02]"
+              />
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 type RadarStat = { label: string; value: number };
 
 function PlayerRadar({ stats }: { stats: RadarStat[] }) {
-  const size = 280;
+  const size = 224;
   const cx = size / 2;
   const cy = size / 2;
-  const maxRadius = 105;
+  const maxRadius = 82;
   const levels = 5;
   const n = stats.length;
 
@@ -510,14 +812,14 @@ function PlayerRadar({ stats }: { stats: RadarStat[] }) {
   });
 
   // Label positions
-  const labelRadius = maxRadius + 22;
+  const labelRadius = maxRadius + 18;
   const labels = stats.map((stat, i) => {
     const p = getPoint(i, labelRadius);
     return { ...stat, x: p.x, y: p.y };
   });
 
   return (
-    <div className="relative">
+    <div className="player-radar relative">
       <svg
         width={size}
         height={size}
@@ -534,8 +836,8 @@ function PlayerRadar({ stats }: { stats: RadarStat[] }) {
             </feMerge>
           </filter>
           <linearGradient id="radar-fill" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="rgb(216, 255, 62)" stopOpacity="0.25" />
-            <stop offset="100%" stopColor="rgb(216, 255, 62)" stopOpacity="0.05" />
+            <stop offset="0%" stopColor="var(--player-radar-accent, rgb(216, 255, 62))" stopOpacity="var(--player-radar-fill-start, 0.25)" />
+            <stop offset="100%" stopColor="var(--player-radar-accent, rgb(216, 255, 62))" stopOpacity="var(--player-radar-fill-end, 0.05)" />
           </linearGradient>
         </defs>
 
@@ -545,7 +847,7 @@ function PlayerRadar({ stats }: { stats: RadarStat[] }) {
             key={i}
             points={points}
             fill="none"
-            stroke="rgba(255,255,255,0.06)"
+            stroke="var(--player-radar-grid, rgba(255,255,255,0.06))"
             strokeWidth="1"
           />
         ))}
@@ -558,7 +860,7 @@ function PlayerRadar({ stats }: { stats: RadarStat[] }) {
             y1={line.y1}
             x2={line.x2}
             y2={line.y2}
-            stroke="rgba(255,255,255,0.06)"
+            stroke="var(--player-radar-grid, rgba(255,255,255,0.06))"
             strokeWidth="1"
           />
         ))}
@@ -567,7 +869,7 @@ function PlayerRadar({ stats }: { stats: RadarStat[] }) {
         <polygon
           points={dataPath}
           fill="url(#radar-fill)"
-          stroke="rgb(216, 255, 62)"
+          stroke="var(--player-radar-accent, rgb(216, 255, 62))"
           strokeWidth="2"
           filter="url(#radar-glow)"
           opacity="0.6"
@@ -577,7 +879,7 @@ function PlayerRadar({ stats }: { stats: RadarStat[] }) {
         <polygon
           points={dataPath}
           fill="url(#radar-fill)"
-          stroke="rgb(216, 255, 62)"
+          stroke="var(--player-radar-accent, rgb(216, 255, 62))"
           strokeWidth="2"
           strokeLinejoin="round"
         />
@@ -585,8 +887,8 @@ function PlayerRadar({ stats }: { stats: RadarStat[] }) {
         {/* Data points */}
         {dataPoints.map((p, i) => (
           <g key={i}>
-            <circle cx={p.x} cy={p.y} r="5" fill="rgb(216, 255, 62)" opacity="0.3" />
-            <circle cx={p.x} cy={p.y} r="3" fill="rgb(216, 255, 62)" />
+            <circle cx={p.x} cy={p.y} r="5" fill="var(--player-radar-accent, rgb(216, 255, 62))" opacity="var(--player-radar-point-halo, 0.3)" />
+            <circle cx={p.x} cy={p.y} r="3" fill="var(--player-radar-accent, rgb(216, 255, 62))" />
           </g>
         ))}
 
@@ -598,7 +900,8 @@ function PlayerRadar({ stats }: { stats: RadarStat[] }) {
             y={label.y}
             textAnchor="middle"
             dominantBaseline="middle"
-            className="fill-white/50 text-[10px] font-semibold"
+            fill="var(--player-radar-label, rgba(255,255,255,0.5))"
+            className="player-radar-label text-[10px] font-semibold"
           >
             {label.label}
           </text>
@@ -651,41 +954,23 @@ function DashPanel({
   icon: Icon,
   children,
   accent,
-  center,
+  className = "",
 }: {
   title: string;
   icon: LucideIcon;
   children: React.ReactNode;
   accent?: boolean;
-  center?: boolean;
+  className?: string;
 }) {
   return (
-    <section
-      className={`overflow-hidden rounded-[1.5rem] p-5 ring-1 backdrop-blur-2xl ${
-        accent
-          ? "bg-volt/[0.04] ring-volt/12"
-          : "bg-white/[0.035] ring-white/[0.07]"
-      }`}
-    >
-      <div
-        className={`mb-4 flex items-center gap-2.5 ${
-          center ? "justify-center" : ""
-        }`}
-      >
-        <div
-          className={`flex h-7 w-7 items-center justify-center rounded-lg ${
-            accent ? "bg-volt/15 text-volt" : "bg-white/[0.06] text-volt/50"
-          }`}
-        >
-          <Icon className="h-4 w-4" />
+    <section className={`hero-card mt-0 overflow-hidden p-5 ${className}`}>
+      <div className="mb-5 flex items-center justify-between border-b border-white/[0.04] pb-3">
+        <div className="flex items-center gap-2">
+          <Icon className={`h-4 w-4 ${accent ? "text-volt" : "text-volt/70"}`} />
+          <h2 className={`text-sm font-semibold uppercase ${accent ? "text-volt/85" : "text-white"}`}>
+            {title}
+          </h2>
         </div>
-        <h2
-          className={`text-sm font-bold uppercase tracking-wider ${
-            accent ? "text-volt/80" : "text-white/70"
-          }`}
-        >
-          {title}
-        </h2>
       </div>
       {children}
     </section>
@@ -702,17 +987,12 @@ function StatBlock({
   accent?: boolean;
 }) {
   return (
-    <div
-      className={`rounded-xl p-3 text-center ring-1 ${
-        accent
-          ? "bg-volt/[0.06] ring-volt/12"
-          : "bg-white/[0.03] ring-white/[0.05]"
-      }`}
-    >
+    <div className="min-w-0 px-2 py-2 text-center">
       <p
-        className={`font-mono text-2xl font-black ${
+        className={`break-words text-lg font-black tabular-nums sm:text-2xl ${
           accent ? "text-volt" : "text-white"
         }`}
+        style={{ fontFamily: "ScreenMatrix, monospace" }}
       >
         {value}
       </p>
@@ -720,6 +1000,32 @@ function StatBlock({
         {label}
       </p>
     </div>
+  );
+}
+
+function TeamLogoName({
+  name,
+  logo,
+  fallbackIcon: FallbackIcon = Shield,
+  className = "",
+}: {
+  name: string;
+  logo?: string;
+  fallbackIcon?: LucideIcon;
+  className?: string;
+}) {
+  return (
+    <span className={`inline-flex min-w-0 items-center gap-2 ${className}`}>
+      <span className="grid h-6 w-6 shrink-0 place-items-center overflow-hidden rounded-lg bg-white/[0.05] ring-1 ring-white/[0.06]">
+        {logo ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={logo} alt="" className="h-[18px] w-[18px] object-contain" />
+        ) : (
+          <FallbackIcon className="h-3.5 w-3.5 text-volt/55" />
+        )}
+      </span>
+      <span className="min-w-0 truncate">{name}</span>
+    </span>
   );
 }
 
@@ -734,6 +1040,54 @@ function EmptyState({ text }: { text: string }) {
 /* ────────────────────────────────────────────
    Data Helpers
    ──────────────────────────────────────────── */
+
+function buildCareerTimeline(
+  transfers: PlayerProfileData["transfers"],
+  trophies: PlayerProfileData["trophies"]
+) {
+  const transferItems = transfers.map((item) => ({
+    kind: "transfer" as const,
+    date: item.date || "日期待更新",
+    sortKey: item.date || "",
+    title: `${localizeClubName(item.teams?.out?.name) || "未知"} → ${localizeClubName(item.teams?.in?.name) || "未知"}`,
+    outTeam: {
+      name: localizeClubName(item.teams?.out?.name) || "未知",
+      logo: item.teams?.out?.logo || "",
+    },
+    inTeam: {
+      name: localizeClubName(item.teams?.in?.name) || "未知",
+      logo: item.teams?.in?.logo || "",
+    },
+    detail: item.type || "转会",
+  }));
+
+  const honorItems = trophies.map((item) => ({
+    kind: "honor" as const,
+    date: item.season || "赛季待更新",
+    sortKey: item.season || "",
+    title: item.league || "赛事荣誉",
+    outTeam: null,
+    inTeam: null,
+    detail: [item.place, item.country].filter(Boolean).join(" · "),
+  }));
+
+  return [...transferItems, ...honorItems]
+    .sort((a, b) => String(b.sortKey).localeCompare(String(a.sortKey)))
+    .slice(0, 10);
+}
+
+function getProfileRating(rawRating: string, scoutNote?: PlayerScoutNote | null) {
+  if (scoutNote?.gsRating && Number.isFinite(scoutNote.gsRating)) {
+    const score = Math.max(0, Math.min(100, Math.round(scoutNote.gsRating)));
+    return { score, label: String(score), source: "fm-scout" as const };
+  }
+
+  const fallbackRating = Number(rawRating);
+  if (!Number.isFinite(fallbackRating) || fallbackRating <= 0) return null;
+
+  const score = Math.max(0, Math.min(100, Math.round(fallbackRating * 10)));
+  return { score, label: String(score), source: "api-football" as const };
+}
 
 function summarizeStats(stats: NonNullable<PlayerProfileData["seasonStats"]>) {
   const totals = stats.reduce(
@@ -793,10 +1147,10 @@ function buildRadarStats(data: PlayerProfileData | null): RadarStat[] {
   const staminaRaw = (minutes / Math.max(appearances, 1) / 90) * 100;
 
   return [
-    { label: "进攻", value: clamp(attackRaw / 300 * 100) || 25 },
-    { label: "传球", value: clamp(passingRaw / 100 * 100) || 25 },
-    { label: "防守", value: clamp(defenseRaw / 200 * 100) || 25 },
-    { label: "盘带", value: clamp(dribbleRaw / 120 * 100) || 25 },
+    { label: "进攻", value: clamp((attackRaw / 300) * 100) || 25 },
+    { label: "传球", value: clamp((passingRaw / 100) * 100) || 25 },
+    { label: "防守", value: clamp((defenseRaw / 200) * 100) || 25 },
+    { label: "盘带", value: clamp((dribbleRaw / 120) * 100) || 25 },
     { label: "体能", value: clamp(staminaRaw) || 40 },
   ];
 }

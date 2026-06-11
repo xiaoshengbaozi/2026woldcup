@@ -82,6 +82,11 @@ export function localizeBirthPlace(value: string | null | undefined) {
   return translate("birthPlaces", normalized);
 }
 
+export function localizeCoachName(value: string | null | undefined) {
+  const normalized = value ?? "";
+  return translate("coaches", normalized);
+}
+
 const POSITION_TO_CN: Record<string, string> = {
   Goalkeeper: "门将",
   Defender: "后卫",

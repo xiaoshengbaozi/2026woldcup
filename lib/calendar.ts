@@ -1,5 +1,61 @@
 ﻿import type { DetailRow, Match } from "@/types/match";
 
+const CITY_NAME_ZH: Record<string, string> = {
+  Atlanta: "亚特兰大",
+  Boston: "波士顿",
+  Dallas: "达拉斯",
+  Houston: "休斯敦",
+  "Kansas City": "堪萨斯城",
+  "Los Angeles": "洛杉矶",
+  Miami: "迈阿密",
+  "Miami Gardens": "迈阿密",
+  "New York": "纽约/新泽西",
+  NewYork: "纽约/新泽西",
+  newyork: "纽约/新泽西",
+  "New York City": "纽约/新泽西",
+  "New York New Jersey": "纽约/新泽西",
+  "NewYork NewJersey": "纽约/新泽西",
+  "newyork newjersey": "纽约/新泽西",
+  "New York/New Jersey": "纽约/新泽西",
+  "NewYork/NewJersey": "纽约/新泽西",
+  "newyork/newjersey": "纽约/新泽西",
+  "New York / New Jersey": "纽约/新泽西",
+  Philadelphia: "费城",
+  "San Francisco": "旧金山湾区",
+  "San Francisco Bay Area": "旧金山湾区",
+  Seattle: "西雅图",
+  Arlington: "达拉斯",
+  "East Rutherford": "纽约/新泽西",
+  Foxborough: "波士顿",
+  Inglewood: "洛杉矶",
+  "Santa Clara": "旧金山湾区",
+  Toronto: "多伦多",
+  Vancouver: "温哥华",
+  "Mexico City": "墨西哥城",
+  Guadalajara: "瓜达拉哈拉",
+  Zapopan: "瓜达拉哈拉",
+  Monterrey: "蒙特雷",
+};
+
+export function localizeCityName(city: string) {
+  const normalized = city.trim();
+  const compactKey = normalized.replace(/\s+/g, "").toLowerCase();
+  return (
+    CITY_NAME_ZH[normalized] ??
+    CITY_NAME_ZH[compactKey] ??
+    (compactKey === "newyork" || compactKey === "newyorknewjersey" ? "纽约/新泽西" : normalized)
+  );
+}
+
+export function localizeLocationText(location: string) {
+  return location
+    .trim()
+    .replace(/\bNew\s*York\s+New\s*Jersey\b/gi, "纽约/新泽西")
+    .replace(/（([^）]+)）/g, (_, city: string) => `（${localizeCityName(city)}）`)
+    .replace(/\s·\s([^·,，（）]+)$/g, (_, city: string) => ` · ${localizeCityName(city)}`)
+    .replace(/,\s*([^,，（）]+)$/g, (_, city: string) => `, ${localizeCityName(city)}`);
+}
+
 export function unfoldIcs(text: string) {
   return text.replace(/\r?\n[ \t]/g, "");
 }
@@ -55,11 +111,11 @@ export function extractStage(summary: string, description: string) {
     .map((part) => part.trim())
     .filter(Boolean);
 
-  return parts[1] || "鍏朵粬";
+  return parts[1] || "其他";
 }
 
 export function extractWeather(description: string) {
-  const match = description.match(/鍔ㄦ€佸ぉ姘擻s*(https?:\/\/\S+)/);
+  const match = description.match(/动态天气\s*(https?:\/\/\S+)/);
   return match ? match[1] : "";
 }
 
@@ -67,14 +123,14 @@ export function extractCity(location: string) {
   const openIndex = location.lastIndexOf("\uFF08");
   const closeIndex = location.lastIndexOf("\uFF09");
   if (openIndex >= 0 && closeIndex > openIndex) {
-    return location.slice(openIndex + 1, closeIndex).trim();
+    return localizeCityName(location.slice(openIndex + 1, closeIndex));
   }
 
   if (location.includes("·")) {
-    return location.split("·").pop()?.trim() || location.trim();
+    return localizeCityName(location.split("·").pop()?.trim() || location.trim());
   }
 
-  return location.split(",").slice(-1)[0]?.trim() || location.trim();
+  return localizeCityName(location.split(",").slice(-1)[0]?.trim() || location.trim());
 }
 
 export function parseCalendar(text: string): Match[] {
@@ -121,19 +177,19 @@ export function detailRows(match: Match): DetailRow[] {
     .filter(
       (line) =>
         !line.startsWith("动态天气") &&
-        !line.startsWith("绯荤粺鍦板浘:") &&
-        !line.startsWith("閫氱敤鍦板浘:")
+        !line.startsWith("系统地图:") &&
+        !line.startsWith("通用地图:")
     )
     .map((line) => {
-      if (line.startsWith("馃搷")) {
-        return { icon: "LOC", text: line.slice(2).trim(), type: "venue" };
+      if (line.startsWith("📍")) {
+        return { icon: "LOC", text: localizeLocationText(line.slice(2)), type: "venue" };
       }
 
-      if (line.startsWith("馃彑")) {
+      if (line.startsWith("🏟")) {
         return { icon: "STAD", text: line.slice(2).trim(), type: "meta" };
       }
 
-      if (line.startsWith("鍧愭爣:")) {
+      if (line.startsWith("坐标:")) {
         return { icon: "GPS", text: line, type: "meta" };
       }
 
@@ -180,10 +236,9 @@ export function getDayStatus(dayMatches: Match[]) {
   return `${days} days later`;
 }
 
-export function getTournamentProgress(matches: Match[]) {
+export function getTournamentProgress(matches: Match[], now = Date.now()) {
   if (!matches.length) return 0;
 
-  const now = Date.now();
   const completed = matches.filter((match) => {
     const end = match.end || match.start;
     return end.getTime() < now;

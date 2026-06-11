@@ -13,8 +13,8 @@ export function MatchesHeader({
 }: MatchesHeaderProps) {
   return (
     <motion.header
-      initial={{ opacity: 0, y: -12, filter: "blur(14px)" }}
-      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      initial={{ opacity: 0, y: -12 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.72, ease: [0.16, 1, 0.3, 1] }}
       className="hero-shell relative z-30 flex min-h-16 items-center justify-between gap-3 px-4 py-3 sm:px-7"
     >

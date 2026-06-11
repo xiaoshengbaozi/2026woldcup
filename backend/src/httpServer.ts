@@ -1,10 +1,19 @@
 import http from "http";
+import { execFile } from "child_process";
+import { timingSafeEqual } from "crypto";
+import { existsSync } from "fs";
+import { readFile, writeFile } from "fs/promises";
+import { promisify } from "util";
 import type { ApiFootballEndpoint, ApiFootballService } from "./apiFootball";
 import type { HistoryBuffer } from "./historyBuffer";
+import type { PlayerXTimelineService } from "./playerXTimeline";
 import type { SnapshotCache } from "./snapshotCache";
+import type { UserSystem } from "./userSystem";
 import { renderAdminPageHtml } from "./adminPage";
+import { deleteLiveChannel, getPublicLiveChannels, readLiveChannels, upsertLiveChannel } from "./liveChannels";
 import type { CountryData, MatchLinesResponse } from "./types";
 import { getWorldCupPlayerProfile, getWorldCupTopScorers } from "./playerProfileData";
+import { getSiteAnalyticsStats, recordSiteHeartbeat, recordSiteVisit } from "./siteAnalytics";
 import {
   getWorldCupFixtures,
   getWorldCupLiveFixtures,
@@ -12,7 +21,37 @@ import {
   getWorldCupRounds,
   getWorldCupSquads,
   getWorldCupStandings,
+  getWorldCupWarmupFixtures,
 } from "./worldCupData";
+import { createWechatJsSdkSignature, isWechatJsSdkConfigured } from "./wechatJsSdk";
+
+const execFileAsync = promisify(execFile);
+const NEWS_SERVICE_DIR = process.env.NEWS_SERVICE_DIR || "/opt/worldcup-news";
+const NEWS_SERVICE_ENV_FILE = process.env.NEWS_SERVICE_ENV_FILE || `${NEWS_SERVICE_DIR}/.env`;
+const DEFAULT_ADMIN_USERNAME = "admin";
+const DEFAULT_ADMIN_PASSWORD = "worldcup2026-admin";
+const MAX_JSON_BODY_BYTES = 256 * 1024;
+const CACHE_PUBLIC_SHORT = "public, max-age=15, stale-while-revalidate=60, stale-if-error=300";
+const CACHE_PUBLIC_MEDIUM = "public, max-age=300, stale-while-revalidate=900, stale-if-error=86400";
+const CACHE_PUBLIC_LONG = "public, max-age=3600, stale-while-revalidate=86400, stale-if-error=604800";
+const CORS_PREFLIGHT_MAX_AGE_SECONDS = 86400;
+const NEWS_PROXY_TIMEOUT_MS = 5_000;
+const NEWS_PROXY_STALE_TTL_MS = 24 * 60 * 60 * 1000;
+const newsProxyCache = new Map<string, { savedAt: number; payload: Record<string, unknown> }>();
+const DEFAULT_CORS_ORIGINS = [
+  "https://ball.boyzi.fun",
+  "https://localhost",
+  "capacitor://localhost",
+  "ionic://localhost",
+  "https://beta-wzja.world-cup-2026-625.pages.dev",
+  "https://world-cup-2026-625.pages.dev",
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "http://localhost:3002",
+  "http://127.0.0.1:3000",
+  "http://127.0.0.1:3001",
+  "http://127.0.0.1:3002",
+];
 
 interface HttpServerOptions {
   snapshotCache: SnapshotCache;
@@ -22,6 +61,7 @@ interface HttpServerOptions {
     getSubscribedClientCount: () => number;
   };
   apiFootball?: ApiFootballService;
+  playerXTimeline?: PlayerXTimelineService;
   getState: () => {
     countries: CountryData[];
     sequenceNumber: number;
@@ -30,9 +70,12 @@ interface HttpServerOptions {
     lastPolymarketUpdate: number | null;
     matchLines: MatchLinesResponse;
   };
+  userSystem?: UserSystem;
 }
 
 export function createHttpServer(options: HttpServerOptions) {
+  assertProductionAdminCredentials();
+
   return http.createServer((req, res) => {
     setCorsHeaders(req, res);
 
@@ -42,14 +85,63 @@ export function createHttpServer(options: HttpServerOptions) {
     }
 
     const url = new URL(req.url ?? "/", "http://localhost");
+    const pathname = url.pathname.replace(/\/+$/, "") || "/";
+    if ((pathname === "/admin" || pathname === "/admini" || url.pathname.startsWith("/api/admin/")) && !isAdminAuthorized(req)) {
+      sendAdminUnauthorized(res);
+      return;
+    }
+
+    if (url.pathname === "/api/admin/news-translation") {
+      handleNewsTranslationSettings(req, res).catch((error: Error & { statusCode?: number }) => {
+        sendJson(res, { error: error.message || "news_translation_settings_failed" }, error.statusCode ?? 500);
+      });
+      return;
+    }
+
+    if (url.pathname === "/api/live-channels" || url.pathname === "/api/admin/live-channels") {
+      handleLiveChannelsRequest(req, url, res).catch((error: Error & { statusCode?: number }) => {
+        sendJson(res, { error: error.message || "live_channels_failed" }, error.statusCode ?? 500);
+      });
+      return;
+    }
+
+    if (
+      options.userSystem &&
+      (url.pathname.startsWith("/api/auth/") ||
+        url.pathname.startsWith("/api/avatar/") ||
+        url.pathname.startsWith("/api/telegram/") ||
+        url.pathname === "/api/player-x-timeline" ||
+        url.pathname === "/api/user-preferences" ||
+        url.pathname.startsWith("/api/me/") ||
+        url.pathname.startsWith("/api/admin/"))
+    ) {
+      options.userSystem.handleRequest(req, res, url);
+      return;
+    }
 
     if (req.method === "GET" && url.pathname === "/") {
       redirect(res, "/admin");
       return;
     }
 
-    if (req.method === "GET" && (url.pathname === "/admin" || url.pathname === "/admini")) {
+    if (req.method === "GET" && (pathname === "/admin" || pathname === "/admini")) {
       sendHtml(res, renderAdminPage());
+      return;
+    }
+
+    if (url.pathname === "/api/site-analytics") {
+      handleSiteAnalyticsRequest(req, res).catch((error: Error & { statusCode?: number }) => {
+        sendJson(res, { error: error.message || "site_analytics_failed" }, error.statusCode ?? 500);
+      });
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/wechat/js-sdk-signature") {
+      createWechatJsSdkSignature(url.searchParams.get("url") || "")
+        .then((payload) => sendJson(res, payload))
+        .catch((error: Error & { statusCode?: number }) => {
+          sendJson(res, { error: error.message || "wechat_js_sdk_signature_failed" }, error.statusCode ?? 500);
+        });
       return;
     }
 
@@ -61,6 +153,8 @@ export function createHttpServer(options: HttpServerOptions) {
           polymarketConnected: state.polymarketConnected,
           lastUpdateTimestamp: state.lastPolymarketUpdate,
           apiFootballConfigured: options.apiFootball?.isConfigured() ?? false,
+          wechatJsSdkConfigured: isWechatJsSdkConfigured(),
+          xApi: options.playerXTimeline?.getRuntimeStats() ?? null,
         },
         clients: options.wsServer.getClientCount(),
         subscribedClients: options.wsServer.getSubscribedClientCount(),
@@ -68,6 +162,16 @@ export function createHttpServer(options: HttpServerOptions) {
         sequenceNumber: state.sequenceNumber,
         uptime: process.uptime(),
       });
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname === "/cf-failover-active") {
+      if (!isFailoverOriginActive()) {
+        sendJson(res, { status: "standby" }, 503);
+        return;
+      }
+
+      sendJson(res, { status: "active" });
       return;
     }
 
@@ -88,6 +192,8 @@ export function createHttpServer(options: HttpServerOptions) {
           polymarketConnected: state.polymarketConnected,
           lastUpdateTimestamp: state.lastPolymarketUpdate,
           apiFootballConfigured: options.apiFootball?.isConfigured() ?? false,
+          wechatJsSdkConfigured: isWechatJsSdkConfigured(),
+          xApi: options.playerXTimeline?.getRuntimeStats() ?? null,
         },
         data: {
           sequenceNumber: state.sequenceNumber,
@@ -111,15 +217,6 @@ export function createHttpServer(options: HttpServerOptions) {
       return;
     }
 
-    if (req.method === "GET" && url.pathname === "/api/player/one-vs-one") {
-      getOneVsOnePlayerSummary(url)
-        .then((payload) => sendJson(res, payload))
-        .catch((error: Error & { statusCode?: number }) => {
-          sendJson(res, { error: error.message || "one_vs_one_unavailable" }, error.statusCode ?? 500);
-        });
-      return;
-    }
-
     if (req.method === "GET" && url.pathname.startsWith("/api/worldcup/")) {
       handleWorldCupRequest(options.apiFootball, url, res);
       return;
@@ -127,24 +224,24 @@ export function createHttpServer(options: HttpServerOptions) {
 
     if (req.method === "GET" && url.pathname === "/api/snapshot") {
       const snapshot = options.snapshotCache.getLatest();
-      sendJson(res, snapshot ?? { type: "snapshot", timestamp: Date.now(), countries: [], events: [], history: {} });
+      sendCachedJson(res, toLightweightSnapshot(snapshot), CACHE_PUBLIC_SHORT);
       return;
     }
 
     if (req.method === "GET" && url.pathname === "/api/markets") {
       const state = options.getState();
-      sendJson(res, {
+      sendCachedJson(res, {
         timestamp: Date.now(),
         count: state.countries.length,
         markets: [...state.countries]
           .sort((a, b) => b.impliedProbability - a.impliedProbability)
           .map(toMarketSummary),
-      });
+      }, CACHE_PUBLIC_SHORT);
       return;
     }
 
     if (req.method === "GET" && url.pathname === "/api/match-lines") {
-      sendJson(res, options.getState().matchLines);
+      sendCachedJson(res, options.getState().matchLines, CACHE_PUBLIC_SHORT);
       return;
     }
 
@@ -153,17 +250,57 @@ export function createHttpServer(options: HttpServerOptions) {
       const now = Date.now();
       const from = Number(url.searchParams.get("from") ?? now - 24 * 60 * 60 * 1000);
       const to = Number(url.searchParams.get("to") ?? now);
-      sendJson(res, {
+      sendCachedJson(res, {
         countryCode,
         from,
         to,
         data: options.historyBuffer.getHistory(countryCode, from, to),
-      });
+      }, CACHE_PUBLIC_SHORT);
       return;
     }
 
     sendJson(res, { error: "not_found", path: url.pathname }, 404);
   });
+}
+
+function isFailoverOriginActive() {
+  const activeFile = process.env.CF_FAILOVER_ACTIVE_FILE;
+  if (activeFile) return existsSync(activeFile);
+  return process.env.CF_FAILOVER_ACTIVE !== "false";
+}
+
+function toLightweightSnapshot(snapshot: ReturnType<SnapshotCache["getLatest"]>) {
+  return {
+    type: "snapshot" as const,
+    timestamp: snapshot?.timestamp ?? Date.now(),
+    countries: snapshot?.countries ?? [],
+    events: snapshot?.events ?? [],
+    history: {},
+  };
+}
+
+async function handleSiteAnalyticsRequest(req: http.IncomingMessage, res: http.ServerResponse) {
+  if (req.method === "GET") {
+    sendJson(res, await getSiteAnalyticsStats());
+    return;
+  }
+
+  if (req.method !== "POST") {
+    sendJson(res, { error: "method_not_allowed" }, 405);
+    return;
+  }
+
+  const body = await readJsonBody(req);
+  const sessionId = typeof body.sessionId === "string" ? body.sessionId : "";
+  const action = body.action === "heartbeat" ? "heartbeat" : "view";
+
+  if (action === "heartbeat") {
+    await recordSiteHeartbeat(sessionId);
+    sendJson(res, { ok: true });
+    return;
+  }
+
+  sendJson(res, await recordSiteVisit(sessionId));
 }
 
 function handleWorldCupRequest(
@@ -185,6 +322,7 @@ function handleWorldCupRequest(
     "/api/worldcup/player-profile": getWorldCupPlayerProfile,
     "/api/worldcup/top-scorers": getWorldCupTopScorers,
     "/api/worldcup/squads": getWorldCupSquads,
+    "/api/worldcup/warmups": getWorldCupWarmupFixtures,
   };
 
   const handler = handlers[url.pathname.replace(/\/+$/, "")];
@@ -194,7 +332,7 @@ function handleWorldCupRequest(
   }
 
   handler(apiFootball, url)
-    .then((payload) => sendJson(res, payload))
+    .then((payload) => sendCachedJson(res, payload, getWorldCupCacheHeader(url.pathname)))
     .catch((error: Error & { statusCode?: number; details?: unknown }) => {
       sendJson(
         res,
@@ -225,7 +363,7 @@ function handleApiFootballRequest(
 
   apiFootball
     .request(endpoint, url.searchParams)
-    .then((payload) => sendJson(res, payload))
+    .then((payload) => sendCachedJson(res, payload, getApiFootballCacheHeader(endpoint)))
     .catch((error: Error & { statusCode?: number; details?: unknown }) => {
       sendJson(
         res,
@@ -271,124 +409,268 @@ function parseApiFootballEndpoint(pathname: string): ApiFootballEndpoint | null 
   return allowed.has(endpoint as ApiFootballEndpoint) ? (endpoint as ApiFootballEndpoint) : null;
 }
 
+function getWorldCupCacheHeader(pathname: string) {
+  if (pathname.endsWith("/live")) return CACHE_PUBLIC_SHORT;
+  if (pathname.endsWith("/match-detail")) return CACHE_PUBLIC_SHORT;
+  if (pathname.endsWith("/rounds") || pathname.endsWith("/squads")) return CACHE_PUBLIC_LONG;
+  return CACHE_PUBLIC_MEDIUM;
+}
+
+function getApiFootballCacheHeader(endpoint: ApiFootballEndpoint) {
+  if (endpoint === "odds/live" || endpoint === "fixtures/events") return CACHE_PUBLIC_SHORT;
+  if (
+    endpoint === "players/squads" ||
+    endpoint === "players/profiles" ||
+    endpoint === "teams" ||
+    endpoint === "leagues" ||
+    endpoint === "coachs"
+  ) {
+    return CACHE_PUBLIC_LONG;
+  }
+  return CACHE_PUBLIC_MEDIUM;
+}
+
+function isAdminAuthorized(req: http.IncomingMessage) {
+  const authorization = req.headers.authorization ?? "";
+  if (!authorization.startsWith("Basic ")) return false;
+
+  const decoded = Buffer.from(authorization.slice(6), "base64").toString("utf8");
+  const separatorIndex = decoded.indexOf(":");
+  if (separatorIndex === -1) return false;
+
+  const username = decoded.slice(0, separatorIndex);
+  const password = decoded.slice(separatorIndex + 1);
+  return safeEqual(username, process.env.ADMIN_USERNAME || DEFAULT_ADMIN_USERNAME) && safeEqual(password, process.env.ADMIN_PASSWORD || DEFAULT_ADMIN_PASSWORD);
+}
+
+function assertProductionAdminCredentials() {
+  if (!isProductionLikeEnvironment()) return;
+
+  if (
+    (!process.env.ADMIN_USERNAME || !process.env.ADMIN_PASSWORD) &&
+    process.env.ALLOW_DEFAULT_ADMIN !== "true"
+  ) {
+    throw new Error(
+      "ADMIN_USERNAME and ADMIN_PASSWORD must be set for deployment environments."
+    );
+  }
+}
+
+function isProductionLikeEnvironment() {
+  return (
+    process.env.NODE_ENV === "production" ||
+    Boolean(process.env.VERCEL || process.env.CF_PAGES || process.env.RENDER || process.env.RAILWAY_ENVIRONMENT)
+  );
+}
+
+function safeEqual(value: string, expected: string) {
+  const supplied = Buffer.from(value);
+  const target = Buffer.from(expected);
+  return supplied.length === target.length && timingSafeEqual(supplied, target);
+}
+
+function sendAdminUnauthorized(res: http.ServerResponse) {
+  res.writeHead(401, {
+    "Content-Type": "text/plain; charset=utf-8",
+    "WWW-Authenticate": 'Basic realm="World Cup Admin"',
+  });
+  res.end("Admin credentials required.");
+}
+
 function handleNewsRequest(url: URL, res: http.ServerResponse) {
   const newsApi = (process.env.NEWS_API_URL || process.env.NEXT_PUBLIC_NEWS_API_URL || "https://news.20250114.xyz")
     .replace(/\/+$/, "");
   const params = new URLSearchParams(url.searchParams);
   if (!params.has("limit")) params.set("limit", "24");
+  const cacheKey = `${newsApi}/api/news?${params.toString()}`;
 
-  fetch(`${newsApi}/api/news?${params.toString()}`, { cache: "no-store" })
+  fetchWithTimeout(cacheKey, { cache: "no-store" }, NEWS_PROXY_TIMEOUT_MS)
     .then(async (response) => {
       const payload = await response.json().catch(() => null);
       if (!response.ok) {
-        sendJson(res, { error: "news_api_request_failed", status: response.status, details: payload }, response.status);
-        return;
+        throw Object.assign(new Error("news_api_request_failed"), {
+          status: response.status,
+          details: payload,
+        });
       }
-      sendJson(res, {
+      const nextPayload = {
         source: "news-api",
         endpoint: newsApi,
         timestamp: Date.now(),
         ...payload,
-      });
+      };
+      newsProxyCache.set(cacheKey, { savedAt: Date.now(), payload: nextPayload });
+      sendCachedJson(res, nextPayload, CACHE_PUBLIC_MEDIUM);
     })
-    .catch((error: Error) => {
-      sendJson(res, { error: error.message || "news_api_unavailable" }, 502);
+    .catch((error: Error & { status?: number; details?: unknown }) => {
+      const cached = newsProxyCache.get(cacheKey);
+      if (cached && Date.now() - cached.savedAt <= NEWS_PROXY_STALE_TTL_MS) {
+        sendCachedJson(res, {
+          ...cached.payload,
+          stale: true,
+          staleReason: error.message || "news_api_unavailable",
+        }, CACHE_PUBLIC_SHORT);
+        return;
+      }
+
+      sendJson(res, { error: error.message || "news_api_unavailable", details: error.details }, error.status ?? 502);
     });
 }
 
-async function getOneVsOnePlayerSummary(url: URL) {
-  const name = url.searchParams.get("name")?.trim();
-  if (!name) {
-    const error = new Error("missing_name") as Error & { statusCode?: number };
-    error.statusCode = 400;
-    throw error;
+async function handleLiveChannelsRequest(req: http.IncomingMessage, url: URL, res: http.ServerResponse) {
+  const isAdmin = url.pathname === "/api/admin/live-channels";
+
+  if (!isAdmin) {
+    if (req.method !== "GET") {
+      sendJson(res, { error: "method_not_allowed" }, 405);
+      return;
+    }
+    const matchId = url.searchParams.get("matchId")?.trim();
+    if (!matchId) {
+      sendJson(res, { error: "missing_match_id" }, 400);
+      return;
+    }
+    sendCachedJson(res, { channels: await getPublicLiveChannels(matchId) }, CACHE_PUBLIC_MEDIUM);
+    return;
   }
 
-  const candidates = buildOneVsOneSlugCandidates(name);
-  for (const slug of candidates) {
-    const profileUrl = `https://one-versus-one.com/en/players/${slug}`;
-    const response = await fetch(profileUrl, {
-      headers: {
-        "user-agent": "Mozilla/5.0 compatible; WorldCupDashboard/1.0",
-      },
-    });
-
-    if (!response.ok) continue;
-
-    const html = await response.text();
-    const jsonLd = parseOneVsOnePersonJsonLd(html);
-    return {
-      source: "one-versus-one",
-      url: profileUrl,
-      found: true,
-      player: {
-        name: [jsonLd?.givenName, jsonLd?.familyName].filter(Boolean).join(" ") || name,
-        birthDate: jsonLd?.birthDate ?? null,
-        nationality: jsonLd?.nationality ?? null,
-        image: toOneVsOneAbsoluteUrl(jsonLd?.image),
-        teamName: extractOneVsOneTeamName(jsonLd?.affiliation?.["@id"]),
-        teamUrl: jsonLd?.affiliation?.["@id"] ?? null,
-      },
-    };
+  if (req.method === "GET") {
+    sendJson(res, { channels: await readLiveChannels() });
+    return;
   }
 
+  if (req.method === "POST") {
+    const body = await readJsonBody(req);
+    sendJson(res, { channel: await upsertLiveChannel(body) });
+    return;
+  }
+
+  if (req.method === "DELETE") {
+    const id = url.searchParams.get("id")?.trim();
+    if (!id) {
+      sendJson(res, { error: "missing_channel_id" }, 400);
+      return;
+    }
+    sendJson(res, await deleteLiveChannel(id));
+    return;
+  }
+
+  sendJson(res, { error: "method_not_allowed" }, 405);
+}
+
+async function handleNewsTranslationSettings(req: http.IncomingMessage, res: http.ServerResponse) {
+  if (req.method !== "GET" && req.method !== "POST") {
+    sendJson(res, { error: "method_not_allowed" }, 405);
+    return;
+  }
+
+  if (req.method === "GET") {
+    sendJson(res, await readNewsTranslationSettings());
+    return;
+  }
+
+  const body = await readJsonBody(req);
+  const next = await updateNewsTranslationSettings({
+    listTranslationEnabled: typeof body.listTranslationEnabled === "boolean" ? body.listTranslationEnabled : undefined,
+    articleTranslationEnabled: typeof body.articleTranslationEnabled === "boolean" ? body.articleTranslationEnabled : undefined,
+  });
+  await restartNewsService();
+  sendJson(res, { ok: true, restarted: true, ...next });
+}
+
+async function readNewsTranslationSettings() {
+  const env = parseEnvFile(await readFile(NEWS_SERVICE_ENV_FILE, "utf8"));
   return {
-    source: "one-versus-one",
-    found: false,
-    url: null,
-    player: null,
+    serviceDir: NEWS_SERVICE_DIR,
+    listTranslationEnabled: parseEnvBoolean(env.NEWS_LIST_TRANSLATION_ENABLED, true),
+    articleTranslationEnabled: parseEnvBoolean(env.NEWS_ARTICLE_TRANSLATION_ENABLED, false),
+    model: env.OPENAI_TRANSLATION_MODEL || "deepseek-v4-flash",
+    target: env.OPENAI_TRANSLATION_TARGET || "Simplified Chinese",
+    batchSize: Number(env.TRANSLATION_BATCH_SIZE || 4),
   };
 }
 
-function buildOneVsOneSlugCandidates(name: string) {
-  const cleaned = name
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^\w\s-]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  const parts = cleaned.split(" ").filter(Boolean);
-  const candidates = new Set<string>();
+async function updateNewsTranslationSettings(settings: {
+  listTranslationEnabled?: boolean;
+  articleTranslationEnabled?: boolean;
+}) {
+  const raw = await readFile(NEWS_SERVICE_ENV_FILE, "utf8");
+  const next = upsertEnvValue(
+    upsertEnvValue(raw, "NEWS_LIST_TRANSLATION_ENABLED", settings.listTranslationEnabled),
+    "NEWS_ARTICLE_TRANSLATION_ENABLED",
+    settings.articleTranslationEnabled
+  );
+  await writeFile(NEWS_SERVICE_ENV_FILE, next, "utf8");
+  return readNewsTranslationSettings();
+}
 
-  if (parts.length >= 2) {
-    candidates.add(parts.join("-"));
-    candidates.add([parts[0], parts[parts.length - 1]].join("-"));
-    candidates.add(parts.slice(0, 3).join("-"));
+function parseEnvFile(raw: string) {
+  const env: Record<string, string> = {};
+  for (const line of raw.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const index = trimmed.indexOf("=");
+    if (index === -1) continue;
+    env[trimmed.slice(0, index)] = trimmed.slice(index + 1).replace(/^["']|["']$/g, "");
   }
-  candidates.add(cleaned.replace(/\s+/g, "-"));
-
-  return [...candidates].filter(Boolean);
+  return env;
 }
 
-function parseOneVsOnePersonJsonLd(html: string) {
-  const blocks = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi) ?? [];
-  for (const block of blocks) {
-    const raw = block
-      .replace(/^<script type="application\/ld\+json">/i, "")
-      .replace(/<\/script>$/i, "")
-      .replace(/,\s*}/g, "}")
-      .trim();
-
-    try {
-      const parsed = JSON.parse(raw);
-      if (parsed?.["@type"] === "Person") return parsed;
-    } catch {
-      // Some 1vs1 pages include permissive JSON-LD. Ignore malformed blocks.
-    }
-  }
-  return null;
+function parseEnvBoolean(value: string | undefined, fallback: boolean) {
+  if (value === undefined || value === "") return fallback;
+  return ["1", "true", "yes", "on", "enabled"].includes(value.trim().toLowerCase());
 }
 
-function toOneVsOneAbsoluteUrl(value: string | null | undefined) {
-  if (!value) return null;
-  if (value.startsWith("http")) return value;
-  return `https://one-versus-one.com${value.startsWith("/") ? "" : "/"}${value}`;
+function upsertEnvValue(raw: string, key: string, value: boolean | undefined) {
+  if (value === undefined) return raw;
+  const line = `${key}=${value ? "true" : "false"}`;
+  const pattern = new RegExp(`^${key}=.*$`, "m");
+  if (pattern.test(raw)) return raw.replace(pattern, line);
+  return `${raw.trimEnd()}\n${line}\n`;
 }
 
-function extractOneVsOneTeamName(value: string | null | undefined) {
-  if (!value) return null;
-  const slug = value.split("/").filter(Boolean).pop();
-  return slug ? decodeURIComponent(slug).replace(/-/g, " ") : null;
+async function restartNewsService() {
+  await execFileAsync("docker", ["compose", "up", "-d", "--force-recreate", "worldcup-news"], {
+    cwd: NEWS_SERVICE_DIR,
+    timeout: 120000,
+    windowsHide: true,
+  });
+}
+
+function readJsonBody(req: http.IncomingMessage) {
+  return new Promise<Record<string, unknown>>((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    let totalBytes = 0;
+    let rejected = false;
+
+    req.on("data", (chunk) => {
+      if (rejected) return;
+      const buffer = Buffer.from(chunk);
+      totalBytes += buffer.length;
+
+      if (totalBytes > MAX_JSON_BODY_BYTES) {
+        rejected = true;
+        reject(Object.assign(new Error("request_body_too_large"), { statusCode: 413 }));
+        req.destroy();
+        return;
+      }
+
+      chunks.push(buffer);
+    });
+    req.on("end", () => {
+      if (rejected) return;
+      if (!chunks.length) {
+        resolve({});
+        return;
+      }
+      try {
+        resolve(JSON.parse(Buffer.concat(chunks).toString("utf8")));
+      } catch {
+        reject(Object.assign(new Error("invalid_json_body"), { statusCode: 400 }));
+      }
+    });
+    req.on("error", reject);
+  });
 }
 
 function toMarketSummary(country: CountryData) {
@@ -411,21 +693,43 @@ function toMarketSummary(country: CountryData) {
 }
 
 function setCorsHeaders(req: http.IncomingMessage, res: http.ServerResponse) {
-  const allowedOrigins = (process.env.CORS_ORIGIN || "*")
-    .split(",")
-    .map((origin) => origin.trim())
-    .filter(Boolean);
-  const requestOrigin = req.headers.origin;
+  const allowedOrigins = getAllowedCorsOrigins();
+  const requestOrigin = typeof req.headers.origin === "string" ? req.headers.origin : "";
+  const pathname = new URL(req.url ?? "/", "http://localhost").pathname.replace(/\/+$/, "") || "/";
 
-  if (allowedOrigins.includes("*")) {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-  } else if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
+  if (requestOrigin && allowedOrigins.has(requestOrigin)) {
     res.setHeader("Access-Control-Allow-Origin", requestOrigin);
     res.setHeader("Vary", "Origin");
+    if (isCredentialedCorsPath(pathname)) {
+      res.setHeader("Access-Control-Allow-Credentials", "true");
+    }
   }
 
-  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Max-Age", String(CORS_PREFLIGHT_MAX_AGE_SECONDS));
+}
+
+function getAllowedCorsOrigins() {
+  const configured = (process.env.CORS_ORIGIN || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter((origin) => origin && origin !== "*");
+  return new Set(configured.length ? configured : DEFAULT_CORS_ORIGINS);
+}
+
+function isCredentialedCorsPath(pathname: string) {
+  return (
+    pathname === "/admin" ||
+    pathname === "/admini" ||
+    pathname === "/api/player-x-timeline" ||
+    pathname === "/api/site-analytics" ||
+    pathname === "/api/user-preferences" ||
+    pathname.startsWith("/api/auth/") ||
+    pathname.startsWith("/api/avatar/") ||
+    pathname.startsWith("/api/me/") ||
+    pathname.startsWith("/api/admin/")
+  );
 }
 
 function sendEmpty(res: http.ServerResponse, statusCode: number) {
@@ -438,14 +742,32 @@ function redirect(res: http.ServerResponse, location: string) {
   res.end();
 }
 
-function sendJson(res: http.ServerResponse, payload: unknown, statusCode = 200) {
-  res.writeHead(statusCode, { "Content-Type": "application/json; charset=utf-8" });
+function sendJson(res: http.ServerResponse, payload: unknown, statusCode = 200, headers: http.OutgoingHttpHeaders = {}) {
+  res.writeHead(statusCode, { "Content-Type": "application/json; charset=utf-8", ...headers });
   res.end(JSON.stringify(payload));
+}
+
+function sendCachedJson(res: http.ServerResponse, payload: unknown, cacheControl: string, statusCode = 200) {
+  sendJson(res, payload, statusCode, { "Cache-Control": cacheControl });
 }
 
 function sendHtml(res: http.ServerResponse, html: string) {
   res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
   res.end(html);
+}
+
+async function fetchWithTimeout(input: string, init: RequestInit, timeoutMs: number) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 function renderAdminPage() {
@@ -598,7 +920,12 @@ function renderAdminPageLegacy() {
       \`).join("");
     }
     refresh();
-    setInterval(refresh, 5000);
+    setInterval(function () {
+      if (!document.hidden) refresh();
+    }, 15000);
+    document.addEventListener("visibilitychange", function () {
+      if (!document.hidden) refresh();
+    });
   </script>
 </body>
 </html>`;

@@ -52,7 +52,7 @@ export function MapTooltip({ country, x, y, containerWidth = 600, containerHeigh
   return (
     <div
       ref={tooltipRef}
-      className="absolute z-30 pointer-events-none rounded-2xl p-4"
+      className="map-tooltip-panel absolute z-30 pointer-events-none rounded-2xl p-4"
       style={{
         left,
         top,

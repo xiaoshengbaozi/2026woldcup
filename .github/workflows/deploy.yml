@@ -2,7 +2,7 @@ name: Deploy to Cloudflare Pages
 
 on:
   push:
-    branches: [main]
+    branches: [main, beta]
   workflow_dispatch:
 
 permissions:
@@ -13,6 +13,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     name: Build & Deploy
+    environment: ${{ github.ref_name == 'main' && 'production' || 'preview' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,6 +27,12 @@ jobs:
         run: npm install
 
       - name: Build
+        env:
+          NEXT_PUBLIC_MARKET_API_URL: https://api.boyzi.fun
+          NEXT_PUBLIC_MARKET_WS_URL: wss://api.boyzi.fun
+          NEXT_PUBLIC_NEWS_API_URL: ${{ vars.NEXT_PUBLIC_NEWS_API_URL || secrets.NEXT_PUBLIC_NEWS_API_URL }}
+          NEXT_PUBLIC_USER_API_URL: https://api.boyzi.fun
+          NEXT_PUBLIC_WARMUP_API_URL: https://api.boyzi.fun
         run: npm run build
 
       - name: Deploy to Cloudflare Pages
@@ -33,4 +40,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy out --project-name=world-cup-2026 --branch=main --commit-dirty=true
+          command: pages deploy out --project-name=world-cup-2026 --branch=${{ github.ref_name }} --commit-dirty=true

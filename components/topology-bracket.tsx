@@ -7,7 +7,8 @@ import { Minus, Plus, RotateCcw, Maximize2, Minimize2, Expand, Shrink } from "lu
 import { parseTeams } from "@/lib/teams";
 import { formatTime } from "@/lib/format";
 import { formatStageLabel } from "@/lib/stage";
-import { generateMatchSlug } from "@/lib/match-detail";
+import { areMatchTeamsConfirmed } from "@/lib/match-availability";
+import { generateMatchRouteSlug } from "@/lib/match-detail";
 import { getStageGroupId } from "@/lib/stage";
 import type { Match, Team } from "@/types/match";
 
@@ -441,19 +442,19 @@ export function TopologyBracket({ matches, timezoneOffset = 0 }: TopologyBracket
     if (!match) return null;
     const teams = parseTeams(match.summary);
     const adjustedStart = new Date(match.start.getTime() + timezoneOffset * 3600000);
-    const slug = generateMatchSlug(match.summary);
+    const slug = generateMatchRouteSlug(match);
+    const isUnlocked = areMatchTeamsConfirmed(match.summary);
     const isHomeH = hoveredTeam === teams.home.name;
     const isAwayH = hoveredTeam === teams.away.name;
     const anyH = hoveredTeam !== null;
     const inJourney = teamJourneySet.has(id);
 
     // Stage label color
-    const stageLabel = formatStageLabel(match.stage);
+    const stageLabel = formatStageLabel(match.stage, match.summary);
     const isFinal = match.stage.includes("决赛");
     const isSemi = match.stage.includes("半决赛");
 
-    return (
-      <Link href={"/matches/" + slug} key={id}>
+    const card = (
         <motion.div
           id={`bracket-node-${id}`}
           className={`group relative w-[196px] rounded-2xl border p-3 backdrop-blur-xl transition-all duration-300 ${
@@ -517,7 +518,16 @@ export function TopologyBracket({ matches, timezoneOffset = 0 }: TopologyBracket
             <div className="absolute inset-x-3 -bottom-px h-px bg-gradient-to-r from-transparent via-volt/40 to-transparent" />
           )}
         </motion.div>
+    );
+
+    return isUnlocked ? (
+      <Link href={"/matches/" + slug} key={id}>
+        {card}
       </Link>
+    ) : (
+      <div key={id} aria-disabled="true" className="opacity-70">
+        {card}
+      </div>
     );
   };
 

@@ -1,8 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { Users, ChevronDown } from "lucide-react";
 import { useStore } from "@/lib/store";
+import { getTeamDetailHrefByCode } from "@/lib/team-links";
 import { localizeTeamName } from "@/lib/team-localization";
 import { getFlagUrl } from "@/lib/world-cup-2026";
 
@@ -13,13 +15,16 @@ function probabilityLabel(value: number) {
 
 /** Approximate height for 2 rows of pills (36px row + 8px gap) */
 const COLLAPSED_PX = 80;
+const COLLAPSED_RENDER_COUNT = 24;
 
 export function RankingOverflowCard() {
   const countries = useStore((s) => s.countries);
   const selectedCountry = useStore((s) => s.selectedCountry);
   const selectCountry = useStore((s) => s.selectCountry);
   const hoverCountry = useStore((s) => s.hoverCountry);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia("(max-width: 1023px)").matches : false
+  );
 
   const overflowCountries = useMemo(() => {
     const sorted = Array.from(countries.values()).sort(
@@ -27,11 +32,14 @@ export function RankingOverflowCard() {
     );
     return sorted.slice(10);
   }, [countries]);
+  const renderedCountries = expanded
+    ? overflowCountries
+    : overflowCountries.slice(0, COLLAPSED_RENDER_COUNT);
 
   if (overflowCountries.length === 0) return null;
 
   return (
-    <section className="hero-card overflow-hidden px-5 py-4">
+    <section className="ranking-overflow-card hero-card overflow-hidden px-5 py-4">
       <div className="flex items-center justify-between border-b border-white/[0.04] pb-3 mb-5">
         <div className="flex items-center gap-2">
           <Users className="h-4 w-4 text-volt" />
@@ -49,7 +57,7 @@ export function RankingOverflowCard() {
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
-            className="flex items-center gap-1 text-[10px] text-white/30 transition hover:text-volt/60"
+            className="ranking-overflow-toggle flex items-center gap-1 text-[10px] text-white/30 transition hover:text-volt/60"
           >
             <span>{expanded ? "收起" : "展开"}</span>
             <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${expanded ? "rotate-180" : ""}`} />
@@ -60,35 +68,58 @@ export function RankingOverflowCard() {
         className="flex flex-wrap gap-2 overflow-hidden transition-all duration-300"
         style={{ maxHeight: expanded ? "2000px" : `${COLLAPSED_PX}px` }}
       >
-        {overflowCountries.map((country) => {
+        {renderedCountries.map((country) => {
           const isSelected = selectedCountry === country.countryCode;
+          const teamHref = getTeamDetailHrefByCode(country.countryCode);
+          const teamName = localizeTeamName(country.countryName, country.countryCode);
 
-          return (
-            <button
-              key={country.countryCode}
-              type="button"
-              onClick={() => selectCountry(country.countryCode, "map")}
-              onMouseEnter={() => hoverCountry(country.countryCode, "ranking")}
-              onMouseLeave={() => hoverCountry(null, "ranking")}
-              className="group flex items-center gap-2 rounded-full border border-white/[0.06] bg-white/[0.03] px-3 py-1.5 transition hover:border-volt/20 hover:bg-white/[0.06]"
-              style={{
-                background: isSelected ? "rgba(216,255,62,0.06)" : undefined,
-                borderColor: isSelected ? "rgba(216,255,62,0.2)" : undefined,
-              }}
-            >
+          const content = (
+            <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={getFlagUrl(country.countryCode, 40)}
-                alt={localizeTeamName(country.countryName, country.countryCode)}
+                alt={teamName}
                 className="h-3.5 w-5 shrink-0 rounded-sm object-cover"
                 loading="lazy"
               />
-              <span className="text-[11px] font-semibold text-white/70">
-                {localizeTeamName(country.countryName, country.countryCode)}
+              <span className="ranking-overflow-team text-[11px] font-semibold text-white/70">
+                {teamName}
               </span>
-              <span className="text-[11px] font-bold tabular-nums text-white/45">
+              <span className="ranking-overflow-probability text-[11px] font-bold tabular-nums text-white/45">
                 {probabilityLabel(country.impliedProbability)}
               </span>
+            </>
+          );
+
+          const interactionProps = {
+            onClick: () => selectCountry(country.countryCode, "map"),
+            onMouseEnter: () => hoverCountry(country.countryCode, "ranking"),
+            onMouseLeave: () => hoverCountry(null, "ranking"),
+            onFocus: () => hoverCountry(country.countryCode, "ranking"),
+            onBlur: () => hoverCountry(null, "ranking"),
+            className: "ranking-overflow-pill group flex items-center gap-2 rounded-full border border-white/[0.06] bg-white/[0.03] px-3 py-1.5 transition hover:border-volt/20 hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-volt/50",
+            style: {
+              background: isSelected ? "rgba(216,255,62,0.06)" : undefined,
+              borderColor: isSelected ? "rgba(216,255,62,0.2)" : undefined,
+            },
+          };
+
+          if (teamHref) {
+            return (
+              <Link
+                key={country.countryCode}
+                href={teamHref}
+                aria-label={`查看${teamName}球队页`}
+                {...interactionProps}
+              >
+                {content}
+              </Link>
+            );
+          }
+
+          return (
+            <button key={country.countryCode} type="button" {...interactionProps}>
+              {content}
             </button>
           );
         })}
@@ -96,7 +127,7 @@ export function RankingOverflowCard() {
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="mt-3 flex w-full items-center justify-center gap-1 text-[11px] text-white/30 transition hover:text-volt/60"
+        className="ranking-overflow-toggle mt-3 flex w-full items-center justify-center gap-1 text-[11px] text-white/30 transition hover:text-volt/60"
       >
         <span>{expanded ? "收起" : "展开更多"}</span>
         <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${expanded ? "rotate-180" : ""}`} />

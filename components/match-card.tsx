@@ -1,37 +1,54 @@
 import { motion } from "framer-motion";
 import { MapPin } from "lucide-react";
 import Link from "next/link";
-import { detailRows } from "@/lib/calendar";
-import { formatTime } from "@/lib/format";
+import { detailRows, localizeLocationText } from "@/lib/calendar";
+import { areMatchTeamsConfirmed } from "@/lib/match-availability";
+import { getMatchLiveDisplay } from "@/lib/match-live-display";
 import { parseTeams } from "@/lib/teams";
-import { generateMatchSlug } from "@/lib/match-detail";
+import { generateMatchRouteSlug } from "@/lib/match-detail";
 import { formatStageLabel } from "@/lib/stage";
 import type { Match, Team } from "@/types/match";
 
-export function MatchCard({ match, timezoneOffset = 0 }: { match: Match; timezoneOffset?: number }) {
+export function MatchCard({
+  match,
+  timezoneOffset = 0,
+  stageLabel,
+}: {
+  match: Match;
+  timezoneOffset?: number;
+  stageLabel?: string;
+}) {
   const teams = parseTeams(match.summary);
   const details = detailRows(match);
-  const venue = details.find((detail) => detail.type === "venue")?.text || match.location;
+  const venue = details.find((detail) => detail.type === "venue")?.text || localizeLocationText(match.location);
   const adjustedStart = new Date(match.start.getTime() + timezoneOffset * 3600000);
-  const slug = generateMatchSlug(match.summary);
+  const slug = generateMatchRouteSlug(match);
+  const isUnlocked = areMatchTeamsConfirmed(match.summary);
+  const display = getMatchLiveDisplay({
+    match,
+    kickoff: adjustedStart,
+    scheduledStageLabel: stageLabel ?? formatStageLabel(match.stage, match.summary),
+  });
 
-  return (
-    <Link href={"/matches/" + slug}>
+  const card = (
     <motion.article
       layout
-      className="group relative flex min-w-0 flex-col gap-2 rounded-3xl p-2.5 transition sm:gap-3 sm:p-4 cursor-pointer"
+      aria-disabled={!isUnlocked}
+      className={`group relative flex min-w-0 flex-col gap-2 rounded-3xl p-2.5 transition sm:gap-3 sm:p-4 ${
+        isUnlocked ? "cursor-pointer" : "cursor-default opacity-70"
+      }`}
     >
       <div className="relative flex items-center justify-between gap-1 sm:gap-3">
         <TeamBlock team={teams.home} align="left" />
         <div className="absolute left-1/2 -translate-x-1/2 flex w-20 shrink-0 flex-col items-center sm:w-auto">
           <div className="max-w-full truncate text-[10px] uppercase tracking-[0.12em] text-white/40 transition group-hover:text-volt/60 sm:text-xs sm:tracking-widest">
-            {formatStageLabel(match.stage)}
+            {display.topLabel}
           </div>
           <div
             className="mt-1 text-lg font-semibold leading-none text-white transition group-hover:text-volt sm:text-3xl"
             style={{ fontFamily: "ScreenMatrix, monospace" }}
           >
-            {formatTime(adjustedStart)}
+            {display.centerLabel}
           </div>
         </div>
         <TeamBlock team={teams.away} align="right" />
@@ -43,7 +60,14 @@ export function MatchCard({ match, timezoneOffset = 0 }: { match: Match; timezon
         </span>
       </div>
     </motion.article>
+  );
+
+  return isUnlocked ? (
+    <Link href={"/matches/" + slug}>
+      {card}
     </Link>
+  ) : (
+    card
   );
 }
 

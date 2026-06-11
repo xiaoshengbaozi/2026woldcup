@@ -41,82 +41,82 @@ type VenueBanner = {
 
 const VENUE_BANNERS: VenueBanner[] = [
   {
-    aliases: ["metlife", "\u5927\u90fd\u4f1a\u4eba\u5bff"],
+    aliases: ["metlife", "\u5927\u90fd\u4f1a\u4eba\u5bff", "\u7ebd\u7ea6/\u65b0\u6cfd\u897f", "\u7ebd\u7ea6-\u65b0\u6cfd\u897f"],
     day: metlifeDay.src,
     night: metlifeNight.src,
   },
   {
-    aliases: ["sofi"],
+    aliases: ["sofi", "\u6d1b\u6749\u77f6"],
     day: sofiDay.src,
     night: sofiNight.src,
   },
   {
-    aliases: ["at&t", "at & t"],
+    aliases: ["at&t", "at & t", "\u8fbe\u62c9\u65af"],
     day: attDay.src,
     night: attNight.src,
   },
   {
-    aliases: ["mercedes-benz", "mercedes benz", "\u6885\u8d5b\u5fb7\u65af"],
+    aliases: ["mercedes-benz", "mercedes benz", "\u6885\u8d5b\u5fb7\u65af", "\u4e9a\u7279\u5170\u5927"],
     day: mercedesDay.src,
     night: mercedesNight.src,
   },
   {
-    aliases: ["hard rock", "\u786c\u77f3"],
+    aliases: ["hard rock", "\u786c\u77f3", "\u8fc8\u963f\u5bc6"],
     day: hardRockDay.src,
     night: hardRockNight.src,
   },
   {
-    aliases: ["gillette", "\u5409\u5217"],
+    aliases: ["gillette", "\u5409\u5217", "\u6ce2\u58eb\u987f"],
     day: gilletteDay.src,
     night: gilletteNight.src,
   },
   {
-    aliases: ["nrg"],
+    aliases: ["nrg", "\u4f11\u65af\u6566"],
     day: nrgDay.src,
     night: nrgNight.src,
   },
   {
-    aliases: ["levi", "\u674e\u7ef4\u65af"],
+    aliases: ["levi", "\u674e\u7ef4\u65af", "\u65e7\u91d1\u5c71\u6e7e\u533a"],
     day: levisDay.src,
     night: levisNight.src,
   },
   {
-    aliases: ["lumen", "\u6d41\u660e"],
+    aliases: ["lumen", "\u6d41\u660e", "\u897f\u96c5\u56fe"],
     day: lumenDay.src,
     night: lumenNight.src,
   },
   {
-    aliases: ["lincoln financial", "\u6797\u80af\u91d1\u878d"],
+    aliases: ["lincoln financial", "\u6797\u80af\u91d1\u878d", "\u8d39\u57ce"],
     day: lincolnDay.src,
     night: lincolnNight.src,
   },
   {
-    aliases: ["arrowhead", "\u7bad\u5934"],
+    aliases: ["arrowhead", "\u7bad\u5934", "\u582a\u8428\u65af\u57ce"],
     day: arrowheadDay.src,
     night: arrowheadNight.src,
   },
   {
-    aliases: ["bc place", "\u5351\u8bd7"],
+    aliases: ["bc place", "\u5351\u8bd7", "\u6e29\u54e5\u534e"],
     day: bcPlaceDay.src,
     night: bcPlaceNight.src,
   },
   {
-    aliases: ["bmo"],
+    aliases: ["bmo", "\u591a\u4f26\u591a"],
     day: bmoFieldDay.src,
     night: bmoFieldNight.src,
   },
   {
-    aliases: ["azteca", "banorte", "\u963f\u5179\u7279\u514b", "\u5df4\u8bfa\u5c14\u7279"],
+    aliases: ["azteca", "banorte", "\u963f\u5179\u7279\u514b", "\u5df4\u8bfa\u5c14\u7279", "\u58a8\u897f\u54e5\u57ce"],
     day: estadioAztecaDay.src,
     night: estadioAztecaNight.src,
   },
   {
-    aliases: ["akron", "\u963f\u514b\u4f26"],
+    aliases: ["akron", "\u963f\u514b\u4f26", "\u74dc\u8fbe\u62c9\u54c8\u62c9"],
     day: estadioAkronDay.src,
     night: estadioAkronNight.src,
   },
   {
-    aliases: ["bbva"],
+    aliases: ["bbva", "\u8499\u7279\u96f7"],
     day: estadioBbvaDay.src,
     night: estadioBbvaNight.src,
   },

@@ -1,0 +1,1872 @@
+{
+  "source": "star.txt",
+  "sourcePath": "C:/Users/caiyu/Desktop/star.txt",
+  "generatedAt": "2026-06-04T09:04:38.007Z",
+  "count": 101,
+  "teams": {
+    "FRA": [
+      {
+        "id": "278",
+        "nameEn": "Kylian Mbappe Lottin",
+        "nameCn": "姆巴佩",
+        "aliases": [
+          "姆巴佩",
+          "Kylian Mbappé",
+          "Kylian Mbappe Lottin",
+          "Mbappe Kylian",
+          "Kylian",
+          "Mbappe Lottin",
+          "Mbappe",
+          "K Mbappe",
+          "K. Mbappe",
+          "Kylian Mbappe"
+        ]
+      },
+      {
+        "id": "22090",
+        "nameEn": "William Alain André Gabriel Saliba",
+        "nameCn": "萨利巴",
+        "aliases": [
+          "萨利巴",
+          "William Saliba",
+          "William Alain André Gabriel Saliba",
+          "Saliba William",
+          "William Alain André Gabriel",
+          "Saliba",
+          "A Saliba",
+          "A. Saliba",
+          "Alain Saliba",
+          "André Saliba",
+          "G Saliba",
+          "G. Saliba",
+          "Gabriel Saliba",
+          "W Saliba",
+          "W. Saliba"
+        ]
+      }
+    ],
+    "ENG": [
+      {
+        "id": "129718",
+        "nameEn": "Jude Victor William Bellingham",
+        "nameCn": "贝林厄姆",
+        "aliases": [
+          "贝林厄姆",
+          "Jude Bellingham",
+          "Jude Victor William Bellingham",
+          "Bellingham Jude",
+          "Jude Victor William",
+          "Bellingham",
+          "J Bellingham",
+          "J. Bellingham",
+          "V Bellingham",
+          "V. Bellingham",
+          "Victor Bellingham",
+          "W Bellingham",
+          "W. Bellingham",
+          "William Bellingham"
+        ]
+      },
+      {
+        "id": "184",
+        "nameEn": "Harry Edward Kane",
+        "nameCn": "凯恩",
+        "aliases": [
+          "凯恩",
+          "Harry Kane",
+          "Harry Edward Kane",
+          "Kane Harry",
+          "Harry Edward",
+          "Kane",
+          "E Kane",
+          "E. Kane",
+          "Edward Kane",
+          "H Kane",
+          "H. Kane"
+        ]
+      },
+      {
+        "id": "1460",
+        "nameEn": "Bukayo Ayoyinka Saka",
+        "nameCn": "萨卡",
+        "aliases": [
+          "萨卡",
+          "Bukayo Saka",
+          "Bukayo Ayoyinka Saka",
+          "Saka Bukayo",
+          "Bukayo Ayoyinka",
+          "Saka",
+          "A Saka",
+          "A. Saka",
+          "Ayoyinka Saka",
+          "B Saka",
+          "B. Saka"
+        ]
+      }
+    ],
+    "ESP": [
+      {
+        "id": "386828",
+        "nameEn": "Lamine Yamal Nasraoui Ebana",
+        "nameCn": "亚马尔",
+        "aliases": [
+          "亚马尔",
+          "Lamine Yamal",
+          "Lamine Yamal Nasraoui Ebana",
+          "Yamal Lamine",
+          "Nasraoui Ebana",
+          "L Nasraoui",
+          "L. Nasraoui",
+          "Lamine Nasraoui",
+          "Y Nasraoui",
+          "Y. Nasraoui",
+          "Yamal Nasraoui"
+        ]
+      },
+      {
+        "id": "44",
+        "nameEn": "Rodrigo Hernández Cascante",
+        "nameCn": "罗德里",
+        "aliases": [
+          "罗德里",
+          "Rodri",
+          "Rodrigo Hernández Cascante",
+          "Rodrigo",
+          "Hernández Cascante",
+          "R Hernández",
+          "R. Hernández",
+          "Rodrigo Hernández"
+        ]
+      },
+      {
+        "id": "133609",
+        "nameEn": "Pedro González López",
+        "nameCn": "佩德里",
+        "aliases": [
+          "佩德里",
+          "Pedri",
+          "Pedro González López",
+          "Pedro",
+          "González López",
+          "P González",
+          "P. González",
+          "Pedro González"
+        ]
+      },
+      {
+        "id": "183799",
+        "nameEn": "Nicholas Williams Arthuer",
+        "nameCn": "尼科·威廉姆斯",
+        "aliases": [
+          "尼科·威廉姆斯",
+          "Nico Williams",
+          "Nicholas Williams Arthuer",
+          "Williams Nico",
+          "Nicholas",
+          "Williams Arthuer",
+          "Williams Jr",
+          "N Williams",
+          "N. Williams",
+          "Nicholas Williams"
+        ]
+      }
+    ],
+    "GER": [
+      {
+        "id": "203224",
+        "nameEn": "Florian Richard Wirtz",
+        "nameCn": "维尔茨",
+        "aliases": [
+          "维尔茨",
+          "Florian Wirtz",
+          "Florian Richard Wirtz",
+          "Wirtz Florian",
+          "Florian Richard",
+          "Wirtz",
+          "F Wirtz",
+          "F. Wirtz",
+          "R Wirtz",
+          "R. Wirtz",
+          "Richard Wirtz"
+        ]
+      },
+      {
+        "id": "181812",
+        "nameEn": "Jamal Musiala",
+        "nameCn": "穆西亚拉",
+        "aliases": [
+          "穆西亚拉",
+          "Jamal Musiala",
+          "Musiala Jamal",
+          "Jamal",
+          "Musiala",
+          "J Musiala",
+          "J. Musiala"
+        ]
+      },
+      {
+        "id": "978",
+        "nameEn": "Kai Lukas Havertz",
+        "nameCn": "哈弗茨",
+        "aliases": [
+          "哈弗茨",
+          "Kai Havertz",
+          "Kai Lukas Havertz",
+          "Havertz Kai",
+          "Kai Lukas",
+          "Havertz",
+          "K Havertz",
+          "K. Havertz",
+          "L Havertz",
+          "L. Havertz",
+          "Lukas Havertz"
+        ]
+      },
+      {
+        "id": "2285",
+        "nameEn": "Antonio Rüdiger",
+        "nameCn": "吕迪格",
+        "aliases": [
+          "吕迪格",
+          "Antonio Rüdiger",
+          "Ruediger Antonio",
+          "Antonio",
+          "Rüdiger",
+          "A Rüdiger",
+          "A. Rüdiger",
+          "Antonio Ruediger"
+        ]
+      }
+    ],
+    "POR": [
+      {
+        "id": "874",
+        "nameEn": "Cristiano Ronaldodos Santos Aveiro Ronaldo",
+        "nameCn": "克里斯蒂亚诺·罗纳尔多",
+        "aliases": [
+          "克里斯蒂亚诺·罗纳尔多",
+          "C罗",
+          "Cristiano Ronaldo",
+          "Cristiano Ronaldodos Santos Aveiro Ronaldo",
+          "Cristiano Ronaldodos Santos Aveiro",
+          "Ronaldo",
+          "05/02/1985Al Nassr Fc (Ksa)",
+          "A Ronaldo",
+          "A. Ronaldo",
+          "Aveiro Ronaldo",
+          "C Ronaldo",
+          "C. Ronaldo",
+          "R Ronaldo",
+          "R. Ronaldo",
+          "Ronaldo Cristiano",
+          "Ronaldodos Ronaldo",
+          "S Ronaldo",
+          "S. Ronaldo",
+          "Santos Ronaldo"
+        ]
+      },
+      {
+        "id": "22236",
+        "nameEn": "Rafael Alexandre Da Conceição Leão",
+        "nameCn": "莱奥",
+        "aliases": [
+          "莱奥",
+          "Rafael Leão",
+          "Rafael Alexandre Da Conceição Leão",
+          "Rafael Leao",
+          "Rafael Alexandre",
+          "Da Conceição Leão",
+          "Rafa Leão",
+          "A Da Conceição",
+          "A. Da Conceição",
+          "Alexandre Da Conceição",
+          "Leao Rafael",
+          "R Da Conceição",
+          "R. Da Conceição",
+          "Rafael Da Conceição"
+        ]
+      },
+      {
+        "id": "1485",
+        "nameEn": "Bruno Miguel Borges Fernandes",
+        "nameCn": "布鲁诺·费尔南德斯",
+        "aliases": [
+          "布鲁诺·费尔南德斯",
+          "B费",
+          "Bruno Fernandes",
+          "Bruno Miguel Borges Fernandes",
+          "Bruno Miguel",
+          "Borges Fernandes",
+          "B. Fernandes",
+          "B Borges",
+          "B. Borges",
+          "Bruno Borges",
+          "Fernandes Bruno",
+          "M Borges",
+          "M. Borges",
+          "Miguel Borges"
+        ]
+      }
+    ],
+    "NED": [
+      {
+        "id": "290",
+        "nameEn": "Virgil Van Dijk",
+        "nameCn": "范戴克",
+        "aliases": [
+          "范戴克",
+          "Virgil van Dijk",
+          "Virgil Van Dijk",
+          "Van Dijk Virgil",
+          "Virgil",
+          "Van Dijk",
+          "Dijk Virgil Van",
+          "V Van Dijk",
+          "V. Van Dijk"
+        ]
+      },
+      {
+        "id": "538",
+        "nameEn": "Frenkie De Jong",
+        "nameCn": "德容",
+        "aliases": [
+          "德容",
+          "Frenkie de Jong",
+          "Frenkie De Jong",
+          "De Jong Frenkie",
+          "Frenkie",
+          "De Jong",
+          "F. De Jong",
+          "F De Jong",
+          "Jong Frenkie De"
+        ]
+      }
+    ],
+    "BEL": [
+      {
+        "id": "629",
+        "nameEn": "Kevin De Bruyne",
+        "nameCn": "德布劳内",
+        "aliases": [
+          "德布劳内",
+          "Kevin De Bruyne",
+          "De Bruyne Kevin",
+          "Kevin",
+          "De Bruyne",
+          "Bruyne Kevin De",
+          "K De Bruyne",
+          "K. De Bruyne"
+        ]
+      },
+      {
+        "id": "1422",
+        "nameEn": "Jeremy Baffour Doku",
+        "nameCn": "多库",
+        "aliases": [
+          "多库",
+          "Jérémy Doku",
+          "Jeremy Baffour Doku",
+          "Doku Jeremy",
+          "Jeremy Baffour",
+          "Doku",
+          "B Doku",
+          "B. Doku",
+          "Baffour Doku",
+          "J Doku",
+          "J. Doku",
+          "Jeremy Doku"
+        ]
+      }
+    ],
+    "SUI": [
+      {
+        "id": "5",
+        "nameEn": "Manuel Obafemi Akanji",
+        "nameCn": "阿坎吉",
+        "aliases": [
+          "阿坎吉",
+          "Manuel Akanji",
+          "Manuel Obafemi Akanji",
+          "Akanji Manuel",
+          "Manuel Obafemi",
+          "Akanji",
+          "M Akanji",
+          "M. Akanji",
+          "O Akanji",
+          "O. Akanji",
+          "Obafemi Akanji"
+        ]
+      },
+      {
+        "id": "1464",
+        "nameEn": "Granit Xhaka",
+        "nameCn": "扎卡",
+        "aliases": [
+          "扎卡",
+          "Granit Xhaka",
+          "Xhaka Granit",
+          "Granit",
+          "Xhaka",
+          "G Xhaka",
+          "G. Xhaka"
+        ]
+      }
+    ],
+    "TUR": [
+      {
+        "id": "291964",
+        "nameEn": "Arda Güler",
+        "nameCn": "居莱尔",
+        "aliases": [
+          "居莱尔",
+          "Arda Güler",
+          "Guler Arda",
+          "Arda",
+          "Güler",
+          "A Güler",
+          "A. Güler",
+          "Arda Guler"
+        ]
+      },
+      {
+        "id": "1640",
+        "nameEn": "Hakan Çalhanoğlu",
+        "nameCn": "恰尔汗奥卢",
+        "aliases": [
+          "恰尔汗奥卢",
+          "Hakan Çalhanoğlu",
+          "Calhanoglu Hakan",
+          "Hakan",
+          "Çalhanoğlu",
+          "H Çalhanoğlu",
+          "H. Çalhanoğlu",
+          "Hakan Calhanoglu"
+        ]
+      }
+    ],
+    "AUT": [
+      {
+        "id": "505",
+        "nameEn": "David Alaba",
+        "nameCn": "阿拉巴",
+        "aliases": [
+          "阿拉巴",
+          "David Alaba",
+          "Alaba David",
+          "David",
+          "Alaba",
+          "D Alaba",
+          "D. Alaba"
+        ]
+      },
+      {
+        "id": "1159",
+        "nameEn": "Marcel Sabitzer",
+        "nameCn": "萨比策",
+        "aliases": [
+          "萨比策",
+          "Marcel Sabitzer",
+          "Sabitzer Marcel",
+          "Marcel",
+          "Sabitzer",
+          "M Sabitzer",
+          "M. Sabitzer"
+        ]
+      },
+      {
+        "id": "1157",
+        "nameEn": "Konrad Laimer",
+        "nameCn": "莱默尔",
+        "aliases": [
+          "莱默尔",
+          "Konrad Laimer",
+          "Laimer Konrad",
+          "Konrad",
+          "Laimer",
+          "K Laimer",
+          "K. Laimer"
+        ]
+      }
+    ],
+    "NOR": [
+      {
+        "id": "1100",
+        "nameEn": "Erling Braut Haaland",
+        "nameCn": "哈兰德",
+        "aliases": [
+          "哈兰德",
+          "Erling Haaland",
+          "Erling Braut Haaland",
+          "Haaland Erling",
+          "Erling Braut",
+          "Haaland",
+          "Braut Haaland",
+          "B Haaland",
+          "B. Haaland",
+          "E Haaland",
+          "E. Haaland"
+        ]
+      },
+      {
+        "id": "37127",
+        "nameEn": "Martín Ødegaard",
+        "nameCn": "厄德高",
+        "aliases": [
+          "厄德高",
+          "Martin Ødegaard",
+          "Martín Ødegaard",
+          "Odegaard Martin",
+          "Martín",
+          "Ødegaard",
+          "M Ødegaard",
+          "M. Ødegaard",
+          "Martin Odegaard"
+        ]
+      }
+    ],
+    "SWE": [
+      {
+        "id": "2864",
+        "nameEn": "Alexander Isak",
+        "nameCn": "伊萨克",
+        "aliases": [
+          "伊萨克",
+          "Alexander Isak",
+          "Isak Alexander",
+          "Alexander",
+          "Isak",
+          "A Isak",
+          "A. Isak"
+        ]
+      },
+      {
+        "id": "18979",
+        "nameEn": "Viktor Einar Gyökeres",
+        "nameCn": "哲凯赖什",
+        "aliases": [
+          "哲凯赖什",
+          "Viktor Gyökeres",
+          "Viktor Einar Gyökeres",
+          "Gyokeres Viktor",
+          "Viktor Einar",
+          "Gyökeres",
+          "E Gyökeres",
+          "E. Gyökeres",
+          "Einar Gyökeres",
+          "V Gyökeres",
+          "V. Gyökeres",
+          "Viktor Gyokeres"
+        ]
+      }
+    ],
+    "CZE": [
+      {
+        "id": "794",
+        "nameEn": "Patrik Schick",
+        "nameCn": "希克",
+        "aliases": [
+          "希克",
+          "Patrik Schick",
+          "Schick Patrik",
+          "Patrik",
+          "Schick",
+          "P Schick",
+          "P. Schick"
+        ]
+      },
+      {
+        "id": "1243",
+        "nameEn": "Tomáš Souček",
+        "nameCn": "绍切克",
+        "aliases": [
+          "绍切克",
+          "Tomáš Souček",
+          "Soucek Tomas",
+          "Tomáš",
+          "Souček",
+          "T Souček",
+          "T. Souček",
+          "Tomas Soucek"
+        ]
+      }
+    ],
+    "SCO": [
+      {
+        "id": "903",
+        "nameEn": "Scott Francis Mctominay",
+        "nameCn": "麦克托米奈",
+        "aliases": [
+          "麦克托米奈",
+          "Scott McTominay",
+          "Scott Francis Mctominay",
+          "Mctominay Scott",
+          "Scott Francis",
+          "Mctominay",
+          "F Mctominay",
+          "F. Mctominay",
+          "Francis Mctominay",
+          "S Mctominay",
+          "S. Mctominay",
+          "Scott Mctominay"
+        ]
+      },
+      {
+        "id": "289",
+        "nameEn": "Andrew Henry Robertson",
+        "nameCn": "罗伯逊",
+        "aliases": [
+          "罗伯逊",
+          "Andy Robertson",
+          "Andrew Henry Robertson",
+          "Robertson Andy",
+          "Andrew Henry",
+          "Robertson",
+          "A Robertson",
+          "A. Robertson",
+          "Andrew Robertson",
+          "H Robertson",
+          "H. Robertson",
+          "Henry Robertson"
+        ]
+      }
+    ],
+    "BIH": [
+      {
+        "id": "790",
+        "nameEn": "Edin Džeko",
+        "nameCn": "哲科",
+        "aliases": [
+          "哲科",
+          "Edin Džeko",
+          "Dzeko Edin",
+          "Edin",
+          "Džeko",
+          "E Džeko",
+          "E. Džeko",
+          "Edin Dzeko"
+        ]
+      },
+      {
+        "id": "46930",
+        "nameEn": "Ermedin Demirović",
+        "nameCn": "德米罗维奇",
+        "aliases": [
+          "德米罗维奇",
+          "Ermedin Demirović",
+          "Demirovic Ermedin",
+          "Ermedin",
+          "Demirović",
+          "E Demirović",
+          "E. Demirović",
+          "Ermedin Demirovic"
+        ]
+      }
+    ],
+    "ARG": [
+      {
+        "id": "154",
+        "nameEn": "Lionel Andrés Messi",
+        "nameCn": "梅西",
+        "aliases": [
+          "梅西",
+          "Lionel Messi",
+          "Lionel Andrés Messi",
+          "Messi Lionel",
+          "Lionel Andrés",
+          "Messi",
+          "A Messi",
+          "A. Messi",
+          "Andrés Messi",
+          "L Messi",
+          "L. Messi"
+        ]
+      },
+      {
+        "id": "2467",
+        "nameEn": "Lisandro M Artínez",
+        "nameCn": "劳塔罗",
+        "aliases": [
+          "劳塔罗",
+          "Lautaro Martínez",
+          "Lisandro M Artínez",
+          "Martinez Lisandro",
+          "Lisandro",
+          "M Artínez",
+          "L M",
+          "L. M",
+          "Lisandro M",
+          "Lisandro Martinez"
+        ]
+      },
+      {
+        "id": "6716",
+        "nameEn": "Alexis Mac Allister",
+        "nameCn": "麦卡利斯特",
+        "aliases": [
+          "麦卡利斯特",
+          "Alexis Mac Allister",
+          "Mac Allister Alexis",
+          "Alexis",
+          "Mac Allister",
+          "A Mac Allister",
+          "A. Mac Allister",
+          "Allister Alexis Mac"
+        ]
+      },
+      {
+        "id": "5996",
+        "nameEn": "Enzo Jeremías Fernández",
+        "nameCn": "恩佐",
+        "aliases": [
+          "恩佐",
+          "Enzo Fernández",
+          "Enzo Jeremías Fernández",
+          "Fernandez Enzo",
+          "Enzo Jeremías",
+          "Fernández",
+          "E. Fernandez",
+          "E Fernández",
+          "E. Fernández",
+          "Enzo Fernandez",
+          "J Fernández",
+          "J. Fernández",
+          "Jeremías Fernández"
+        ]
+      }
+    ],
+    "BRA": [
+      {
+        "id": "762",
+        "nameEn": "Vinicius José Paixão De Oliveira Júnior",
+        "nameCn": "维尼修斯",
+        "aliases": [
+          "维尼修斯",
+          "Vinícius Júnior",
+          "Vinicius José Paixão De Oliveira Júnior",
+          "Vinicius Junior",
+          "Vinicius José",
+          "Paixão De Oliveira Júnior",
+          "Vini Jr.",
+          "J Paixão",
+          "J. Paixão",
+          "José Paixão",
+          "Junior Vinicius",
+          "V Paixão",
+          "V. Paixão",
+          "Vinicius Paixão"
+        ]
+      },
+      {
+        "id": "10135",
+        "nameEn": "Bruno Guimarães Rodriguez Moura",
+        "nameCn": "吉马良斯",
+        "aliases": [
+          "吉马良斯",
+          "Bruno Guimarães",
+          "Bruno Guimarães Rodriguez Moura",
+          "Bruno Guimaraes",
+          "Bruno",
+          "Guimarães Rodriguez Moura",
+          "Bruno G.",
+          "B Guimarães",
+          "B. Guimarães",
+          "Guimaraes Bruno"
+        ]
+      },
+      {
+        "id": "276",
+        "nameEn": "Neymar Da Silva Santos Júnior",
+        "nameCn": "内马尔",
+        "aliases": [
+          "内马尔",
+          "Neymar",
+          "Neymar Jr",
+          "Neymar Da Silva Santos Júnior",
+          "Neymar da Silva Santos Junior",
+          "Neymar Santos",
+          "N. Neymar"
+        ]
+      }
+    ],
+    "URU": [
+      {
+        "id": "756",
+        "nameEn": "Federico Santiagovalverde Dipetta F. Valverde",
+        "nameCn": "巴尔韦德",
+        "aliases": [
+          "巴尔韦德",
+          "Federico Valverde",
+          "Federico Santiagovalverde Dipetta F. Valverde",
+          "Valverde Federico",
+          "Federico Santiagovalverde Dipetta",
+          "F. Valverde",
+          "22/07/1998Real Madrid C. F. (Esp)",
+          "D F.",
+          "D. F.",
+          "Dipetta F.",
+          "F F.",
+          "F. F.",
+          "Federico F.",
+          "S F.",
+          "S. F.",
+          "Santiagovalverde F."
+        ]
+      },
+      {
+        "id": "51617",
+        "nameEn": "Darwin Gabriel Nuñez Ribeiro",
+        "nameCn": "努涅斯",
+        "aliases": [
+          "努涅斯",
+          "Darwin Núñez",
+          "Darwin Gabriel Nuñez Ribeiro",
+          "Nunez Darwin",
+          "Darwin Gabriel",
+          "Nuñez Ribeiro",
+          "D. Nuñez",
+          "D Nuñez",
+          "Darwin Nunez",
+          "Darwin Nuñez",
+          "G Nuñez",
+          "G. Nuñez",
+          "Gabriel Nuñez"
+        ]
+      },
+      {
+        "id": "101814",
+        "nameEn": "Ronald Federico Araújo Da Silva",
+        "nameCn": "阿劳霍",
+        "aliases": [
+          "阿劳霍",
+          "Ronald Araújo",
+          "Ronald Federico Araújo Da Silva",
+          "Araujo Ronald",
+          "Ronald Federico",
+          "Araújo Da Silva",
+          "R. Araujo",
+          "F Araújo",
+          "F. Araújo",
+          "Federico Araújo",
+          "R Araújo",
+          "R. Araújo",
+          "Ronald Araujo"
+        ]
+      }
+    ],
+    "COL": [
+      {
+        "id": "2489",
+        "nameEn": "Luis Fernando Díaz Marulanda",
+        "nameCn": "路易斯·迪亚斯",
+        "aliases": [
+          "路易斯·迪亚斯",
+          "Luis Díaz",
+          "Luis Fernando Díaz Marulanda",
+          "Diaz Luis",
+          "Luis Fernando",
+          "Díaz Marulanda",
+          "Luis Diaz",
+          "F Díaz",
+          "F. Díaz",
+          "Fernando Díaz",
+          "L Díaz",
+          "L. Díaz"
+        ]
+      }
+    ],
+    "ECU": [
+      {
+        "id": "116117",
+        "nameEn": "Moisés Isaac Caicedo Corozo",
+        "nameCn": "凯塞多",
+        "aliases": [
+          "凯塞多",
+          "Moisés Caicedo",
+          "Moisés Isaac Caicedo Corozo",
+          "Caicedo Moises",
+          "Moisés Isaac",
+          "Caicedo Corozo",
+          "M. Caicedo",
+          "I Caicedo",
+          "I. Caicedo",
+          "Isaac Caicedo",
+          "M Caicedo",
+          "Moises Caicedo"
+        ]
+      },
+      {
+        "id": "127817",
+        "nameEn": "Piero Martin Hincapié Reyna",
+        "nameCn": "因卡皮耶",
+        "aliases": [
+          "因卡皮耶",
+          "Piero Hincapié",
+          "Piero Martin Hincapié Reyna",
+          "Hincapie Piero",
+          "Piero Martin",
+          "Hincapié Reyna",
+          "Hincapie",
+          "M Hincapié",
+          "M. Hincapié",
+          "Martin Hincapié",
+          "P Hincapié",
+          "P. Hincapié",
+          "Piero Hincapie"
+        ]
+      },
+      {
+        "id": "35533",
+        "nameEn": "Enner Remberto Valencia Lastra",
+        "nameCn": "瓦伦西亚",
+        "aliases": [
+          "瓦伦西亚",
+          "Enner Valencia",
+          "Enner Remberto Valencia Lastra",
+          "Valencia Enner",
+          "Enner Remberto",
+          "Valencia Lastra",
+          "E. Valencia",
+          "E Valencia",
+          "R Valencia",
+          "R. Valencia",
+          "Remberto Valencia"
+        ]
+      }
+    ],
+    "PAR": [
+      {
+        "id": "70747",
+        "nameEn": "Julio Cesar Enciso Espinola",
+        "nameCn": "恩西索",
+        "aliases": [
+          "恩西索",
+          "Julio Enciso",
+          "Julio Cesar Enciso Espinola",
+          "Enciso Julio",
+          "Julio Cesar",
+          "Enciso Espinola",
+          "Enciso",
+          "C Enciso",
+          "C. Enciso",
+          "Cesar Enciso",
+          "J Enciso",
+          "J. Enciso"
+        ]
+      },
+      {
+        "id": "2507",
+        "nameEn": "Miguel Angel Almirón Rejala",
+        "nameCn": "阿尔米隆",
+        "aliases": [
+          "阿尔米隆",
+          "Miguel Almirón",
+          "Miguel Angel Almirón Rejala",
+          "Almiron Miguel",
+          "Miguel Angel",
+          "Almirón Rejala",
+          "M. Almiron",
+          "A Almirón",
+          "A. Almirón",
+          "Angel Almirón",
+          "M Almirón",
+          "M. Almirón",
+          "Miguel Almiron"
+        ]
+      }
+    ],
+    "USA": [
+      {
+        "id": "17",
+        "nameEn": "Christian Mate Pulisic",
+        "nameCn": "普利希奇",
+        "aliases": [
+          "普利希奇",
+          "Christian Pulisic",
+          "Christian Mate Pulisic",
+          "Pulisic Christian",
+          "Christian Mate",
+          "Pulisic",
+          "C Pulisic",
+          "C. Pulisic",
+          "M Pulisic",
+          "M. Pulisic",
+          "Mate Pulisic"
+        ]
+      },
+      {
+        "id": "415",
+        "nameEn": "Weston James Earl Mc Kennie",
+        "nameCn": "麦肯尼",
+        "aliases": [
+          "麦肯尼",
+          "Weston McKennie",
+          "Weston James Earl Mc Kennie",
+          "Mckennie Weston",
+          "Weston James Earl",
+          "Mc Kennie",
+          "Mckennie",
+          "E Mc",
+          "E. Mc",
+          "Earl Mc",
+          "J Mc",
+          "J. Mc",
+          "James Mc",
+          "W Mc",
+          "W. Mc",
+          "Weston Mc",
+          "Weston Mckennie"
+        ]
+      },
+      {
+        "id": "138835",
+        "nameEn": "Folarin Jolaoluwa Balogun",
+        "nameCn": "巴洛贡",
+        "aliases": [
+          "巴洛贡",
+          "Folarin Balogun",
+          "Folarin Jolaoluwa Balogun",
+          "Balogun Folarin",
+          "Folarin Jolaoluwa",
+          "Balogun",
+          "F Balogun",
+          "F. Balogun",
+          "J Balogun",
+          "J. Balogun",
+          "Jolaoluwa Balogun"
+        ]
+      }
+    ],
+    "MEX": [
+      {
+        "id": "2098",
+        "nameEn": "Francisco Guillermoochoa Magaña G. Ochoa",
+        "nameCn": "奥乔亚",
+        "aliases": [
+          "奥乔亚",
+          "Guillermo Ochoa",
+          "Francisco Guillermoochoa Magaña G. Ochoa",
+          "Ochoa Guillermo",
+          "Francisco Guillermoochoa Magaña",
+          "G. Ochoa",
+          "13/07/1985Ael Limassol (Cyp)",
+          "F G.",
+          "F. G.",
+          "Francisco G.",
+          "G G.",
+          "G. G.",
+          "Guillermoochoa G.",
+          "M G.",
+          "M. G.",
+          "Magaña G."
+        ]
+      },
+      {
+        "id": "2869",
+        "nameEn": "Edson Omar Álvarez Velázquez",
+        "nameCn": "阿尔瓦雷斯",
+        "aliases": [
+          "阿尔瓦雷斯",
+          "Edson Álvarez",
+          "Edson Omar Álvarez Velázquez",
+          "Alvarez Edson",
+          "Edson Omar",
+          "Álvarez Velázquez",
+          "E. Álvarez",
+          "E Álvarez",
+          "Edson Alvarez",
+          "O Álvarez",
+          "O. Álvarez",
+          "Omar Álvarez"
+        ]
+      }
+    ],
+    "CAN": [
+      {
+        "id": "509",
+        "nameEn": "Alphonso Boyle Davies",
+        "nameCn": "阿方索·戴维斯",
+        "aliases": [
+          "阿方索·戴维斯",
+          "Alphonso Davies",
+          "Alphonso Boyle Davies",
+          "Davies Alphonso",
+          "Alphonso Boyle",
+          "Davies",
+          "A Davies",
+          "A. Davies",
+          "B Davies",
+          "B. Davies",
+          "Boyle Davies"
+        ]
+      },
+      {
+        "id": "8489",
+        "nameEn": "Jonathan Christian David",
+        "nameCn": "乔纳森·戴维",
+        "aliases": [
+          "乔纳森·戴维",
+          "Jonathan David",
+          "Jonathan Christian David",
+          "David Jonathan",
+          "Jonathan Christian",
+          "David",
+          "J. David",
+          "C David",
+          "C. David",
+          "Christian David",
+          "J David"
+        ]
+      }
+    ],
+    "PAN": [
+      {
+        "id": "57807",
+        "nameEn": "Adalberto Eliecer Carrasquilla Alcazar",
+        "nameCn": "卡拉斯基利亚",
+        "aliases": [
+          "卡拉斯基利亚",
+          "Adalberto Carrasquilla",
+          "Adalberto Eliecer Carrasquilla Alcazar",
+          "Carrasquilla Adalberto",
+          "Adalberto Eliecer",
+          "Carrasquilla Alcazar",
+          "Carrasquilla",
+          "A Carrasquilla",
+          "A. Carrasquilla",
+          "E Carrasquilla",
+          "E. Carrasquilla",
+          "Eliecer Carrasquilla"
+        ]
+      },
+      {
+        "id": "2983",
+        "nameEn": "José Fajardo Nelson",
+        "nameCn": "法哈多",
+        "aliases": [
+          "法哈多",
+          "José Fajardo",
+          "José Fajardo Nelson",
+          "Fajardo Jose",
+          "José",
+          "Fajardo Nelson",
+          "Fajardo",
+          "J Fajardo",
+          "J. Fajardo",
+          "Jose Fajardo"
+        ]
+      }
+    ],
+    "HAI": [
+      {
+        "id": "8601",
+        "nameEn": "Frantzdy Pierrot",
+        "nameCn": "皮埃罗特",
+        "aliases": [
+          "皮埃罗特",
+          "Frantzdy Pierrot",
+          "Pierrot Frantzdy",
+          "Frantzdy",
+          "Pierrot",
+          "F Pierrot",
+          "F. Pierrot"
+        ]
+      },
+      {
+        "id": "45020",
+        "nameEn": "Duckens Nazon",
+        "nameCn": "纳宗",
+        "aliases": [
+          "纳宗",
+          "Duckens Nazon",
+          "Nazon Duckens",
+          "Duckens",
+          "Nazon",
+          "D Nazon",
+          "D. Nazon"
+        ]
+      }
+    ],
+    "CUW": [
+      {
+        "id": "19047",
+        "nameEn": "Juninho Gracielo Bacuna",
+        "nameCn": "巴利",
+        "aliases": [
+          "巴利",
+          "阿斯顿维拉旧将 Juninho Bacuna",
+          "Juninho Gracielo Bacuna",
+          "Bacuna Juninho",
+          "Juninho Gracielo",
+          "Bacuna",
+          "J. Bacuna",
+          "G Bacuna",
+          "G. Bacuna",
+          "Gracielo Bacuna",
+          "J Bacuna",
+          "Juninho Bacuna"
+        ]
+      },
+      {
+        "id": "38708",
+        "nameEn": "Gervane Zjandric Adonnis Kastaneer",
+        "nameCn": "卡斯特尼尔",
+        "aliases": [
+          "卡斯特尼尔",
+          "Gervane Kastaneer",
+          "Gervane Zjandric Adonnis Kastaneer",
+          "Kastaneer Gervane",
+          "Gervane Zjandric Adonnis",
+          "Kastaneer",
+          "A Kastaneer",
+          "A. Kastaneer",
+          "Adonnis Kastaneer",
+          "G Kastaneer",
+          "G. Kastaneer",
+          "Z Kastaneer",
+          "Z. Kastaneer",
+          "Zjandric Kastaneer"
+        ]
+      }
+    ],
+    "MAR": [
+      {
+        "id": "9",
+        "nameEn": "Achraf Hakimi Mouh",
+        "nameCn": "阿什拉夫",
+        "aliases": [
+          "阿什拉夫",
+          "Achraf Hakimi",
+          "Achraf Hakimi Mouh",
+          "Hakimi Achraf",
+          "Achraf",
+          "Hakimi Mouh",
+          "Hakimi",
+          "A Hakimi",
+          "A. Hakimi"
+        ]
+      },
+      {
+        "id": "744",
+        "nameEn": "Brahim Abdelkader Díaz",
+        "nameCn": "迪亚斯",
+        "aliases": [
+          "迪亚斯",
+          "Brahim Díaz",
+          "Brahim Abdelkader Díaz",
+          "Diaz Brahim",
+          "Brahim",
+          "Abdelkader Díaz",
+          "B Abdelkader",
+          "B. Abdelkader",
+          "Brahim Abdelkader",
+          "Brahim Diaz"
+        ]
+      },
+      {
+        "id": "2701",
+        "nameEn": "Yassine Bounou",
+        "nameCn": "布努",
+        "aliases": [
+          "布努",
+          "Yassine Bounou",
+          "Bounou Yassine",
+          "Yassine",
+          "Bounou",
+          "Bono",
+          "Y Bounou",
+          "Y. Bounou"
+        ]
+      }
+    ],
+    "EGY": [
+      {
+        "id": "306",
+        "nameEn": "Mohamed Salah Hamed Mahrous Ghaly",
+        "nameCn": "萨拉赫",
+        "aliases": [
+          "萨拉赫",
+          "Mohamed Salah",
+          "Mohamed Salah Hamed Mahrous Ghaly",
+          "Mohamed Salah Hamed Mahrous",
+          "Ghaly",
+          "M. Salah",
+          "H Ghaly",
+          "H. Ghaly",
+          "Hamed Ghaly",
+          "M Ghaly",
+          "M. Ghaly",
+          "Mahrous Ghaly",
+          "Mohamed Ghaly",
+          "S Ghaly",
+          "S. Ghaly",
+          "Salah Ghaly",
+          "Salah Mohamed"
+        ]
+      },
+      {
+        "id": "81573",
+        "nameEn": "Omar Khaled Mohamed Abdelsalamm Armoush Marmoush",
+        "nameCn": "马尔穆什",
+        "aliases": [
+          "马尔穆什",
+          "Omar Marmoush",
+          "Omar Khaled Mohamed Abdelsalamm Armoush Marmoush",
+          "Omar Khaled Mohamed Abdelsalamm Armoush",
+          "Marmoush",
+          "07/02/1999Manchester City Fc (Eng)",
+          "A Marmoush",
+          "A. Marmoush",
+          "Abdelsalamm Marmoush",
+          "Armoush Marmoush",
+          "K Marmoush",
+          "K. Marmoush",
+          "Khaled Marmoush",
+          "M Marmoush",
+          "M. Marmoush",
+          "Marmoush Omar",
+          "Mohamed Marmoush",
+          "O Marmoush",
+          "O. Marmoush"
+        ]
+      }
+    ],
+    "SEN": [
+      {
+        "id": "304",
+        "nameEn": "Sadio M Ané",
+        "nameCn": "马内",
+        "aliases": [
+          "马内",
+          "Sadio Mané",
+          "Sadio M Ané",
+          "Mane Sadio",
+          "Sadio",
+          "M Ané",
+          "S M",
+          "S. M",
+          "Sadio M",
+          "Sadio Mane"
+        ]
+      },
+      {
+        "id": "283058",
+        "nameEn": "Nicolas Jackson",
+        "nameCn": "尼古拉斯·杰克逊",
+        "aliases": [
+          "尼古拉斯·杰克逊",
+          "Nicolas Jackson",
+          "Jackson Nicolas",
+          "Nicolas",
+          "Jackson",
+          "N Jackson",
+          "N. Jackson"
+        ]
+      },
+      {
+        "id": "318",
+        "nameEn": "Kalidou Koulibaly",
+        "nameCn": "库利巴利",
+        "aliases": [
+          "库利巴利",
+          "Kalidou Koulibaly",
+          "Koulibaly Kalidou",
+          "Kalidou",
+          "Koulibaly",
+          "K Koulibaly",
+          "K. Koulibaly"
+        ]
+      }
+    ],
+    "ALG": [
+      {
+        "id": "635",
+        "nameEn": "Riyad Karim Mahrez",
+        "nameCn": "马赫雷斯",
+        "aliases": [
+          "马赫雷斯",
+          "Riyad Mahrez",
+          "Riyad Karim Mahrez",
+          "Mahrez Riyad",
+          "Riyad Karim",
+          "Mahrez",
+          "K Mahrez",
+          "K. Mahrez",
+          "Karim Mahrez",
+          "R Mahrez",
+          "R. Mahrez"
+        ]
+      },
+      {
+        "id": "21138",
+        "nameEn": "Rayan Aït-Nouri",
+        "nameCn": "艾特-努里",
+        "aliases": [
+          "艾特-努里",
+          "Rayán Aït-Nouri",
+          "Rayan Aït-Nouri",
+          "Ait-Nouri Rayan",
+          "Rayan",
+          "Aït-Nouri",
+          "Aït Nouri",
+          "R Aït-Nouri",
+          "R. Aït-Nouri",
+          "Rayan Ait-Nouri"
+        ]
+      },
+      {
+        "id": "658",
+        "nameEn": "Houssem-Eddine Chaabane Aouar",
+        "nameCn": "阿瓦尔",
+        "aliases": [
+          "阿瓦尔",
+          "Houssem Aouar",
+          "Houssem-Eddine Chaabane Aouar",
+          "Aouar Houssem",
+          "Houssem-Eddine Chaabane",
+          "Aouar",
+          "C Aouar",
+          "C. Aouar",
+          "Chaabane Aouar",
+          "E Aouar",
+          "E. Aouar",
+          "Eddine Aouar",
+          "H Aouar",
+          "H. Aouar"
+        ]
+      }
+    ],
+    "CIV": [
+      {
+        "id": "301771",
+        "nameEn": "Simon Adingra",
+        "nameCn": "阿丁格拉",
+        "aliases": [
+          "阿丁格拉",
+          "Simon Adingra",
+          "Adingra Simon",
+          "Simon",
+          "Adingra",
+          "S Adingra",
+          "S. Adingra"
+        ]
+      },
+      {
+        "id": "1642",
+        "nameEn": "Franck Yannick Kessie",
+        "nameCn": "凯西",
+        "aliases": [
+          "凯西",
+          "Franck Kessié",
+          "Franck Yannick Kessie",
+          "Kessie Franck",
+          "Franck Yannick",
+          "Kessie",
+          "F Kessie",
+          "F. Kessie",
+          "Franck Kessie",
+          "Y Kessie",
+          "Y. Kessie",
+          "Yannick Kessie"
+        ]
+      }
+    ],
+    "GHA": [
+      {
+        "id": "47294",
+        "nameEn": "Inaki Williams Arthuer",
+        "nameCn": "威廉姆斯",
+        "aliases": [
+          "威廉姆斯",
+          "Inaki Williams",
+          "Inaki Williams Arthuer",
+          "Williams Inaki",
+          "Inaki",
+          "Williams Arthuer",
+          "Williams",
+          "I Williams",
+          "I. Williams"
+        ]
+      },
+      {
+        "id": "49",
+        "nameEn": "Thomas Teye Partey",
+        "nameCn": "托马斯",
+        "aliases": [
+          "托马斯",
+          "Thomas Partey",
+          "Thomas Teye Partey",
+          "Partey Thomas",
+          "Thomas Teye",
+          "Partey",
+          "Thomas",
+          "T Partey",
+          "T. Partey",
+          "Teye Partey"
+        ]
+      }
+    ],
+    "RSA": [
+      {
+        "id": "3287",
+        "nameEn": "Teboho Mokoena",
+        "nameCn": "莫科纳",
+        "aliases": [
+          "莫科纳",
+          "Teboho Mokoena",
+          "Mokoena Teboho",
+          "Teboho",
+          "Mokoena",
+          "T Mokoena",
+          "T. Mokoena"
+        ]
+      }
+    ],
+    "CPV": [
+      {
+        "id": "1494",
+        "nameEn": "Jovane Eduardo Borges Cabral",
+        "nameCn": "卡布拉尔",
+        "aliases": [
+          "卡布拉尔",
+          "Jovane Cabral",
+          "Jovane Eduardo Borges Cabral",
+          "Jovane Eduardo",
+          "Borges Cabral",
+          "Jovane",
+          "Cabral Jovane",
+          "E Borges",
+          "E. Borges",
+          "Eduardo Borges",
+          "J Borges",
+          "J. Borges",
+          "Jovane Borges"
+        ]
+      }
+    ],
+    "COD": [
+      {
+        "id": "20649",
+        "nameEn": "Yoane Wissa",
+        "nameCn": "维萨",
+        "aliases": [
+          "维萨",
+          "Yoane Wissa",
+          "Wissa Yoane",
+          "Yoane",
+          "Wissa",
+          "Y Wissa",
+          "Y. Wissa"
+        ]
+      },
+      {
+        "id": "375",
+        "nameEn": "Mangulu Chancel Mbemba",
+        "nameCn": "姆本巴",
+        "aliases": [
+          "姆本巴",
+          "Chancel Mbemba",
+          "Mangulu Chancel Mbemba",
+          "Mbemba Chancel",
+          "Mangulu Chancel",
+          "Mbemba",
+          "C Mbemba",
+          "C. Mbemba",
+          "M Mbemba",
+          "M. Mbemba",
+          "Mangulu Mbemba"
+        ]
+      }
+    ],
+    "JPN": [
+      {
+        "id": "32862",
+        "nameEn": "Takefusa Kubo",
+        "nameCn": "久保建英",
+        "aliases": [
+          "久保建英",
+          "Takefusa Kubo",
+          "Kubo Takefusa",
+          "Takefusa",
+          "Kubo",
+          "T Kubo",
+          "T. Kubo"
+        ]
+      },
+      {
+        "id": "8500",
+        "nameEn": "Wataru Endo",
+        "nameCn": "远藤航",
+        "aliases": [
+          "远藤航",
+          "Wataru Endo",
+          "Endo Wataru",
+          "Wataru",
+          "Endo",
+          "W Endo",
+          "W. Endo"
+        ]
+      },
+      {
+        "id": "8500",
+        "nameEn": "Wataru Endo",
+        "nameCn": "远藤航等",
+        "aliases": [
+          "远藤航等",
+          "Wataru Endo",
+          "Endo Wataru",
+          "Wataru",
+          "Endo",
+          "W Endo",
+          "W. Endo"
+        ]
+      }
+    ],
+    "KOR": [
+      {
+        "id": "186",
+        "nameEn": "Heung Min Son",
+        "nameCn": "孙兴慜",
+        "aliases": [
+          "孙兴慜",
+          "Heung-min Son",
+          "Heung Min Son",
+          "Son Heungmin",
+          "Heung Min",
+          "Son",
+          "Heungmin",
+          "H Son",
+          "H. Son",
+          "Heung Son",
+          "Heungmin Son",
+          "M Son",
+          "M. Son",
+          "Min Son"
+        ]
+      },
+      {
+        "id": "2897",
+        "nameEn": "Minjae Kim",
+        "nameCn": "金玟哉",
+        "aliases": [
+          "金玟哉",
+          "Min-jae Kim",
+          "Minjae Kim",
+          "Kim Minjae",
+          "Minjae",
+          "Kim",
+          "M Kim",
+          "M. Kim"
+        ]
+      },
+      {
+        "id": "927",
+        "nameEn": "Kangin Lee",
+        "nameCn": "李刚仁",
+        "aliases": [
+          "李刚仁",
+          "Kang-in Lee",
+          "Kangin Lee",
+          "Lee Kangin",
+          "Kangin",
+          "Lee",
+          "K Lee",
+          "K. Lee"
+        ]
+      }
+    ],
+    "IRN": [
+      {
+        "id": "42315",
+        "nameEn": "Mehdi Taremi",
+        "nameCn": "塔雷米",
+        "aliases": [
+          "塔雷米",
+          "Mehdi Taremi",
+          "Taremi Mehdi",
+          "Mehdi",
+          "Taremi",
+          "M Taremi",
+          "M. Taremi"
+        ]
+      }
+    ],
+    "QAT": [
+      {
+        "id": "2544",
+        "nameEn": "Akram Hassan A Y Afif",
+        "nameCn": "阿克拉姆·阿菲夫",
+        "aliases": [
+          "阿克拉姆·阿菲夫",
+          "Akram Afif",
+          "Akram Hassan A Y Afif",
+          "Akram Hassan A Y",
+          "Afif",
+          "A Afif",
+          "A. Afif",
+          "Afif Akram",
+          "H Afif",
+          "H. Afif",
+          "Hassan Afif",
+          "Y Afif",
+          "Y. Afif"
+        ]
+      },
+      {
+        "id": "2543",
+        "nameEn": "Almoez Ali Zainelabdeen M Abdulla",
+        "nameCn": "阿尔莫埃斯·阿里",
+        "aliases": [
+          "阿尔莫埃斯·阿里",
+          "Almoez Ali",
+          "Almoez Ali Zainelabdeen M Abdulla",
+          "Almoez Ali Zainelabdeen M",
+          "Abdulla",
+          "Almoez",
+          "A Abdulla",
+          "A. Abdulla",
+          "Ali Abdulla",
+          "Ali Almoez",
+          "Almoez Abdulla",
+          "M Abdulla",
+          "M. Abdulla",
+          "Z Abdulla",
+          "Z. Abdulla",
+          "Zainelabdeen Abdulla"
+        ]
+      }
+    ],
+    "AUS": [
+      {
+        "id": "20079",
+        "nameEn": "Harry James Souttar",
+        "nameCn": "苏塔尔",
+        "aliases": [
+          "苏塔尔",
+          "Harry Souttar",
+          "Harry James Souttar",
+          "Souttar Harry",
+          "Harry James",
+          "Souttar",
+          "H Souttar",
+          "H. Souttar",
+          "J Souttar",
+          "J. Souttar",
+          "James Souttar"
+        ]
+      }
+    ],
+    "UZB": [
+      {
+        "id": "53535",
+        "nameEn": "Eldor Shomurodov",
+        "nameCn": "肖穆罗多夫",
+        "aliases": [
+          "肖穆罗多夫",
+          "Eldor Shomurodov",
+          "Shomurodov Eldor",
+          "Eldor",
+          "Shomurodov",
+          "E Shomurodov",
+          "E. Shomurodov"
+        ]
+      },
+      {
+        "id": "263676",
+        "nameEn": "Abbosbek Fayzullaev",
+        "nameCn": "法伊祖拉耶夫",
+        "aliases": [
+          "法伊祖拉耶夫",
+          "Abbosbek Fayzullaev",
+          "Fayzullaev Abbosbek",
+          "Abbosbek",
+          "Fayzullaev",
+          "A Fayzullaev",
+          "A. Fayzullaev"
+        ]
+      }
+    ],
+    "IRQ": [
+      {
+        "id": "49451",
+        "nameEn": "Aymen Hussein Ghadhban Ghadhban",
+        "nameCn": "艾曼·胡笙",
+        "aliases": [
+          "艾曼·胡笙",
+          "Aymen Hussein",
+          "Aymen Hussein Ghadhban Ghadhban",
+          "Aymen Hussein Ghadhban",
+          "Ghadhban",
+          "Aymen",
+          "A Ghadhban",
+          "A. Ghadhban",
+          "Aymen Ghadhban",
+          "G Ghadhban",
+          "G. Ghadhban",
+          "Ghadhban Ghadhban",
+          "H Ghadhban",
+          "H. Ghadhban",
+          "Hussein Aymen",
+          "Hussein Ghadhban"
+        ]
+      },
+      {
+        "id": "542644",
+        "nameEn": "Ali Jasim Elaibi Al-Tameemi",
+        "nameCn": "阿里·贾西姆",
+        "aliases": [
+          "阿里·贾西姆",
+          "Ali Jasim",
+          "Ali Jasim Elaibi Al-Tameemi",
+          "Ali Jasim Elaibi",
+          "Al-Tameemi",
+          "Ali J.",
+          "A Al-Tameemi",
+          "A. Al-Tameemi",
+          "Ali Al-Tameemi",
+          "E Al-Tameemi",
+          "E. Al-Tameemi",
+          "Elaibi Al-Tameemi",
+          "J Al-Tameemi",
+          "J. Al-Tameemi",
+          "Jasim Al-Tameemi",
+          "Jasim Ali"
+        ]
+      }
+    ],
+    "NZL": [
+      {
+        "id": "18931",
+        "nameEn": "Christopher Grant Wood",
+        "nameCn": "克里斯·伍德",
+        "aliases": [
+          "克里斯·伍德",
+          "Chris Wood",
+          "Christopher Grant Wood",
+          "Wood Chris",
+          "Christopher Grant",
+          "Wood",
+          "C Wood",
+          "C. Wood",
+          "Christopher Wood",
+          "G Wood",
+          "G. Wood",
+          "Grant Wood"
+        ]
+      },
+      {
+        "id": "6935",
+        "nameEn": "Sarpreet Singh",
+        "nameCn": "萨尔佩特·辛格",
+        "aliases": [
+          "萨尔佩特·辛格",
+          "Sarpreet Singh",
+          "Singh Sarpreet",
+          "Sarpreet",
+          "Singh",
+          "S Singh",
+          "S. Singh"
+        ]
+      }
+    ]
+  }
+}

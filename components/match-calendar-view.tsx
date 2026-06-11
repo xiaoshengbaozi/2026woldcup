@@ -1,12 +1,13 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, MapPin, CalendarDays } from "lucide-react";
+import { ChevronLeft, ChevronRight, MapPin } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { detailRows } from "@/lib/calendar";
+import { detailRows, localizeLocationText } from "@/lib/calendar";
 import { formatTime } from "@/lib/format";
-import { generateMatchSlug } from "@/lib/match-detail";
+import { areMatchTeamsConfirmed } from "@/lib/match-availability";
+import { generateMatchRouteSlug } from "@/lib/match-detail";
 import { formatStageLabel } from "@/lib/stage";
 import { parseTeams } from "@/lib/teams";
 import type { Match } from "@/types/match";
@@ -16,6 +17,7 @@ type CalendarMode = "month" | "week" | "day";
 type MatchCalendarViewProps = {
   matches: Match[];
   timezoneOffset: number;
+  frameless?: boolean;
 };
 
 const modeOptions: { value: CalendarMode; label: string }[] = [
@@ -26,7 +28,7 @@ const modeOptions: { value: CalendarMode; label: string }[] = [
 
 const weekDays = ["一", "二", "三", "四", "五", "六", "日"];
 
-export function MatchCalendarView({ matches, timezoneOffset }: MatchCalendarViewProps) {
+export function MatchCalendarView({ matches, timezoneOffset, frameless = false }: MatchCalendarViewProps) {
   const [mode, setMode] = useState<CalendarMode>("month");
 
   const calendarMatches = useMemo(
@@ -81,25 +83,19 @@ export function MatchCalendarView({ matches, timezoneOffset }: MatchCalendarView
 
   return (
     <motion.section
-      initial={{ opacity: 0, y: 18, filter: "blur(12px)" }}
-      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      initial={{ opacity: 0, y: 18 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="hero-card overflow-hidden"
+      className={frameless ? "w-full min-w-0 overflow-hidden" : "hero-card w-full min-w-0 overflow-hidden"}
     >
-      <div className="relative z-10 flex flex-col lg:flex-row">
+      <div className="relative z-10 flex min-w-0 flex-col lg:flex-row">
         {/* ── Left Panel ── */}
         <div className="flex w-full flex-col gap-4 p-5 sm:p-6 lg:w-[22rem] lg:border-r lg:border-white/[0.06]">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-volt/[0.1] text-volt">
-                <CalendarDays className="h-5 w-5" />
-              </div>
               <div>
-                <h2 className="text-lg font-semibold text-white">My Calendar</h2>
-                <p className="text-[10px] uppercase tracking-[0.16em] text-white/36">
-                  {totalMatchesToday} 场比赛今天
-                </p>
+                <h2 className="text-base font-semibold text-white sm:text-lg">今日{totalMatchesToday}场比赛</h2>
               </div>
             </div>
           </div>
@@ -151,14 +147,14 @@ export function MatchCalendarView({ matches, timezoneOffset }: MatchCalendarView
                     key={key}
                     type="button"
                     onClick={() => setCursor(startOfDay(date))}
-                    className={`group relative flex h-9 items-center justify-center text-xs font-medium transition ${
+                    className={`group relative mx-auto flex h-9 w-9 items-center justify-center rounded-full text-xs font-medium transition ${
                       !sameMonth
                         ? "text-white/18"
                         : isSelected
-                          ? "bg-volt text-black rounded-full shadow-[0_0_16px_rgba(216,255,62,.3)]"
+                          ? "bg-volt text-black shadow-[0_0_16px_rgba(216,255,62,.3)]"
                           : isToday
-                            ? "bg-volt/[0.12] text-volt rounded-full ring-1 ring-volt/30"
-                            : "text-white/70 rounded-xl hover:bg-white/[0.08] hover:text-white"
+                            ? "bg-volt/[0.12] text-volt ring-1 ring-volt/30"
+                            : "text-white/70 hover:bg-white/[0.08] hover:text-white"
                     }`}
                   >
                     <span>{date.getDate()}</span>
@@ -198,7 +194,7 @@ export function MatchCalendarView({ matches, timezoneOffset }: MatchCalendarView
           </div>
 
           {/* Selected Day Info */}
-          <div className="rounded-[1.4rem] bg-white/[0.03] p-4">
+          <div className="hidden rounded-[1.4rem] bg-white/[0.03] p-4 sm:block">
             <div className="mb-3 flex items-center justify-between">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/32">Date Detail</p>
@@ -223,7 +219,7 @@ export function MatchCalendarView({ matches, timezoneOffset }: MatchCalendarView
         </div>
 
         {/* ── Right Panel: Time Grid ── */}
-        <div className="min-h-[36rem] flex-1 p-5 sm:p-6">
+        <div className="min-w-0 flex-1 p-5 sm:p-6 lg:min-h-[36rem]">
           <div className="mb-4 flex items-center justify-between">
             <div>
               <h3 className="text-base font-semibold text-white">
@@ -524,17 +520,15 @@ function TimedMatchCard({
   tone: number;
 }) {
   const teams = parseTeams(match.summary);
-  const slug = generateMatchSlug(match.summary);
+  const slug = generateMatchRouteSlug(match);
   const toneIdx = tone % eventTones.length;
+  const isUnlocked = areMatchTeamsConfirmed(match.summary);
 
-  return (
-    <Link
-      href={"/matches/" + slug}
-      className={`block border-l-[3px] px-2 py-1.5 transition hover:bg-white/[0.06] ${eventTones[toneIdx]}`}
-    >
+  const content = (
+    <>
       <div className="flex items-center justify-between gap-1.5">
         <span className="text-[10px] font-semibold text-white/80">{formatTime(displayStart)}</span>
-        <span className="truncate text-[8px] font-medium uppercase tracking-wider text-white/40">{formatStageLabel(match.stage)}</span>
+        <span className="truncate text-[8px] font-medium uppercase tracking-wider text-white/40">{formatStageLabel(match.stage, match.summary)}</span>
       </div>
       <div className="mt-0.5 flex items-center gap-1.5 truncate text-[11px] font-bold text-white/90">
         <TeamFlag team={teams.home} size={14} />
@@ -544,7 +538,23 @@ function TimedMatchCard({
         <TeamFlag team={teams.away} size={14} />
         <span className="truncate">{teams.away.name}</span>
       </div>
+    </>
+  );
+
+  return isUnlocked ? (
+    <Link
+      href={"/matches/" + slug}
+      className={`block border-l-[3px] px-2 py-1.5 transition hover:bg-white/[0.06] ${eventTones[toneIdx]}`}
+    >
+      {content}
     </Link>
+  ) : (
+    <div
+      aria-disabled="true"
+      className={`block border-l-[3px] px-2 py-1.5 opacity-70 transition ${eventTones[toneIdx]}`}
+    >
+      {content}
+    </div>
   );
 }
 
@@ -553,20 +563,18 @@ function TimedMatchCard({
 function SelectedDayMatchRow({ match, displayStart }: { match: Match; displayStart: Date }) {
   const teams = parseTeams(match.summary);
   const details = detailRows(match);
-  const venue = details.find((detail) => detail.type === "venue")?.text || match.location;
-  const slug = generateMatchSlug(match.summary);
+  const venue = details.find((detail) => detail.type === "venue")?.text || localizeLocationText(match.location);
+  const slug = generateMatchRouteSlug(match);
+  const isUnlocked = areMatchTeamsConfirmed(match.summary);
 
-  return (
-    <Link
-      href={"/matches/" + slug}
-      className="group block rounded-2xl bg-white/[0.04] px-3 py-2.5 transition hover:bg-white/[0.07]"
-    >
+  const content = (
+    <>
       <div className="flex items-center justify-between gap-2">
         <div className="text-sm font-bold text-white transition group-hover:text-volt">
           {formatTime(displayStart)}
         </div>
         <div className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[9px] font-semibold text-white/40">
-          {formatStageLabel(match.stage)}
+          {formatStageLabel(match.stage, match.summary)}
         </div>
       </div>
       <div className="mt-1.5 flex items-center justify-between gap-2 text-xs font-semibold text-white/72">
@@ -584,7 +592,23 @@ function SelectedDayMatchRow({ match, displayStart }: { match: Match; displaySta
         <MapPin className="h-3 w-3 shrink-0 text-flare/60" />
         <span className="truncate">{venue}</span>
       </div>
+    </>
+  );
+
+  return isUnlocked ? (
+    <Link
+      href={"/matches/" + slug}
+      className="group block rounded-2xl bg-white/[0.04] px-3 py-2.5 transition hover:bg-white/[0.07]"
+    >
+      {content}
     </Link>
+  ) : (
+    <div
+      aria-disabled="true"
+      className="group block rounded-2xl bg-white/[0.04] px-3 py-2.5 opacity-70 transition"
+    >
+      {content}
+    </div>
   );
 }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { cachedJson, fetchWithTimeout } from "@/lib/request-cache";
 
 export type NewsItem = {
   id: string;
@@ -110,25 +111,32 @@ function mapNewsItem(item: AggregatedNewsItem, index: number): NewsItem {
   };
 }
 
-export function useFifaNews() {
+export function useFifaNews(enabled = true) {
   const [news, setNews] = useState<NewsItem[]>(fallbackNews);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
 
   useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
+
     let alive = true;
-    const controller = new AbortController();
 
     async function loadNews() {
+      if (document.hidden || !navigator.onLine) return;
       try {
         const params = new URLSearchParams({ limit: "4" });
-        const response = await fetch(`${NEWS_API}/api/news?${params.toString()}`, {
-          cache: "no-store",
-          signal: controller.signal
-        });
+        const endpoint = `${NEWS_API}/api/news?${params.toString()}`;
+        const data = await cachedJson<AggregatedNewsResponse>(endpoint, REFRESH_INTERVAL_MS, async () => {
+          const response = await fetchWithTimeout(endpoint, {
+            cache: "no-store"
+          }, 5_000);
 
-        if (!response.ok) throw new Error(`News API returned ${response.status}`);
+          if (!response.ok) throw new Error(`News API returned ${response.status}`);
 
-        const data = (await response.json()) as AggregatedNewsResponse;
+          return (await response.json()) as AggregatedNewsResponse;
+        }, { persist: true, staleTtlMs: 24 * 60 * 60 * 1000 });
         const items = (data.items ?? []).slice(0, 4).map(mapNewsItem);
 
         if (alive && items.length) setNews(items);
@@ -141,13 +149,16 @@ export function useFifaNews() {
 
     loadNews();
     const timer = window.setInterval(loadNews, REFRESH_INTERVAL_MS);
+    document.addEventListener("visibilitychange", loadNews);
+    window.addEventListener("online", loadNews);
 
     return () => {
       alive = false;
-      controller.abort();
       window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", loadNews);
+      window.removeEventListener("online", loadNews);
     };
-  }, []);
+  }, [enabled]);
 
   return { news, loading };
 }

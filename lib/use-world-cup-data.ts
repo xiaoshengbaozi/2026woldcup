@@ -3,15 +3,21 @@
 import { useEffect, useMemo, useState } from "react";
 import { extractCity, getTournamentProgress, parseCalendar } from "@/lib/calendar";
 import { parseTeams } from "@/lib/teams";
-import { fetchWorldCupFixtures } from "@/lib/world-cup-api";
+import { cachedText, fetchWithTimeout } from "@/lib/request-cache";
+import { useNow } from "@/lib/use-now";
+import { fetchWorldCupFixtures, fetchWorldCupWarmupFixtures } from "@/lib/world-cup-api";
 import type { Match } from "@/types/match";
 
 export function useWorldCupData() {
+  const currentTime = useNow(30_000);
   const [matches, setMatches] = useState<Match[]>([]);
+  const [warmupMatches, setWarmupMatches] = useState<Match[]>([]);
   const [activeCity, setActiveCity] = useState("全部城市");
   const [calendarUrl, setCalendarUrl] = useState("calendar.ics");
   const [loading, setLoading] = useState(true);
+  const [warmupLoading, setWarmupLoading] = useState(true);
   const [error, setError] = useState("");
+  const [warmupError, setWarmupError] = useState("");
 
   useEffect(() => {
     setCalendarUrl(new URL("/calendar.ics", window.location.href).href);
@@ -22,9 +28,11 @@ export function useWorldCupData() {
       let calendarMatches: Match[] = [];
 
       try {
-        const response = await fetch("/calendar.ics");
-        if (!response.ok) throw new Error("calendar fetch failed");
-        const text = await response.text();
+        const text = await cachedText("calendar.ics", 60 * 60 * 1000, async () => {
+          const response = await fetchWithTimeout("/calendar.ics", {}, 5_000);
+          if (!response.ok) throw new Error("calendar fetch failed");
+          return response.text();
+        }, { persist: true, staleTtlMs: 7 * 24 * 60 * 60 * 1000 });
         calendarMatches = parseCalendar(text);
       } catch {
         if (active) setError("赛程同步失败，请直接下载日历文件。");
@@ -59,6 +67,30 @@ export function useWorldCupData() {
     };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+
+    async function loadWarmups() {
+      try {
+        const warmups = await fetchWorldCupWarmupFixtures();
+        if (!active) return;
+        setWarmupMatches(warmups);
+        setWarmupError("");
+      } catch (err) {
+        console.warn("[WorldCupData] warmup fixtures unavailable:", err);
+        if (active) setWarmupError("热身赛同步失败，请稍后重试。");
+      } finally {
+        if (active) setWarmupLoading(false);
+      }
+    }
+
+    void loadWarmups();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const cities = useMemo(() => {
     const values = matches
       .map((match) => extractCity(match.location))
@@ -68,9 +100,11 @@ export function useWorldCupData() {
   }, [matches]);
 
   const matchStats = useMemo(() => {
-    const now = Date.now();
+    const now = currentTime > 0 ? currentTime : 0;
     let completed = 0;
     let ongoing = 0;
+
+    if (!now) return { completedCount: completed, ongoingCount: ongoing };
 
     for (const match of matches) {
       const started = match.start.getTime() <= now;
@@ -84,21 +118,29 @@ export function useWorldCupData() {
     }
 
     return { completedCount: completed, ongoingCount: ongoing };
-  }, [matches]);
+  }, [currentTime, matches]);
+
+  const progress = useMemo(
+    () => (currentTime > 0 ? getTournamentProgress(matches, currentTime) : 0),
+    [currentTime, matches]
+  );
 
   return {
     matches,
+    warmupMatches,
     activeCity,
     setActiveCity,
     calendarUrl,
     webcalUrl: calendarUrl.replace(/^https?:/, "webcal:"),
     cities,
     firstMatch: matches[0] ?? null,
-    progress: getTournamentProgress(matches),
+    progress,
     completedCount: matchStats.completedCount,
     ongoingCount: matchStats.ongoingCount,
     loading,
-    error
+    warmupLoading,
+    error,
+    warmupError
   };
 }
 

@@ -1,9 +1,12 @@
 ﻿"use client";
 
+import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { CalendarDays, Check, ChevronDown, Clock, GitFork, Grid3X3, Layers, LayoutList, MapPin, Search } from "lucide-react";
 import { ComponentType, useEffect, useMemo, useRef, useState } from "react";
-import type { ScheduleLayout } from "@/app/matches/page";
+import { createPortal } from "react-dom";
+import { openCreatorSupportModal } from "@/components/support-creator-modal";
+import type { ScheduleLayout, ScheduleMatchSource } from "@/app/matches/page";
 import { formatStageLabel, getStageGroupId, rankStage } from "@/lib/stage";
 
 type Timezone = {
@@ -21,6 +24,7 @@ const timezones: Timezone[] = [
 
 type MatchFiltersProps = {
   query: string;
+  matchSource: ScheduleMatchSource;
   stage: string;
   stages: string[];
   activeCity: string;
@@ -28,13 +32,14 @@ type MatchFiltersProps = {
   timezoneOffset: number;
   layout: ScheduleLayout;
   onQueryChange: (value: string) => void;
+  onMatchSourceChange: (value: ScheduleMatchSource) => void;
   onStageChange: (value: string) => void;
   onCityChange: (value: string) => void;
   onTimezoneChange: (offset: number) => void;
   onLayoutChange: (layout: ScheduleLayout) => void;
 };
 
-type FilterOption = {
+export type FilterOption = {
   label: string;
   value: string;
   meta?: string;
@@ -72,6 +77,7 @@ function sortStages(stages: string[]): string[] {
 
 export function MatchFilters({
   query,
+  matchSource,
   stage,
   stages,
   activeCity,
@@ -79,6 +85,7 @@ export function MatchFilters({
   timezoneOffset,
   layout,
   onQueryChange,
+  onMatchSourceChange,
   onStageChange,
   onCityChange,
   onTimezoneChange,
@@ -103,59 +110,165 @@ export function MatchFilters({
   );
 
   return (
-    <motion.section
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.08, duration: 0.65 }}
-      className="relative z-20 space-y-3 sm:space-y-0 sm:flex sm:flex-wrap sm:items-center sm:gap-3"
+    <>
+      <motion.section
+        data-match-filters="true"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.08, duration: 0.65 }}
+        className="scrollbar-hidden relative z-[10000] w-full min-w-0 flex flex-nowrap items-center gap-1.5 overflow-x-auto overscroll-x-contain sm:z-20 sm:flex-wrap sm:gap-3 sm:overflow-visible"
+      >
+        <div className="hidden sm:block">
+          <MatchSourceToggle value={matchSource} onChange={onMatchSourceChange} />
+        </div>
+
+        <label className="glass-chip order-1 flex h-10 min-w-[6.25rem] max-w-[10rem] shrink-0 items-center gap-2 px-3 text-white/70 transition focus-within:text-white sm:order-none sm:w-auto sm:min-w-0 sm:max-w-none sm:flex-1 sm:basis-auto sm:gap-3 sm:px-5">
+          <Search className="h-5 w-5 shrink-0 text-volt/80" />
+          <input
+            value={query}
+            onChange={(event) => onQueryChange(event.target.value)}
+            placeholder="球队、场馆、城市或比赛"
+            className="w-full bg-transparent text-xs text-white outline-none placeholder:text-white/35"
+          />
+        </label>
+
+        <div className="order-1 flex shrink-0 items-center gap-2 sm:hidden">
+          <MobileScheduleModeToggle layout={layout} onChange={onLayoutChange} />
+        </div>
+
+        <div className="hidden sm:block">
+          <LayoutToggle layout={layout} onChange={onLayoutChange} />
+        </div>
+
+        <div className="order-2 flex w-auto shrink-0 items-center gap-1.5 sm:order-none sm:gap-3">
+          <FilterDropdown
+            icon={Clock}
+            value={String(timezoneOffset)}
+            fallbackLabel="时区"
+            options={timezones.map((timezone) => ({
+              label: timezone.label,
+              value: String(timezone.offset),
+              meta: timezone.label.split(" ")[0]
+            }))}
+            compactLabel={(option) => option?.meta ?? "时区"}
+            onChange={(nextValue) => onTimezoneChange(Number(nextValue))}
+          />
+          <FilterDropdown
+            icon={Layers}
+            value={stage}
+            fallbackLabel="赛段"
+            allLabel="全部赛段"
+            options={stageOptions}
+            onChange={onStageChange}
+            grouped
+          />
+          <FilterDropdown
+            icon={MapPin}
+            value={activeCity === "全部城市" ? "" : activeCity}
+            fallbackLabel="城市"
+            allLabel="全部城市"
+            options={cityOptions}
+            onChange={(nextValue) => onCityChange(nextValue || "全部城市")}
+            grouped
+          />
+          <SupportBeerButton />
+        </div>
+      </motion.section>
+    </>
+  );
+}
+
+function SupportBeerButton() {
+  return (
+    <button
+      type="button"
+      aria-label="打赏作者"
+      title="打赏作者"
+      onClick={openCreatorSupportModal}
+      className="glass-chip group relative box-border hidden h-10 min-h-10 w-10 shrink-0 items-center justify-center overflow-hidden px-0 text-white/78 ring-1 ring-transparent transition hover:text-white hover:ring-amber-300/25 sm:flex sm:w-auto sm:min-w-[11.5rem] sm:justify-start sm:gap-2.5 sm:px-4"
     >
-      <label className="glass-chip flex h-10 w-full items-center gap-3 px-5 text-white/70 transition focus-within:text-white sm:flex-1">
-        <Search className="h-5 w-5 shrink-0 text-volt/80" />
-        <input
-          value={query}
-          onChange={(event) => onQueryChange(event.target.value)}
-          placeholder="搜索球队、场馆、城市或比赛"
-          className="w-full bg-transparent text-xs text-white outline-none placeholder:text-white/35"
+      <span className="relative block h-8 max-h-8 w-8 shrink-0 overflow-hidden">
+        <Image
+          src="/support/beer-glass.webp"
+          alt=""
+          fill
+          sizes="32px"
+          className="block object-contain p-0.5 transition duration-200 group-hover:scale-110"
         />
-      </label>
+      </span>
+      <span className="hidden whitespace-nowrap text-xs leading-none sm:block">请作者喝杯啤酒</span>
+    </button>
+  );
+}
 
-      <div className="hidden sm:block">
-        <LayoutToggle layout={layout} onChange={onLayoutChange} />
-      </div>
+function MatchSourceToggle({
+  value,
+  onChange
+}: {
+  value: ScheduleMatchSource;
+  onChange: (value: ScheduleMatchSource) => void;
+}) {
+  const options: { value: ScheduleMatchSource; label: string }[] = [
+    { value: "official", label: "\u6b63\u8d5b" },
+    { value: "warmups", label: "\u70ed\u8eab" },
+  ];
 
-      <div className="grid grid-cols-3 gap-3 sm:flex sm:gap-3">
-        <FilterDropdown
-          icon={Clock}
-          value={String(timezoneOffset)}
-          fallbackLabel="时区"
-          options={timezones.map((timezone) => ({
-            label: timezone.label,
-            value: String(timezone.offset),
-            meta: timezone.label.split(" ")[0]
-          }))}
-          compactLabel={(option) => option?.meta ?? "时区"}
-          onChange={(nextValue) => onTimezoneChange(Number(nextValue))}
-        />
-        <FilterDropdown
-          icon={Layers}
-          value={stage}
-          fallbackLabel="赛段"
-          allLabel="全部赛段"
-          options={stageOptions}
-          onChange={onStageChange}
-          grouped
-        />
-        <FilterDropdown
-          icon={MapPin}
-          value={activeCity === "全部城市" ? "" : activeCity}
-          fallbackLabel="城市"
-          allLabel="全部城市"
-          options={cityOptions}
-          onChange={(nextValue) => onCityChange(nextValue || "全部城市")}
-          grouped
-        />
-      </div>
-    </motion.section>
+  return (
+    <div className="glass-chip flex h-10 shrink-0 items-center overflow-hidden p-1">
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          data-match-source={option.value}
+          onClick={() => onChange(option.value)}
+          className={`h-8 rounded-full px-3 text-[11px] font-semibold transition-all duration-150 sm:px-4 ${
+            value === option.value
+              ? "bg-volt/10 text-volt ring-1 ring-volt/25 shadow-[0_0_18px_rgba(216,255,62,.12)]"
+              : "text-white/50 hover:text-white/78"
+          }`}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function MobileScheduleModeToggle({
+  layout,
+  onChange
+}: {
+  layout: ScheduleLayout;
+  onChange: (layout: ScheduleLayout) => void;
+}) {
+  const activeMode = layout === "waterfall" ? "group" : "date";
+  const options: { value: "date" | "group"; label: string; nextLayout: ScheduleLayout }[] = [
+    { value: "date", label: "日期", nextLayout: "default" },
+    { value: "group", label: "小组", nextLayout: "waterfall" },
+  ];
+
+  return (
+    <div className="glass-chip flex h-10 shrink-0 items-center overflow-hidden p-1">
+      {options.map((option) => {
+        const active = activeMode === option.value;
+
+        return (
+          <button
+            key={option.value}
+            type="button"
+            aria-pressed={active}
+            onClick={() => onChange(option.nextLayout)}
+            className={`h-8 rounded-full px-3 text-[11px] font-semibold transition-all duration-150 ${
+              active
+                ? "bg-volt/10 text-volt ring-1 ring-volt/25 shadow-[0_0_18px_rgba(216,255,62,.12)]"
+                : "text-white/50 hover:text-white/78"
+            }`}
+          >
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -231,6 +344,8 @@ function useDropdownClose(open: boolean, onClose: () => void) {
     if (!open) return;
 
     const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (target.closest("[data-filter-sheet='true']")) return;
       if (ref.current && !ref.current.contains(event.target as Node)) onClose();
     };
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -248,7 +363,7 @@ function useDropdownClose(open: boolean, onClose: () => void) {
   return ref;
 }
 
-function FilterDropdown({
+export function FilterDropdown({
   icon: Icon,
   value,
   fallbackLabel,
@@ -268,8 +383,13 @@ function FilterDropdown({
   onChange: (value: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const ref = useDropdownClose(open, () => setOpen(false));
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!open) setExpandedGroups({});
@@ -284,129 +404,156 @@ function FilterDropdown({
     return acc;
   }, {});
   const groupEntries = Object.entries(groupedOptions);
+  const panelContent = (
+    <>
+      <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-volt/35 to-transparent" />
+      <div className="flex shrink-0 items-center justify-center px-5 pb-2 pt-3 sm:hidden">
+        <span className="h-1 w-10 rounded-full bg-white/18" />
+      </div>
+      <div className="flex shrink-0 items-center gap-3 px-5 pb-3 sm:hidden">
+        <Icon className="h-4 w-4 shrink-0 text-volt/80" />
+        <div className="min-w-0">
+          <p className="text-[10px] font-semibold uppercase text-white/34">筛选</p>
+          <p className="truncate text-sm font-semibold text-white/86">{fallbackLabel}</p>
+        </div>
+      </div>
+      {allLabel && (
+        <button
+          type="button"
+          onClick={() => {
+            onChange("");
+            setOpen(false);
+          }}
+          className={`flex w-full shrink-0 items-center gap-3 px-5 py-3 text-sm font-medium transition-all duration-150 ${
+            !value ? "bg-volt/[0.08] text-volt" : "text-white/62 hover:bg-white/[0.05] hover:text-white/90"
+          }`}
+        >
+          {allLabel}
+          {!value && <Check className="ml-auto h-4 w-4 shrink-0" />}
+        </button>
+      )}
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-6 scrollbar-hidden sm:max-h-[20rem] sm:flex-none sm:pb-2">
+        {groupEntries.length ? groupEntries.map(([group, items]) => (
+          <div key={group} className="pt-2">
+            {grouped ? (
+              <>
+                <FilterGroupHeader
+                  count={items.length}
+                  expanded={Boolean(expandedGroups[group])}
+                  label={group}
+                  selected={value === makeFilterGroupValue(group)}
+                  onSelect={() => {
+                    onChange(makeFilterGroupValue(group));
+                    setOpen(false);
+                  }}
+                  onToggle={() =>
+                    setExpandedGroups((current) => ({
+                      ...current,
+                      [group]: !current[group]
+                    }))
+                  }
+                />
+                <AnimatePresence initial={false}>
+                  {expandedGroups[group] && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+                      className="overflow-hidden sm:mx-2 sm:rounded-2xl sm:bg-white/[0.025]"
+                    >
+                      <OptionList options={items} value={value} onSelect={(nextValue) => {
+                        onChange(nextValue);
+                        setOpen(false);
+                      }} />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </>
+            ) : (
+              <div className="overflow-hidden sm:mx-2 sm:rounded-2xl sm:bg-white/[0.025]">
+                <OptionList options={items} value={value} onSelect={(nextValue) => {
+                  onChange(nextValue);
+                  setOpen(false);
+                }} />
+              </div>
+            )}
+          </div>
+        )) : (
+          <button
+            type="button"
+            className="mx-2 my-3 flex w-[calc(100%-1rem)] items-center justify-center rounded-2xl bg-white/[0.04] px-4 py-4 text-sm text-white/50 transition hover:bg-white/[0.07] hover:text-white/75"
+          >
+            没有匹配项
+          </button>
+        )}
+      </div>
+    </>
+  );
+  const mobileLayer = mounted ? createPortal(
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.button
+            data-filter-backdrop="true"
+            type="button"
+            aria-label="关闭筛选器"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            onClick={() => setOpen(false)}
+            className="fixed inset-0 z-[9990] bg-black/52 backdrop-blur-md sm:hidden"
+          />
+          <motion.div
+            data-filter-sheet="true"
+            initial={{ opacity: 0, y: 28, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 28, scale: 0.98 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed inset-x-0 bottom-0 z-[9999] flex h-[54dvh] min-h-[20rem] flex-col overflow-hidden rounded-t-[2rem] bg-black/82 shadow-[0_-28px_90px_rgba(0,0,0,.72),0_0_0_1px_rgba(255,255,255,.09),0_0_48px_rgba(216,255,62,.08)] backdrop-blur-2xl sm:hidden"
+          >
+            {panelContent}
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>,
+    document.body
+  ) : null;
 
   return (
-    <div ref={ref} className="relative min-w-0 sm:min-w-[150px]">
+    <div ref={ref} className="relative min-w-0 shrink-0 sm:min-w-[150px]">
       <button
         type="button"
+        aria-label={fallbackLabel}
+        title={fallbackLabel}
         onClick={() => setOpen(!open)}
-        className={`glass-chip flex h-10 w-full items-center justify-between gap-1.5 px-3 text-left transition sm:gap-2 sm:px-5 ${
+        className={`glass-chip flex h-10 w-10 items-center justify-center gap-1.5 px-0 text-left transition sm:w-full sm:justify-between sm:gap-2 sm:px-5 ${
           open ? "text-volt ring-1 ring-volt/25" : "text-white/78 hover:text-white"
         }`}
       >
         <Icon className="h-4 w-4 shrink-0 text-volt/80" />
-        <span className="truncate text-xs">{label}</span>
-        <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
+        <span className="hidden truncate text-xs sm:block">{label}</span>
+        <motion.span className="hidden sm:block" animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
           <ChevronDown className="h-4 w-4 shrink-0" />
         </motion.span>
       </button>
 
       <AnimatePresence>
         {open && (
-          <>
-            <motion.button
-              type="button"
-              aria-label="关闭筛选器"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.18 }}
-              onClick={() => setOpen(false)}
-              className="fixed inset-0 z-40 bg-black/52 backdrop-blur-md sm:hidden"
-            />
-            <motion.div
-              initial={{ opacity: 0, y: 28, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 28, scale: 0.98 }}
-              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-              className="fixed inset-x-0 bottom-0 z-50 flex h-[54dvh] min-h-[20rem] flex-col overflow-hidden rounded-t-[2rem] bg-black/82 shadow-[0_-28px_90px_rgba(0,0,0,.72),0_0_0_1px_rgba(255,255,255,.09),0_0_48px_rgba(216,255,62,.08)] backdrop-blur-2xl sm:absolute sm:bottom-auto sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:h-auto sm:min-h-0 sm:w-40 sm:rounded-[1.35rem]"
-            >
-              <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-volt/35 to-transparent" />
-              <div className="flex shrink-0 items-center justify-center px-5 pb-2 pt-3 sm:hidden">
-                <span className="h-1 w-10 rounded-full bg-white/18" />
-              </div>
-              <div className="flex shrink-0 items-center gap-3 px-5 pb-3 sm:hidden">
-                <Icon className="h-4 w-4 shrink-0 text-volt/80" />
-                <div className="min-w-0">
-                  <p className="text-[10px] font-semibold uppercase text-white/34">筛选</p>
-                  <p className="truncate text-sm font-semibold text-white/86">{fallbackLabel}</p>
-                </div>
-              </div>
-              {allLabel && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    onChange("");
-                    setOpen(false);
-                  }}
-                  className={`flex w-full shrink-0 items-center gap-3 px-5 py-3 text-sm font-medium transition-all duration-150 ${
-                    !value ? "bg-volt/[0.08] text-volt" : "text-white/62 hover:bg-white/[0.05] hover:text-white/90"
-                  }`}
-                >
-                  {allLabel}
-                  {!value && <Check className="ml-auto h-4 w-4 shrink-0" />}
-                </button>
-              )}
-              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-6 scrollbar-hidden sm:max-h-[20rem] sm:flex-none sm:pb-2">
-                {groupEntries.length ? groupEntries.map(([group, items]) => (
-                  <div key={group} className="pt-2">
-                    {grouped ? (
-                      <>
-                        <FilterGroupHeader
-                          count={items.length}
-                          expanded={Boolean(expandedGroups[group])}
-                          label={group}
-                          selected={value === makeFilterGroupValue(group)}
-                          onSelect={() => {
-                            onChange(makeFilterGroupValue(group));
-                            setOpen(false);
-                          }}
-                          onToggle={() =>
-                            setExpandedGroups((current) => ({
-                              ...current,
-                              [group]: !current[group]
-                            }))
-                          }
-                        />
-                        <AnimatePresence initial={false}>
-                          {expandedGroups[group] && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: "auto", opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-                              className="mx-2 overflow-hidden rounded-2xl bg-white/[0.025]"
-                            >
-                              <OptionList options={items} value={value} onSelect={(nextValue) => {
-                                onChange(nextValue);
-                                setOpen(false);
-                              }} />
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </>
-                    ) : (
-                      <div className="mx-2 overflow-hidden rounded-2xl bg-white/[0.025]">
-                        <OptionList options={items} value={value} onSelect={(nextValue) => {
-                          onChange(nextValue);
-                          setOpen(false);
-                        }} />
-                      </div>
-                    )}
-                  </div>
-                )) : (
-                  <button
-                    type="button"
-                    className="mx-2 my-3 flex w-[calc(100%-1rem)] items-center justify-center rounded-2xl bg-white/[0.04] px-4 py-4 text-sm text-white/50 transition hover:bg-white/[0.07] hover:text-white/75"
-                  >
-                    没有匹配项
-                  </button>
-                )}
-              </div>
-            </motion.div>
-          </>
+          <motion.div
+            data-filter-sheet="true"
+            initial={{ opacity: 0, y: 8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.98 }}
+            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="filter-dropdown-panel absolute right-0 top-full z-50 mt-2 hidden w-40 flex-col overflow-hidden rounded-[1.35rem] bg-black/82 shadow-[0_18px_55px_rgba(0,0,0,.46),0_0_0_1px_rgba(255,255,255,.09),0_0_38px_rgba(216,255,62,.08)] backdrop-blur-2xl sm:flex"
+          >
+            {panelContent}
+          </motion.div>
         )}
       </AnimatePresence>
+      {mobileLayer}
     </div>
   );
 }
@@ -489,5 +636,3 @@ function FilterGroupHeader({
     </div>
   );
 }
-
-

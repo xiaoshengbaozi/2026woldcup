@@ -6,10 +6,10 @@ export interface CountriesSlice {
   countries: Map<string, CountryData>;
   lastSequenceNumber: number | null;
 
-  updateCountries: (data: CountryData[]) => void;
+  updateCountries: (data: CountryData[]) => string[];
   updateCountriesFromDelta: (
     updates: Array<Partial<CountryData> & { countryCode: string }>
-  ) => void;
+  ) => string[];
   getCountry: (code: string) => CountryData | undefined;
   getAllCountries: () => CountryData[];
 }
@@ -24,19 +24,42 @@ export const createCountriesSlice: StateCreator<
     const map = new Map<string, CountryData>();
     for (const c of data) map.set(c.countryCode, c);
     set({ countries: map });
+    return data.map((c) => c.countryCode);
   },
 
   updateCountriesFromDelta: (updates) => {
-    set((state) => {
-      const next = new Map(state.countries);
-      for (const u of updates) {
-        const existing = next.get(u.countryCode);
-        if (existing) {
-          next.set(u.countryCode, { ...existing, ...u } as CountryData);
+    if (!updates.length) return [];
+
+    const { countries } = get();
+    const next = new Map(countries);
+    const changedCountryCodes: string[] = [];
+
+    for (const u of updates) {
+      const existing = next.get(u.countryCode);
+      if (!existing) continue;
+      const { historyPoint: _historyPoint, ...countryPatch } = u as typeof u & {
+        historyPoint?: unknown;
+      };
+
+      let changed = false;
+      for (const [key, value] of Object.entries(countryPatch)) {
+        if (existing[key as keyof CountryData] !== value) {
+          changed = true;
+          break;
         }
       }
-      return { countries: next };
-    });
+
+      if (changed) {
+        next.set(u.countryCode, { ...existing, ...countryPatch } as CountryData);
+        changedCountryCodes.push(u.countryCode);
+      }
+    }
+
+    if (changedCountryCodes.length) {
+      set({ countries: next });
+    }
+
+    return changedCountryCodes;
   },
 
   getCountry: (code) => get().countries.get(code),

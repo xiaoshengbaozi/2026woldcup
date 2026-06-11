@@ -1,8 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { BarChart3 } from "lucide-react";
-import { parseTeams } from "@/lib/teams";
 import type { MatchDetail } from "@/types/match";
 
 type StatRow = {
@@ -15,7 +13,6 @@ type StatRow = {
 };
 
 export function MatchStatsPanel({ detail }: { detail: MatchDetail }) {
-  const teams = parseTeams(detail.match.summary);
   const { stats } = detail;
 
   const statRows: StatRow[] = [
@@ -86,28 +83,11 @@ export function MatchStatsPanel({ detail }: { detail: MatchDetail }) {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.25, duration: 0.5 }}
-      className="hero-card overflow-hidden"
+      className="match-stats-panel hero-card overflow-hidden"
     >
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-volt/25 to-transparent" />
 
       <div className="relative px-4 py-5 sm:px-6 sm:py-6">
-        {/* Header */}
-        <div className="mb-5 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4 text-volt" />
-            <h3 className="text-xs font-semibold uppercase tracking-[0.1em] text-white">
-              数据统计
-            </h3>
-          </div>
-        </div>
-
-        {/* Team labels */}
-        <div className="mb-4 flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase text-volt">{teams.home.name}</span>
-          <span className="text-xs font-semibold uppercase text-flare">{teams.away.name}</span>
-        </div>
-
-        {/* Stats rows */}
         <div className="space-y-3">
           {statRows.map((row, i) => (
             <StatBar key={row.label} row={row} index={i} />
@@ -121,44 +101,62 @@ export function MatchStatsPanel({ detail }: { detail: MatchDetail }) {
 function StatBar({ row, index }: { row: StatRow; index: number }) {
   const homeVal = typeof row.home === "number" ? row.home : parseFloat(row.home as string) || 0;
   const awayVal = typeof row.away === "number" ? row.away : parseFloat(row.away as string) || 0;
-  const total = homeVal + awayVal;
-  const homePct = total > 0 ? (homeVal / total) * 100 : 50;
+  const maxVal = Math.max(homeVal, awayVal, 1);
+  const homePct = Math.max(5, (homeVal / maxVal) * 100);
+  const awayPct = Math.max(5, (awayVal / maxVal) * 100);
   const unit = row.unit ?? "";
+  const homeDisplay = formatStatValue(row.home, unit);
+  const awayDisplay = formatStatValue(row.away, unit);
 
   return (
     <motion.div
+      className="match-stat-row"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ delay: 0.3 + index * 0.03 }}
     >
-      {/* Values */}
-      <div className="mb-1 flex items-center justify-between text-xs">
-        <span className={`tabular font-bold ${row.homeHigher ? "text-volt" : "text-white/60"}`}>
-          {typeof row.home === "number" ? row.home % 1 !== 0 ? row.home.toFixed(1) : row.home : row.home}{unit}
+      <div className="grid grid-cols-[3.75rem_minmax(0,1fr)_5rem_minmax(0,1fr)_3.75rem] items-center gap-2 sm:grid-cols-[4.75rem_minmax(0,1fr)_7rem_minmax(0,1fr)_4.75rem] sm:gap-4">
+        <span
+          className={`match-stat-value text-right text-xl font-bold leading-none tabular-nums sm:text-2xl ${row.homeHigher ? "text-volt" : "text-white/62"}`}
+          style={{ fontFamily: "ScreenMatrix, monospace" }}
+        >
+          {homeDisplay}
         </span>
-        <span className="text-[10px] font-medium uppercase tracking-wider text-white/40">
+
+        <div className="match-stat-track flex h-2.5 items-center justify-end overflow-hidden rounded-full bg-white/[0.06] shadow-[inset_0_1px_8px_rgba(0,0,0,.32)]">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${homePct}%` }}
+            transition={{ delay: 0.4 + index * 0.03, duration: 0.6 }}
+            className={`h-full rounded-full ${row.homeHigher ? "bg-volt shadow-[0_0_14px_rgba(216,255,62,.32)]" : "bg-volt/30"}`}
+          />
+        </div>
+
+        <span className="match-stat-label min-w-0 text-center text-xs font-semibold uppercase leading-tight tracking-[0.12em] text-white/66 sm:text-sm">
           {row.label}
         </span>
-        <span className={`tabular font-bold ${row.awayHigher ? "text-flare" : "text-white/60"}`}>
-          {typeof row.away === "number" ? row.away % 1 !== 0 ? row.away.toFixed(1) : row.away : row.away}{unit}
-        </span>
-      </div>
 
-      {/* Bar */}
-      <div className="flex h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${homePct}%` }}
-          transition={{ delay: 0.4 + index * 0.03, duration: 0.6 }}
-          className={`rounded-l-full ${row.homeHigher ? "bg-volt" : "bg-volt/30"}`}
-        />
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${100 - homePct}%` }}
-          transition={{ delay: 0.4 + index * 0.03, duration: 0.6 }}
-          className={`rounded-r-full ${row.awayHigher ? "bg-flare" : "bg-flare/30"}`}
-        />
+        <div className="match-stat-track flex h-2.5 items-center overflow-hidden rounded-full bg-white/[0.06] shadow-[inset_0_1px_8px_rgba(0,0,0,.32)]">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${awayPct}%` }}
+            transition={{ delay: 0.4 + index * 0.03, duration: 0.6 }}
+            className={`h-full rounded-full ${row.awayHigher ? "bg-flare shadow-[0_0_14px_rgba(255,154,31,.32)]" : "bg-flare/30"}`}
+          />
+        </div>
+
+        <span
+          className={`match-stat-value text-left text-xl font-bold leading-none tabular-nums sm:text-2xl ${row.awayHigher ? "text-flare" : "text-white/62"}`}
+          style={{ fontFamily: "ScreenMatrix, monospace" }}
+        >
+          {awayDisplay}
+        </span>
       </div>
     </motion.div>
   );
+}
+
+function formatStatValue(value: number | string, unit: string) {
+  const display = typeof value === "number" ? (value % 1 !== 0 ? value.toFixed(1) : String(value)) : value;
+  return `${display}${unit}`;
 }

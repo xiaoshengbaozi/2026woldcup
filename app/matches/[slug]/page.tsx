@@ -3,6 +3,8 @@ import fs from "fs";
 import path from "path";
 import { parseCalendar } from "@/lib/calendar";
 import { generateLegacyMatchSlug, generateMatchSlug, generateStageLegacyMatchSlug } from "@/lib/match-detail";
+import { fetchWithTimeout } from "@/lib/request-cache";
+import { getBackendApiUrl, getWarmupBackendApiUrl } from "@/lib/world-cup-api";
 import { MatchDetailClient } from "./client";
 
 type Props = { params: { slug: string } };
@@ -25,7 +27,7 @@ function getAllSlugs(): string[] {
 
 async function getApiFixtureSlugs(): Promise<string[]> {
   try {
-    const response = await fetch("http://localhost:3001/api/worldcup/fixtures", { cache: "no-store" });
+    const response = await fetchWithTimeout(`${getBackendApiUrl()}/api/worldcup/fixtures`, { cache: "no-store" }, 5_000);
     if (!response.ok) return [];
     const payload = (await response.json()) as { fixtures?: Array<{ summary?: string }> };
     const slugs = (payload.fixtures ?? [])
@@ -42,8 +44,26 @@ async function getApiFixtureSlugs(): Promise<string[]> {
   }
 }
 
+async function getWarmupFixtureSlugs(): Promise<string[]> {
+  try {
+    const response = await fetchWithTimeout(`${getWarmupBackendApiUrl()}/api/worldcup/warmups`, { cache: "no-store" }, 5_000);
+    if (!response.ok) return [];
+    const payload = (await response.json()) as { fixtures?: Array<{ summary?: string }> };
+    const slugs = (payload.fixtures ?? [])
+      .filter((fixture): fixture is { summary: string } => Boolean(fixture.summary))
+      .flatMap((fixture) => {
+        const slug = `warmup-${generateMatchSlug(fixture.summary)}`;
+        return [slug, encodeURIComponent(slug)];
+      });
+
+    return slugs;
+  } catch {
+    return [];
+  }
+}
+
 export async function generateStaticParams() {
-  const slugs = [...getAllSlugs(), ...(await getApiFixtureSlugs())];
+  const slugs = [...getAllSlugs(), ...(await getApiFixtureSlugs()), ...(await getWarmupFixtureSlugs())];
   return [...new Set(slugs)].map((slug) => ({ slug }));
 }
 

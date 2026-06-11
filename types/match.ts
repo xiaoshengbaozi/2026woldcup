@@ -20,6 +20,15 @@ export type Match = {
   } | null;
   stage: string;
   weather: string;
+  status?: "not_started" | "live" | "halftime" | "finished" | "postponed" | "unknown";
+  statusLabel?: string;
+  elapsed?: number | null;
+  score?: {
+    home: number | null;
+    away: number | null;
+    halftimeHome?: number | null;
+    halftimeAway?: number | null;
+  };
   homeTeam?: MatchTeamMeta;
   awayTeam?: MatchTeamMeta;
 };
@@ -70,6 +79,7 @@ export type LineupPlayer = {
   nameCn?: string;
   number: number | null;
   position: PlayerPosition;
+  grid?: string | null;
   positionCn?: string;
   photo?: string;
   isStarter: boolean;
@@ -77,6 +87,7 @@ export type LineupPlayer = {
   club: string;
   age: number;
   rating?: number;
+  featuredCategory?: "superstar" | "wonderkid" | "star" | "rating";
   isCaptain?: boolean;
   injury?: boolean;
   yellowCards?: number;
@@ -85,8 +96,9 @@ export type LineupPlayer = {
 export type MatchLineup = {
   formation: string;
   players: LineupPlayer[];
-  listType?: "confirmed_lineup" | "squad_pool";
+  listType?: "confirmed_lineup" | "final_squad" | "squad_pool";
   officialWorldCupSquad?: boolean;
+  coach?: string | null;
 };
 
 export type MatchEventType =

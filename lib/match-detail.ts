@@ -11,6 +11,11 @@ export function generateMatchSlug(summary: string): string {
   return `${slugifyTeamName(teams.home)}-vs-${slugifyTeamName(teams.away)}`;
 }
 
+export function generateMatchRouteSlug(match: Match): string {
+  const slug = generateMatchSlug(match.summary);
+  return isWarmupMatch(match) ? `warmup-${slug}` : slug;
+}
+
 export function generateLegacyMatchSlug(summary: string): string {
   const teams = splitMatchTeams(summary);
   if (!teams) return slugify(summary);
@@ -116,7 +121,11 @@ const TEAM_NAME_TO_SLUG: Record<string, string> = {
   意大利: "italy",
   英格兰: "england",
   约旦: "jordan",
+  "刚果(金)": "dr-congo",
+  刚果金: "dr-congo",
   刚果民主共和国: "dr-congo",
+  "DR Congo": "dr-congo",
+  "Congo DR": "dr-congo",
   海地: "haiti",
   埃及: "egypt",
   秘鲁: "peru",
@@ -136,9 +145,14 @@ export function findMatchBySlug(matches: Match[], slug: string): Match | undefin
   const decodedSlug = decodeURIComponent(slug);
   return matches.find((match) => {
     return (
+      generateMatchRouteSlug(match) === decodedSlug ||
       generateMatchSlug(match.summary) === decodedSlug ||
       generateLegacyMatchSlug(match.summary) === decodedSlug ||
       generateStageLegacyMatchSlug(match.summary) === decodedSlug
     );
   });
+}
+
+function isWarmupMatch(match: Match) {
+  return match.uid.startsWith("warmup-") || match.stage === "\u70ed\u8eab\u8d5b";
 }

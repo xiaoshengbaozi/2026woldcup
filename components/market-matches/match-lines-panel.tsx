@@ -1,10 +1,16 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { memo, useState, useCallback, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart3, TrendingUp, X, Zap, Globe2, ChevronDown } from "lucide-react";
 import { getTeamCodeFromName, localizeTeamName } from "@/lib/team-localization";
+import {
+  getLineupPlayerEnterTransition,
+  lineupPlayerEnterAnimate,
+  lineupPlayerEnterInitial,
+  lineupPlayerEnterVariants,
+} from "@/components/motion/lineup-player-enter";
 import { useMatchLines } from "@/lib/use-match-lines";
 import { formatVolume } from "@/lib/format";
 import { getFlagUrl } from "@/lib/world-cup-2026";
@@ -14,7 +20,9 @@ export function MatchLinesPanel() {
   const { events, timestamp, loading, error } = useMatchLines();
   const [selected, setSelected] = useState<MatchLineEvent | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia("(max-width: 1023px)").matches : false
+  );
   const panelRef = useRef<HTMLDivElement>(null);
 
   const close = useCallback(() => setSelected(null), []);
@@ -29,14 +37,14 @@ export function MatchLinesPanel() {
 
   return (
     <>
-    <section ref={panelRef} className="hero-card relative overflow-hidden p-5">
+    <section ref={panelRef} className="match-lines-panel hero-card relative overflow-hidden p-5">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(216,255,62,0.10),transparent_30%),radial-gradient(circle_at_90%_20%,rgba(255,154,31,0.08),transparent_32%)]" />
 
       <div className="relative flex items-center justify-between border-b border-white/[0.04] pb-3 mb-5">
         <div className="flex items-center gap-2">
           <BarChart3 className="h-4 w-4 text-volt" />
-          <p className="text-sm font-semibold uppercase tracking-[0.08em] text-white">
-            比赛盘口
+          <p className="match-lines-title text-sm font-semibold uppercase tracking-[0.08em] text-white">
+            比赛预测
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -50,7 +58,7 @@ export function MatchLinesPanel() {
             <button
               type="button"
               onClick={() => setExpanded((v) => !v)}
-              className="flex items-center gap-1 text-[10px] text-white/30 transition hover:text-volt/60"
+              className="match-lines-toggle flex items-center gap-1 text-[10px] text-white/30 transition hover:text-volt/60"
             >
               <span>{expanded ? "收起" : "展开"}</span>
               <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${expanded ? "rotate-180" : ""}`} />
@@ -62,13 +70,13 @@ export function MatchLinesPanel() {
       <div className="relative">
         {loading && (
           <div className="grid min-h-[220px] place-items-center rounded-3xl border border-white/[0.06] bg-black/20 text-xs uppercase tracking-[0.16em] text-white/35">
-            正在同步比赛盘口...
+            正在同步比赛预测...
           </div>
         )}
 
         {!loading && error && (
           <div className="rounded-3xl border border-flare/20 bg-flare/5 p-6 text-sm text-flare">
-            比赛盘口暂时不可用：{error}
+            比赛预测暂时不可用：{error}
           </div>
         )}
 
@@ -78,7 +86,7 @@ export function MatchLinesPanel() {
               className="grid grid-cols-1 gap-2.5 overflow-hidden transition-all duration-300 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
               style={{ maxHeight: expanded ? "4000px" : "160px" }}
             >
-              {visibleEvents(events).map((event, index) => (
+              {visibleEvents(events, expanded).map((event, index) => (
                 <MatchLineCard
                   key={event.id}
                   event={event}
@@ -94,7 +102,7 @@ export function MatchLinesPanel() {
               <button
                 type="button"
                 onClick={() => setExpanded((v) => !v)}
-                className="mt-3 flex w-full items-center justify-center gap-1 text-[11px] text-white/30 transition hover:text-volt/60"
+                className="match-lines-toggle mt-3 flex w-full items-center justify-center gap-1 text-[11px] text-white/30 transition hover:text-volt/60"
               >
                 <span>{expanded ? "收起" : "展开更多"}</span>
                 <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${expanded ? "rotate-180" : ""}`} />
@@ -121,7 +129,7 @@ export function MatchLinesPanel() {
 
 /* ──────────── Simplified Card ──────────── */
 
-function MatchLineCard({
+const MatchLineCard = memo(function MatchLineCard({
   event,
   index,
   isSelected,
@@ -158,7 +166,7 @@ function MatchLineCard({
       onMouseEnter={() => onHover(event.id)}
       onMouseLeave={() => onHover(null)}
       className={`
-        group relative cursor-pointer overflow-hidden rounded-2xl border p-3.5 transition-all duration-200
+        match-line-card group relative cursor-pointer overflow-hidden rounded-2xl border p-3.5 transition-all duration-200
         ${isSelected
           ? "border-volt/20 bg-volt/[0.04]"
           : isHovered
@@ -253,7 +261,7 @@ function MatchLineCard({
       </div>
     </motion.article>
   );
-}
+});
 
 /* ──────────── Detail Modal (Flight-card inspired) ──────────── */
 
@@ -282,16 +290,16 @@ function MatchDetailModal({
       onClick={onClose}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+      <div className="match-detail-modal-backdrop absolute inset-0 bg-black/70 backdrop-blur-sm" />
 
       {/* Card */}
       <motion.div
-        initial={{ scale: 0.92, y: 20, opacity: 0 }}
-        animate={{ scale: 1, y: 0, opacity: 1 }}
-        exit={{ scale: 0.92, y: 20, opacity: 0 }}
-        transition={{ type: "spring", damping: 28, stiffness: 380 }}
+        initial={lineupPlayerEnterInitial}
+        animate={lineupPlayerEnterAnimate}
+        exit={{ opacity: 0, y: 8 }}
+        transition={getLineupPlayerEnterTransition(0, 0.08, 0.02, 0.3)}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-[380px] overflow-hidden rounded-[24px] border border-white/[0.08] bg-[#111113] shadow-[0_32px_64px_rgba(0,0,0,0.6)]"
+        className="match-detail-modal relative w-full max-w-[380px] overflow-hidden rounded-[24px] border border-white/[0.08] bg-[#111113] shadow-[0_32px_64px_rgba(0,0,0,0.6)]"
       >
         {/* Close button */}
         <button
@@ -307,17 +315,29 @@ function MatchDetailModal({
         {/* Main content area — flight card layout */}
         <div className="relative px-6 pt-7 pb-5">
           {/* Time row */}
-          <div className="flex items-center justify-between mb-5">
+          <motion.div
+            custom={0}
+            variants={lineupPlayerEnterVariants}
+            initial="hidden"
+            animate="visible"
+            className="mb-5 flex items-center justify-between"
+          >
             <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-white/25" style={{ fontFamily: "ScreenMatrix" }}>
               开赛时间
             </span>
             <span className="text-[10px] font-medium uppercase tracking-[0.1em] text-white/25" style={{ fontFamily: "ScreenMatrix" }}>
               {event.ticker}
             </span>
-          </div>
+          </motion.div>
 
           {/* Teams vs layout — flight path inspired */}
-          <div className="flex items-center justify-between gap-3">
+          <motion.div
+            custom={1}
+            variants={lineupPlayerEnterVariants}
+            initial="hidden"
+            animate="visible"
+            className="flex items-center justify-between gap-3"
+          >
             {/* Home team */}
             <div className="flex flex-col items-center min-w-0 gap-1.5">
               <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-white/35" style={{ fontFamily: "ScreenMatrix" }}>
@@ -385,12 +405,18 @@ function MatchDetailModal({
                 {awayLocalized}
               </span>
             </div>
-          </div>
+          </motion.div>
 
           {/* Dotted flight path */}
-          <div className="relative mt-4 h-[1px]">
+          <motion.div
+            custom={2}
+            variants={lineupPlayerEnterVariants}
+            initial="hidden"
+            animate="visible"
+            className="relative mt-4 h-[1px]"
+          >
             <div className="absolute inset-x-0 top-1/2 h-[1px] bg-gradient-to-r from-transparent via-white/15 to-transparent" />
-          </div>
+          </motion.div>
 
           {/* Odds grid — adapts to 2 or 3 markets */}
           <div
@@ -399,11 +425,15 @@ function MatchDetailModal({
           >
             {moneyline.map((market, idx) => {
               const isHome = idx === 0;
-              const isDraw = moneyline.length === 3 && idx === 2;
+              const isDraw = moneyline.length === 3 && idx === 1;
               const isAway = !isHome && !isDraw;
               return (
-                <div
+                <motion.div
                   key={market.id}
+                  custom={idx + 3}
+                  variants={lineupPlayerEnterVariants}
+                  initial="hidden"
+                  animate="visible"
                   className="flex flex-col items-center gap-1 rounded-xl border border-white/[0.05] bg-white/[0.025] px-2 py-2.5 transition hover:border-volt/15"
                 >
                   <span className="text-[9px] uppercase tracking-[0.1em] text-white/30">
@@ -422,13 +452,19 @@ function MatchDetailModal({
                       Bid {market.bestBid.toFixed(2)}
                     </span>
                   )}
-                </div>
+                </motion.div>
               );
             })}
           </div>
 
           {/* Market stats footer */}
-          <div className="mt-4 flex items-center justify-between border-t border-white/[0.04] pt-3">
+          <motion.div
+            custom={moneyline.length + 3}
+            variants={lineupPlayerEnterVariants}
+            initial="hidden"
+            animate="visible"
+            className="mt-4 flex items-center justify-between border-t border-white/[0.04] pt-3"
+          >
             <div className="flex items-center gap-1.5 text-[10px] text-white/25">
               <Globe2 className="h-3 w-3" />
               <span>流动性 {formatVolume(event.liquidity)}</span>
@@ -437,7 +473,7 @@ function MatchDetailModal({
               <TrendingUp className="h-3 w-3" />
               <span>24h 交易量 {formatVolume(event.volume24h)}</span>
             </div>
-          </div>
+          </motion.div>
         </div>
       </motion.div>
     </motion.div>
@@ -446,8 +482,8 @@ function MatchDetailModal({
 
 /* ──────────── Helpers ──────────── */
 
-function visibleEvents(events: MatchLineEvent[]) {
-  return events;
+function visibleEvents(events: MatchLineEvent[], expanded: boolean) {
+  return expanded ? events : events.slice(0, 8);
 }
 
 function pickMoneyline(event: MatchLineEvent) {

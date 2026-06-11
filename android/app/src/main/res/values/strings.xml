@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">CYBERBALL</string>
+    <string name="title_activity_main">CYBERBALL</string>
+    <string name="package_name">fun.boyzi.cyberball</string>
+    <string name="custom_url_scheme">fun.boyzi.cyberball</string>
+</resources>
