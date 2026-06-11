@@ -52,6 +52,9 @@ export function useWorldCupData() {
           setMatches(nextMatches);
           setError("");
           setLoading(false);
+          if (!forceRefresh && hasMatchInLiveRefreshWindow(nextMatches, Date.now())) {
+            void loadMatches(true);
+          }
           return;
         }
       } catch (err) {
@@ -64,6 +67,9 @@ export function useWorldCupData() {
         matchesRef.current = calendarMatches;
         setMatches(calendarMatches);
         setError("");
+        if (!forceRefresh && hasMatchInLiveRefreshWindow(calendarMatches, Date.now())) {
+          void loadMatches(true);
+        }
       }
 
       if (active) setLoading(false);
@@ -92,6 +98,9 @@ export function useWorldCupData() {
         warmupMatchesRef.current = warmups;
         setWarmupMatches(warmups);
         setWarmupError("");
+        if (!forceRefresh && hasMatchInLiveRefreshWindow(warmups, Date.now())) {
+          void loadWarmups(true);
+        }
       } catch (err) {
         console.warn("[WorldCupData] warmup fixtures unavailable:", err);
         if (active) setWarmupError("热身赛同步失败，请稍后重试。");

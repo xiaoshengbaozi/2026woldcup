@@ -171,7 +171,7 @@ export function WorldCupHero({ matches, progress, completedCount, ongoingCount, 
           });
       };
 
-      syncTopScorers();
+      syncTopScorers(true);
       const refreshId = window.setInterval(() => syncTopScorers(true), TOP_SCORERS_REFRESH_MS);
 
       return () => {

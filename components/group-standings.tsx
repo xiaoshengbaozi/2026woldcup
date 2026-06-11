@@ -91,7 +91,10 @@ export function GroupStandings({ matches }: GroupStandingsProps) {
   const fallbackGroups = useMemo(() => buildGroupStandings(matches), [matches]);
   const apiGroups = useMemo(() => buildApiGroupStandings(remoteStandings), [remoteStandings]);
   const seedGroups = useMemo(() => buildSeedGroupStandings(), []);
-  const officialGroups = apiGroups.length ? apiGroups : fallbackGroups.length ? fallbackGroups : seedGroups;
+  const officialGroups = useMemo(
+    () => mergeGroupStandings(seedGroups, fallbackGroups, apiGroups),
+    [apiGroups, fallbackGroups, seedGroups]
+  );
   const archiveGroups = useMemo(
     () => (activeArchive ? buildPredictionGroupStandings(activeArchive.groupScores) : []),
     [activeArchive]
@@ -300,7 +303,21 @@ function buildPredictionGroupStandings(scores: Record<string, PredictionScore>):
     id: group.id,
     label: `${group.id} 组`,
     teams: computePredictionStandings(group.id, scores),
-  })).filter((group) => group.teams.some((team) => team.played > 0));
+  }));
+}
+
+function mergeGroupStandings(...sources: GroupStanding[][]): GroupStanding[] {
+  const groups = new Map<string, GroupStanding>();
+
+  for (const source of sources) {
+    for (const group of source) {
+      groups.set(group.id, group);
+    }
+  }
+
+  return preferredGroups
+    .map((id) => groups.get(id))
+    .filter((group): group is GroupStanding => Boolean(group));
 }
 
 function buildSeedGroupStandings(): GroupStanding[] {
@@ -396,7 +413,9 @@ function normalizeFlagCode(code: string) {
 }
 
 function getApiGroupId(group: string) {
-  const match = group.match(/^([A-L])\s*组?/i);
+  const match =
+    group.match(/^([A-L])\s*组?/i) ??
+    group.match(/Group\s+([A-L])\b/i);
   return match?.[1]?.toUpperCase() ?? null;
 }
 
@@ -423,22 +442,101 @@ function collectTeams(matches: Match[]): StandingTeam[] {
   const teams = new Map<string, StandingTeam>();
 
   matches.forEach((match) => {
-    const parsed = parseTeams(match.summary);
-    [parsed.home, parsed.away].forEach((team) => {
-      if (!teams.has(team.name)) {
-        teams.set(team.name, {
-          ...team,
-          played: 0,
-          won: 0,
-          drawn: 0,
-          lost: 0,
-          points: 0
-        });
-      }
-    });
+    const { home, away } = getMatchTeams(match);
+    ensureStandingTeam(teams, home);
+    ensureStandingTeam(teams, away);
+
+    const score = getCompletedScore(match);
+    if (!score) return;
+
+    const homeRow = teams.get(home.key);
+    const awayRow = teams.get(away.key);
+    if (!homeRow || !awayRow) return;
+
+    applyScore(homeRow, awayRow, score.home, score.away);
   });
 
-  return [...teams.values()].slice(0, 4);
+  return [...teams.values()]
+    .sort((a, b) =>
+      b.points - a.points ||
+      (b.goalDifference ?? 0) - (a.goalDifference ?? 0) ||
+      (b.goalsFor ?? 0) - (a.goalsFor ?? 0) ||
+      b.won - a.won ||
+      a.name.localeCompare(b.name)
+    )
+    .slice(0, 4);
+}
+
+function ensureStandingTeam(teams: Map<string, StandingTeam>, team: Team & { key: string }) {
+  if (teams.has(team.key)) return;
+
+  teams.set(team.key, {
+    badge: team.badge,
+    badgeType: team.badgeType,
+    image: team.image,
+    name: team.name,
+    played: 0,
+    won: 0,
+    drawn: 0,
+    lost: 0,
+    points: 0,
+    goalsFor: 0,
+    goalDifference: 0,
+  });
+}
+
+function getMatchTeams(match: Match) {
+  const parsed = parseTeams(match.summary);
+  const home = match.homeTeam ? teamFromMeta(match.homeTeam.code, match.homeTeam.name, parsed.home) : parsed.home;
+  const away = match.awayTeam ? teamFromMeta(match.awayTeam.code, match.awayTeam.name, parsed.away) : parsed.away;
+
+  return {
+    home: { ...home, key: teamCode(home) },
+    away: { ...away, key: teamCode(away) },
+  };
+}
+
+function teamFromMeta(code: string, name: string, fallback: Team): Team {
+  if (!code) return fallback;
+
+  return {
+    badge: code,
+    badgeType: "image",
+    image: getFlagUrl(normalizeFlagCode(code), 40),
+    name: name || fallback.name,
+  };
+}
+
+function getCompletedScore(match: Match): { home: number; away: number } | null {
+  const home = match.score?.home;
+  const away = match.score?.away;
+  if (typeof home !== "number" || typeof away !== "number") return null;
+
+  return { home, away };
+}
+
+function applyScore(home: StandingTeam, away: StandingTeam, homeGoals: number, awayGoals: number) {
+  home.played++;
+  away.played++;
+  home.goalsFor = (home.goalsFor ?? 0) + homeGoals;
+  away.goalsFor = (away.goalsFor ?? 0) + awayGoals;
+  home.goalDifference = (home.goalDifference ?? 0) + homeGoals - awayGoals;
+  away.goalDifference = (away.goalDifference ?? 0) + awayGoals - homeGoals;
+
+  if (homeGoals > awayGoals) {
+    home.won++;
+    home.points += 3;
+    away.lost++;
+  } else if (awayGoals > homeGoals) {
+    away.won++;
+    away.points += 3;
+    home.lost++;
+  } else {
+    home.drawn++;
+    away.drawn++;
+    home.points++;
+    away.points++;
+  }
 }
 
 function teamCode(team: Team) {

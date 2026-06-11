@@ -848,7 +848,7 @@ function localizeRound(round: string) {
 
 function localizeGroup(group: string) {
   if (/Ranking of third-placed teams/i.test(group)) return "小组第三排名";
-  const match = group.match(/^Group\s+([A-Z])$/i);
+  const match = group.match(/(?:^|-\s*)Group\s+([A-Z])$/i);
   return match ? `${match[1].toUpperCase()} 组` : group;
 }
 
