@@ -15,7 +15,7 @@ import { useNow } from "@/lib/use-now";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
 import playerArticles from "@/data/player-articles.json";
 import { getOfficialPlayerCatalog, type OfficialPlayerCatalogItem } from "@/lib/official-player-catalog";
-import { fetchWorldCupTopScorers, TOP_SCORERS_REFRESH_MS, type WorldCupTopScorer } from "@/lib/world-cup-top-scorers";
+import { fallbackTopScorerProfiles, fetchWorldCupTopScorers, TOP_SCORERS_REFRESH_MS, type WorldCupTopScorer } from "@/lib/world-cup-top-scorers";
 
 type PlayerArticle = (typeof playerArticles.players)[number];
 type PlayerListItem = PlayerArticle | OfficialPlayerCatalogItem;
@@ -81,7 +81,7 @@ export function PlayersClient() {
     mobileFiltersRef,
     MOBILE_PLAYERS_FILTERS_STICKY_OFFSET
   );
-  const [topScorers, setTopScorers] = useState<WorldCupTopScorer[]>([]);
+  const [topScorers, setTopScorers] = useState<WorldCupTopScorer[]>(fallbackTopScorerProfiles);
   const [topScorersLoading, setTopScorersLoading] = useState(true);
   const { home } = useUserSession();
   const { matches, warmupMatches } = useWorldCupData();
@@ -176,11 +176,11 @@ export function PlayersClient() {
     const syncTopScorers = (forceRefresh = false) => {
       fetchWorldCupTopScorers({ forceRefresh })
         .then((items) => {
-          if (active) setTopScorers(items);
+          if (active) setTopScorers(items.length ? items : fallbackTopScorerProfiles);
         })
         .catch((error) => {
           console.warn("[PlayersClient] top scorers unavailable:", error);
-          if (active && !forceRefresh) setTopScorers([]);
+          if (active && !forceRefresh) setTopScorers(fallbackTopScorerProfiles);
         })
         .finally(() => {
           if (active) setTopScorersLoading(false);

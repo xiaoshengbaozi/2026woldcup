@@ -94,6 +94,7 @@ export async function fetchWorldCupFixtures(options: { season?: number; league?:
     league: String(options.league ?? 1),
     season: String(options.season ?? 2026),
   });
+  if (options.forceRefresh) params.set("forceRefresh", String(Date.now()));
 
   const url = `${apiUrl}/api/worldcup/fixtures?${params}`;
   const fetchFixtures = async () => {
@@ -123,6 +124,7 @@ export async function fetchWorldCupWarmupFixtures(options: { season?: number; le
   if (options.league) params.set("league", String(options.league));
   if (options.from) params.set("from", options.from);
   if (options.to) params.set("to", options.to);
+  if (options.forceRefresh) params.set("forceRefresh", String(Date.now()));
 
   const url = `${apiUrl}/api/worldcup/warmups?${params}`;
   const fetchFixtures = async () => {
