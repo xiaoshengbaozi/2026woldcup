@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Bell, Radio, Send, Unlink } from "lucide-react";
+import { Radio, Send, Unlink } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { buildNotificationSummaryGroups, formatNotificationTime, NotificationSummaryPanel } from "@/components/notification-summary";
 import { useUserSession } from "@/components/user-session-provider";
@@ -69,28 +69,7 @@ export default function NotificationsPage() {
 
   return (
     <DashboardShell>
-      <main className="mx-auto grid w-full max-w-[430px] gap-4 pb-2 sm:max-w-3xl lg:max-w-5xl">
-        <section className="relative overflow-hidden rounded-[2rem] border border-white/[0.12] bg-white/[0.055] p-5 text-white shadow-[0_24px_70px_rgba(0,0,0,.42),0_0_42px_rgba(216,255,62,.08)] backdrop-blur-2xl">
-          <div className="pointer-events-none absolute -right-12 -top-14 h-36 w-36 rounded-full bg-volt/12 blur-[56px]" />
-          <div className="relative flex items-start justify-between gap-4">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-volt/75">Notification Center</p>
-              <h1 className="mt-2 text-2xl font-semibold tracking-normal">通知汇总</h1>
-              <p className="mt-2 text-xs leading-5 text-white/46">
-                站内提醒会把关注球员、关注球队和收藏比赛的关键动态集中到这里。
-              </p>
-            </div>
-            <div className="relative grid h-12 w-12 shrink-0 place-items-center rounded-full bg-white/[0.08] text-volt ring-1 ring-white/[0.1]">
-              <Bell className="h-5 w-5" />
-              {unreadCount > 0 ? (
-                <span className="absolute -right-1 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-flare px-1 text-[10px] font-black text-black ring-2 ring-ink-950">
-                  {unreadCount > 9 ? "9+" : unreadCount}
-                </span>
-              ) : null}
-            </div>
-          </div>
-        </section>
-
+      <main className="grid w-full gap-4 pb-2">
         {loading ? (
           <section className="rounded-[1.75rem] border border-white/[0.1] bg-white/[0.045] p-5 text-sm text-white/52 backdrop-blur-2xl">
             正在同步你的通知...
@@ -191,7 +170,7 @@ export default function NotificationsPage() {
         ) : null}
 
         <section className="grid gap-3">
-          <div className="flex items-center gap-2 px-1">
+          <div className="flex items-center gap-2">
             <Radio className="h-4 w-4 text-volt/80" />
             <h2 className="text-sm font-semibold text-white/86">查看全部</h2>
           </div>
