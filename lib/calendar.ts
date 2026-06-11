@@ -207,33 +207,64 @@ export function groupMatchesByDay(matches: Match[]) {
 }
 
 export function getDayStatus(dayMatches: Match[]) {
+  if (!dayMatches.length) return "暂无比赛";
+
   const now = Date.now();
-  const firstStart = dayMatches[0].start.getTime();
-  const lastEnd = dayMatches.reduce((latest, match) => {
-    const end = match.end?.getTime() || match.start.getTime();
-    return end > latest ? end : latest;
-  }, dayMatches[0].end?.getTime() || dayMatches[0].start.getTime());
+  const orderedMatches = [...dayMatches].sort((a, b) => a.start.getTime() - b.start.getTime());
+  const nextMatch = orderedMatches.find((match) => match.start.getTime() > now);
+  const hasLiveMatch = orderedMatches.some((match) => isMatchLive(match, now));
+  const hasStartedMatch = orderedMatches.some((match) => hasMatchStarted(match, now));
+  const allFinished = orderedMatches.every((match) => isMatchFinished(match, now));
 
-  if (now > lastEnd) return "Finished";
+  if (allFinished) return "已完赛";
+  if (hasLiveMatch) return "比赛中";
+  if (hasStartedMatch && nextMatch) return "比赛日进行中";
+  if (hasStartedMatch) return "比赛中";
 
-  const inProgress = dayMatches.some((match) => {
-    const start = match.start.getTime();
-    const end = match.end?.getTime() || start;
-    return now >= start && now <= end;
-  });
-  if (inProgress) return "Live";
+  const firstStart = nextMatch?.start.getTime() ?? orderedMatches[0].start.getTime();
+  const diff = Math.max(0, firstStart - now);
 
-  const diff = firstStart - now;
   const hoursTotal = diff / 3600000;
 
   if (hoursTotal < 24) {
     const h = Math.floor(hoursTotal);
     const m = Math.floor((hoursTotal - h) * 60);
-    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")} left`;
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")} 后开赛`;
   }
 
   const days = Math.ceil(hoursTotal / 24);
-  return `${days} days later`;
+  return `${days} 天后开赛`;
+}
+
+function hasMatchStarted(match: Match, now: number) {
+  return (
+    match.status === "live" ||
+    match.status === "halftime" ||
+    match.status === "finished" ||
+    hasMatchScore(match) ||
+    match.start.getTime() <= now
+  );
+}
+
+function isMatchLive(match: Match, now: number) {
+  if (match.status === "live" || match.status === "halftime") return true;
+  if (match.status === "finished") return false;
+
+  const start = match.start.getTime();
+  const end = match.end?.getTime() ?? start + 2 * 60 * 60 * 1000;
+  return now >= start && now <= end;
+}
+
+function isMatchFinished(match: Match, now: number) {
+  if (match.status === "finished") return true;
+  if (match.status === "live" || match.status === "halftime") return false;
+
+  const end = match.end?.getTime() ?? match.start.getTime() + 2 * 60 * 60 * 1000;
+  return end < now;
+}
+
+function hasMatchScore(match: Match) {
+  return typeof match.score?.home === "number" || typeof match.score?.away === "number";
 }
 
 export function getTournamentProgress(matches: Match[], now = Date.now()) {

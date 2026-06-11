@@ -187,7 +187,7 @@ export function PlayersClient() {
         });
     };
 
-    syncTopScorers();
+    syncTopScorers(true);
     const refreshId = window.setInterval(() => syncTopScorers(true), TOP_SCORERS_REFRESH_MS);
 
     return () => {
