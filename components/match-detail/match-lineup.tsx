@@ -146,7 +146,7 @@ function getMobilePitchPosition(coord: PitchCoord, layout: PitchCoord[], side: "
   const maxY = Math.max(...ys, coord.y);
   const span = Math.max(maxY - minY, 1);
   const lineProgress = clamp((maxY - coord.y) / span, 0, 1);
-  const x = clamp(48.2 + (coord.x - 50) * 0.94, 14.5, 82.5);
+  const x = clamp(46.8 + (coord.x - 50) * 0.92, 13.5, 81);
   const y = side === "home"
     ? 10.5 + lineProgress * 33
     : 83.5 - lineProgress * 30;

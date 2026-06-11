@@ -2156,9 +2156,9 @@
     linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(243, 246, 239, 0.76)),
     rgba(255, 255, 255, 0.96) !important;
   box-shadow:
-    0 12px 30px rgba(31, 43, 26, 0.07),
+    0 8px 22px rgba(31, 43, 26, 0.045),
     inset 0 1px 0 rgba(255, 255, 255, 0.95),
-    inset 0 -1px 0 rgba(54, 65, 44, 0.04) !important;
+    inset 0 -1px 0 rgba(54, 65, 44, 0.03) !important;
 }
 
 [data-theme="light"] .favorite-match-list-card::before {
