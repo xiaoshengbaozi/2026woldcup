@@ -23,6 +23,25 @@ export function getLiveMatchQueue(matches: Match[], currentTime: number, limit =
   };
 }
 
+export function getNextUpcomingMatch(matches: Match[], currentTime: number) {
+  const now = currentTime > 0 ? currentTime : Date.now();
+
+  return [...matches]
+    .filter((match) => {
+      if (match.status === "live" || match.status === "halftime" || match.status === "finished" || match.status === "postponed") {
+        return false;
+      }
+
+      return match.start.getTime() > now;
+    })
+    .sort((a, b) => a.start.getTime() - b.start.getTime())[0] ?? null;
+}
+
+export function hasMatchInLiveRefreshWindow(matches: Match[], currentTime: number) {
+  const now = currentTime > 0 ? currentTime : Date.now();
+  return matches.some((match) => isMatchInLiveWindow(match, now));
+}
+
 export function getUpcomingMatchesWithinWindow(
   matches: Match[],
   currentTime: number,

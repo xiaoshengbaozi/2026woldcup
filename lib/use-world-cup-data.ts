@@ -1,12 +1,15 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { extractCity, getTournamentProgress, parseCalendar } from "@/lib/calendar";
+import { hasMatchInLiveRefreshWindow } from "@/lib/live-match-queue";
 import { parseTeams } from "@/lib/teams";
 import { cachedText, fetchWithTimeout } from "@/lib/request-cache";
 import { useNow } from "@/lib/use-now";
 import { fetchWorldCupFixtures, fetchWorldCupWarmupFixtures } from "@/lib/world-cup-api";
 import type { Match } from "@/types/match";
+
+const LIVE_FIXTURE_REFRESH_MS = 60_000;
 
 export function useWorldCupData() {
   const currentTime = useNow(30_000);
@@ -18,13 +21,15 @@ export function useWorldCupData() {
   const [warmupLoading, setWarmupLoading] = useState(true);
   const [error, setError] = useState("");
   const [warmupError, setWarmupError] = useState("");
+  const matchesRef = useRef<Match[]>([]);
+  const warmupMatchesRef = useRef<Match[]>([]);
 
   useEffect(() => {
     setCalendarUrl(new URL("/calendar.ics", window.location.href).href);
 
     let active = true;
 
-    async function loadMatches() {
+    async function loadMatches(forceRefresh = false) {
       let calendarMatches: Match[] = [];
 
       try {
@@ -39,20 +44,24 @@ export function useWorldCupData() {
       }
 
       try {
-        const liveMatches = await fetchWorldCupFixtures();
+        const liveMatches = await fetchWorldCupFixtures({ forceRefresh });
         if (!active) return;
         if (liveMatches.length) {
-          setMatches(mergeCalendarWithLiveFixtures(calendarMatches, liveMatches));
+          const nextMatches = mergeCalendarWithLiveFixtures(calendarMatches, liveMatches);
+          matchesRef.current = nextMatches;
+          setMatches(nextMatches);
           setError("");
           setLoading(false);
           return;
         }
       } catch (err) {
         console.warn("[WorldCupData] API-Football normalized fixtures unavailable, falling back to calendar:", err);
+        if (forceRefresh) return;
       }
 
       if (calendarMatches.length) {
         if (!active) return;
+        matchesRef.current = calendarMatches;
         setMatches(calendarMatches);
         setError("");
       }
@@ -61,19 +70,26 @@ export function useWorldCupData() {
     }
 
     void loadMatches();
+    const refreshId = window.setInterval(() => {
+      if (hasMatchInLiveRefreshWindow(matchesRef.current, Date.now())) {
+        void loadMatches(true);
+      }
+    }, LIVE_FIXTURE_REFRESH_MS);
 
     return () => {
       active = false;
+      window.clearInterval(refreshId);
     };
   }, []);
 
   useEffect(() => {
     let active = true;
 
-    async function loadWarmups() {
+    async function loadWarmups(forceRefresh = false) {
       try {
-        const warmups = await fetchWorldCupWarmupFixtures();
+        const warmups = await fetchWorldCupWarmupFixtures({ forceRefresh });
         if (!active) return;
+        warmupMatchesRef.current = warmups;
         setWarmupMatches(warmups);
         setWarmupError("");
       } catch (err) {
@@ -85,9 +101,15 @@ export function useWorldCupData() {
     }
 
     void loadWarmups();
+    const refreshId = window.setInterval(() => {
+      if (hasMatchInLiveRefreshWindow(warmupMatchesRef.current, Date.now())) {
+        void loadWarmups(true);
+      }
+    }, LIVE_FIXTURE_REFRESH_MS);
 
     return () => {
       active = false;
+      window.clearInterval(refreshId);
     };
   }, []);
 

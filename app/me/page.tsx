@@ -38,12 +38,14 @@ import { useUserPreferenceCatalog } from "@/lib/use-user-preferences";
 import { useUserSession } from "@/components/user-session-provider";
 import { userApi, type PublicUser, type UserHomePayload } from "@/lib/user-system";
 import { fetchMyPlayerXTimeline, type PlayerXTimelinePayload } from "@/lib/player-x-timeline";
-import { fetchWorldCupTopScorers, type WorldCupTopScorer } from "@/lib/world-cup-top-scorers";
+import { fetchWorldCupTopScorers, TOP_SCORERS_REFRESH_MS, type WorldCupTopScorer } from "@/lib/world-cup-top-scorers";
 import { getFlagUrl } from "@/lib/world-cup-2026";
 import { generateMatchSlug } from "@/lib/match-detail";
+import { hasMatchInLiveRefreshWindow } from "@/lib/live-match-queue";
 import { formatStageLabel } from "@/lib/stage";
 import { buildMatchRoundLabels } from "@/lib/stage-rounds";
 import { parseTeams } from "@/lib/teams";
+import { useNow } from "@/lib/use-now";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
 import { usePopularTeams } from "@/components/world-cup-hero/use-popular-teams";
 import type { Match } from "@/types/match";
@@ -307,7 +309,12 @@ function MePageContent() {
   const [error, setError] = useState("");
   const [emailNotice, setEmailNotice] = useState("");
   const ignoreAuthParamRef = useRef(false);
-  const { matches } = useWorldCupData();
+  const { matches, warmupMatches } = useWorldCupData();
+  const currentTime = useNow(30_000);
+  const topScorersRefreshEnabled = useMemo(
+    () => hasMatchInLiveRefreshWindow([...matches, ...warmupMatches], currentTime),
+    [currentTime, matches, warmupMatches]
+  );
   const popularTeams = usePopularTeams();
 
   const avatarPlayerId = selectedPlayerIds[0] ?? catalog.players[0]?.id ?? fallbackUserPreferenceCatalog.players[0].id;
@@ -368,19 +375,27 @@ function MePageContent() {
   }, [router, searchParams]);
 
   useEffect(() => {
+    if (!topScorersRefreshEnabled) return;
+
     let active = true;
-    fetchWorldCupTopScorers()
-      .then((players) => {
-        if (active && players.length) setTopScorers(fillTopScorers(players).slice(0, 6));
-      })
-      .catch(() => {
-        if (active) setTopScorers(DEFAULT_TOP_SCORERS);
-      });
+    const syncTopScorers = (forceRefresh = false) => {
+      fetchWorldCupTopScorers({ forceRefresh })
+        .then((players) => {
+          if (active && players.length) setTopScorers(fillTopScorers(players).slice(0, 6));
+        })
+        .catch(() => {
+          if (active && !forceRefresh) setTopScorers(DEFAULT_TOP_SCORERS);
+        });
+    };
+
+    syncTopScorers();
+    const refreshId = window.setInterval(() => syncTopScorers(true), TOP_SCORERS_REFRESH_MS);
 
     return () => {
       active = false;
+      window.clearInterval(refreshId);
     };
-  }, []);
+  }, [topScorersRefreshEnabled]);
 
   const openAuth = useCallback((mode: AuthMode, syncUrl = true) => {
     ignoreAuthParamRef.current = false;

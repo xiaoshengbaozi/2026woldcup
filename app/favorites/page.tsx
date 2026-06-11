@@ -22,7 +22,7 @@ import { UserActionButton } from "@/components/user-action-button";
 import { useUserSession } from "@/components/user-session-provider";
 import { buildFavoriteMatchCards, compactFavoriteMatchStage, formatFavoriteVenueLine, getFavoriteTeamCode, type FavoriteMatchCard } from "@/lib/favorite-matches";
 import { buildOddsSelectionForTeams, sameOddsMarket, type OddsSelection } from "@/lib/match-odds-selection";
-import { getMatchLiveDisplay } from "@/lib/match-live-display";
+import { getMatchLiveDisplay, getMatchScore } from "@/lib/match-live-display";
 import { useMatchLines } from "@/lib/use-match-lines";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
 import type { Team } from "@/types/match";
@@ -164,6 +164,9 @@ function StackCard({
   const display = match.sourceMatch && kickoff
     ? getMatchLiveDisplay({ match: match.sourceMatch, kickoff, scheduledStageLabel: match.stage })
     : null;
+  const finishedScore = match.sourceMatch?.status === "finished"
+    ? getMatchScore(match.sourceMatch)
+    : null;
 
   return (
     <motion.article
@@ -218,7 +221,7 @@ function StackCard({
       <WeatherStrip match={match} muted={!isTop} signedIn={signedIn} onRemove={onRemove} />
 
       <div className="relative mt-4 grid grid-cols-[minmax(0,1fr)_82px_minmax(0,1fr)] items-end gap-3 px-3">
-        <TeamTerminal team={match.home} align="left" muted={!isTop} />
+        <TeamTerminal team={match.home} align="left" muted={!isTop} score={finishedScore?.home} />
         <div className="grid place-items-center pb-0.5">
           <img
             src="/logos/world-cup-2026-alternate.svg"
@@ -227,12 +230,12 @@ function StackCard({
             loading="eager"
           />
         </div>
-        <TeamTerminal team={match.away} align="right" muted={!isTop} />
+        <TeamTerminal team={match.away} align="right" muted={!isTop} score={finishedScore?.away} />
       </div>
       <div className={`relative mx-3 mt-4 grid grid-cols-4 divide-x border-y py-1 ${
         isTop ? "divide-black/30 border-black/30" : "divide-black/30 border-black/24"
       }`}>
-        <PassInfo icon={<Clock3 className="h-3 w-3" />} label="开赛" value={display?.centerLabel ?? formatTime(kickoff)} muted={!isTop} />
+        <PassInfo icon={<Clock3 className="h-3 w-3" />} label="开赛" value={finishedScore ? formatTime(kickoff) : display?.centerLabel ?? formatTime(kickoff)} muted={!isTop} />
         <PassInfo icon={<CalendarDays className="h-3 w-3" />} label="日期" value={formatShortDate(kickoff)} muted={!isTop} />
         <PassInfo icon={<MapPin className="h-3 w-3" />} label="城市" value={match.city || "TBD"} muted={!isTop} />
         <PassInfo icon={<Star className="h-3 w-3" />} label="阶段" value={compactFavoriteMatchStage(match.stage)} muted={!isTop} />
@@ -548,9 +551,10 @@ function WeatherStrip({
   );
 }
 
-function TeamTerminal({ team, align, muted = false }: { team: Team; align: "left" | "right"; muted?: boolean }) {
+function TeamTerminal({ team, align, muted = false, score }: { team: Team; align: "left" | "right"; muted?: boolean; score?: number }) {
   const isRight = align === "right";
   const code = getTeamCode(team);
+  const value = typeof score === "number" ? String(score) : code;
   return (
     <div className={`flex min-w-0 flex-col ${isRight ? "items-end text-right" : "items-start text-left"}`}>
       <p className={`mb-2 max-w-[116px] truncate text-sm font-medium leading-none ${muted ? "text-white/44" : "text-black/58"}`}>
@@ -562,7 +566,7 @@ function TeamTerminal({ team, align, muted = false }: { team: Team; align: "left
           className={`truncate text-[2.2rem] leading-none ${muted ? "text-white/86" : "text-black"}`}
           style={{ fontFamily: "ScreenMatrix, monospace" }}
         >
-          {code}
+          {value}
         </p>
         {isRight && <TeamMark team={team} muted={muted} />}
       </div>

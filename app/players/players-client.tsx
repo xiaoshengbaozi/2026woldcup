@@ -9,10 +9,13 @@ import { DashboardShell } from "@/components/dashboard-shell";
 import { FilterDropdown } from "@/components/match-filters";
 import { UserActionButton } from "@/components/user-action-button";
 import { useUserSession } from "@/components/user-session-provider";
+import { hasMatchInLiveRefreshWindow } from "@/lib/live-match-queue";
 import { useMobilePinnedRail } from "@/lib/use-mobile-pinned-rail";
+import { useNow } from "@/lib/use-now";
+import { useWorldCupData } from "@/lib/use-world-cup-data";
 import playerArticles from "@/data/player-articles.json";
 import { getOfficialPlayerCatalog, type OfficialPlayerCatalogItem } from "@/lib/official-player-catalog";
-import { fetchWorldCupTopScorers, type WorldCupTopScorer } from "@/lib/world-cup-top-scorers";
+import { fetchWorldCupTopScorers, TOP_SCORERS_REFRESH_MS, type WorldCupTopScorer } from "@/lib/world-cup-top-scorers";
 
 type PlayerArticle = (typeof playerArticles.players)[number];
 type PlayerListItem = PlayerArticle | OfficialPlayerCatalogItem;
@@ -81,6 +84,8 @@ export function PlayersClient() {
   const [topScorers, setTopScorers] = useState<WorldCupTopScorer[]>([]);
   const [topScorersLoading, setTopScorersLoading] = useState(true);
   const { home } = useUserSession();
+  const { matches, warmupMatches } = useWorldCupData();
+  const currentTime = useNow(30_000);
   const signedIn = Boolean(home);
 
   const visibleTabs = useMemo(
@@ -149,6 +154,10 @@ export function PlayersClient() {
       })),
     [topScorers]
   );
+  const topScorersRefreshEnabled = useMemo(
+    () => hasMatchInLiveRefreshWindow([...matches, ...warmupMatches], currentTime),
+    [currentTime, matches, warmupMatches]
+  );
 
   const visiblePlayers = useMemo((): PlayerRailItem[] => {
     if (activeTab === "following") return followedPlayers;
@@ -157,24 +166,35 @@ export function PlayersClient() {
   }, [activeTab, followedPlayers, topScorerRailItems]);
 
   useEffect(() => {
+    if (!topScorersRefreshEnabled) {
+      setTopScorersLoading(false);
+      return;
+    }
+
     let active = true;
     setTopScorersLoading(true);
-    fetchWorldCupTopScorers()
-      .then((items) => {
-        if (active) setTopScorers(items);
-      })
-      .catch((error) => {
-        console.warn("[PlayersClient] top scorers unavailable:", error);
-        if (active) setTopScorers([]);
-      })
-      .finally(() => {
-        if (active) setTopScorersLoading(false);
-      });
+    const syncTopScorers = (forceRefresh = false) => {
+      fetchWorldCupTopScorers({ forceRefresh })
+        .then((items) => {
+          if (active) setTopScorers(items);
+        })
+        .catch((error) => {
+          console.warn("[PlayersClient] top scorers unavailable:", error);
+          if (active && !forceRefresh) setTopScorers([]);
+        })
+        .finally(() => {
+          if (active) setTopScorersLoading(false);
+        });
+    };
+
+    syncTopScorers();
+    const refreshId = window.setInterval(() => syncTopScorers(true), TOP_SCORERS_REFRESH_MS);
 
     return () => {
       active = false;
+      window.clearInterval(refreshId);
     };
-  }, []);
+  }, [topScorersRefreshEnabled]);
 
   useEffect(() => {
     if (signedIn && !signedInDefaultAppliedRef.current) {

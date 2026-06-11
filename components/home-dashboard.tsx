@@ -12,7 +12,6 @@ export function HomeDashboard() {
     warmupMatches,
     calendarUrl,
     webcalUrl,
-    firstMatch,
     progress,
     completedCount,
     ongoingCount
@@ -26,7 +25,6 @@ export function HomeDashboard() {
     <DashboardShell>
       <WorldCupHero
         matches={liveQueueMatches}
-        firstMatch={firstMatch}
         progress={progress}
         completedCount={completedCount}
         ongoingCount={ongoingCount}

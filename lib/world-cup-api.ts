@@ -88,7 +88,7 @@ function isLocalDevHost(location: Location) {
   );
 }
 
-export async function fetchWorldCupFixtures(options: { season?: number; league?: number } = {}) {
+export async function fetchWorldCupFixtures(options: { season?: number; league?: number; forceRefresh?: boolean } = {}) {
   const apiUrl = getBackendApiUrl();
   const params = new URLSearchParams({
     league: String(options.league ?? 1),
@@ -96,7 +96,7 @@ export async function fetchWorldCupFixtures(options: { season?: number; league?:
   });
 
   const url = `${apiUrl}/api/worldcup/fixtures?${params}`;
-  const payload = await cachedJson<FixturesResponse & { error?: string }>(url, FIXTURE_CACHE_TTL_MS, async () => {
+  const fetchFixtures = async () => {
     const response = await fetchWithTimeout(url, { cache: "no-store" }, PUBLIC_REQUEST_TIMEOUT_MS);
     const payload = (await response.json()) as FixturesResponse & { error?: string };
 
@@ -105,12 +105,16 @@ export async function fetchWorldCupFixtures(options: { season?: number; league?:
     }
 
     return payload;
-  }, { persist: true, staleTtlMs: PUBLIC_STALE_TTL_MS });
+  };
+
+  const payload = options.forceRefresh
+    ? await fetchFixtures()
+    : await cachedJson<FixturesResponse & { error?: string }>(url, FIXTURE_CACHE_TTL_MS, fetchFixtures, { persist: true, staleTtlMs: PUBLIC_STALE_TTL_MS });
 
   return (payload.fixtures ?? []).map(toMatch);
 }
 
-export async function fetchWorldCupWarmupFixtures(options: { season?: number; league?: number; from?: string; to?: string } = {}) {
+export async function fetchWorldCupWarmupFixtures(options: { season?: number; league?: number; from?: string; to?: string; forceRefresh?: boolean } = {}) {
   const apiUrl = getWarmupBackendApiUrl();
   const params = new URLSearchParams({
     season: String(options.season ?? 2026),
@@ -121,7 +125,7 @@ export async function fetchWorldCupWarmupFixtures(options: { season?: number; le
   if (options.to) params.set("to", options.to);
 
   const url = `${apiUrl}/api/worldcup/warmups?${params}`;
-  const payload = await cachedJson<FixturesResponse & { error?: string }>(url, FIXTURE_CACHE_TTL_MS, async () => {
+  const fetchFixtures = async () => {
     const response = await fetchWithTimeout(url, { cache: "no-store" }, PUBLIC_REQUEST_TIMEOUT_MS);
     const payload = (await response.json()) as FixturesResponse & { error?: string };
 
@@ -130,7 +134,11 @@ export async function fetchWorldCupWarmupFixtures(options: { season?: number; le
     }
 
     return payload;
-  }, { persist: true, staleTtlMs: PUBLIC_STALE_TTL_MS });
+  };
+
+  const payload = options.forceRefresh
+    ? await fetchFixtures()
+    : await cachedJson<FixturesResponse & { error?: string }>(url, FIXTURE_CACHE_TTL_MS, fetchFixtures, { persist: true, staleTtlMs: PUBLIC_STALE_TTL_MS });
 
   return (payload.fixtures ?? []).map(toMatch);
 }
