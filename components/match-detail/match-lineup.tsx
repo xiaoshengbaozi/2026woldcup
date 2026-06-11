@@ -146,10 +146,10 @@ function getMobilePitchPosition(coord: PitchCoord, layout: PitchCoord[], side: "
   const maxY = Math.max(...ys, coord.y);
   const span = Math.max(maxY - minY, 1);
   const lineProgress = clamp((maxY - coord.y) / span, 0, 1);
-  const x = clamp(50 + (coord.x - 50) * 1.02, 13.5, 86.5);
+  const x = clamp(48.2 + (coord.x - 50) * 0.94, 14.5, 82.5);
   const y = side === "home"
-    ? 13.5 + lineProgress * 32.5
-    : 86.5 - lineProgress * 32.5;
+    ? 10.5 + lineProgress * 33
+    : 83.5 - lineProgress * 30;
 
   return { x, y };
 }
@@ -453,7 +453,7 @@ function MobilePitchPlayer({
           />
         )}
       </div>
-      <p className="mt-0.5 w-[4.15rem] truncate text-center text-[9px] font-black leading-tight text-white/90 [text-shadow:0_1px_5px_rgba(0,0,0,.65)]" title={label}>
+      <p className="mt-0.5 w-[3.8rem] truncate text-center text-[9px] font-black leading-tight text-white/90 [text-shadow:0_1px_5px_rgba(0,0,0,.65)]" title={label}>
         {label}
       </p>
     </motion.div>
