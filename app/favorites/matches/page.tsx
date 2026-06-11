@@ -78,7 +78,7 @@ function FavoriteMatchListCard({ match, index }: { match: FavoriteMatchCard; ind
             stage: match.stage,
             startsAt: match.startsAt,
           }}
-          className="h-9 w-9 min-w-9 border border-volt bg-volt text-black shadow-[0_0_22px_rgba(216,255,62,.2)] ring-volt/60 hover:bg-volt hover:text-black"
+          className="favorite-match-reminder-button h-9 w-9 min-w-9"
         />
       </div>
 
