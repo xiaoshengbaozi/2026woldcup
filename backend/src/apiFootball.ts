@@ -102,11 +102,13 @@ export function createApiFootballService(
         throw createHttpError(503, "api_football_not_configured");
       }
 
+      const forceRefresh = shouldForceRefresh(params);
       const normalizedParams = normalizeParams(params);
       const cacheKey = `${endpoint}?${normalizedParams.toString()}`;
       const cached = cache.get(cacheKey);
 
       if (
+        !forceRefresh &&
         cached &&
         cached.expiresAt > Date.now() &&
         isCacheFreshForCurrentTtl(cached, endpoint, normalizedParams, fallbackTtl) &&
@@ -246,11 +248,22 @@ function saveCache(cacheFile: string, cache: Map<string, CacheRecord>) {
 function normalizeParams(params: URLSearchParams) {
   const normalized = new URLSearchParams();
   [...params.entries()]
-    .filter(([key, value]) => key.trim() && value.trim())
+    .filter(([key, value]) => key.trim() && value.trim() && !isCacheControlParam(key))
     .sort(([a], [b]) => a.localeCompare(b))
     .forEach(([key, value]) => normalized.append(key, value));
 
   return normalized;
+}
+
+function shouldForceRefresh(params: URLSearchParams) {
+  return [...params.entries()].some(([key, value]) => {
+    if (!isCacheControlParam(key)) return false;
+    return !["0", "false", "no"].includes(value.trim().toLowerCase());
+  });
+}
+
+function isCacheControlParam(key: string) {
+  return ["forceRefresh", "refresh", "_refresh"].includes(key);
 }
 
 function createHttpError(statusCode: number, code: string, details?: unknown) {

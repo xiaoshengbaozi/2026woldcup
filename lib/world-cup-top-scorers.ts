@@ -29,7 +29,13 @@ type TopScorersPayload = {
 };
 
 export async function fetchWorldCupTopScorers(options: { forceRefresh?: boolean } = {}) {
-  const url = `${getBackendApiUrl()}/api/worldcup/top-scorers?league=1&season=2026`;
+  const params = new URLSearchParams({
+    league: "1",
+    season: "2026",
+  });
+  if (options.forceRefresh) params.set("forceRefresh", String(Date.now()));
+
+  const url = `${getBackendApiUrl()}/api/worldcup/top-scorers?${params}`;
   const fetchScorers = async () => {
     const response = await fetchWithTimeout(url, { cache: "no-store" }, 6_000);
     const payload = (await response.json()) as TopScorersPayload;
