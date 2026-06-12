@@ -145,7 +145,9 @@ function getMobilePitchPosition(coord: PitchCoord, layout: PitchCoord[], side: "
   const minY = Math.min(...ys, coord.y);
   const maxY = Math.max(...ys, coord.y);
   const span = Math.max(maxY - minY, 1);
-  const lineProgress = clamp((maxY - coord.y) / span, 0, 1);
+  const lineProgress = side === "home"
+    ? clamp((maxY - coord.y) / span, 0, 1)
+    : clamp((coord.y - minY) / span, 0, 1);
   const x = clamp(46.8 + (coord.x - 50) * 0.92, 13.5, 81);
   const y = side === "home"
     ? 10.5 + lineProgress * 33
@@ -191,7 +193,7 @@ function reconcileLineupPlayers(players: LineupPlayer[], teamCode: string): Line
       name: official.nameCn || official.nameEn || player.name,
       nameCn: official.nameCn || player.nameCn,
       nameEn: official.nameEn || player.nameEn,
-      number: official.number ?? player.number,
+      number: player.number ?? official.number,
       position: reconcilePlayerPosition(player.position, official.position),
       positionCn: official.positionCn || player.positionCn,
       photo: hasKnownBlankPlayerPhoto(official.apiPlayerId) ? "" : official.photo || player.photo,
@@ -238,7 +240,7 @@ export function MatchLineup({ detail, compactMobile = false }: { detail: MatchDe
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.08, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      className={`hero-card overflow-hidden ${compactMobile ? "hidden lg:block" : ""}`}
+      className={`match-lineup-surface hero-card overflow-hidden ${compactMobile ? "hidden lg:block" : ""}`}
     >
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-volt/30 to-transparent" />
 
@@ -254,7 +256,11 @@ export function MatchLineup({ detail, compactMobile = false }: { detail: MatchDe
               key={side}
               onClick={() => setActiveSide(side)}
               className="relative flex flex-1 items-center justify-center gap-2 py-3.5 text-sm font-semibold transition-colors sm:py-4 sm:text-base"
-              style={{ color: active ? hex : "rgba(255,255,255,0.4)" }}
+              style={{
+                color: active
+                  ? `var(${side === "home" ? "--match-lineup-home-active" : "--match-lineup-away-active"}, ${hex})`
+                  : "var(--match-lineup-tab-muted, rgba(255,255,255,0.4))",
+              }}
             >
               <span className="h-2 w-2 rounded-full" style={{ backgroundColor: hex, opacity: active ? 1 : 0.3 }} />
               <span className="uppercase tracking-wide">{label}</span>
@@ -719,10 +725,10 @@ function FeaturedSquadSummary({
   const displayCoach = localizeCoachName(coach) || "待更新";
 
   return (
-    <div className={`flex min-h-[320px] flex-col justify-between rounded-3xl bg-white/[0.025] p-5 ring-1 ring-white/[0.055]${hideHeader ? " squad-summary-hide-header" : ""}`}>
+    <div className={`lineup-summary-card flex min-h-[320px] flex-col justify-between rounded-3xl bg-white/[0.025] p-5 ring-1 ring-white/[0.055]${hideHeader ? " squad-summary-hide-header" : ""}`}>
       <div>
         <div
-          className="rounded-2xl px-4 py-3 ring-1 ring-white/[0.055]"
+          className="lineup-info-tile rounded-2xl px-4 py-3 ring-1 ring-white/[0.055]"
           style={{ background: `linear-gradient(135deg, ${accentFrom}0.14), rgba(255,255,255,0.025))` }}
         >
           <p className="text-[10px] font-bold tracking-[0.16em] text-white/35">主教练</p>
@@ -750,7 +756,7 @@ function FeaturedSquadSummary({
             ))}
           </div>
         ) : (
-          <div className="rounded-2xl bg-white/[0.025] px-4 py-5 text-center ring-1 ring-white/[0.055]">
+          <div className="lineup-info-tile rounded-2xl bg-white/[0.025] px-4 py-5 text-center ring-1 ring-white/[0.055]">
             <p className="text-sm font-semibold text-white/42">暂无明星球员数据</p>
           </div>
         )}
@@ -758,7 +764,7 @@ function FeaturedSquadSummary({
 
       <div className="mt-5 flex flex-wrap gap-2">
         <span
-          className="rounded-full px-3 py-1 text-[11px] font-bold text-white/65 ring-1 ring-white/[0.06]"
+          className="lineup-count-chip rounded-full px-3 py-1 text-[11px] font-bold text-white/65 ring-1 ring-white/[0.06]"
           style={{ background: `${accentFrom}0.08)` }}
         >
           名单 {players.length || 0}
@@ -766,7 +772,7 @@ function FeaturedSquadSummary({
         {availableGroups.length ? availableGroups.map((group) => (
           <span
             key={group.key}
-            className="rounded-full px-3 py-1 text-[11px] font-bold text-white/65 ring-1 ring-white/[0.06]"
+            className="lineup-count-chip rounded-full px-3 py-1 text-[11px] font-bold text-white/65 ring-1 ring-white/[0.06]"
             style={{ background: `${accentFrom}0.08)` }}
           >
             {group.label} {group.count}
@@ -1159,10 +1165,10 @@ export function PlayerGrid({
           <div key={group.key}>
             <div className="mb-2 flex items-center gap-2 pl-0.5">
               <span className="inline-block h-3 w-1.5 rounded-full" style={{ backgroundColor: accentHex, opacity: 0.55 }} />
-              <span className="squad-position-group-title text-xs font-black uppercase tracking-[0.12em] sm:text-sm" style={{ color: `${accentHex}bb` }}>
+              <span className="squad-position-group-title text-xs font-black uppercase tracking-[0.12em] sm:text-sm" style={{ color: `var(--match-lineup-position-color, ${accentHex}bb)` }}>
                 {group.label}
               </span>
-              <span className="text-xs text-white/28 sm:text-sm">({groupPlayers.length})</span>
+              <span className="lineup-position-count text-xs text-white/28 sm:text-sm">({groupPlayers.length})</span>
             </div>
             <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 sm:gap-2">
               {groupPlayers.map((player) => {
@@ -1180,10 +1186,10 @@ export function PlayerGrid({
         <div>
           <div className="mb-2 flex items-center gap-2 pl-0.5">
             <span className="inline-block h-3 w-1.5 rounded-full" style={{ backgroundColor: accentHex, opacity: 0.35 }} />
-            <span className="text-xs font-black uppercase tracking-[0.12em] text-white/55 sm:text-sm">
+            <span className="lineup-substitute-title text-xs font-black uppercase tracking-[0.12em] text-white/55 sm:text-sm">
               替补
             </span>
-            <span className="text-xs text-white/28 sm:text-sm">({substitutePlayers.length})</span>
+            <span className="lineup-position-count text-xs text-white/28 sm:text-sm">({substitutePlayers.length})</span>
           </div>
           <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 sm:gap-2">
             {substitutePlayers.map((player) => {
@@ -1250,10 +1256,10 @@ function PlayerCell({
       </div>
 
             <div className="min-w-0 flex-1">
-        <p className="truncate text-[11px] font-bold leading-tight text-white/88 sm:text-[12px]">
+        <p className="lineup-player-name truncate text-[11px] font-bold leading-tight text-white/88 sm:text-[12px]">
           {player.nameCn || player.name}
         </p>
-        <p className="mt-0.5 truncate text-[9px] leading-tight text-white/40 sm:text-[10px]">
+        <p className="lineup-player-meta mt-0.5 truncate text-[9px] leading-tight text-white/40 sm:text-[10px]">
           {[player.positionCn || player.position, player.number ? `${player.number}号` : null].filter(Boolean).join(" · ")}
         </p>
       </div>
@@ -1283,7 +1289,7 @@ function PlayerCell({
       initial={lineupPlayerEnterInitial}
       animate={lineupPlayerEnterAnimate}
       transition={getLineupPlayerEnterTransition(index)}
-      className="group relative flex items-center gap-2 overflow-hidden rounded-xl px-2 py-1.5 transition-all duration-200 hover:bg-white/[0.04]"
+      className="lineup-player-cell group relative flex items-center gap-2 overflow-hidden rounded-xl px-2 py-1.5 transition-all duration-200 hover:bg-white/[0.04]"
       style={{
         background: "rgba(255,255,255,0.025)",
         border: "1px solid rgba(255,255,255,0.04)",

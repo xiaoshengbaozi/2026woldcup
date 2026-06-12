@@ -668,7 +668,7 @@ function mergeOfficialPlayerWithApi(
   return {
     ...apiPlayer,
     nameCn: hasCjk(localizedOfficialName) ? localizedOfficialName : apiPlayer.nameCn,
-    number: typeof officialPlayer.number === "number" ? officialPlayer.number : apiPlayer.number,
+    number: typeof apiPlayer.number === "number" ? apiPlayer.number : typeof officialPlayer.number === "number" ? officialPlayer.number : null,
     position,
     positionCn: localizeFootballPosition(position),
     photo: getPlayerPhoto(officialPlayer.apiFootballId ?? apiPlayer.id, apiPlayer.photo),

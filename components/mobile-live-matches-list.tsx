@@ -4,7 +4,7 @@ import { Radio } from "lucide-react";
 import type { ReactNode } from "react";
 import { useMemo } from "react";
 import { LiveMatchCard } from "@/components/world-cup-hero/live-match-card";
-import { getUpcomingMatchesWithinWindow, isMatchInLiveWindow } from "@/lib/live-match-queue";
+import { getLiveMatchQueue, isMatchInLiveWindow } from "@/lib/live-match-queue";
 import { buildMatchRoundLabels } from "@/lib/stage-rounds";
 import { useNow } from "@/lib/use-now";
 import type { Match } from "@/types/match";
@@ -25,7 +25,7 @@ export function MobileLiveMatchesList({
   const currentTime = useNow(30_000);
 
   const displayMatches = useMemo(
-    () => getUpcomingMatchesWithinWindow(matches, currentTime, 24),
+    () => getLiveMatchQueue(matches, currentTime, 8).displayMatches,
     [currentTime, matches]
   );
   const roundLabels = useMemo(() => buildMatchRoundLabels(matches), [matches]);
