@@ -290,7 +290,7 @@ function MatchDetailModal({
       onClick={onClose}
     >
       {/* Backdrop */}
-      <div className="match-detail-modal-backdrop absolute inset-0 bg-black/70 backdrop-blur-sm" />
+      <div className="auth-modal-backdrop match-detail-modal-backdrop absolute inset-0" />
 
       {/* Card */}
       <motion.div

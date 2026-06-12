@@ -1,5 +1,6 @@
 import { getBackendApiUrl } from "@/lib/world-cup-api";
 import { cachedJson, fetchWithTimeout } from "@/lib/request-cache";
+import { localizeTeamName } from "@/lib/team-localization";
 
 export const TOP_SCORERS_REFRESH_MS = 60_000;
 
@@ -21,6 +22,8 @@ type TopScorersPayload = {
     photo?: string;
     team?: {
       name?: string;
+      nameEn?: string;
+      code?: string;
       logo?: string;
     } | null;
     goals?: number | null;
@@ -61,7 +64,7 @@ export async function fetchWorldCupTopScorers(options: { forceRefresh?: boolean 
         id: item.id,
         name: item.name,
         photo: item.photo ?? "",
-        teamName: item.team?.name ?? "国家队",
+        teamName: localizeTeamName(item.team?.nameEn ?? item.team?.name ?? "国家队", item.team?.code),
         teamLogo: item.team?.logo ?? "",
         goals,
       };
