@@ -319,7 +319,7 @@ export class UserSystem {
         return true;
       }
 
-      if (req.method === "POST" && url.pathname === "/api/telegram/webhook") {
+      if (req.method === "POST" && (url.pathname === "/api/telegram/webhook" || url.pathname === "/api/tg/webhook")) {
         const body = await readJsonBody(req);
         sendJson(res, await this.handleTelegramWebhook(body));
         return true;
