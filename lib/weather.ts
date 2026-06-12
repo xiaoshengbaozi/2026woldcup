@@ -12,19 +12,21 @@ export function weatherKey(match: Match) {
 }
 
 export function weatherIcon(code?: number) {
-  if (code === undefined) return "HUD";
-  if ([0, 1].includes(code)) return "SUN";
-  if ([2].includes(code)) return "HAZE";
-  if ([3, 45, 48].includes(code)) return "CLD";
-  if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return "RAIN";
-  if ([71, 73, 75, 77, 85, 86].includes(code)) return "SNOW";
-  if ([95, 96, 99].includes(code)) return "STORM";
-  return "WX";
+  if (code === undefined) return "天气";
+  if ([0, 1].includes(code)) return "晴";
+  if ([2].includes(code)) return "少云";
+  if ([3].includes(code)) return "多云";
+  if ([45, 48].includes(code)) return "有雾";
+  if ([51, 53, 55, 56, 57].includes(code)) return "毛毛雨";
+  if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return "有雨";
+  if ([71, 73, 75, 77, 85, 86].includes(code)) return "有雪";
+  if ([95, 96, 99].includes(code)) return "雷雨";
+  return "天气";
 }
 
 export function weatherLabel(data?: WeatherState) {
-  if (!data) return "SYNC";
-  if (data.error) return "OFFLINE";
+  if (!data) return "天气同步中";
+  if (data.error) return "天气暂不可用";
   return `${weatherIcon(data.code)} ${Math.round(data.temp ?? 0)}°C`;
 }
 

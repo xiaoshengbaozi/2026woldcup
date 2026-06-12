@@ -49,7 +49,7 @@ export default function FavoritesPage() {
   const favoriteCards = useMemo(() => buildFavoriteMatchCards(home, scheduleMatches), [home, scheduleMatches]);
 
   const visibleCards = useMemo(() => {
-    return favoriteCards.filter((match) => !dismissedFavoriteIds.has(match.id));
+    return favoriteCards.filter((match) => !isFinishedFavoriteMatch(match) && !dismissedFavoriteIds.has(match.id));
   }, [dismissedFavoriteIds, favoriteCards]);
 
   const removeFavoriteCard = (id: string) => {
@@ -648,6 +648,10 @@ function getNextIndex(current: number, total: number) {
   return (current + 1) % total;
 }
 
+function isFinishedFavoriteMatch(match: FavoriteMatchCard) {
+  return match.sourceMatch?.status === "finished";
+}
+
 function getTeamCode(team: Team) {
   return getFavoriteTeamCode(team);
 }
@@ -678,8 +682,8 @@ function getMatchWeatherSummary(match: FavoriteMatchCard, liveWeather?: WeatherS
 
   const staticWeather = match.sourceMatch?.weather?.trim();
   if (staticWeather && staticWeather !== "待更新" && !/^https?:\/\//i.test(staticWeather)) return staticWeather;
-  if (match.sourceMatch?.geo) return "SYNC";
-  return "NO GEO";
+  if (match.sourceMatch?.geo) return "天气同步中";
+  return "暂无天气";
 }
 
 function formatTime(date: Date | null) {
