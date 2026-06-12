@@ -1391,7 +1391,7 @@ function AccountStat({ value, label }: { value: number; label: string }) {
 
 function AuthModal({ mode, registerStep, onClose, children }: { mode: AuthMode; registerStep: RegisterStep; onClose: () => void; children: ReactNode }) {
   return (
-    <motion.div className="fixed inset-0 z-50 grid place-items-center bg-black/70 px-4 py-8 backdrop-blur-xl" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+    <motion.div className="auth-modal-backdrop fixed inset-0 z-50 grid place-items-center px-4 py-8" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <motion.div
         initial={{ opacity: 0, y: 18, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}

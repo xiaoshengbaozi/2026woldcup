@@ -141,17 +141,17 @@ function clamp(value: number, min: number, max: number) {
 }
 
 function getMobilePitchPosition(coord: PitchCoord, layout: PitchCoord[], side: "home" | "away"): PitchCoord {
+  const halfPitchStart = side === "home" ? 7 : 56;
+  const halfPitchSpan = 35;
   const ys = layout.map((item) => item.y);
   const minY = Math.min(...ys, coord.y);
   const maxY = Math.max(...ys, coord.y);
   const span = Math.max(maxY - minY, 1);
-  const lineProgress = side === "home"
-    ? clamp((maxY - coord.y) / span, 0, 1)
-    : clamp((coord.y - minY) / span, 0, 1);
+  const lineProgress = clamp((maxY - coord.y) / span, 0, 1);
   const x = clamp(45.6 + (coord.x - 50) * 0.86, 11.5, 79.5);
   const y = side === "home"
-    ? 9.5 + lineProgress * 38
-    : 84.5 - lineProgress * 34;
+    ? halfPitchStart + lineProgress * halfPitchSpan
+    : halfPitchStart + (1 - lineProgress) * halfPitchSpan;
 
   return { x, y };
 }
@@ -440,16 +440,17 @@ function MobilePitchPlayer({
   const [scoutOpen, setScoutOpen] = useState(false);
   const avatar = (
     <div className="relative grid h-10 w-10 place-items-center overflow-hidden rounded-full bg-[#30343d] text-[11px] font-black text-white shadow-[0_10px_22px_rgba(0,0,0,.26)] ring-1 ring-white/15 transition group-hover:ring-volt/45">
-      <span>{fallback}</span>
+      <span className={player.photo ? "opacity-0" : ""}>{fallback}</span>
       {player.photo && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={player.photo}
           alt={player.nameEn || player.name}
-          className="absolute inset-0 h-full w-full object-cover"
+          className="absolute inset-0 h-full w-full rounded-full object-cover"
           loading="lazy"
           onError={(event) => {
             event.currentTarget.style.display = "none";
+            event.currentTarget.previousElementSibling?.classList.remove("opacity-0");
           }}
         />
       )}
@@ -484,7 +485,11 @@ function MobilePitchPlayer({
       ) : (
         avatar
       )}
-      <p className="mt-0.5 w-[3.8rem] truncate text-center text-[9px] font-black leading-tight text-white/90 [text-shadow:0_1px_5px_rgba(0,0,0,.65)]" title={label}>
+      <p
+        className="mt-0.5 w-[3.8rem] truncate text-center text-[9px] font-black leading-tight text-white/90 [text-shadow:0_1px_5px_rgba(0,0,0,.65)]"
+        style={{ color: "rgba(255,255,255,0.92)" }}
+        title={label}
+      >
         {label}
       </p>
       {scoutNote && <ScoutNoteDialog open={scoutOpen} onClose={() => setScoutOpen(false)} player={player} note={scoutNote} />}
@@ -673,14 +678,14 @@ function FormationPitch({
                   aria-label={`${label} 球员卡片`}
                 >
                   <div className="relative">
-                    <div className="relative grid h-9 w-9 place-items-center overflow-hidden rounded-full bg-[#30343d] text-[11px] font-black text-white shadow-[0_10px_22px_rgba(0,0,0,.3)] ring-1 ring-white/15 transition group-hover:ring-volt/45 sm:h-10 sm:w-10"
+                    <div className="relative grid h-9 w-9 place-items-center overflow-visible rounded-full bg-[#30343d] text-[11px] font-black text-white shadow-[0_10px_22px_rgba(0,0,0,.3)] ring-1 ring-white/15 transition group-hover:ring-volt/45 sm:h-10 sm:w-10"
                       style={{
                         background: isGK
                           ? "linear-gradient(135deg, #314239 0%, #1f2d27 100%)"
                           : "linear-gradient(135deg, #30343d 0%, #191d25 100%)",
                       }}
                     >
-                      <span className="relative z-10 text-[11px] font-black tabular-nums text-white sm:text-[13px]"
+                      <span className={`relative z-0 text-[11px] font-black tabular-nums text-white sm:text-[13px] ${player.photo ? "opacity-0" : ""}`}
                         style={{ textShadow: "0 1px 3px rgba(0,0,0,0.4)", fontFamily: "ScreenMatrix, monospace" }}
                       >
                         {fallback}
@@ -690,10 +695,11 @@ function FormationPitch({
                         <img
                           src={player.photo}
                           alt={player.nameEn || player.name}
-                          className="absolute inset-0 h-full w-full object-cover"
+                          className="absolute inset-0 h-full w-full rounded-full object-cover"
                           loading="lazy"
                           onError={(event) => {
                             event.currentTarget.style.display = "none";
+                            event.currentTarget.previousElementSibling?.classList.remove("opacity-0");
                           }}
                         />
                       )}
@@ -718,7 +724,7 @@ function FormationPitch({
                     className={`mt-0.5 truncate rounded-full bg-black/18 px-1 text-center font-semibold leading-tight text-white/80 backdrop-blur-sm ${
                       rowDensity >= 5 ? "text-[7px] sm:text-[8px]" : "text-[8px] sm:text-[9px]"
                     }`}
-                    style={{ maxWidth: `${labelWidth}px`, textShadow: "0 1px 4px rgba(0,0,0,0.6)" }}
+                    style={{ maxWidth: `${labelWidth}px`, color: "rgba(255,255,255,0.92)", textShadow: "0 1px 4px rgba(0,0,0,0.6)" }}
                     title={label}
                   >
                     {displayName}

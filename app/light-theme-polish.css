@@ -1264,12 +1264,6 @@
   --tw-ring-color: rgba(54, 65, 44, 0.12) !important;
 }
 
-[data-theme="light"] .match-detail-modal-backdrop {
-  background:
-    radial-gradient(circle at 50% 18%, rgba(255, 254, 250, 0.72), transparent 42%),
-    rgba(244, 248, 240, 0.72) !important;
-}
-
 [data-theme="light"] .match-detail-modal {
   background:
     linear-gradient(135deg, rgba(255, 254, 250, 0.96), rgba(244, 248, 239, 0.86)),
