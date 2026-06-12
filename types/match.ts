@@ -146,7 +146,12 @@ export type HeadToHeadMatch = {
   homeTeam: string;
   awayTeam: string;
   score: string;
+  venue?: string;
+  neutral?: boolean;
+  source?: string;
 };
+
+export type HeadToHeadStatus = "direct_history" | "confirmed_no_meeting" | "unknown";
 
 export type MatchDetail = {
   match: Match;
@@ -162,4 +167,5 @@ export type MatchDetail = {
   stats: MatchStats;
   news: MatchNewsItem[];
   headToHead: HeadToHeadMatch[];
+  headToHeadStatus?: HeadToHeadStatus;
 };

@@ -16,6 +16,7 @@ import { createWsServer } from "./wsServer";
 import type { CountryData, HistoryPoint } from "./types";
 
 loadLocalEnv(resolve(process.cwd(), ".env"));
+loadLocalEnv(resolve(process.cwd(), "backend", ".env"));
 
 const PORT = parseInt(process.env.PORT || "3001");
 const POLYMARKET_API_KEY = process.env.POLYMARKET_API_KEY || "";

@@ -108,9 +108,13 @@ export async function fetchWorldCupFixtures(options: { season?: number; league?:
     return payload;
   };
 
-  const payload = options.forceRefresh
+  let payload = options.forceRefresh
     ? await fetchFixtures()
     : await cachedJson<FixturesResponse & { error?: string }>(url, FIXTURE_CACHE_TTL_MS, fetchFixtures, { persist: true, staleTtlMs: PUBLIC_STALE_TTL_MS });
+
+  if (!options.forceRefresh && !(payload.fixtures ?? []).length) {
+    payload = await fetchFixtures();
+  }
 
   return (payload.fixtures ?? []).map(toMatch);
 }

@@ -8,6 +8,7 @@ import { buildMatchRoundLabels } from "@/lib/stage-rounds";
 import { parseTeams } from "@/lib/teams";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
 import { fetchWorldCupHeadToHead } from "@/lib/world-cup-head-to-head";
+import { getQualifiedTeam } from "@/data/teams";
 import {
   fetchWorldCupMatchDetail,
   type WorldCupFixtureEvent,
@@ -19,6 +20,7 @@ import {
 import { fetchWorldCupSquadDetails, type WorldCupSquadDetail } from "@/lib/world-cup-squads";
 import type {
   HeadToHeadMatch,
+  HeadToHeadStatus,
   LineupPlayer,
   Match,
   MatchDetail,
@@ -38,6 +40,7 @@ export function useMatchDetail(slug: string): {
   const { matches, warmupMatches, loading, warmupLoading, error, warmupError } = useWorldCupData();
   const [remoteSquads, setRemoteSquads] = useState<Map<number, WorldCupSquadDetail> | null>(null);
   const [remoteHeadToHead, setRemoteHeadToHead] = useState<HeadToHeadMatch[] | null>(null);
+  const [headToHeadStatus, setHeadToHeadStatus] = useState<HeadToHeadStatus>("unknown");
   const [remoteMatchDetail, setRemoteMatchDetail] = useState<WorldCupMatchDetailPayload | null>(null);
   const isWarmupSlug = slug.startsWith("warmup-");
   const lookupMatches = isWarmupSlug ? warmupMatches : matches;
@@ -96,12 +99,19 @@ export function useMatchDetail(slug: string): {
   useEffect(() => {
     let active = true;
     setRemoteHeadToHead(null);
+    setHeadToHeadStatus("unknown");
 
-    if (!match?.homeTeam || !match.awayTeam) return;
+    if (!match) return;
 
-    fetchWorldCupHeadToHead(match.homeTeam, match.awayTeam)
-      .then((items) => {
-        if (active) setRemoteHeadToHead(items);
+    const h2hTeams = resolveHeadToHeadTeams(match, slug);
+    if (!h2hTeams) return;
+
+    fetchWorldCupHeadToHead(h2hTeams.home, h2hTeams.away)
+      .then((result) => {
+        if (active) {
+          setRemoteHeadToHead(result.matches);
+          setHeadToHeadStatus(result.status);
+        }
       })
       .catch((err) => {
         console.warn("[MatchDetail] Head-to-head unavailable:", err);
@@ -110,7 +120,7 @@ export function useMatchDetail(slug: string): {
     return () => {
       active = false;
     };
-  }, [match?.awayTeam, match?.homeTeam]);
+  }, [match, slug]);
 
   const detail = useMemo(() => {
     if (!match) return null;
@@ -130,9 +140,10 @@ export function useMatchDetail(slug: string): {
       enriched.awayLineup = squadToLineup(awaySquad);
     }
 
-    enriched.headToHead = match.homeTeam?.id && match.awayTeam?.id ? remoteHeadToHead ?? [] : [];
+    enriched.headToHead = remoteHeadToHead ?? [];
+    enriched.headToHeadStatus = headToHeadStatus;
     return enriched;
-  }, [match, remoteHeadToHead, remoteMatchDetail, remoteSquads, roundLabels, slug]);
+  }, [headToHeadStatus, match, remoteHeadToHead, remoteMatchDetail, remoteSquads, roundLabels, slug]);
 
   return {
     detail,
@@ -190,6 +201,7 @@ function buildRealMatchDetail(match: Match, slug: string, remote: WorldCupMatchD
     stats: toMatchStats(remote?.stats ?? [], match.homeTeam, match.awayTeam),
     news: [],
     headToHead: [],
+    headToHeadStatus: "unknown",
   };
 }
 
@@ -214,6 +226,37 @@ function emptyLineup(formation: string): MatchLineup {
     listType: "squad_pool",
     officialWorldCupSquad: false,
     coach: null,
+  };
+}
+
+function resolveHeadToHeadTeams(match: Match, slug: string): { home: MatchTeamMeta; away: MatchTeamMeta } | null {
+  if (match.homeTeam?.code && match.awayTeam?.code) {
+    return { home: match.homeTeam, away: match.awayTeam };
+  }
+
+  const routeSlug = slug.replace(/^warmup-/, "");
+  const [homeSlug, awaySlug] = routeSlug.split("-vs-");
+  if (!homeSlug || !awaySlug) return null;
+
+  const home = getQualifiedTeam(homeSlug);
+  const away = getQualifiedTeam(awaySlug);
+  if (!home || !away) return null;
+
+  return {
+    home: {
+      id: null,
+      name: home.nameCn,
+      englishName: home.nameEn,
+      code: home.code,
+      logo: home.cover,
+    },
+    away: {
+      id: null,
+      name: away.nameCn,
+      englishName: away.nameEn,
+      code: away.code,
+      logo: away.cover,
+    },
   };
 }
 

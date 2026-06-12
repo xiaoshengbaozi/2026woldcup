@@ -1,5 +1,8 @@
 import type { Match } from "@/types/match";
 
+const PRE_MATCH_REFRESH_MS = 60 * 60_000;
+const POST_MATCH_REFRESH_MS = 6 * 60 * 60_000;
+
 export function getLiveMatchQueue(matches: Match[], currentTime: number, limit = 4) {
   const liveNow = matches
     .filter((match) => isMatchInLiveWindow(match, currentTime))
@@ -39,7 +42,7 @@ export function getNextUpcomingMatch(matches: Match[], currentTime: number) {
 
 export function hasMatchInLiveRefreshWindow(matches: Match[], currentTime: number) {
   const now = currentTime > 0 ? currentTime : Date.now();
-  return matches.some((match) => isMatchInLiveWindow(match, now));
+  return matches.some((match) => isMatchInLiveRefreshWindow(match, now));
 }
 
 export function getUpcomingMatchesWithinWindow(
@@ -64,4 +67,13 @@ export function isMatchInLiveWindow(match: Match, currentTime: number) {
   const start = match.start.getTime();
   const end = match.end?.getTime() ?? start + 2 * 60 * 60 * 1000;
   return start <= currentTime && currentTime <= end;
+}
+
+export function isMatchInLiveRefreshWindow(match: Match, currentTime: number) {
+  if (match.status === "live" || match.status === "halftime") return true;
+  if (match.status === "finished" || match.status === "postponed") return false;
+
+  const start = match.start.getTime();
+  const end = match.end?.getTime() ?? start + 2 * 60 * 60 * 1000;
+  return start - PRE_MATCH_REFRESH_MS <= currentTime && currentTime <= end + POST_MATCH_REFRESH_MS;
 }
