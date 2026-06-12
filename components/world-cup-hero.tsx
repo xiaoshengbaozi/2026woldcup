@@ -157,8 +157,6 @@ export function WorldCupHero({ matches, progress, completedCount, ongoingCount, 
   }, []);
 
   useEffect(() => {
-    if (!topScorersRefreshEnabled) return;
-
     const loadTopScorers = () => {
       let active = true;
       const syncTopScorers = (forceRefresh = false) => {
@@ -171,12 +169,14 @@ export function WorldCupHero({ matches, progress, completedCount, ongoingCount, 
           });
       };
 
-      syncTopScorers(true);
-      const refreshId = window.setInterval(() => syncTopScorers(true), TOP_SCORERS_REFRESH_MS);
+      syncTopScorers(false);
+      const refreshId = topScorersRefreshEnabled
+        ? window.setInterval(() => syncTopScorers(true), TOP_SCORERS_REFRESH_MS)
+        : null;
 
       return () => {
         active = false;
-        window.clearInterval(refreshId);
+        if (refreshId !== null) window.clearInterval(refreshId);
       };
     };
 

@@ -148,10 +148,10 @@ function getMobilePitchPosition(coord: PitchCoord, layout: PitchCoord[], side: "
   const lineProgress = side === "home"
     ? clamp((maxY - coord.y) / span, 0, 1)
     : clamp((coord.y - minY) / span, 0, 1);
-  const x = clamp(46.8 + (coord.x - 50) * 0.92, 13.5, 81);
+  const x = clamp(45.6 + (coord.x - 50) * 0.86, 11.5, 79.5);
   const y = side === "home"
-    ? 10.5 + lineProgress * 33
-    : 83.5 - lineProgress * 30;
+    ? 9.5 + lineProgress * 38
+    : 84.5 - lineProgress * 34;
 
   return { x, y };
 }
@@ -435,6 +435,26 @@ function MobilePitchPlayer({
   const y = coord.y;
   const label = player.number ? `${player.number} ${player.nameCn || player.name}` : player.nameCn || player.name;
   const fallback = player.number ?? getPlayerInitial(player);
+  const href = /^\d+$/.test(player.id) ? `/players/${player.id}/` : null;
+  const scoutNote = getLineupPlayerScoutNote(player);
+  const [scoutOpen, setScoutOpen] = useState(false);
+  const avatar = (
+    <div className="relative grid h-10 w-10 place-items-center overflow-hidden rounded-full bg-[#30343d] text-[11px] font-black text-white shadow-[0_10px_22px_rgba(0,0,0,.26)] ring-1 ring-white/15 transition group-hover:ring-volt/45">
+      <span>{fallback}</span>
+      {player.photo && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={player.photo}
+          alt={player.nameEn || player.name}
+          className="absolute inset-0 h-full w-full object-cover"
+          loading="lazy"
+          onError={(event) => {
+            event.currentTarget.style.display = "none";
+          }}
+        />
+      )}
+    </div>
+  );
 
   return (
     <motion.div
@@ -444,24 +464,30 @@ function MobilePitchPlayer({
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ delay: 0.06 + delay * 0.025, duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
     >
-      <div className="relative grid h-10 w-10 place-items-center overflow-hidden rounded-full bg-[#30343d] text-[11px] font-black text-white shadow-[0_10px_22px_rgba(0,0,0,.26)] ring-1 ring-white/15">
-        <span>{fallback}</span>
-        {player.photo && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={player.photo}
-            alt={player.nameEn || player.name}
-            className="absolute inset-0 h-full w-full object-cover"
-            loading="lazy"
-            onError={(event) => {
-              event.currentTarget.style.display = "none";
-            }}
-          />
-        )}
-      </div>
+      {scoutNote ? (
+        <button
+          type="button"
+          onClick={() => setScoutOpen(true)}
+          className="group rounded-full outline-none focus-visible:ring-2 focus-visible:ring-volt/60"
+          aria-label={`${label} 球员卡片`}
+        >
+          {avatar}
+        </button>
+      ) : href ? (
+        <Link
+          href={href}
+          className="group rounded-full outline-none focus-visible:ring-2 focus-visible:ring-volt/60"
+          aria-label={`${label} 球员详情`}
+        >
+          {avatar}
+        </Link>
+      ) : (
+        avatar
+      )}
       <p className="mt-0.5 w-[3.8rem] truncate text-center text-[9px] font-black leading-tight text-white/90 [text-shadow:0_1px_5px_rgba(0,0,0,.65)]" title={label}>
         {label}
       </p>
+      {scoutNote && <ScoutNoteDialog open={scoutOpen} onClose={() => setScoutOpen(false)} player={player} note={scoutNote} />}
     </motion.div>
   );
 }
@@ -525,6 +551,7 @@ function FormationPitch({
   const layout = getPlayerPitchCoords(starters, formation);
   const accentFrom = accentHex === "#D8FF3E" ? "rgba(216,255,62," : "rgba(255,154,31,";
   const displayCoach = localizeCoachName(coach) || "待更新";
+  const [activeScout, setActiveScout] = useState<{ player: LineupPlayer; note: PlayerScoutNote } | null>(null);
 
   return (
     <div className="flex flex-col items-center pt-1 sm:pt-2">
@@ -620,6 +647,10 @@ function FormationPitch({
             const labelWidth = rowDensity >= 5 ? 44 : rowDensity === 4 ? 52 : rowDensity === 3 ? 62 : 72;
             const isGK = player.position === "GK";
             const isCapt = player.isCaptain;
+            const scoutNote = getLineupPlayerScoutNote(player);
+            const label = player.number ? `${player.number} ${player.nameCn || player.name}` : player.nameCn || player.name;
+            const displayName = player.nameCn || player.name;
+            const fallback = player.number ?? getPlayerInitial(player);
             const x = 5.9 + (coord.x / 100) * 88.2;
             const y = 3 + (coord.y / 100) * 94;
 
@@ -634,21 +665,46 @@ function FormationPitch({
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.08 + i * 0.04, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                 >
-                <div className="flex flex-col items-center">
+                <button
+                  type="button"
+                  disabled={!scoutNote}
+                  onClick={() => scoutNote && setActiveScout({ player, note: scoutNote })}
+                  className="group flex flex-col items-center outline-none disabled:cursor-default focus-visible:ring-2 focus-visible:ring-volt/60"
+                  aria-label={`${label} 球员卡片`}
+                >
                   <div className="relative">
-                    <div className="flex h-[32px] w-[32px] items-center justify-center sm:h-[38px] sm:w-[38px]"
+                    <div className="relative grid h-9 w-9 place-items-center overflow-hidden rounded-full bg-[#30343d] text-[11px] font-black text-white shadow-[0_10px_22px_rgba(0,0,0,.3)] ring-1 ring-white/15 transition group-hover:ring-volt/45 sm:h-10 sm:w-10"
                       style={{
                         background: isGK
-                          ? "linear-gradient(135deg, #2ecc71 0%, #1a8a4a 100%)"
-                          : `linear-gradient(135deg, ${accentHex} 0%, ${accentDark} 100%)`,
-                        clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)",
+                          ? "linear-gradient(135deg, #314239 0%, #1f2d27 100%)"
+                          : "linear-gradient(135deg, #30343d 0%, #191d25 100%)",
                       }}
                     >
                       <span className="relative z-10 text-[11px] font-black tabular-nums text-white sm:text-[13px]"
                         style={{ textShadow: "0 1px 3px rgba(0,0,0,0.4)", fontFamily: "ScreenMatrix, monospace" }}
                       >
-                        {player.number ?? "—"}
+                        {fallback}
                       </span>
+                      {player.photo && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={player.photo}
+                          alt={player.nameEn || player.name}
+                          className="absolute inset-0 h-full w-full object-cover"
+                          loading="lazy"
+                          onError={(event) => {
+                            event.currentTarget.style.display = "none";
+                          }}
+                        />
+                      )}
+                      {player.number ? (
+                        <span
+                          className="absolute -bottom-0.5 -right-0.5 z-10 grid h-4 min-w-4 place-items-center rounded-full px-1 text-[8px] font-black text-black ring-1 ring-black/30"
+                          style={{ background: isGK ? "#72ff9f" : accentHex }}
+                        >
+                          {player.number}
+                        </span>
+                      ) : null}
                     </div>
                     {isCapt && (
                       <div className="absolute -right-1 -top-1 z-20 flex h-3.5 w-3.5 items-center justify-center rounded-full sm:h-4 sm:w-4"
@@ -663,17 +719,25 @@ function FormationPitch({
                       rowDensity >= 5 ? "text-[7px] sm:text-[8px]" : "text-[8px] sm:text-[9px]"
                     }`}
                     style={{ maxWidth: `${labelWidth}px`, textShadow: "0 1px 4px rgba(0,0,0,0.6)" }}
-                    title={player.name}
+                    title={label}
                   >
-                    {player.name}
+                    {displayName}
                   </p>
-                </div>
+                </button>
                 </motion.div>
               </div>
             );
           })}
         </div>
       </div>
+      {activeScout && (
+        <ScoutNoteDialog
+          open
+          onClose={() => setActiveScout(null)}
+          player={activeScout.player}
+          note={activeScout.note}
+        />
+      )}
     </div>
   );
 }

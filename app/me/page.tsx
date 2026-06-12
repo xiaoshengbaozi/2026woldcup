@@ -375,8 +375,6 @@ function MePageContent() {
   }, [router, searchParams]);
 
   useEffect(() => {
-    if (!topScorersRefreshEnabled) return;
-
     let active = true;
     const syncTopScorers = (forceRefresh = false) => {
       fetchWorldCupTopScorers({ forceRefresh })
@@ -388,12 +386,14 @@ function MePageContent() {
         });
     };
 
-    syncTopScorers(true);
-    const refreshId = window.setInterval(() => syncTopScorers(true), TOP_SCORERS_REFRESH_MS);
+    syncTopScorers(false);
+    const refreshId = topScorersRefreshEnabled
+      ? window.setInterval(() => syncTopScorers(true), TOP_SCORERS_REFRESH_MS)
+      : null;
 
     return () => {
       active = false;
-      window.clearInterval(refreshId);
+      if (refreshId !== null) window.clearInterval(refreshId);
     };
   }, [topScorersRefreshEnabled]);
 
