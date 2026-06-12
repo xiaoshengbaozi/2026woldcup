@@ -13,6 +13,7 @@ import {
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useFifaNews } from "@/lib/fifa-news";
+import { localizeCityName } from "@/lib/calendar";
 import { formatCountdown, formatDate } from "@/lib/format";
 import { getLiveMatchQueue, getNextUpcomingMatch, hasMatchInLiveRefreshWindow, isMatchInLiveWindow } from "@/lib/live-match-queue";
 import { generateMatchRouteSlug } from "@/lib/match-detail";
@@ -415,12 +416,14 @@ function formatVenueLine(location: string) {
   const trimmed = location.trim();
   if (!trimmed) return "";
 
-  const parenMatch = trimmed.match(/^(.+?)（(.+?)）$/);
-  const venue = (parenMatch?.[1] || trimmed.split(/[,(（]/)[0] || trimmed).trim();
-  const city = (parenMatch?.[2] || trimmed.match(/\((.+?)\)$/)?.[1] || "").trim();
+  const parenMatch = trimmed.match(/^(.+?)[（(]([^（）()]+)[）)]$/);
+  const separatorMatch = trimmed.match(/^(.+?)\s*[·,，]\s*([^·,，]+)$/);
+  const venue = (parenMatch?.[1] || separatorMatch?.[1] || trimmed).trim();
+  const cityRaw = (parenMatch?.[2] || separatorMatch?.[2] || "").trim();
+  const city = cityRaw ? localizeCityName(cityRaw) : "";
   const country = getHostCountry(city);
 
-  return [country, city, venue].filter(Boolean).join(" - ");
+  return [venue, city, country].filter(Boolean).join(" · ");
 }
 
 function getHostCountry(city: string) {
