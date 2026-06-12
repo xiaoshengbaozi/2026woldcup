@@ -1805,6 +1805,15 @@
   background-color: rgba(191, 63, 98, 0.08) !important;
 }
 
+[data-theme="light"] .auth-modal-backdrop {
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255, 254, 250, 0.72), transparent 42%),
+    linear-gradient(135deg, rgba(250, 253, 244, 0.72), rgba(229, 237, 221, 0.62)),
+    rgba(242, 247, 236, 0.72) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(1.08) brightness(1.03) !important;
+  backdrop-filter: blur(24px) saturate(1.08) brightness(1.03) !important;
+}
+
 [data-theme="light"] .notification-summary-backdrop,
 [data-theme="light"] .news-reader-backdrop {
   background:

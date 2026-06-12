@@ -7,7 +7,7 @@ import { isEmailConfigured, sendEmail } from "./emailService";
 import { getTelegramBotUsername, sendTelegramMessage } from "./telegramService";
 import { getWorldCupFixtures, getWorldCupSquads } from "./worldCupData";
 import { UserStore, toPublicUser } from "./userStore";
-import type { InvitationCode, PredictionArchive, WorldCupUser } from "./userStore";
+import type { InvitationCode, PredictionArchive, UserNotification, WorldCupUser } from "./userStore";
 import type { PlayerXTimelineService, XTimelinePlayerInput } from "./playerXTimeline";
 
 const SESSION_COOKIE = "wc_session";
@@ -183,7 +183,8 @@ export class UserSystem {
       if (req.method === "GET" && url.pathname === "/api/me/session") {
         const user = this.requireSessionUser(req, res);
         if (!user) return true;
-        sendJson(res, buildSessionPayload(user));
+        const syncedUser = await this.syncNotificationState(user);
+        sendJson(res, buildSessionPayload(syncedUser));
         return true;
       }
 
@@ -192,8 +193,10 @@ export class UserSystem {
         if (!user) return true;
         const catalog = await this.getPreferenceCatalog();
         const syncedUser = syncMutualFollowedMatchesForUser(this.store, user.id, catalog);
-        queueDueMatchNotifications(this.store, syncedUser);
-        sendJson(res, buildHomePayload(this.store.getUserById(user.id) ?? syncedUser, catalog));
+        const queuedNotifications = queueDueMatchNotifications(this.store, syncedUser);
+        const latestUser = this.store.getUserById(user.id) ?? syncedUser;
+        await deliverTelegramNotifications(this.store, latestUser, collectTelegramPendingNotifications(latestUser, queuedNotifications));
+        sendJson(res, buildHomePayload(this.store.getUserById(user.id) ?? latestUser, catalog));
         return true;
       }
 
@@ -310,7 +313,7 @@ export class UserSystem {
           user.telegram.chatId,
           `赛波 CYBERBALL 测试通知已接通。\n\n你好，${user.profile.displayName}。后续比赛提醒会从这里同步给你。`
         );
-        if (delivery.sent) this.store.markTelegramTestSent(user.id);
+        if (delivery.sent) this.store.markTelegramDeliverySent(user.id);
         sendJson(res, {
           ok: delivery.sent,
           delivery,
@@ -610,6 +613,15 @@ export class UserSystem {
     }
 
     return this.playerXTimeline.getTimeline(players);
+  }
+
+  private async syncNotificationState(user: WorldCupUser) {
+    const catalog = await this.getPreferenceCatalog();
+    const syncedUser = syncMutualFollowedMatchesForUser(this.store, user.id, catalog);
+    const queuedNotifications = queueDueMatchNotifications(this.store, syncedUser);
+    const latestUser = this.store.getUserById(user.id) ?? syncedUser;
+    await deliverTelegramNotifications(this.store, latestUser, collectTelegramPendingNotifications(latestUser, queuedNotifications));
+    return this.store.getUserById(user.id) ?? latestUser;
   }
 }
 
@@ -1450,6 +1462,7 @@ function minutesFromMatchDayStart(startsAt: string) {
 }
 
 function queueDueMatchNotifications(store: UserStore, user: WorldCupUser, now = Date.now()) {
+  const queuedNotifications: UserNotification[] = [];
   const latestUser = store.getUserById(user.id) ?? user;
   for (const reminder of latestUser.reminders) {
     if (!reminder.enabled || !reminder.startsAt || reminder.lastQueuedAt) continue;
@@ -1463,7 +1476,8 @@ function queueDueMatchNotifications(store: UserStore, user: WorldCupUser, now = 
     if (isDayReminder && (!isSameDay || timeToStart <= 20 * 60_000)) continue;
     if (isTwentyMinuteReminder && (timeToStart > 20 * 60_000 || timeToStart < -2 * 60 * 60_000)) continue;
 
-    store.queueNotification(latestUser.id, {
+    const beforeIds = new Set((store.getUserById(latestUser.id) ?? latestUser).notifications.map((notification) => notification.id));
+    const updatedUser = store.queueNotification(latestUser.id, {
       type: "match_reminder",
       title: reminder.title,
       body: isTwentyMinuteReminder ? "比赛即将开始，别错过你收藏的比赛。" : "你收藏的比赛今天开赛。",
@@ -1475,8 +1489,38 @@ function queueDueMatchNotifications(store: UserStore, user: WorldCupUser, now = 
         urgent: isTwentyMinuteReminder,
       },
     });
+    const queued = updatedUser.notifications.find((notification) => !beforeIds.has(notification.id));
+    if (queued) queuedNotifications.push(queued);
     store.markReminderQueued(latestUser.id, reminder.id, now);
   }
+  return queuedNotifications;
+}
+
+async function deliverTelegramNotifications(store: UserStore, user: WorldCupUser, notifications: UserNotification[]) {
+  if (!notifications.length || !user.telegram?.chatId || !user.telegram.notificationsEnabled) return;
+
+  for (const notification of notifications) {
+    const delivery = await sendTelegramMessage(user.telegram.chatId, `${notification.title}\n\n${notification.body}`);
+    if (!delivery.sent) {
+      console.warn(`[Telegram] delivery failed; user=${user.email}; notification=${notification.id}; error=${delivery.error || delivery.status || "unknown"}`);
+      continue;
+    }
+    store.markNotificationTelegramDelivered(user.id, notification.id);
+    store.markTelegramDeliverySent(user.id);
+  }
+}
+
+function collectTelegramPendingNotifications(user: WorldCupUser, queuedNotifications: UserNotification[]) {
+  const byId = new Map<string, UserNotification>();
+  for (const notification of queuedNotifications) byId.set(notification.id, notification);
+  for (const notification of user.notifications) {
+    if (notification.read || notification.metadata?.telegramDeliveredAt) continue;
+    if (notification.channel !== "site" && notification.channel !== "telegram") continue;
+    byId.set(notification.id, notification);
+  }
+  return [...byId.values()]
+    .sort((a, b) => a.createdAt - b.createdAt)
+    .slice(0, 5);
 }
 
 function normalizeSearchText(value: string) {

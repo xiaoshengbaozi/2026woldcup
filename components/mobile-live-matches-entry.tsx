@@ -5,7 +5,7 @@ import { Radio, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { MobileLiveMatchesList } from "@/components/mobile-live-matches-list";
 import { mobileFloatingSurfaceStyle } from "@/components/mobile-surface-styles";
-import { getUpcomingMatchesWithinWindow, isMatchInLiveWindow } from "@/lib/live-match-queue";
+import { getLiveAndUpcomingMatchesWithinWindow, isMatchInLiveWindow } from "@/lib/live-match-queue";
 import { useNow } from "@/lib/use-now";
 import type { Match } from "@/types/match";
 
@@ -19,7 +19,7 @@ export function MobileLiveMatchesEntry({ matches, variant = "fixed" }: MobileLiv
   const [open, setOpen] = useState(false);
 
   const displayMatches = useMemo(
-    () => getUpcomingMatchesWithinWindow(matches, currentTime, 24),
+    () => getLiveAndUpcomingMatchesWithinWindow(matches, currentTime, 24),
     [currentTime, matches]
   );
   const isLive = displayMatches.some((match) => isMatchInLiveWindow(match, currentTime));

@@ -385,7 +385,7 @@ function AuthModal({ mode, registerStep, onClose, children }: { mode: SharedAuth
   }, []);
 
   const modal = (
-    <motion.div className="fixed inset-0 z-[500] grid place-items-center overflow-hidden bg-black/72 px-4 py-6 backdrop-blur-xl sm:py-10" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+    <motion.div className="auth-modal-backdrop fixed inset-0 z-[500] grid place-items-center overflow-hidden px-4 py-6 sm:py-10" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <div className="pointer-events-none fixed left-1/2 top-0 h-[360px] w-[min(720px,100vw)] -translate-x-1/2 rounded-full bg-volt/10 blur-[120px]" />
       <motion.div
         ref={modalRef}

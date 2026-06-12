@@ -937,7 +937,7 @@ function ScoutNoteDialog({
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-[120] grid place-items-center bg-black/70 px-4 py-6 backdrop-blur-xl"
+          className="auth-modal-backdrop fixed inset-0 z-[120] grid place-items-center px-4 py-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
