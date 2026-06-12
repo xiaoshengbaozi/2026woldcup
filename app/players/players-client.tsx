@@ -166,11 +166,6 @@ export function PlayersClient() {
   }, [activeTab, followedPlayers, topScorerRailItems]);
 
   useEffect(() => {
-    if (!topScorersRefreshEnabled) {
-      setTopScorersLoading(false);
-      return;
-    }
-
     let active = true;
     setTopScorersLoading(true);
     const syncTopScorers = (forceRefresh = false) => {
@@ -187,12 +182,14 @@ export function PlayersClient() {
         });
     };
 
-    syncTopScorers(true);
-    const refreshId = window.setInterval(() => syncTopScorers(true), TOP_SCORERS_REFRESH_MS);
+    syncTopScorers(false);
+    const refreshId = topScorersRefreshEnabled
+      ? window.setInterval(() => syncTopScorers(true), TOP_SCORERS_REFRESH_MS)
+      : null;
 
     return () => {
       active = false;
-      window.clearInterval(refreshId);
+      if (refreshId !== null) window.clearInterval(refreshId);
     };
   }, [topScorersRefreshEnabled]);
 
