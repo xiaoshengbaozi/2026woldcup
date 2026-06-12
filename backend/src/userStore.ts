@@ -568,6 +568,23 @@ export class UserStore {
     return user;
   }
 
+  markNotificationTelegramDelivered(userId: string, notificationId: string, deliveredAt = Date.now()) {
+    const user = this.requireUser(userId);
+    user.notifications = user.notifications.map((notification) => (
+      notification.id === notificationId
+        ? {
+            ...notification,
+            metadata: {
+              ...(notification.metadata ?? {}),
+              telegramDeliveredAt: deliveredAt,
+            },
+          }
+        : notification
+    ));
+    this.touch(user);
+    return user;
+  }
+
   setTelegramBindingCode(userId: string, codeHash: string, expiresAt: number) {
     const user = this.requireUser(userId);
     user.telegramBinding = {
@@ -628,6 +645,10 @@ export class UserStore {
   }
 
   markTelegramTestSent(userId: string, sentAt = Date.now()) {
+    return this.markTelegramDeliverySent(userId, sentAt);
+  }
+
+  markTelegramDeliverySent(userId: string, sentAt = Date.now()) {
     const user = this.requireUser(userId);
     if (!user.telegram) throw createUserStoreError("telegram_not_linked", 404);
     user.telegram = {

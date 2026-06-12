@@ -186,6 +186,14 @@ html.theme-switching *::after {
     backdrop-filter: blur(64px) saturate(1.16) brightness(0.68) !important;
   }
 
+  .auth-modal-backdrop {
+    background:
+      radial-gradient(circle at 50% 18%, rgba(216, 255, 62, 0.055), transparent 36%),
+      rgba(0, 0, 0, 0.72) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(1.08) brightness(0.74) !important;
+    backdrop-filter: blur(24px) saturate(1.08) brightness(0.74) !important;
+  }
+
   .players-page .filter-dropdown-panel {
     width: min(14.5rem, calc(100vw - 2rem));
     background:

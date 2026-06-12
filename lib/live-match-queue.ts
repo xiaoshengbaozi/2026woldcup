@@ -60,6 +60,29 @@ export function getUpcomingMatchesWithinWindow(
     .sort((a, b) => a.start.getTime() - b.start.getTime());
 }
 
+export function getLiveAndUpcomingMatchesWithinWindow(
+  matches: Match[],
+  currentTime: number,
+  windowHours = 24
+) {
+  const windowEnd = currentTime + windowHours * 60 * 60 * 1000;
+  const liveNow = matches
+    .filter((match) => isMatchInLiveWindow(match, currentTime))
+    .sort((a, b) => a.start.getTime() - b.start.getTime());
+  const liveIds = new Set(liveNow.map((match) => match.uid));
+  const upcomingMatches = matches
+    .filter((match) => {
+      if (liveIds.has(match.uid)) return false;
+      if (match.status === "finished" || match.status === "postponed") return false;
+
+      const start = match.start.getTime();
+      return start > currentTime && start <= windowEnd;
+    })
+    .sort((a, b) => a.start.getTime() - b.start.getTime());
+
+  return [...liveNow, ...upcomingMatches];
+}
+
 export function isMatchInLiveWindow(match: Match, currentTime: number) {
   if (match.status === "live" || match.status === "halftime") return true;
   if (match.status === "finished" || match.status === "postponed") return false;

@@ -71,15 +71,110 @@ export async function getWorldCupTopScorers(apiFootball: ApiFootballService, url
       raw: item,
     };
   });
+  const officialScorers = response.filter((item) => (item.goals ?? 0) > 0);
+  if (officialScorers.length) {
+    return {
+      source: "api-football",
+      normalized: true,
+      localized: true,
+      timestamp: Date.now(),
+      count: officialScorers.length,
+      scorers: officialScorers,
+    };
+  }
+
+  const fallbackScorers = await getTopScorersFromFixtureEvents(apiFootball, params);
 
   return {
-    source: "api-football",
+    source: "api-football-events-fallback",
     normalized: true,
     localized: true,
     timestamp: Date.now(),
-    count: response.length,
-    scorers: response,
+    officialCount: response.length,
+    count: fallbackScorers.length,
+    scorers: fallbackScorers,
   };
+}
+
+async function getTopScorersFromFixtureEvents(apiFootball: ApiFootballService, params: URLSearchParams) {
+  const fixtureParams = new URLSearchParams({
+    league: params.get("league") || "1",
+    season: params.get("season") || "2026",
+  });
+  const fixturesPayload = await apiFootball.request("fixtures", fixtureParams);
+  const fixtures = ((fixturesPayload.upstream as { response?: any[] })?.response ?? [])
+    .filter((item) => hasStartedFixture(item) && hasAnyRecordedGoal(item))
+    .sort((a, b) => String(a.fixture?.date ?? "").localeCompare(String(b.fixture?.date ?? "")));
+
+  const eventResults = await Promise.allSettled(
+    fixtures.map((item) => {
+      const fixtureId = item.fixture?.id;
+      return apiFootball.request("fixtures/events", new URLSearchParams({ fixture: String(fixtureId) }));
+    })
+  );
+  const scorers = new Map<number, EventTopScorer>();
+
+  for (const result of eventResults) {
+    if (result.status !== "fulfilled") continue;
+    const events = ((result.value.upstream as { response?: any[] })?.response ?? []).filter(isScoringEvent);
+    for (const event of events) {
+      const playerId = Number(event.player?.id);
+      if (!Number.isFinite(playerId) || playerId <= 0) continue;
+
+      const player = localizePlayer({
+        id: playerId,
+        name: event.player?.name ?? "",
+        photo: event.player?.photo ?? `https://media.api-sports.io/football/players/${playerId}.png`,
+      });
+      const team = localizeTeam({
+        id: event.team?.id ?? null,
+        name: event.team?.name ?? "",
+        logo: event.team?.logo ?? (event.team?.id ? `https://media.api-sports.io/football/teams/${event.team.id}.png` : ""),
+      });
+      const existing = scorers.get(playerId);
+      if (existing) {
+        existing.goals += 1;
+        existing.raw.push(event);
+      } else {
+        scorers.set(playerId, {
+          id: playerId,
+          name: player?.name ?? event.player?.name ?? "",
+          nameEn: player?.nameEn ?? event.player?.name ?? "",
+          photo: player?.photo ?? `https://media.api-sports.io/football/players/${playerId}.png`,
+          team,
+          goals: 1,
+          raw: [event],
+        });
+      }
+    }
+  }
+
+  return [...scorers.values()].sort((a, b) => b.goals - a.goals || a.nameEn.localeCompare(b.nameEn));
+}
+
+type EventTopScorer = {
+  id: number;
+  name: string;
+  nameEn: string;
+  photo: string;
+  team: any;
+  goals: number;
+  raw: any[];
+};
+
+function hasStartedFixture(item: any) {
+  const status = String(item.fixture?.status?.short ?? "").toUpperCase();
+  return Boolean(item.fixture?.id) && !["", "TBD", "NS", "PST", "CANC", "ABD", "AWD", "WO"].includes(status);
+}
+
+function hasAnyRecordedGoal(item: any) {
+  return Number(item.goals?.home ?? 0) > 0 || Number(item.goals?.away ?? 0) > 0;
+}
+
+function isScoringEvent(event: any) {
+  const type = String(event.type ?? "").toLowerCase();
+  const detail = String(event.detail ?? "").toLowerCase();
+  return type === "goal" && !detail.includes("own goal");
 }
 
 function getResponse<T>(result: PromiseSettledResult<{ upstream: unknown }>) {
