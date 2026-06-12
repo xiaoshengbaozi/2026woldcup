@@ -25,6 +25,7 @@ import { buildOddsSelectionForTeams, sameOddsMarket, type OddsSelection } from "
 import { getMatchLiveDisplay, getMatchScore } from "@/lib/match-live-display";
 import { useMatchLines } from "@/lib/use-match-lines";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
+import { fetchCurrentWeather, weatherLabel, type WeatherState } from "@/lib/weather";
 import type { Team } from "@/types/match";
 import type { MatchLineMarket } from "@/types/messages";
 
@@ -532,11 +533,31 @@ function WeatherStrip({
   onRemove: () => void;
   muted?: boolean;
 }) {
+  const [weather, setWeather] = useState<WeatherState | undefined>();
+
+  useEffect(() => {
+    const sourceMatch = match.sourceMatch;
+    if (!sourceMatch?.geo) {
+      setWeather(undefined);
+      return;
+    }
+
+    let active = true;
+    setWeather(undefined);
+    fetchCurrentWeather(sourceMatch).then((data) => {
+      if (active) setWeather(data);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [match.sourceMatch]);
+
   return (
     <div className={`relative flex items-center justify-between gap-3 px-3 text-xs font-medium ${muted ? "text-white/42" : "text-black/52"}`}>
       <span className="inline-flex min-w-0 items-center gap-1.5">
         <CloudSun className="h-3.5 w-3.5 shrink-0" strokeWidth={1.6} />
-        <span>{getMatchWeatherSummary(match)}</span>
+        <span>{getMatchWeatherSummary(match, weather)}</span>
       </span>
       {!muted && (
         <FavoriteAction
@@ -652,10 +673,13 @@ function getFavoriteMatchLiveOdds(match: FavoriteMatchCard, selection: OddsSelec
   ];
 }
 
-function getMatchWeatherSummary(match: FavoriteMatchCard) {
-  const weather = match.sourceMatch?.weather?.trim();
-  if (weather && weather !== "待更新" && !/^https?:\/\//i.test(weather)) return weather;
-  return "赛日天气待更新";
+function getMatchWeatherSummary(match: FavoriteMatchCard, liveWeather?: WeatherState) {
+  if (liveWeather) return weatherLabel(liveWeather);
+
+  const staticWeather = match.sourceMatch?.weather?.trim();
+  if (staticWeather && staticWeather !== "待更新" && !/^https?:\/\//i.test(staticWeather)) return staticWeather;
+  if (match.sourceMatch?.geo) return "SYNC";
+  return "NO GEO";
 }
 
 function formatTime(date: Date | null) {

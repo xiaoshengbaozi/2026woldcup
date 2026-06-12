@@ -70,7 +70,8 @@
     "Mexico": "Mexico",
     "Mexico U20": "Mexico U20",
     "Germany U17": "Germany U17",
-    "Palmeiras": "Palmeiras"
+    "Palmeiras": "Palmeiras",
+    "Czech Republic": "Czech Republic"
   },
   "leagues": {
     "King's Cup": "King's Cup",
@@ -103,7 +104,8 @@
     "Korea Republic": "Korea Republic",
     "Türkiye": "Türkiye",
     "China PR": "China PR",
-    "Tunisia": "Tunisia"
+    "Tunisia": "Tunisia",
+    "Czechia": "Czechia"
   },
   "transferTypes": {
     "€ 17M": "€ 17M",
@@ -138,7 +140,8 @@
     "Cachín": "Cachín",
     "Cihuatlán": "Cihuatlán",
     "Johannesburg": "Johannesburg",
-    "Celaya": "Celaya"
+    "Celaya": "Celaya",
+    "Skalka": "Skalka"
   },
   "coaches": {
     "H. Regragui": "H. Regragui",
