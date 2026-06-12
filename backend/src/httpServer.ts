@@ -111,6 +111,7 @@ export function createHttpServer(options: HttpServerOptions) {
       (url.pathname.startsWith("/api/auth/") ||
         url.pathname.startsWith("/api/avatar/") ||
         url.pathname.startsWith("/api/telegram/") ||
+        url.pathname.startsWith("/api/tg/") ||
         url.pathname === "/api/player-x-timeline" ||
         url.pathname === "/api/user-preferences" ||
         url.pathname.startsWith("/api/me/") ||
