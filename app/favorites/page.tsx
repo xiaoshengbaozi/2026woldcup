@@ -379,7 +379,7 @@ function FavoriteAction({
           stage: match.stage,
           startsAt: match.startsAt,
         }}
-        className={`${inverted ? "bg-black/12 text-black ring-black/10 hover:bg-black/18" : ""} ${className}`}
+        className={`favorite-match-reminder-button ${inverted ? "text-volt ring-volt/55" : ""} ${className}`}
         onChanged={(active) => {
           if (!active) onRemoved?.();
         }}
@@ -564,7 +564,7 @@ function WeatherStrip({
           match={match}
           signedIn={signedIn}
           inverted
-          className="h-9 w-9 min-w-9 bg-transparent text-black shadow-none ring-1 ring-black/45 hover:bg-black/8"
+          className="h-9 w-9 min-w-9"
           onRemoved={onRemove}
         />
       )}
