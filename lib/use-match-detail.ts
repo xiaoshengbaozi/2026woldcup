@@ -34,6 +34,7 @@ import type {
 } from "@/types/match";
 
 const LIVE_MATCH_DETAIL_REFRESH_MS = 60_000;
+const MATCH_DETAIL_REFRESH_WINDOW_CHECK_MS = 10 * 60_000;
 
 export function useMatchDetail(slug: string): {
   detail: MatchDetail | null;
@@ -83,6 +84,7 @@ export function useMatchDetail(slug: string): {
   useEffect(() => {
     let active = true;
     let refreshId: number | null = null;
+    let windowCheckId: number | null = null;
     setRemoteMatchDetail(null);
 
     if (!match?.apiFixtureId) return;
@@ -99,18 +101,25 @@ export function useMatchDetail(slug: string): {
 
     syncMatchDetail(false);
 
-    if (isMatchInLiveRefreshWindow(match, Date.now())) {
+    const startLiveRefresh = () => {
+      if (refreshId !== null || !isMatchInLiveRefreshWindow(match, Date.now())) return;
       syncMatchDetail(true);
       refreshId = window.setInterval(() => {
         if (isMatchInLiveRefreshWindow(match, Date.now())) {
           syncMatchDetail(true);
         }
       }, LIVE_MATCH_DETAIL_REFRESH_MS);
+    };
+
+    startLiveRefresh();
+    if (refreshId === null) {
+      windowCheckId = window.setInterval(startLiveRefresh, MATCH_DETAIL_REFRESH_WINDOW_CHECK_MS);
     }
 
     return () => {
       active = false;
       if (refreshId !== null) window.clearInterval(refreshId);
+      if (windowCheckId !== null) window.clearInterval(windowCheckId);
     };
   }, [match]);
 

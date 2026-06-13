@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
 import type { ApiFootballService } from "./apiFootball";
 import { createApiFootballService } from "./apiFootball";
+import { localizePlayerName } from "./playerTranslations";
 import { sendTelegramMessage } from "./telegramService";
 import { UserStore, type MatchReminder, type WorldCupUser } from "./userStore";
 
@@ -207,10 +208,11 @@ function queueKickoffNotifications(store: UserStore, user: WorldCupUser, fixture
   if (fixture.status !== "live" && fixture.status !== "halftime") return;
 
   for (const team of matchingFollowedTeams(user, fixture)) {
+    const teamName = localizeFollowedTeamName(team, fixture);
     queueFollowNotification(store, user.id, {
       key: `follow:kickoff:${fixture.id}:team:${team.id}`,
-      title: `${team.name} 开赛了`,
-      body: `${fixture.home.name} vs ${fixture.away.name} 已经开始，当前比分 ${scoreText(fixture)}。`,
+      title: `${teamName} 开赛了`,
+      body: `${fixtureTitle(fixture)} 已经开始，当前比分 ${scoreText(fixture)}。`,
       metadata: {
         followType: "team",
         eventType: "kickoff",
@@ -226,10 +228,12 @@ function queueGoalNotifications(store: UserStore, user: WorldCupUser, fixture: L
     if (event.type !== "Goal" || /Missed Penalty/i.test(event.detail)) continue;
 
     for (const team of matchingFollowedTeams(user, fixture, event.team)) {
+      const teamName = localizeFollowedTeamName(team, fixture, event.team);
+      const scorerName = localizeLivePlayerName(event) || "球队";
       queueFollowNotification(store, user.id, {
         key: `follow:goal:${fixture.id}:team:${team.id}:${event.id}`,
-        title: `${event.team.name || team.name} 进球`,
-        body: `${event.minute}' ${event.player || "球队"} 破门，${fixture.home.name} ${fixture.score.home ?? 0} - ${fixture.score.away ?? 0} ${fixture.away.name}。`,
+        title: `${teamName} 进球`,
+        body: `${event.minute}' ${scorerName} 破门，${fixtureScoreLine(fixture)}。`,
         metadata: {
           followType: "team",
           eventType: "goal",
@@ -241,10 +245,12 @@ function queueGoalNotifications(store: UserStore, user: WorldCupUser, fixture: L
     }
 
     for (const player of matchingFollowedPlayers(user, event)) {
+      const playerName = localizeFollowedPlayerName(player, event);
+      const teamName = localizeLiveTeamName(event.team) || player.team || "球队";
       queueFollowNotification(store, user.id, {
         key: `follow:goal:${fixture.id}:player:${player.id}:${event.id}`,
-        title: `${player.name} 进球`,
-        body: `${event.minute}' ${player.name} 为 ${event.team.name || player.team || "球队"} 破门。`,
+        title: `${playerName} 进球`,
+        body: `${event.minute}' ${playerName} 为 ${teamName} 破门。`,
         metadata: {
           followType: "player",
           eventType: "goal",
@@ -263,10 +269,11 @@ function queueWinNotifications(store: UserStore, user: WorldCupUser, fixture: Li
   if (!winner) return;
 
   for (const team of matchingFollowedTeams(user, fixture, winner)) {
+    const teamName = localizeFollowedTeamName(team, fixture, winner);
     queueFollowNotification(store, user.id, {
       key: `follow:win:${fixture.id}:team:${team.id}`,
-      title: `${team.name} 获胜`,
-      body: `${fixture.home.name} ${fixture.score.home ?? 0} - ${fixture.score.away ?? 0} ${fixture.away.name}，你关注的球队拿下比赛。`,
+      title: `${teamName} 获胜`,
+      body: `${fixtureScoreLine(fixture)}，你关注的球队拿下比赛。`,
       metadata: {
         followType: "team",
         eventType: "win",
@@ -318,6 +325,106 @@ type LiveEvent = {
   team: LiveTeam;
   player: string;
   playerId: number | null;
+};
+
+const TEAM_NAME_CN_BY_KEY: Record<string, string> = {
+  "1": "比利时",
+  "2": "法国",
+  "3": "克罗地亚",
+  "5": "瑞典",
+  "6": "巴西",
+  "7": "乌拉圭",
+  "8": "哥伦比亚",
+  "9": "西班牙",
+  "10": "英格兰",
+  "11": "德国",
+  "13": "塞内加尔",
+  "14": "塞尔维亚",
+  "15": "瑞士",
+  "16": "墨西哥",
+  "17": "美国",
+  "21": "丹麦",
+  "24": "日本",
+  "25": "澳大利亚",
+  "26": "阿根廷",
+  "27": "加拿大",
+  "28": "哥斯达黎加",
+  "29": "威尔士",
+  "31": "波兰",
+  "32": "沙特阿拉伯",
+  "34": "摩洛哥",
+  "35": "突尼斯",
+  "36": "葡萄牙",
+  "37": "荷兰",
+  "38": "厄瓜多尔",
+  "1118": "奥地利",
+  "1090": "挪威",
+  "1530": "巴拿马",
+  "1531": "乌兹别克斯坦",
+  "1532": "新西兰",
+  "1533": "约旦",
+  "1534": "埃及",
+  "1535": "伊朗",
+  "1536": "伊拉克",
+  "1537": "卡塔尔",
+  "1538": "韩国",
+  "1539": "南非",
+  "1540": "科特迪瓦",
+  "1541": "阿尔及利亚",
+  "1542": "加纳",
+  "1543": "佛得角",
+  "1544": "库拉索",
+  "1545": "巴拉圭",
+  "1546": "海地",
+  argentina: "阿根廷",
+  algeria: "阿尔及利亚",
+  australia: "澳大利亚",
+  austria: "奥地利",
+  belgium: "比利时",
+  brazil: "巴西",
+  canada: "加拿大",
+  colombia: "哥伦比亚",
+  croatia: "克罗地亚",
+  denmark: "丹麦",
+  ecuador: "厄瓜多尔",
+  egypt: "埃及",
+  england: "英格兰",
+  france: "法国",
+  germany: "德国",
+  ghana: "加纳",
+  haiti: "海地",
+  iran: "伊朗",
+  iraq: "伊拉克",
+  "ivory coast": "科特迪瓦",
+  japan: "日本",
+  jordan: "约旦",
+  mexico: "墨西哥",
+  morocco: "摩洛哥",
+  netherlands: "荷兰",
+  "new zealand": "新西兰",
+  norway: "挪威",
+  panama: "巴拿马",
+  paraguay: "巴拉圭",
+  poland: "波兰",
+  portugal: "葡萄牙",
+  qatar: "卡塔尔",
+  "saudi arabia": "沙特阿拉伯",
+  scotland: "苏格兰",
+  senegal: "塞内加尔",
+  serbia: "塞尔维亚",
+  "south africa": "南非",
+  "south korea": "韩国",
+  spain: "西班牙",
+  sweden: "瑞典",
+  switzerland: "瑞士",
+  tunisia: "突尼斯",
+  turkiye: "土耳其",
+  turkey: "土耳其",
+  uruguay: "乌拉圭",
+  usa: "美国",
+  "united states": "美国",
+  uzbekistan: "乌兹别克斯坦",
+  wales: "威尔士",
 };
 
 function normalizeLiveFixture(raw: unknown): LiveFixture | null {
@@ -390,6 +497,39 @@ function matchingFollowedPlayers(user: WorldCupUser, event: LiveEvent) {
     if (event.playerId !== null && String(player.id) === String(event.playerId)) return true;
     return normalizeText(player.name) === normalizeText(event.player);
   });
+}
+
+function localizeFollowedTeamName(team: { id: string; name: string; region?: string }, fixture: LiveFixture, liveTeam?: LiveTeam) {
+  const matched = liveTeam ?? [fixture.home, fixture.away].find((item) => entityMatchesTeam(team, item));
+  return localizeLiveTeamName(matched) || localizeTeamDisplayName(team.region || team.name) || team.name;
+}
+
+function localizeFollowedPlayerName(player: { id: string; name: string }, event: LiveEvent) {
+  return localizePlayerName(event.playerId, event.player || player.name);
+}
+
+function localizeLivePlayerName(event: LiveEvent) {
+  if (!event.player && event.playerId === null) return "";
+  return localizePlayerName(event.playerId, event.player);
+}
+
+function fixtureTitle(fixture: LiveFixture) {
+  return `${localizeLiveTeamName(fixture.home)} vs ${localizeLiveTeamName(fixture.away)}`;
+}
+
+function fixtureScoreLine(fixture: LiveFixture) {
+  return `${localizeLiveTeamName(fixture.home)} ${fixture.score.home ?? 0} - ${fixture.score.away ?? 0} ${localizeLiveTeamName(fixture.away)}`;
+}
+
+function localizeLiveTeamName(team: LiveTeam | null | undefined) {
+  if (!team) return "";
+  return localizeTeamDisplayName(team.id === null ? team.name : String(team.id), team.name);
+}
+
+function localizeTeamDisplayName(primary: string, fallback = primary) {
+  const direct = TEAM_NAME_CN_BY_KEY[normalizeText(primary)];
+  if (direct) return direct;
+  return TEAM_NAME_CN_BY_KEY[normalizeText(fallback)] ?? fallback;
 }
 
 function entityMatchesTeam(entity: { id: string; name: string; region?: string }, team: LiveTeam) {

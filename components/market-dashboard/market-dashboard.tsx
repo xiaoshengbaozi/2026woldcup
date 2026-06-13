@@ -9,6 +9,7 @@ import { useStore } from "@/lib/store";
 import { ModuleD_Ticker } from "@/components/market-ticker/module-d-ticker";
 import { MarketOddsCard } from "@/components/market-ranking/market-odds-card";
 import { RankingOverflowCard } from "@/components/market-ranking/ranking-overflow-card";
+import { TopScorersCard } from "@/components/market-ranking/top-scorers-card";
 import { MatchLinesPanel } from "@/components/market-matches/match-lines-panel";
 import { ThreeGlobe } from "@/components/market-map/three-globe";
 import { StatusBar } from "./status-bar";
@@ -264,9 +265,14 @@ export function MarketDashboard() {
                   className="absolute inset-0"
                 />
               </div>
-              {/* Ranking card */}
-              <div className="hero-card pointer-events-auto absolute right-5 top-1/2 z-20 hidden max-h-[calc(100vh-2.5rem)] w-[340px] max-w-[calc(100vw-2.5rem)] -translate-y-1/2 overflow-y-auto p-5 lg:block">
-                <MarketOddsCard />
+              {/* Side cards */}
+              <div className="pointer-events-none absolute left-5 right-5 top-1/2 z-20 hidden -translate-y-1/2 items-start justify-between gap-5 lg:flex">
+                <div className="hero-card pointer-events-auto max-h-[calc(100vh-2.5rem)] w-[320px] max-w-[calc(50vw-2rem)] overflow-y-auto p-5">
+                  <TopScorersCard />
+                </div>
+                <div className="hero-card pointer-events-auto max-h-[calc(100vh-2.5rem)] w-[340px] max-w-[calc(50vw-2rem)] overflow-y-auto p-5">
+                  <MarketOddsCard />
+                </div>
               </div>
             </div>
             {/* Bottom overflow card */}
