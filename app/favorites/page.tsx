@@ -379,7 +379,7 @@ function FavoriteAction({
           stage: match.stage,
           startsAt: match.startsAt,
         }}
-        className={`favorite-match-reminder-button ${inverted ? "text-volt ring-volt/55" : ""} ${className}`}
+        className={`favorite-stack-reminder-button ${inverted ? "text-volt ring-volt/55" : ""} ${className}`}
         onChanged={(active) => {
           if (!active) onRemoved?.();
         }}

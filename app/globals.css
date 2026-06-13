@@ -420,22 +420,36 @@ html.theme-switching *::after {
 
   :root:not([data-theme="light"]) .favorite-match-reminder-button {
     border-color: rgba(216, 255, 62, 0.22) !important;
-    background: rgba(232, 235, 228, 0.92) !important;
+    background: rgba(7, 10, 8, 0.74) !important;
     color: rgba(216, 255, 62, 0.86) !important;
     box-shadow:
-      0 10px 22px rgba(0, 0, 0, 0.24),
-      0 0 18px rgba(216, 255, 62, 0.16),
-      inset 0 1px 0 rgba(255, 255, 255, 0.82) !important;
-    --tw-ring-color: rgba(216, 255, 62, 0.55) !important;
+      0 8px 18px rgba(0, 0, 0, 0.24),
+      0 0 12px rgba(216, 255, 62, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+    --tw-ring-color: rgba(216, 255, 62, 0.18) !important;
   }
 
   :root:not([data-theme="light"]) .favorite-match-reminder-button:hover {
-    background: rgba(244, 246, 241, 0.96) !important;
+    background: rgba(10, 15, 10, 0.86) !important;
     color: #d8ff3e !important;
     box-shadow:
-      0 12px 26px rgba(0, 0, 0, 0.28),
-      0 0 22px rgba(216, 255, 62, 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.88) !important;
+      0 10px 22px rgba(0, 0, 0, 0.28),
+      0 0 16px rgba(216, 255, 62, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  }
+
+  :root:not([data-theme="light"]) .favorite-stack-reminder-button {
+    border-color: rgba(20, 24, 18, 0.16) !important;
+    background: rgba(232, 235, 228, 0.92) !important;
+    color: rgba(20, 24, 18, 0.86) !important;
+    box-shadow: none !important;
+    --tw-ring-color: rgba(20, 24, 18, 0.16) !important;
+  }
+
+  :root:not([data-theme="light"]) .favorite-stack-reminder-button:hover {
+    background: rgba(244, 246, 241, 0.96) !important;
+    color: rgba(8, 12, 8, 0.92) !important;
+    box-shadow: none !important;
   }
 
   .me-account-card {
