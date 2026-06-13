@@ -510,40 +510,75 @@ function MobileBenchList({
     <div className={`min-w-0 space-y-1.5 ${align === "right" ? "text-right" : "text-left"}`}>
       <p className="text-[10px] font-black text-white/35">替补</p>
       <div className={`flex flex-col gap-1.5 ${align === "right" ? "items-end" : "items-start"}`}>
-        {players.slice(0, 9).map((player) => {
-          const label = player.number ? `${player.number} ${player.nameCn || player.name}` : player.nameCn || player.name;
-          const positionLabel = player.positionCn || player.position;
-
-          return (
-            <div
-              key={player.id}
-              className={`flex max-w-full items-center gap-1.5 rounded-2xl bg-white/[0.035] px-1.5 py-1 ring-1 ring-white/[0.055] ${align === "right" ? "flex-row-reverse" : ""}`}
-              title={label}
-            >
-              <div className="relative grid h-7 w-7 shrink-0 place-items-center overflow-hidden rounded-full bg-[#30343d] text-[10px] font-black text-white ring-1 ring-white/12">
-                <span>{player.number ?? getPlayerInitial(player)}</span>
-                {player.photo && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={player.photo}
-                    alt={player.nameEn || player.name}
-                    className="absolute inset-0 h-full w-full object-cover"
-                    loading="lazy"
-                    onError={(event) => {
-                      event.currentTarget.style.display = "none";
-                    }}
-                  />
-                )}
-              </div>
-              <div className="min-w-0">
-                <p className="truncate text-[10px] font-bold leading-tight text-white/68">{label}</p>
-                <p className="mt-0.5 truncate text-[9px] font-bold leading-tight text-white/34">{positionLabel}</p>
-              </div>
-            </div>
-          );
-        })}
+        {players.slice(0, 9).map((player) => (
+          <MobileBenchPlayer key={player.id} player={player} align={align} />
+        ))}
       </div>
     </div>
+  );
+}
+
+function MobileBenchPlayer({
+  player,
+  align,
+}: {
+  player: LineupPlayer;
+  align: "left" | "right";
+}) {
+  const label = player.number ? `${player.number} ${player.nameCn || player.name}` : player.nameCn || player.name;
+  const positionLabel = player.positionCn || player.position;
+  const href = /^\d+$/.test(player.id) ? `/players/${player.id}/` : null;
+  const scoutNote = getLineupPlayerScoutNote(player);
+  const [scoutOpen, setScoutOpen] = useState(false);
+  const content = (
+    <>
+      <div className="relative grid h-7 w-7 shrink-0 place-items-center overflow-hidden rounded-full bg-[#30343d] text-[10px] font-black text-white ring-1 ring-white/12 transition group-hover:ring-volt/45">
+        <span className={player.photo ? "opacity-0" : ""}>{player.number ?? getPlayerInitial(player)}</span>
+        {player.photo && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={player.photo}
+            alt={player.nameEn || player.name}
+            className="absolute inset-0 h-full w-full object-cover"
+            loading="lazy"
+            onError={(event) => {
+              event.currentTarget.style.display = "none";
+              event.currentTarget.previousElementSibling?.classList.remove("opacity-0");
+            }}
+          />
+        )}
+      </div>
+      <div className="min-w-0">
+        <p className="truncate text-[10px] font-bold leading-tight text-white/68 transition group-hover:text-white/90">{label}</p>
+        <p className="mt-0.5 truncate text-[9px] font-bold leading-tight text-white/34">{positionLabel}</p>
+      </div>
+    </>
+  );
+  const className = `group flex max-w-full items-center gap-1.5 rounded-2xl bg-white/[0.035] px-1.5 py-1 ring-1 ring-white/[0.055] transition hover:bg-white/[0.055] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-volt/60 ${align === "right" ? "flex-row-reverse" : ""}`;
+
+  return (
+    <>
+      {scoutNote ? (
+        <button
+          type="button"
+          onClick={() => setScoutOpen(true)}
+          className={className}
+          title={label}
+          aria-label={`${label} 球员卡片`}
+        >
+          {content}
+        </button>
+      ) : href ? (
+        <Link href={href} className={className} title={label} aria-label={`${label} 球员详情`}>
+          {content}
+        </Link>
+      ) : (
+        <div className={className} title={label}>
+          {content}
+        </div>
+      )}
+      {scoutNote && <ScoutNoteDialog open={scoutOpen} onClose={() => setScoutOpen(false)} player={player} note={scoutNote} />}
+    </>
   );
 }
 

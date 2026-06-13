@@ -47,9 +47,12 @@ export type WorldCupMatchDetailPayload = {
   events: WorldCupFixtureEvent[];
 };
 
-export async function fetchWorldCupMatchDetail(fixtureId: number) {
-  const url = `${getBackendApiUrl()}/api/worldcup/match-detail?fixture=${fixtureId}`;
-  return cachedJson<WorldCupMatchDetailPayload & { error?: string }>(url, 60 * 1000, async () => {
+export async function fetchWorldCupMatchDetail(fixtureId: number, options: { forceRefresh?: boolean } = {}) {
+  const params = new URLSearchParams({ fixture: String(fixtureId) });
+  if (options.forceRefresh) params.set("forceRefresh", String(Date.now()));
+
+  const url = `${getBackendApiUrl()}/api/worldcup/match-detail?${params}`;
+  const fetchDetail = async () => {
     const response = await fetchWithTimeout(url, { cache: "no-store" }, 5_000);
     const payload = (await response.json()) as WorldCupMatchDetailPayload & { error?: string };
 
@@ -58,5 +61,9 @@ export async function fetchWorldCupMatchDetail(fixtureId: number) {
     }
 
     return payload;
-  }, { persist: true, staleTtlMs: 6 * 60 * 60 * 1000 });
+  };
+
+  return options.forceRefresh
+    ? fetchDetail()
+    : cachedJson<WorldCupMatchDetailPayload & { error?: string }>(url, 60 * 1000, fetchDetail, { persist: true, staleTtlMs: 6 * 60 * 60 * 1000 });
 }
