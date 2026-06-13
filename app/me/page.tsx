@@ -383,7 +383,7 @@ function MePageContent() {
     const syncTopScorers = (forceRefresh = false) => {
       fetchWorldCupTopScorers({ forceRefresh })
         .then((players) => {
-          if (active && players.length) setTopScorers(fillTopScorers(players).slice(0, 6));
+          if (active && players.length) setTopScorers(players.slice(0, 6));
         })
         .catch(() => {
           if (active && !forceRefresh) setTopScorers(DEFAULT_TOP_SCORERS);
@@ -1096,7 +1096,11 @@ function TimelineCard({ item, index }: { item: TimelineItem; index: number }) {
         <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold ${item.eyebrow === "NEW" ? "bg-volt text-black shadow-[0_0_18px_rgba(216,255,62,.22)]" : "bg-white/[0.05] text-white/42"}`}>{item.eyebrow}</span>
       </div>
 
-      {item.kind === "match" ? (
+      {item.kind === "notification" ? (
+        <div className="px-4 pb-4 sm:px-5 sm:pb-5">
+          <p className="whitespace-pre-line text-sm leading-6 text-white/68">{item.text}</p>
+        </div>
+      ) : item.kind === "match" ? (
         <div className="w-full">
           {item.href ? (
             <Link href={item.href} className="block outline-none transition hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-volt/60">
@@ -1121,7 +1125,7 @@ function TimelineCard({ item, index }: { item: TimelineItem; index: number }) {
           {item.image ? <Image src={item.image} alt={item.title} fill sizes="760px" className="object-cover opacity-70 transition duration-700 group-hover:scale-[1.02] group-hover:opacity-90" /> : null}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
-            <p className="line-clamp-3 text-sm leading-6 text-white/68">{item.kind === "x" || item.kind === "notification" ? item.text : item.kind === "team" ? "球队文章稍后补充，当前先汇总关注球队的赛程线索与热度变化。" : "关注球员动态已进入你的个人时间线，后续可接入新闻、伤停与首发提醒。"}</p>
+            <p className="line-clamp-3 text-sm leading-6 text-white/68">{item.kind === "x" ? item.text : item.kind === "team" ? "球队文章稍后补充，当前先汇总关注球队的赛程线索与热度变化。" : "关注球员动态已进入你的个人时间线，后续可接入新闻、伤停与首发提醒。"}</p>
           </div>
         </div>
       )}
@@ -1167,7 +1171,7 @@ function ScorerBoard({ players }: { players: WorldCupTopScorer[] }) {
           <Link key={player.id} href={`/players/${player.id}/`} className="group flex items-center gap-3 px-1 py-2.5 transition hover:bg-white/[0.03]">
             <span className="w-4 text-center text-[11px] font-bold text-white/25 group-hover:text-white/50">{index + 1}</span>
             <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full bg-white/[0.06]">
-              <Image src={player.photo} alt={player.name} fill sizes="32px" className="object-cover" />
+              <Image src={player.photo || getPlayerAvatar(String(player.id))} alt={player.name} fill sizes="32px" className="object-cover" />
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-[13px] font-bold text-white/70 group-hover:text-white/90">{getLocalizedPlayerName({ id: player.id, name: player.name })}</p>
@@ -1908,7 +1912,6 @@ function buildNotificationTimelineItems(notifications: PublicUser["notifications
       subtitle: `${getNotificationChannelLabel(item.channel)} · ${formatTimelineDate(item.createdAt)}`,
       eyebrow: item.read ? "通知" : "NEW",
       href: "/notifications/",
-      image: getNotificationTimelineImage(item.type),
       text: item.body,
       timestamp: item.createdAt,
     }));
@@ -1930,10 +1933,6 @@ function getNotificationChannelLabel(channel: PublicUser["notifications"][number
   }[channel];
 }
 
-function getNotificationTimelineImage(type: PublicUser["notifications"][number]["type"]) {
-  return type === "match_reminder" ? "/og/cyberball-og.jpg" : "";
-}
-
 function getXTimelineImage(item: PlayerXTimelineItem) {
   const media = item.media?.find((entry) => entry.url || entry.previewImageUrl);
   return media?.url || media?.previewImageUrl || item.playerPhoto || "";
@@ -1952,9 +1951,12 @@ function formatTimelineDate(value: string | number) {
 
 function fillTopScorers(players: WorldCupTopScorer[]) {
   const byId = new Map<number, WorldCupTopScorer>();
-  for (const player of [...players, ...DEFAULT_TOP_SCORERS]) {
-    if (!STATIC_PLAYER_PAGE_IDS.has(String(player.id))) continue;
+  for (const player of players) {
     byId.set(player.id, player);
+  }
+  for (const player of DEFAULT_TOP_SCORERS) {
+    if (byId.size >= 6) break;
+    if (!byId.has(player.id)) byId.set(player.id, player);
   }
   return [...byId.values()];
 }
