@@ -53,6 +53,9 @@ export function MatchDetailClient({ slug }: { slug: string }) {
     startsAt: detail.match.start.toISOString(),
   };
   const isStarted = detail.status !== "not_started";
+  const hasConfirmedLineup =
+    detail.homeLineup.listType === "confirmed_lineup" ||
+    detail.awayLineup.listType === "confirmed_lineup";
 
   return (
     <DashboardShell>
@@ -80,7 +83,7 @@ export function MatchDetailClient({ slug }: { slug: string }) {
       <MatchNav active={activeTab} onTabChange={setActiveTab} />
 
       <div className="space-y-5">
-        {activeTab === "lineup" && <MatchLineup detail={detail} compactMobile={isStarted} />}
+        {activeTab === "lineup" && <MatchLineup detail={detail} compactMobile={isStarted || hasConfirmedLineup} />}
         {activeTab === "live" && <LivePlayer detail={detail} />}
         {activeTab === "stats" && (
           <MatchStatsPanel detail={detail} />

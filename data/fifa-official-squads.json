@@ -1,5 +1,5 @@
 {
-  "source": "fifa_official",
+  "source": "api_football_aligned_with_fifa_official",
   "sourceUrl": "https://fdp.fifa.org/assetspublic/ce281/pdf/SquadLists-English.pdf",
   "publishedAt": "2026-06-03",
   "squadSizePerTeam": 26,
@@ -12265,18 +12265,20 @@
         {
           "number": 24,
           "position": "FW",
-          "name": "Dennis Dargahi",
-          "officialName": "Dargahi Dennis",
-          "firstNames": "Dennis",
-          "lastNames": "Dargahi",
-          "shirtName": "Dargahi",
+          "name": "Dennis-Yerai Eckert Ayensa",
+          "officialName": "Eckert Ayensa Dennis-Yerai",
+          "firstNames": "Dennis-Yerai",
+          "lastNames": "Eckert Ayensa",
+          "shirtName": "Eckert Ayensa",
           "aliases": [
-            "D Dargahi",
-            "D. Dargahi",
-            "Dargahi",
-            "Dargahi Dennis",
-            "Dennis Dargahi"
-          ]
+            "D Eckert Ayensa",
+            "D. Eckert Ayensa",
+            "Dennis Eckert Ayensa",
+            "Dennis-Yerai Eckert Ayensa",
+            "Eckert Ayensa",
+            "Eckert Ayensa Dennis-Yerai"
+          ],
+          "apiFootballId": 37892
         },
         {
           "number": 25,
@@ -12550,27 +12552,15 @@
         {
           "number": 10,
           "position": "FW",
-          "name": "Mohanad Ali Kadhim Al-Shamm Ari",
-          "officialName": "Mohanad Ali",
-          "firstNames": "Mohanad Ali Kadhim",
-          "lastNames": "Al-Shamm Ari",
-          "shirtName": "Mohanad",
+          "name": "Meme",
+          "officialName": "Meme",
+          "firstNames": "Meme",
+          "lastNames": "Meme",
+          "shirtName": "Meme",
           "aliases": [
-            "A Al-Shamm",
-            "A. Al-Shamm",
-            "Al-Shamm Ari",
-            "Ali Al-Shamm",
-            "Ali Mohanad",
-            "K Al-Shamm",
-            "K. Al-Shamm",
-            "Kadhim Al-Shamm",
-            "M Al-Shamm",
-            "M. Al-Shamm",
-            "Mohanad",
-            "Mohanad Al-Shamm",
-            "Mohanad Ali",
-            "Mohanad Ali Kadhim Al-Shamm Ari"
-          ]
+            "Meme"
+          ],
+          "apiFootballId": 542697
         },
         {
           "number": 11,
@@ -19034,22 +19024,21 @@
         },
         {
           "number": 4,
-          "position": "DF",
-          "name": "Gueye Seydinaissalaye",
-          "officialName": "Issa Laye",
-          "firstNames": "Gueye",
-          "lastNames": "Seydinaissalaye",
-          "shirtName": "Gueye",
+          "position": "MF",
+          "name": "Gueye Seydinaissa Laye",
+          "officialName": "Laye Gueye",
+          "firstNames": "Gueye Seydinaissa",
+          "lastNames": "Laye",
+          "shirtName": "Gueye Laye",
           "aliases": [
-            "G Seydinaissalaye",
-            "G. Seydinaissalaye",
-            "Gueye",
-            "Gueye Seydinaissalaye",
-            "Issa Laye",
-            "Laye Issa",
-            "Seydinaissalaye"
+            "G Laye",
+            "G. Laye",
+            "Gueye Laye",
+            "Gueye Seydinaissa Laye",
+            "Laye",
+            "Laye Gueye"
           ],
-          "apiFootballId": 542536
+          "apiFootballId": 366516
         },
         {
           "number": 5,
@@ -25744,19 +25733,22 @@
         {
           "number": 18,
           "position": "DF",
-          "name": "Abdulla Abdullaev",
-          "officialName": "Abdullaev Abdulla",
+          "name": "Abdulla Abdullayev",
+          "officialName": "Abdullayev Abdulla",
           "firstNames": "Abdulla",
-          "lastNames": "Abdullaev",
-          "shirtName": "Abdullaev",
+          "lastNames": "Abdullayev",
+          "shirtName": "Abdullayev",
           "aliases": [
+            "A Abdullayev",
+            "A. Abdullayev",
+            "Abdulla Abdullayev",
+            "Abdullayev",
+            "Abdullayev Abdulla",
             "A Abdullaev",
             "A. Abdullaev",
-            "Abdulla Abdullaev",
-            "Abdullaev",
-            "Abdullaev Abdulla"
+            "Abdulla Abdullaev"
           ],
-          "apiFootballId": 416952
+          "apiFootballId": 73418
         },
         {
           "number": 19,
@@ -25896,5 +25888,7 @@
         }
       ]
     }
-  }
+  },
+  "note": "Base FIFA official squad file, with injury/late roster changes aligned to latest API-Football players/squads cache.",
+  "apiFootballAlignedAt": "2026-06-13T07:27:51.987Z"
 }
