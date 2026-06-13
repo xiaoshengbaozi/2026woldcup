@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { findMatchBySlug } from "@/lib/match-detail";
 import { localizePlayerDisplayName } from "@/lib/football-localization-client";
 import { getEffectiveMatchStatus } from "@/lib/match-status";
+import { isMatchInLiveRefreshWindow } from "@/lib/live-match-queue";
 import { buildMatchRoundLabels } from "@/lib/stage-rounds";
 import { parseTeams } from "@/lib/teams";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
@@ -31,6 +32,8 @@ import type {
   MatchTeamMeta,
   PlayerPosition,
 } from "@/types/match";
+
+const LIVE_MATCH_DETAIL_REFRESH_MS = 60_000;
 
 export function useMatchDetail(slug: string): {
   detail: MatchDetail | null;
@@ -79,22 +82,37 @@ export function useMatchDetail(slug: string): {
 
   useEffect(() => {
     let active = true;
+    let refreshId: number | null = null;
     setRemoteMatchDetail(null);
 
     if (!match?.apiFixtureId) return;
 
-    fetchWorldCupMatchDetail(match.apiFixtureId)
-      .then((detail) => {
-        if (active) setRemoteMatchDetail(detail);
-      })
-      .catch((err) => {
-        console.warn("[MatchDetail] live match detail unavailable:", err);
-      });
+    const syncMatchDetail = (forceRefresh = false) => {
+      fetchWorldCupMatchDetail(match.apiFixtureId!, { forceRefresh })
+        .then((detail) => {
+          if (active) setRemoteMatchDetail(detail);
+        })
+        .catch((err) => {
+          console.warn("[MatchDetail] live match detail unavailable:", err);
+        });
+    };
+
+    syncMatchDetail(false);
+
+    if (isMatchInLiveRefreshWindow(match, Date.now())) {
+      syncMatchDetail(true);
+      refreshId = window.setInterval(() => {
+        if (isMatchInLiveRefreshWindow(match, Date.now())) {
+          syncMatchDetail(true);
+        }
+      }, LIVE_MATCH_DETAIL_REFRESH_MS);
+    }
 
     return () => {
       active = false;
+      if (refreshId !== null) window.clearInterval(refreshId);
     };
-  }, [match?.apiFixtureId]);
+  }, [match]);
 
   useEffect(() => {
     let active = true;
