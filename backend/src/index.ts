@@ -9,6 +9,7 @@ import { createHistoryBuffer } from "./historyBuffer";
 import { createHttpServer } from "./httpServer";
 import { createMatchLinesService } from "./matchLines";
 import { createPlayerXTimelineService } from "./playerXTimeline";
+import { createReminderWorker } from "./reminderWorker";
 import { createSnapshotCache } from "./snapshotCache";
 import { UserStore } from "./userStore";
 import { createUserSystem } from "./userSystem";
@@ -58,6 +59,9 @@ async function main() {
   await userStore.ready();
   const userSystem = createUserSystem(userStore, apiFootball, playerXTimeline);
   matchLines.start();
+  if (process.env.ENABLE_EMBEDDED_REMINDER_WORKER === "true") {
+    createReminderWorker(userStore, { apiFootball }).start();
+  }
 
   // 2. Connect to Polymarket
   const polymarket = createPolymarketClient(POLYMARKET_API_KEY);

@@ -21,7 +21,7 @@ export function UserNotificationToast() {
 
   useEffect(() => {
     setNotifications(
-      home?.user.notifications.filter((item) => !item.read && item.type === "match_reminder").slice(0, 3) ?? []
+      home?.user.notifications.filter((item) => !item.read && (item.type === "match_reminder" || item.type === "follow_update")).slice(0, 3) ?? []
     );
     setVisible(true);
   }, [home]);
