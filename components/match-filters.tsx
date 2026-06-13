@@ -209,8 +209,8 @@ function CompletionFilterToggle({
   onChange: (value: ScheduleCompletionFilter) => void;
 }) {
   const options: { value: ScheduleCompletionFilter; label: string }[] = [
-    { value: "unfinished", label: "未完赛" },
-    { value: "finished", label: "完赛" },
+    { value: "all", label: "全部" },
+    { value: "not_started", label: "未开始" },
   ];
 
   return (

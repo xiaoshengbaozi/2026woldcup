@@ -14,7 +14,7 @@ import { useMobilePinnedRail } from "@/lib/use-mobile-pinned-rail";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
 
 export type ScheduleLayout = "default" | "waterfall" | "topology" | "calendar";
-export type ScheduleCompletionFilter = "unfinished" | "finished";
+export type ScheduleCompletionFilter = "all" | "not_started";
 
 const MOBILE_MATCH_RAIL_STICKY_OFFSET = 56;
 
@@ -24,7 +24,7 @@ export default function MatchesPage() {
   const [stage, setStage] = useState("");
   const [timezoneOffset, setTimezoneOffset] = useState(0);
   const [layout, setLayout] = useState<ScheduleLayout>("default");
-  const [completionFilter, setCompletionFilter] = useState<ScheduleCompletionFilter>("unfinished");
+  const [completionFilter, setCompletionFilter] = useState<ScheduleCompletionFilter>("all");
   const [selectedDay, setSelectedDay] = useState("");
   const mobileRailSentinelRef = useRef<HTMLDivElement>(null);
   const mobileRailRef = useRef<HTMLDivElement>(null);
@@ -49,8 +49,8 @@ export default function MatchesPage() {
 
   const completionFilteredMatches = useMemo(
     () => scheduleMatches.filter((match) => {
-      const isFinished = getEffectiveMatchStatus(match) === "finished";
-      return completionFilter === "finished" ? isFinished : !isFinished;
+      if (completionFilter === "all") return true;
+      return getEffectiveMatchStatus(match) === "not_started";
     }),
     [completionFilter, scheduleMatches]
   );
