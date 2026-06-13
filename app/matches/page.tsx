@@ -8,22 +8,23 @@ import { MatchStats } from "@/components/match-stats";
 import { MobileMatchDayStrip, type MatchDayOption } from "@/components/mobile-match-day-strip";
 import { ScheduleList } from "@/components/schedule-list";
 import { extractCity, groupMatchesByDay } from "@/lib/calendar";
+import { getEffectiveMatchStatus } from "@/lib/match-status";
 import { getStageGroupId } from "@/lib/stage";
 import { useMobilePinnedRail } from "@/lib/use-mobile-pinned-rail";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
 
 export type ScheduleLayout = "default" | "waterfall" | "topology" | "calendar";
-export type ScheduleMatchSource = "official" | "warmups";
+export type ScheduleCompletionFilter = "unfinished" | "finished";
 
 const MOBILE_MATCH_RAIL_STICKY_OFFSET = 56;
 
 export default function MatchesPage() {
-  const { matches, warmupMatches, activeCity, setActiveCity, loading, warmupLoading, error, warmupError } = useWorldCupData();
+  const { matches, warmupMatches, activeCity, setActiveCity, loading, error } = useWorldCupData();
   const [query, setQuery] = useState("");
   const [stage, setStage] = useState("");
   const [timezoneOffset, setTimezoneOffset] = useState(0);
   const [layout, setLayout] = useState<ScheduleLayout>("default");
-  const [matchSource, setMatchSource] = useState<ScheduleMatchSource>("official");
+  const [completionFilter, setCompletionFilter] = useState<ScheduleCompletionFilter>("unfinished");
   const [selectedDay, setSelectedDay] = useState("");
   const mobileRailSentinelRef = useRef<HTMLDivElement>(null);
   const mobileRailRef = useRef<HTMLDivElement>(null);
@@ -38,33 +39,41 @@ export default function MatchesPage() {
     if (requestedLayout === "calendar") setLayout("calendar");
   }, []);
 
-  const scheduleMatches = matchSource === "warmups" ? warmupMatches : matches;
-  const scheduleLoading = matchSource === "warmups" ? warmupLoading : loading;
-  const scheduleError = matchSource === "warmups" ? warmupError : error;
+  const scheduleMatches = matches;
+  const scheduleLoading = loading;
+  const scheduleError = error;
   const liveQueueMatches = useMemo(
     () => [...matches, ...warmupMatches].sort((a, b) => a.start.getTime() - b.start.getTime()),
     [matches, warmupMatches]
   );
 
+  const completionFilteredMatches = useMemo(
+    () => scheduleMatches.filter((match) => {
+      const isFinished = getEffectiveMatchStatus(match) === "finished";
+      return completionFilter === "finished" ? isFinished : !isFinished;
+    }),
+    [completionFilter, scheduleMatches]
+  );
+
   const stages = useMemo(
-    () => [...new Set(scheduleMatches.map((match) => match.stage))],
-    [scheduleMatches]
+    () => [...new Set(completionFilteredMatches.map((match) => match.stage))],
+    [completionFilteredMatches]
   );
 
   const cities = useMemo(() => {
-    const values = scheduleMatches
+    const values = completionFilteredMatches
       .map((match) => extractCity(match.location))
       .filter(Boolean);
 
     return ["全部城市", ...Array.from(new Set(values)).sort((a, b) => a.localeCompare(b, "zh-CN"))];
-  }, [scheduleMatches]);
+  }, [completionFilteredMatches]);
 
   const filteredMatches = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     const stageGroup = readFilterGroupValue(stage);
     const cityGroup = readFilterGroupValue(activeCity);
 
-    return scheduleMatches.filter((match) => {
+    return completionFilteredMatches.filter((match) => {
       const city = extractCity(match.location);
       const haystack = [match.summary, match.location, match.description, match.stage]
         .join(" ")
@@ -77,12 +86,12 @@ export default function MatchesPage() {
         (!selectedDay || getMatchDayKey(match.start, timezoneOffset) === selectedDay)
       );
     });
-  }, [activeCity, query, scheduleMatches, selectedDay, stage, timezoneOffset]);
+  }, [activeCity, completionFilteredMatches, query, selectedDay, stage, timezoneOffset]);
 
   const grouped = useMemo(() => groupMatchesByDay(filteredMatches), [filteredMatches]);
   const matchDays = useMemo(
-    () => buildMatchDayOptions(scheduleMatches, timezoneOffset),
-    [scheduleMatches, timezoneOffset]
+    () => buildMatchDayOptions(completionFilteredMatches, timezoneOffset),
+    [completionFilteredMatches, timezoneOffset]
   );
 
   useLayoutEffect(() => {
@@ -93,7 +102,7 @@ export default function MatchesPage() {
     setStage("");
     setSelectedDay("");
     setActiveCity("全部城市");
-  }, [matchSource, setActiveCity]);
+  }, [completionFilter, setActiveCity]);
 
   useEffect(() => {
     if (!cities.includes(activeCity)) setActiveCity("全部城市");
@@ -111,7 +120,6 @@ export default function MatchesPage() {
   const totalMatchDays = new Set(scheduleMatches.map((match) => match.start.toDateString())).size;
 
   const totalTeams = 48;
-  const now = Date.now();
 
   const totalCities = useMemo(
     () => new Set(scheduleMatches.map((m) => extractCity(m.location)).filter(Boolean)).size,
@@ -124,22 +132,12 @@ export default function MatchesPage() {
   );
 
   const remainingMatchDays = new Set(
-    scheduleMatches.filter((m) => m.start.getTime() > now).map((m) => m.start.toDateString())
+    scheduleMatches.filter((m) => getEffectiveMatchStatus(m) !== "finished").map((m) => m.start.toDateString())
   ).size;
 
-  const visibleTeamCount = useMemo(() => {
-    const teams = new Set<string>();
-    for (const match of scheduleMatches) {
-      if (match.homeTeam?.code || match.homeTeam?.name) teams.add(match.homeTeam.code || match.homeTeam.name);
-      if (match.awayTeam?.code || match.awayTeam?.name) teams.add(match.awayTeam.code || match.awayTeam.name);
-    }
-    return teams.size;
-  }, [scheduleMatches]);
-
-  const scheduleTeamTotal = matchSource === "warmups" ? visibleTeamCount : totalTeams;
+  const scheduleTeamTotal = totalTeams;
 
   const stageTeamCount = useMemo(() => {
-    if (matchSource === "warmups") return visibleTeamCount;
     if (!stage) return totalTeams;
     const stageGroup = readFilterGroupValue(stage);
     if (stageGroup === "小组赛") return totalTeams;
@@ -152,7 +150,7 @@ export default function MatchesPage() {
     if (stage.includes("半决赛")) return 4;
     if (stage.includes("决赛")) return 2;
     return totalTeams;
-  }, [matchSource, stage, totalTeams, visibleTeamCount]);
+  }, [stage, totalTeams]);
 
   return (
     <DashboardShell>
@@ -172,7 +170,7 @@ export default function MatchesPage() {
       <div className="hidden sm:block">
         <MatchFilters
           query={query}
-          matchSource={matchSource}
+          completionFilter={completionFilter}
           stage={stage}
           stages={stages}
           activeCity={activeCity}
@@ -180,7 +178,7 @@ export default function MatchesPage() {
           timezoneOffset={timezoneOffset}
           layout={layout}
           onQueryChange={setQuery}
-          onMatchSourceChange={setMatchSource}
+          onCompletionFilterChange={setCompletionFilter}
           onStageChange={setStage}
           onCityChange={setActiveCity}
           onTimezoneChange={setTimezoneOffset}
@@ -206,7 +204,7 @@ export default function MatchesPage() {
           <div className="space-y-2">
             <MatchFilters
               query={query}
-              matchSource={matchSource}
+              completionFilter={completionFilter}
               stage={stage}
               stages={stages}
               activeCity={activeCity}
@@ -214,7 +212,7 @@ export default function MatchesPage() {
               timezoneOffset={timezoneOffset}
               layout={layout}
               onQueryChange={setQuery}
-              onMatchSourceChange={setMatchSource}
+              onCompletionFilterChange={setCompletionFilter}
               onStageChange={setStage}
               onCityChange={setActiveCity}
               onTimezoneChange={setTimezoneOffset}

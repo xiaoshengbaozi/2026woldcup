@@ -63,6 +63,7 @@ export interface PlayerXTimelineRuntimeStats {
 }
 
 const DEFAULT_PLAYER_HANDLES: Record<string, string> = {
+  "154": "TeamMessi",
   "278": "KMbappe",
   "762": "vinijr",
   "1100": "ErlingHaaland",
@@ -77,6 +78,53 @@ const DEFAULT_PLAYER_HANDLES: Record<string, string> = {
   "307": "lukamodric10",
   "627": "lewy_official",
   "1496": "pulisic",
+  "lionel-messi": "TeamMessi",
+  "lionel-andres-messi": "TeamMessi",
+  "kylian-mbappe": "KMbappe",
+  "kylian-mbappe-lottin": "KMbappe",
+  "vinicius-junior": "vinijr",
+  "vinicius-jose-paixao-de-oliveira-junior": "vinijr",
+  "lamine-yamal": "LamineeYamal",
+  "lamine-yamal-nasraoui-ebana": "LamineeYamal",
+  "jude-bellingham": "BellinghamJude",
+  "jude-victor-william-bellingham": "BellinghamJude",
+  "erling-haaland": "ErlingHaaland",
+  "erling-braut-haaland": "ErlingHaaland",
+  "cristiano-ronaldo": "Cristiano",
+  "neymar": "neymarjr",
+  "neymar-jr": "neymarjr",
+  "neymar-da-silva-santos-junior": "neymarjr",
+  "harry-kane": "HKane",
+  "harry-edward-kane": "HKane",
+  "mohamed-salah": "MoSalah",
+  "mohamed-salah-hamed-mahrous-ghaly": "MoSalah",
+  "kevin-de-bruyne": "KevinDeBruyne",
+  "son-heung-min": "Sonny7",
+  "heung-min-son": "Sonny7",
+  "luka-modric": "lukamodric10",
+  "robert-lewandowski": "lewy_official",
+  "christian-pulisic": "pulisic",
+  "bukayo-saka": "BukayoSaka87",
+  "bukayo-ayoyinka-saka": "BukayoSaka87",
+  "jamal-musiala": "JamalMusiala",
+  "pedri": "Pedri",
+  "gavi": "Gavi",
+  "pablo-paez-gavira": "Gavi",
+  "phil-foden": "PhilFoden",
+  "antoine-griezmann": "AntoGriezmann",
+  "bruno-fernandes": "B_Fernandes8",
+  "bruno-miguel-borges-fernandes": "B_Fernandes8",
+  "bernardo-silva": "BernardoCSilva",
+  "virgil-van-dijk": "VirgilvDijk",
+  "alisson": "Alissonbecker",
+  "alisson-becker": "Alissonbecker",
+  "thibaut-courtois": "thibautcourtois",
+  "federico-valverde": "fedeevalverde",
+  "f-valverde": "fedeevalverde",
+  "rodrygo": "RodrygoGoes",
+  "raphinha": "Raphinha",
+  "bruno-guimaraes": "brunoog97",
+  "bruno-guimaraes-rodriguez-moura": "brunoog97",
 };
 
 const DEFAULT_CACHE_MS = 2 * 60 * 1000;
@@ -186,7 +234,9 @@ export class PlayerXTimelineService {
   }
 
   private getHandleForPlayer(player: XTimelinePlayerInput) {
-    return this.handles[player.id] || this.handles[slugify(player.name || "")] || "";
+    return [player.id, player.name, ...getNameCandidates(player.name || "")]
+      .map((value) => this.handles[String(value || "")] || this.handles[slugify(String(value || ""))])
+      .find(Boolean) || "";
   }
 
   private async fetchPlayerTimeline(player: XTimelinePlayerInput & { username: string }) {
@@ -337,6 +387,22 @@ function slugify(value: string) {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
+}
+
+function getNameCandidates(value: string) {
+  const normalized = value.trim();
+  if (!normalized) return [];
+
+  const parts = normalized.split(/\s+/).filter(Boolean);
+  const candidates = new Set<string>([normalized]);
+  if (parts.length > 1 && /^[A-Z]\.?$/i.test(parts[0])) {
+    candidates.add(parts.slice(1).join(" "));
+  }
+  if (parts.length > 2 && /^[A-Z]\.?$/i.test(parts[0])) {
+    candidates.add(`${parts[1]} ${parts.slice(2).join(" ")}`);
+  }
+
+  return [...candidates];
 }
 
 function parsePositiveInt(value: string | undefined, fallback: number) {

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  Bell,
   Bookmark,
   CalendarDays,
   Check,
@@ -37,7 +38,7 @@ import {
 import { useUserPreferenceCatalog } from "@/lib/use-user-preferences";
 import { useUserSession } from "@/components/user-session-provider";
 import { userApi, type PublicUser, type UserHomePayload } from "@/lib/user-system";
-import { fetchMyPlayerXTimeline, type PlayerXTimelinePayload } from "@/lib/player-x-timeline";
+import { fetchMyPlayerXTimeline, type PlayerXTimelineItem, type PlayerXTimelinePayload } from "@/lib/player-x-timeline";
 import { fetchWorldCupTopScorers, TOP_SCORERS_REFRESH_MS, type WorldCupTopScorer } from "@/lib/world-cup-top-scorers";
 import { getFlagUrl } from "@/lib/world-cup-2026";
 import { generateMatchSlug } from "@/lib/match-detail";
@@ -61,12 +62,15 @@ type MeTab = "players" | "teams" | "matches";
 type TimelineTab = "combined" | "x";
 type TimelineItem = {
   id: string;
-  kind: "player" | "team" | "match";
+  kind: "player" | "team" | "match" | "x" | "notification";
   title: string;
   subtitle: string;
   eyebrow: string;
   href?: string;
   image?: string;
+  text?: string;
+  createdAt?: string;
+  timestamp?: number;
   homeName?: string;
   awayName?: string;
   homeCode?: string;
@@ -675,8 +679,18 @@ function ProfileBoard({
   const matches: MatchCardItem[] = home?.user.favoriteMatches.length
     ? home.user.favoriteMatches.map((match) => matchPreferenceToCard(match, findRoundLabelForFavorite(match, scheduleMatches, roundLabels)))
     : [];
+  const followedPlayerKey = useMemo(
+    () => home?.user.followedPlayers.map((player) => player.id).sort().join("|") ?? "",
+    [home?.user.followedPlayers]
+  );
 
-  const timeline = buildTimelineItems(players, teams, matches, Boolean(home));
+  const appTimeline = buildTimelineItems(players, teams, matches, Boolean(home));
+  const xTimelineItems = useMemo(() => buildXTimelineItems(xTimeline?.items ?? []), [xTimeline]);
+  const notificationTimelineItems = useMemo(() => buildNotificationTimelineItems(home?.user.notifications ?? []), [home?.user.notifications]);
+  const timeline = useMemo(
+    () => [...xTimelineItems, ...notificationTimelineItems, ...appTimeline].sort(sortTimelineItems),
+    [xTimelineItems, notificationTimelineItems, appTimeline]
+  );
   const xItemCount = xTimeline?.items.length ?? 0;
 
   useEffect(() => {
@@ -746,7 +760,7 @@ function ProfileBoard({
     return () => {
       active = false;
     };
-  }, [home]);
+  }, [followedPlayerKey, home]);
 
   return (
     <div className="grid min-w-0 gap-5">
@@ -1064,7 +1078,7 @@ function MatchTeam({ name, image, align }: { name: string; image?: string; align
 }
 
 function TimelineCard({ item, index }: { item: TimelineItem; index: number }) {
-  const icon = item.kind === "player" ? <UsersRound className="h-4 w-4" /> : item.kind === "team" ? <Globe2 className="h-4 w-4" /> : <CalendarDays className="h-4 w-4" />;
+  const icon = item.kind === "player" ? <UsersRound className="h-4 w-4" /> : item.kind === "team" ? <Globe2 className="h-4 w-4" /> : item.kind === "x" ? <Send className="h-4 w-4" /> : item.kind === "notification" ? <Bell className="h-4 w-4" /> : <CalendarDays className="h-4 w-4" />;
   const content = (
     <motion.article
       initial={{ opacity: 0, y: 14 }}
@@ -1079,7 +1093,7 @@ function TimelineCard({ item, index }: { item: TimelineItem; index: number }) {
           <p className="truncate text-sm font-bold text-white">{item.title}</p>
           <p className="truncate text-xs text-white/36">{item.subtitle}</p>
         </div>
-        <span className="shrink-0 rounded-full bg-white/[0.05] px-2.5 py-1 text-[10px] font-bold text-white/42">{item.eyebrow}</span>
+        <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold ${item.eyebrow === "NEW" ? "bg-volt text-black shadow-[0_0_18px_rgba(216,255,62,.22)]" : "bg-white/[0.05] text-white/42"}`}>{item.eyebrow}</span>
       </div>
 
       {item.kind === "match" ? (
@@ -1107,7 +1121,7 @@ function TimelineCard({ item, index }: { item: TimelineItem; index: number }) {
           {item.image ? <Image src={item.image} alt={item.title} fill sizes="760px" className="object-cover opacity-70 transition duration-700 group-hover:scale-[1.02] group-hover:opacity-90" /> : null}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
-            <p className="text-sm leading-6 text-white/62">{item.kind === "team" ? "球队文章稍后补充，当前先汇总关注球队的赛程线索与热度变化。" : "关注球员动态已进入你的个人时间线，后续可接入新闻、伤停与首发提醒。"}</p>
+            <p className="line-clamp-3 text-sm leading-6 text-white/68">{item.kind === "x" || item.kind === "notification" ? item.text : item.kind === "team" ? "球队文章稍后补充，当前先汇总关注球队的赛程线索与热度变化。" : "关注球员动态已进入你的个人时间线，后续可接入新闻、伤停与首发提醒。"}</p>
           </div>
         </div>
       )}
@@ -1862,6 +1876,78 @@ function buildTimelineItems(players: PlayerCardItem[], teams: TeamCardItem[], ma
   }));
 
   return [...playerItems, ...teamItems, ...matchItems];
+}
+
+function buildXTimelineItems(items: PlayerXTimelineItem[]): TimelineItem[] {
+  return items
+    .slice()
+    .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
+    .map((item) => ({
+      id: `x-${item.playerId}-${item.id}`,
+      kind: "x",
+      title: item.playerName,
+      subtitle: `@${item.username} · ${formatTimelineDate(item.createdAt)}`,
+      eyebrow: "X",
+      href: item.url,
+      image: getXTimelineImage(item),
+      text: item.text,
+      createdAt: item.createdAt,
+      timestamp: Date.parse(item.createdAt),
+    }));
+}
+
+function buildNotificationTimelineItems(notifications: PublicUser["notifications"]): TimelineItem[] {
+  return notifications
+    .slice()
+    .sort((a, b) => b.createdAt - a.createdAt)
+    .slice(0, 8)
+    .map((item) => ({
+      id: `notification-${item.id}`,
+      kind: "notification",
+      title: item.title,
+      subtitle: `${getNotificationChannelLabel(item.channel)} · ${formatTimelineDate(item.createdAt)}`,
+      eyebrow: item.read ? "通知" : "NEW",
+      href: "/notifications/",
+      image: getNotificationTimelineImage(item.type),
+      text: item.body,
+      timestamp: item.createdAt,
+    }));
+}
+
+function sortTimelineItems(a: TimelineItem, b: TimelineItem) {
+  const aTime = a.timestamp ?? 0;
+  const bTime = b.timestamp ?? 0;
+  if (aTime || bTime) return bTime - aTime;
+  return 0;
+}
+
+function getNotificationChannelLabel(channel: PublicUser["notifications"][number]["channel"]) {
+  return {
+    site: "站内",
+    email: "Email",
+    push: "Push",
+    telegram: "Telegram",
+  }[channel];
+}
+
+function getNotificationTimelineImage(type: PublicUser["notifications"][number]["type"]) {
+  return type === "match_reminder" ? "/og/cyberball-og.jpg" : "";
+}
+
+function getXTimelineImage(item: PlayerXTimelineItem) {
+  const media = item.media?.find((entry) => entry.url || entry.previewImageUrl);
+  return media?.url || media?.previewImageUrl || item.playerPhoto || "";
+}
+
+function formatTimelineDate(value: string | number) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "X";
+  return date.toLocaleString("zh-CN", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function fillTopScorers(players: WorldCupTopScorer[]) {
