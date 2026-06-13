@@ -72,6 +72,19 @@ export async function getWorldCupTopScorers(apiFootball: ApiFootballService, url
     };
   });
   const officialScorers = response.filter((item) => (item.goals ?? 0) > 0);
+  const eventScorers = await getTopScorersFromFixtureEvents(apiFootball, params);
+  if (eventScorers.length) {
+    return {
+      source: "api-football-events-fallback",
+      normalized: true,
+      localized: true,
+      timestamp: Date.now(),
+      officialCount: officialScorers.length,
+      count: eventScorers.length,
+      scorers: eventScorers,
+    };
+  }
+
   if (officialScorers.length) {
     return {
       source: "api-football",
@@ -83,16 +96,13 @@ export async function getWorldCupTopScorers(apiFootball: ApiFootballService, url
     };
   }
 
-  const fallbackScorers = await getTopScorersFromFixtureEvents(apiFootball, params);
-
   return {
-    source: "api-football-events-fallback",
+    source: "api-football",
     normalized: true,
     localized: true,
     timestamp: Date.now(),
-    officialCount: response.length,
-    count: fallbackScorers.length,
-    scorers: fallbackScorers,
+    count: response.length,
+    scorers: response,
   };
 }
 
