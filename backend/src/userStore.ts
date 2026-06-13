@@ -87,7 +87,7 @@ export interface NewsSubscription {
 
 export interface UserNotification {
   id: string;
-  type: "match_reminder" | "system";
+  type: "match_reminder" | "follow_update" | "system";
   title: string;
   body: string;
   channel: NotificationChannel;
@@ -528,9 +528,11 @@ export class UserStore {
   queueNotification(userId: string, input: Omit<UserNotification, "id" | "createdAt" | "read">) {
     const user = this.requireUser(userId);
     const duplicate = user.notifications.some((item) => (
-      item.type === input.type &&
-      item.metadata?.reminderId !== undefined &&
-      item.metadata.reminderId === input.metadata?.reminderId
+      (item.type === input.type &&
+        item.metadata?.reminderId !== undefined &&
+        item.metadata.reminderId === input.metadata?.reminderId) ||
+      (input.metadata?.notificationKey !== undefined &&
+        item.metadata?.notificationKey === input.metadata.notificationKey)
     ));
 
     if (!duplicate) {
@@ -1294,7 +1296,7 @@ function rowToNewsSubscription(row: Record<string, unknown>): NewsSubscription {
 }
 
 function rowToNotification(row: Record<string, unknown>): UserNotification {
-  const type = row.type === "match_reminder" ? "match_reminder" : "system";
+  const type = row.type === "match_reminder" || row.type === "follow_update" ? row.type : "system";
   const channel = normalizeNotificationChannel(row.channel);
   return {
     id: String(row.id),

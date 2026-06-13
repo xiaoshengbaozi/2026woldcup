@@ -65,7 +65,7 @@ export interface PublicUser {
   newsSubscriptions: Array<{ id: string; topic: string; enabled: boolean; updatedAt: number }>;
   notifications: Array<{
     id: string;
-    type: "match_reminder" | "system";
+    type: "match_reminder" | "follow_update" | "system";
     title: string;
     body: string;
     channel: "site" | "email" | "push" | "telegram";
