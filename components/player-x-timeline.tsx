@@ -111,24 +111,38 @@ function TimelineMediaGrid({ item }: { item: PlayerXTimelineItem }) {
     <div className={`grid gap-2 px-4 pb-3 sm:px-5 ${mediaItems.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
       {mediaItems.slice(0, 4).map((media, index) => {
         const mediaClassName = `w-full object-cover ${mediaItems.length > 1 ? "aspect-square" : "max-h-[420px] aspect-[16/10]"}`;
+        const mediaContent =
+          media.type === "photo" || !media.videoUrl ? (
+            <img src={media.url ?? media.previewImageUrl} alt="" className={mediaClassName} />
+          ) : media.videoUrl ? (
+            <video
+              src={media.videoUrl}
+              poster={media.previewImageUrl}
+              controls={media.type === "video"}
+              playsInline
+              preload="metadata"
+              muted={media.type === "animated_gif"}
+              loop={media.type === "animated_gif"}
+              autoPlay={media.type === "animated_gif"}
+              className={mediaClassName}
+            />
+          ) : null;
 
         return (
           <div key={`${item.id}-media-${index}`} className="relative overflow-hidden rounded-2xl bg-white/[0.04] ring-1 ring-white/[0.08]">
             {media.type === "photo" || !media.videoUrl ? (
-              <img src={media.url ?? media.previewImageUrl} alt="" className={mediaClassName} />
-            ) : media.videoUrl ? (
-              <video
-                src={media.videoUrl}
-                poster={media.previewImageUrl}
-                controls={media.type === "video"}
-                playsInline
-                preload="metadata"
-                muted={media.type === "animated_gif"}
-                loop={media.type === "animated_gif"}
-                autoPlay={media.type === "animated_gif"}
-                className={mediaClassName}
-              />
-            ) : null}
+              <a
+                href={item.url}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={`Open ${item.playerName}'s X post`}
+                className="block transition duration-300 hover:scale-[1.01] hover:opacity-90"
+              >
+                {mediaContent}
+              </a>
+            ) : (
+              mediaContent
+            )}
           </div>
         );
       })}

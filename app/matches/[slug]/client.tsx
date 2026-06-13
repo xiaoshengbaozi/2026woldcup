@@ -99,9 +99,11 @@ export function MatchDetailClient({ slug }: { slug: string }) {
         )}
         {activeTab === "analysis" && (
           <>
-            <MatchOdds detail={detail} />
+            <div className="grid gap-5 lg:grid-cols-2">
+              <MatchOdds detail={detail} />
+              <MatchHeadToHead detail={detail} />
+            </div>
             {detail.news.length > 0 && <MatchNews detail={detail} />}
-            <MatchHeadToHead detail={detail} />
           </>
         )}
       </div>

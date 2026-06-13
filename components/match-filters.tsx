@@ -6,7 +6,7 @@ import { CalendarDays, Check, ChevronDown, Clock, GitFork, Grid3X3, Layers, Layo
 import { ComponentType, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { openCreatorSupportModal } from "@/components/support-creator-modal";
-import type { ScheduleLayout, ScheduleMatchSource } from "@/app/matches/page";
+import type { ScheduleCompletionFilter, ScheduleLayout } from "@/app/matches/page";
 import { formatStageLabel, getStageGroupId, rankStage } from "@/lib/stage";
 
 type Timezone = {
@@ -24,7 +24,7 @@ const timezones: Timezone[] = [
 
 type MatchFiltersProps = {
   query: string;
-  matchSource: ScheduleMatchSource;
+  completionFilter: ScheduleCompletionFilter;
   stage: string;
   stages: string[];
   activeCity: string;
@@ -32,7 +32,7 @@ type MatchFiltersProps = {
   timezoneOffset: number;
   layout: ScheduleLayout;
   onQueryChange: (value: string) => void;
-  onMatchSourceChange: (value: ScheduleMatchSource) => void;
+  onCompletionFilterChange: (value: ScheduleCompletionFilter) => void;
   onStageChange: (value: string) => void;
   onCityChange: (value: string) => void;
   onTimezoneChange: (offset: number) => void;
@@ -77,7 +77,7 @@ function sortStages(stages: string[]): string[] {
 
 export function MatchFilters({
   query,
-  matchSource,
+  completionFilter,
   stage,
   stages,
   activeCity,
@@ -85,7 +85,7 @@ export function MatchFilters({
   timezoneOffset,
   layout,
   onQueryChange,
-  onMatchSourceChange,
+  onCompletionFilterChange,
   onStageChange,
   onCityChange,
   onTimezoneChange,
@@ -119,7 +119,7 @@ export function MatchFilters({
         className="scrollbar-hidden relative z-[10000] w-full min-w-0 flex flex-nowrap items-center gap-1.5 overflow-x-auto overscroll-x-contain sm:z-20 sm:flex-wrap sm:gap-3 sm:overflow-visible"
       >
         <div className="hidden sm:block">
-          <MatchSourceToggle value={matchSource} onChange={onMatchSourceChange} />
+          <CompletionFilterToggle value={completionFilter} onChange={onCompletionFilterChange} />
         </div>
 
         <label className="glass-chip order-1 flex h-10 min-w-[6.25rem] max-w-[10rem] shrink-0 items-center gap-2 px-3 text-white/70 transition focus-within:text-white sm:order-none sm:w-auto sm:min-w-0 sm:max-w-none sm:flex-1 sm:basis-auto sm:gap-3 sm:px-5">
@@ -201,16 +201,16 @@ function SupportBeerButton() {
   );
 }
 
-function MatchSourceToggle({
+function CompletionFilterToggle({
   value,
   onChange
 }: {
-  value: ScheduleMatchSource;
-  onChange: (value: ScheduleMatchSource) => void;
+  value: ScheduleCompletionFilter;
+  onChange: (value: ScheduleCompletionFilter) => void;
 }) {
-  const options: { value: ScheduleMatchSource; label: string }[] = [
-    { value: "official", label: "\u6b63\u8d5b" },
-    { value: "warmups", label: "\u70ed\u8eab" },
+  const options: { value: ScheduleCompletionFilter; label: string }[] = [
+    { value: "unfinished", label: "未完赛" },
+    { value: "finished", label: "完赛" },
   ];
 
   return (
@@ -219,7 +219,7 @@ function MatchSourceToggle({
         <button
           key={option.value}
           type="button"
-          data-match-source={option.value}
+          data-completion-filter={option.value}
           onClick={() => onChange(option.value)}
           className={`h-8 rounded-full px-3 text-[11px] font-semibold transition-all duration-150 sm:px-4 ${
             value === option.value
