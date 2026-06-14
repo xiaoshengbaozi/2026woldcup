@@ -83,22 +83,24 @@ export function LivePlayer({ detail }: { detail: MatchDetail }) {
     window.open(activeChannel.streamUrl, "_blank", "noopener,noreferrer");
   };
 
-  const openPlayerLink = (href: string) => {
-    window.location.href = href;
-  };
-
   const externalPlayerLinks = useMemo(() => {
     const url = activeChannel?.streamUrl || "";
     const encodedUrl = encodeURIComponent(url);
-    const mxPlayerIntent = buildMxPlayerIntent(url);
     return [
-      { name: "PotPlayer", href: `potplayer://${url}` },
-      { name: "VLC", href: `vlc://${url}` },
-      { name: "IINA", href: `iina://weblink?url=${encodedUrl}` },
-      { name: "nPlayer", href: `nplayer-${url}` },
-      { name: "MX Player", href: mxPlayerIntent },
+      { name: "IINA", href: `iina://weblink?url=${encodedUrl}`, icon: "/player-icons/iina.webp" },
+      { name: "PotPlayer", href: `potplayer://${url}`, icon: "/player-icons/potplayer.webp" },
+      { name: "VLC", href: `vlc://${url}`, icon: "/player-icons/vlc.webp" },
+      { name: "nPlayer", href: `nplayer-${url}`, icon: "/player-icons/nplayer.webp" },
+      { name: "MX Player", href: buildMxPlayerIntent(url, detail.match.summary), icon: "/player-icons/mxplayer.webp" },
     ];
-  }, [activeChannel?.streamUrl]);
+  }, [activeChannel?.streamUrl, detail.match.summary]);
+
+  const destroyPlayer = () => {
+    artRef.current?.destroy(false);
+    artRef.current = null;
+    hlsRef.current?.destroy();
+    hlsRef.current = null;
+  };
 
   const loadStream = async () => {
     if (isExternalPlayer) {
@@ -154,13 +156,6 @@ export function LivePlayer({ detail }: { detail: MatchDetail }) {
     });
   };
 
-  const destroyPlayer = () => {
-    artRef.current?.destroy(false);
-    artRef.current = null;
-    hlsRef.current?.destroy();
-    hlsRef.current = null;
-  };
-
   useEffect(() => {
     loadStream();
     return destroyPlayer;
@@ -186,77 +181,80 @@ export function LivePlayer({ detail }: { detail: MatchDetail }) {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
-        <div className="relative aspect-video overflow-hidden rounded-[1.5rem] bg-black shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] ring-1 ring-white/[0.08]">
-          <div ref={playerRef} className="h-full w-full bg-black" />
+        <div className="grid gap-3">
+          <div className="relative aspect-video overflow-hidden rounded-[1.5rem] bg-black shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] ring-1 ring-white/[0.08]">
+            <div ref={playerRef} className="h-full w-full bg-black" />
+
+            {!hasStream && (
+              <div className="absolute inset-0 grid place-items-center bg-[radial-gradient(circle_at_50%_35%,rgba(216,255,62,0.12),transparent_42%),rgba(0,0,0,0.86)] px-6 text-center">
+                <div>
+                  <Tv className="mx-auto h-9 w-9 text-volt/80" />
+                  <p className="mt-3 text-sm font-semibold text-white">直播通道暂未开启</p>
+                </div>
+              </div>
+            )}
+
+            {hasStream && isExternalPlayer && (
+              <div className="absolute inset-0 grid place-items-center bg-[radial-gradient(circle_at_50%_35%,rgba(216,255,62,0.10),transparent_42%),rgba(0,0,0,0.88)]">
+                <Tv className="h-10 w-10 text-volt/80" />
+              </div>
+            )}
+
+            {playerState === "error" || playerState === "unsupported" ? (
+              <div className="absolute bottom-4 left-4 right-4 rounded-2xl bg-black/72 p-3 text-xs text-white/70 backdrop-blur-xl ring-1 ring-white/[0.08]">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-300" />
+                  <span>{message}</span>
+                </div>
+              </div>
+            ) : null}
+          </div>
 
           {hasStream && isExternalPlayer && (
-            <div className="absolute inset-0 grid place-items-center bg-[radial-gradient(circle_at_50%_35%,rgba(216,255,62,0.12),transparent_42%),rgba(0,0,0,0.88)] px-5 text-center">
-              <div className="w-full max-w-md">
-                <Tv className="mx-auto h-10 w-10 text-volt/85" />
-                <p className="mt-3 text-lg font-bold text-white">选择播放器</p>
-                <div className="mt-5 grid gap-2">
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {externalPlayerLinks.map((player) => (
-                      <button
-                        key={player.name}
-                        type="button"
-                        onClick={() => openPlayerLink(player.href)}
-                        className="inline-flex items-center justify-center gap-2 rounded-2xl bg-volt px-4 py-3 text-sm font-bold text-black transition hover:bg-volt/85"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                        {player.name}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    <button
-                      type="button"
-                      onClick={openExternalPlayer}
-                      className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/[0.08] px-4 py-3 text-sm font-bold text-white transition hover:bg-white/[0.14]"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                      系统默认
-                    </button>
-                    <button
-                      type="button"
-                      onClick={copyStreamUrl}
-                      className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/[0.08] px-4 py-3 text-sm font-bold text-white transition hover:bg-white/[0.14]"
-                    >
-                      <Clipboard className="h-4 w-4" />
-                      复制地址
-                    </button>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={downloadPlaylist}
-                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/[0.08] px-4 py-3 text-sm font-bold text-white transition hover:bg-white/[0.14]"
+            <div className="rounded-[1.35rem] bg-white/[0.035] px-3 py-3 ring-1 ring-white/[0.08]">
+              <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+                {externalPlayerLinks.map((player) => (
+                  <a
+                    key={player.name}
+                    href={player.href}
+                    aria-label={player.name}
+                    title={player.name}
+                    className="grid h-11 w-11 place-items-center rounded-2xl bg-white/[0.07] transition hover:-translate-y-0.5 hover:bg-white/[0.12] hover:shadow-[0_0_24px_rgba(216,255,62,0.16)]"
                   >
-                    <Download className="h-4 w-4" />
-                    下载 .m3u
-                  </button>
-                </div>
-                {copyNotice && <p className="mt-3 text-xs font-semibold text-volt">{copyNotice}</p>}
+                    <img src={player.icon} alt="" className="h-8 w-8 object-contain" loading="lazy" />
+                  </a>
+                ))}
+                <button
+                  type="button"
+                  onClick={openExternalPlayer}
+                  className="grid h-11 w-11 place-items-center rounded-2xl bg-white/[0.07] text-white/72 transition hover:-translate-y-0.5 hover:bg-white/[0.12]"
+                  aria-label="系统默认"
+                  title="系统默认"
+                >
+                  <ExternalLink className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={copyStreamUrl}
+                  className="grid h-11 w-11 place-items-center rounded-2xl bg-white/[0.07] text-white/72 transition hover:-translate-y-0.5 hover:bg-white/[0.12]"
+                  aria-label="复制地址"
+                  title="复制地址"
+                >
+                  <Clipboard className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={downloadPlaylist}
+                  className="grid h-11 w-11 place-items-center rounded-2xl bg-white/[0.07] text-white/72 transition hover:-translate-y-0.5 hover:bg-white/[0.12]"
+                  aria-label="下载 .m3u"
+                  title="下载 .m3u"
+                >
+                  <Download className="h-5 w-5" />
+                </button>
               </div>
+              {copyNotice && <p className="mt-2 text-center text-xs font-semibold text-volt">{copyNotice}</p>}
             </div>
           )}
-
-          {!hasStream && (
-            <div className="absolute inset-0 grid place-items-center bg-[radial-gradient(circle_at_50%_35%,rgba(216,255,62,0.12),transparent_42%),rgba(0,0,0,0.86)] px-6 text-center">
-              <div>
-                <Tv className="mx-auto h-9 w-9 text-volt/80" />
-                <p className="mt-3 text-sm font-semibold text-white">直播通道暂未开启</p>
-              </div>
-            </div>
-          )}
-
-          {playerState === "error" || playerState === "unsupported" ? (
-            <div className="absolute bottom-4 left-4 right-4 rounded-2xl bg-black/72 p-3 text-xs text-white/70 backdrop-blur-xl ring-1 ring-white/[0.08]">
-              <div className="flex items-start gap-2">
-                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-300" />
-                <span>{message}</span>
-              </div>
-            </div>
-          ) : null}
         </div>
 
         <aside className="rounded-[1.5rem] bg-white/[0.035] p-3 ring-1 ring-white/[0.08]">
@@ -369,12 +367,6 @@ function loadArtPlayer() {
   return artPlayerLoader;
 }
 
-function buildMxPlayerIntent(url: string) {
-  try {
-    const parsed = new URL(url);
-    const target = `${parsed.host}${parsed.pathname}${parsed.search}${parsed.hash}`;
-    return `intent://${target}#Intent;scheme=${parsed.protocol.replace(":", "")};package=com.mxtech.videoplayer.ad;end`;
-  } catch {
-    return `intent://${url}#Intent;package=com.mxtech.videoplayer.ad;end`;
-  }
+function buildMxPlayerIntent(url: string, title: string) {
+  return `intent:${url}#Intent;package=com.mxtech.videoplayer.ad;S.title=${encodeURIComponent(title)};end`;
 }
