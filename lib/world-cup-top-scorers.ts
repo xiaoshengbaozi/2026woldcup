@@ -31,6 +31,12 @@ type TopScorersPayload = {
   error?: string;
 };
 
+type WorldCupCacheEnvelope<T> = {
+  ok: boolean;
+  data?: T | null;
+  error?: string;
+};
+
 export async function fetchWorldCupTopScorers(options: { forceRefresh?: boolean } = {}) {
   const params = new URLSearchParams({
     league: "1",
@@ -38,7 +44,10 @@ export async function fetchWorldCupTopScorers(options: { forceRefresh?: boolean 
   });
   if (options.forceRefresh) params.set("forceRefresh", String(Date.now()));
 
-  const url = `${getBackendApiUrl()}/api/worldcup/top-scorers?${params}`;
+  const apiUrl = getBackendApiUrl();
+  const cacheUrl = `${apiUrl}/api/worldcup-cache/top-scorers${options.forceRefresh ? "?refresh=1" : ""}`;
+  const url = `${apiUrl}/api/worldcup/top-scorers?${params}`;
+  const fetchCachedScorers = () => fetchWorldCupCacheData<TopScorersPayload>(cacheUrl, "World Cup cached top scorers");
   const fetchScorers = async () => {
     const response = await fetchWithTimeout(url, { cache: "no-store" }, 6_000);
     const payload = (await response.json()) as TopScorersPayload;
@@ -50,9 +59,17 @@ export async function fetchWorldCupTopScorers(options: { forceRefresh?: boolean 
     return payload;
   };
 
-  const payload = options.forceRefresh
-    ? await fetchScorers()
-    : await cachedJson<TopScorersPayload>(url, 10 * 60 * 1000, fetchScorers, { persist: true, staleTtlMs: 24 * 60 * 60 * 1000 });
+  let payload: TopScorersPayload;
+
+  try {
+    payload = options.forceRefresh
+      ? await fetchCachedScorers()
+      : await cachedJson<TopScorersPayload>(cacheUrl, 10 * 60 * 1000, fetchCachedScorers, { persist: true, staleTtlMs: 24 * 60 * 60 * 1000 });
+  } catch {
+    payload = options.forceRefresh
+      ? await fetchScorers()
+      : await cachedJson<TopScorersPayload>(url, 10 * 60 * 1000, fetchScorers, { persist: true, staleTtlMs: 24 * 60 * 60 * 1000 });
+  }
 
   return (payload.scorers ?? [])
     .map((item): WorldCupTopScorer | null => {
@@ -70,6 +87,17 @@ export async function fetchWorldCupTopScorers(options: { forceRefresh?: boolean 
       };
     })
     .filter((item): item is WorldCupTopScorer => Boolean(item));
+}
+
+async function fetchWorldCupCacheData<T>(url: string, label: string) {
+  const response = await fetchWithTimeout(url, { cache: "no-store" }, 6_000);
+  const envelope = (await response.json()) as WorldCupCacheEnvelope<T>;
+
+  if (!response.ok || !envelope.ok || !envelope.data) {
+    throw new Error(envelope.error || `${label} returned ${response.status}`);
+  }
+
+  return envelope.data;
 }
 
 export const fallbackTopScorerProfiles: WorldCupTopScorer[] = [
