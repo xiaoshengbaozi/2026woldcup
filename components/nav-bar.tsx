@@ -123,14 +123,22 @@ export function NavBar() {
         <Link href="/" className="group flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/logos/world-cup-2026-inverted.svg"
+            src="/logos/world-cup-2026-alternate-light.webp"
             alt="FIFA World Cup 2026"
+            width={596}
+            height={842}
+            loading="eager"
+            fetchPriority="high"
             className="site-logo-dark h-12 w-auto object-contain drop-shadow-[0_10px_24px_rgba(0,0,0,.5)] transition duration-300 group-hover:drop-shadow-[0_0_18px_rgba(216,255,62,.32)]"
           />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/logos/world-cup-2026-alternate.svg"
+            src="/logos/world-cup-2026-alternate-dark.webp"
             alt="FIFA World Cup 2026"
+            width={596}
+            height={842}
+            loading="eager"
+            fetchPriority="high"
             className="site-logo-light h-12 w-auto object-contain drop-shadow-[0_10px_24px_rgba(0,0,0,.18)] transition duration-300 group-hover:drop-shadow-[0_0_18px_rgba(216,255,62,.24)]"
           />
           <span className="flex h-12 w-[112px] flex-col justify-center">
@@ -146,16 +154,7 @@ export function NavBar() {
                 alt="FIFA World Cup 2026"
                 fill
                 sizes="112px"
-                className="site-logo-dark object-contain drop-shadow-[0_8px_18px_rgba(0,0,0,.42)]"
-                priority
-              />
-              <Image
-                src="/logos/world-cup-2026-wordmark-light.svg"
-                alt="FIFA World Cup 2026"
-                fill
-                sizes="112px"
-                className="site-logo-light object-contain drop-shadow-[0_8px_14px_rgba(255,255,255,.14)]"
-                priority
+                className="object-contain drop-shadow-[0_8px_18px_rgba(0,0,0,.42)]"
               />
             </span>
           </span>

@@ -276,6 +276,8 @@ function buildApiGroupStandings(rows: NormalizedWorldCupStandingRow[]): GroupSta
     return acc;
   }, new Map());
 
+  repairApiGroupRows(grouped);
+
   return [...grouped.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([id, items]) => ({
@@ -284,17 +286,22 @@ function buildApiGroupStandings(rows: NormalizedWorldCupStandingRow[]): GroupSta
       teams: items
         .sort((a, b) => a.rank - b.rank)
         .slice(0, 4)
-        .map((row) => ({
-          badge: row.team.code || String(row.rank),
-          badgeType: row.team.code ? "image" : "code",
-          image: row.team.code ? getFlagUrl(normalizeFlagCode(row.team.code), 40) : "",
-          name: row.team.name,
-          played: row.played,
-          won: row.win,
-          drawn: row.draw,
-          lost: row.lose,
-          points: row.points,
-        })),
+        .map((row) => {
+          const code = getCanonicalApiTeamCode(row.team);
+          const localTeam = getTeamByCode(code);
+
+          return {
+            badge: code || String(row.rank),
+            badgeType: code ? "image" : "code",
+            image: code ? getFlagUrl(normalizeFlagCode(code), 40) : "",
+            name: localTeam?.nameCn || localTeam?.name || row.team.name,
+            played: row.played,
+            won: row.win,
+            drawn: row.draw,
+            lost: row.lose,
+            points: row.points,
+          };
+        }),
     }));
 }
 
@@ -411,6 +418,98 @@ function normalizeFlagCode(code: string) {
   if (upper === "KSA") return "SAU";
   return upper;
 }
+
+function repairApiGroupRows(grouped: Map<string, NormalizedWorldCupStandingRow[]>) {
+  for (const [groupId, rows] of grouped) {
+    const groupTeamCodes = GROUPS.find((group) => group.id === groupId)?.teams.map((team) => team.code) ?? [];
+    if (!groupTeamCodes.length) continue;
+
+    const rankedRows = rows.sort((a, b) => a.rank - b.rank).slice(0, 4);
+    const rawCodes = rankedRows.map((row) => getCanonicalApiTeamCode(row.team));
+    const usedGroupCodes = new Set(rawCodes.filter((code) => groupTeamCodes.includes(code)));
+    const missingGroupCodes = groupTeamCodes.filter((code) => !usedGroupCodes.has(code));
+
+    for (const row of rankedRows) {
+      const rawCode = getCanonicalApiTeamCode(row.team);
+      if (groupTeamCodes.includes(rawCode)) continue;
+
+      const replacementCode = missingGroupCodes.shift();
+      const replacementTeam = replacementCode ? getTeamByCode(replacementCode) : undefined;
+      if (!replacementCode || !replacementTeam) continue;
+
+      row.team.id = null;
+      row.team.code = replacementCode;
+      row.team.name = replacementTeam.nameCn || replacementTeam.name;
+      row.team.englishName = replacementTeam.name;
+    }
+  }
+}
+
+function getCanonicalApiTeamCode(team: NormalizedWorldCupStandingRow["team"]) {
+  const idCode = team.id ? apiTeamIdToCode[team.id] : undefined;
+  const rawCode = idCode ?? team.code;
+  const upper = rawCode.trim().toUpperCase();
+
+  return apiCodeAliases[upper] ?? upper;
+}
+
+const apiCodeAliases: Record<string, string> = {
+  ALG: "DZA",
+  KSA: "SAU",
+  PRY: "PAR",
+  CUR: "CUW",
+};
+
+const apiTeamIdToCode: Record<number, string> = {
+  1: "BEL",
+  2: "FRA",
+  3: "CRO",
+  5: "SWE",
+  6: "BRA",
+  7: "URU",
+  8: "COL",
+  9: "ESP",
+  10: "ENG",
+  11: "PAN",
+  12: "JPN",
+  13: "SEN",
+  15: "SUI",
+  16: "MEX",
+  17: "KOR",
+  20: "AUS",
+  22: "IRN",
+  23: "SAU",
+  25: "GER",
+  26: "ARG",
+  27: "POR",
+  28: "TUN",
+  31: "MAR",
+  32: "EGY",
+  770: "CZE",
+  775: "AUT",
+  777: "TUR",
+  1090: "NOR",
+  1108: "SCO",
+  1113: "BIH",
+  1118: "NED",
+  1501: "CIV",
+  1504: "GHA",
+  1508: "COD",
+  1531: "RSA",
+  1532: "DZA",
+  1533: "CPV",
+  1548: "JOR",
+  1567: "IRQ",
+  1568: "UZB",
+  1569: "QAT",
+  2380: "PAR",
+  2382: "ECU",
+  2384: "USA",
+  2386: "HAI",
+  4673: "NZL",
+  5529: "CAN",
+  5530: "CUW",
+};
 
 function getApiGroupId(group: string) {
   const match =

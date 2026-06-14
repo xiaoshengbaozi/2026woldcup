@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { areMatchTeamsConfirmed } from "@/lib/match-availability";
@@ -61,7 +60,13 @@ export function LiveMatchCard({
           )}
         </div>
         <div className="h-1 w-full bg-white/[0.04]">
-          <motion.div initial={{ width: 0 }} animate={{ width: isLive ? (isHT ? "45%" : `${Math.min(elapsed / 90 * 100, 100)}%`) : "8%" }} transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }} className={`h-full ${isHT ? "bg-gradient-to-r from-amber-500 to-amber-400" : isLive ? "bg-gradient-to-r from-volt to-volt/80" : "bg-gradient-to-r from-flare to-volt"}`} style={{ boxShadow: isHT ? "0 0 16px rgba(251,191,36,0.6)" : isLive ? "0 0 16px rgba(216,255,62,0.5)" : "0 0 16px rgba(255,154,31,0.45)" }} />
+          <div
+            className={`h-full transition-[width] duration-700 ease-out ${isHT ? "bg-gradient-to-r from-amber-500 to-amber-400" : isLive ? "bg-gradient-to-r from-volt to-volt/80" : "bg-gradient-to-r from-flare to-volt"}`}
+            style={{
+              width: isLive ? (isHT ? "45%" : `${Math.min(elapsed / 90 * 100, 100)}%`) : "8%",
+              boxShadow: isHT ? "0 0 16px rgba(251,191,36,0.6)" : isLive ? "0 0 16px rgba(216,255,62,0.5)" : "0 0 16px rgba(255,154,31,0.45)",
+            }}
+          />
         </div>
       </div>
     </div>

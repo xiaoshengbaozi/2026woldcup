@@ -225,10 +225,13 @@ function StackCard({
         <TeamTerminal team={match.home} align="left" muted={!isTop} score={finishedScore?.home} />
         <div className="grid place-items-center pb-0.5">
           <img
-            src="/logos/world-cup-2026-alternate.svg"
+            src="/logos/world-cup-2026-alternate-dark.webp"
             alt="FIFA World Cup 2026"
+            width={596}
+            height={842}
             className={`h-[58px] w-[66px] object-contain ${isTop ? "opacity-88" : "opacity-55"}`}
             loading="eager"
+            fetchPriority={isTop ? "high" : "auto"}
           />
         </div>
         <TeamTerminal team={match.away} align="right" muted={!isTop} score={finishedScore?.away} />

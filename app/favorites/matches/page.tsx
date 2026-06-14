@@ -94,19 +94,19 @@ function FavoriteMatchListCard({ match, index }: { match: FavoriteMatchCard; ind
         <div className="grid place-items-center pb-1">
           <div className="favorite-match-logo-frame relative grid h-[58px] w-[68px] place-items-center">
             <OptimizedImage
-              src="/logos/world-cup-2026-inverted.svg"
+              src="/logos/world-cup-2026-alternate-light.webp"
               alt="FIFA World Cup 2026"
               className="favorite-match-logo-dark h-[58px] w-[66px] object-contain drop-shadow-[0_12px_28px_rgba(0,0,0,.45)]"
-              width={66}
-              height={58}
+              width={596}
+              height={842}
               priority={index < 2}
             />
             <OptimizedImage
-              src="/logos/world-cup-2026-alternate.svg"
+              src="/logos/world-cup-2026-alternate-dark.webp"
               alt="FIFA World Cup 2026"
               className="favorite-match-logo-light hidden h-[58px] w-[66px] object-contain drop-shadow-[0_10px_22px_rgba(0,0,0,.16)]"
-              width={66}
-              height={58}
+              width={596}
+              height={842}
               priority={index < 2}
             />
           </div>

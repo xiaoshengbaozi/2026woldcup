@@ -39,6 +39,12 @@ export function useWorldCupData() {
           return response.text();
         }, { persist: true, staleTtlMs: 7 * 24 * 60 * 60 * 1000 });
         calendarMatches = parseCalendar(text);
+        if (active && calendarMatches.length && !forceRefresh) {
+          matchesRef.current = calendarMatches;
+          setMatches(calendarMatches);
+          setError("");
+          setLoading(false);
+        }
       } catch {
         if (active) setError("赛程同步失败，请直接下载日历文件。");
       }
@@ -109,7 +115,16 @@ export function useWorldCupData() {
       }
     }
 
-    void loadWarmups();
+    const startWarmups = () => void loadWarmups();
+    let idleId: number | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    if (typeof window.requestIdleCallback === "function") {
+      idleId = window.requestIdleCallback(startWarmups, { timeout: 2_500 });
+    } else {
+      timeoutId = setTimeout(startWarmups, 1_200);
+    }
+
     const refreshId = window.setInterval(() => {
       if (hasMatchInLiveRefreshWindow(warmupMatchesRef.current, Date.now())) {
         void loadWarmups(true);
@@ -118,6 +133,12 @@ export function useWorldCupData() {
 
     return () => {
       active = false;
+      if (idleId !== null) {
+        window.cancelIdleCallback(idleId);
+      }
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId);
+      }
       window.clearInterval(refreshId);
     };
   }, []);

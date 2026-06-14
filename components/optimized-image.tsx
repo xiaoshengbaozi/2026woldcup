@@ -14,12 +14,18 @@ export function OptimizedImage({
   height,
   ...props
 }: OptimizedImageProps) {
+  const resolvedLoading = loading ?? (priority ? "eager" : "lazy");
+  const resolvedDecoding = decoding ?? (priority ? "sync" : "async");
+  const resolvedFetchPriority = fetchPriority ?? (priority ? "high" : undefined);
+
   return (
     <img
       alt={alt}
-      decoding={decoding}
-      fetchPriority={fetchPriority}
-      loading={loading}
+      decoding={resolvedDecoding}
+      fetchPriority={resolvedFetchPriority}
+      height={height}
+      loading={resolvedLoading}
+      width={width}
       {...props}
     />
   );
