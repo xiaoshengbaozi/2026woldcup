@@ -6,6 +6,10 @@ import { fetchWithTimeout } from "@/lib/request-cache";
 const LOCAL_API_URL = "http://localhost:3001";
 const PRODUCTION_API_URL = "https://api.boyzi.fun";
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
+const API_URL_BY_APP_HOST: Record<string, string> = {
+  "ball.boyzi.fun": "https://api.boyzi.fun",
+  "ball.boyzi.top": "https://api.boyzi.top",
+};
 
 export interface PublicUser {
   id: string;
@@ -122,9 +126,15 @@ export interface PopularPlayersPayload {
 }
 
 export function getUserApiUrl() {
+  const runtimeApiUrl = getRuntimeApiUrl();
   const fallbackUrl = getFallbackApiUrl();
 
-  return (process.env.NEXT_PUBLIC_USER_API_URL || process.env.NEXT_PUBLIC_MARKET_API_URL || fallbackUrl).replace(/\/$/, "");
+  return (runtimeApiUrl || process.env.NEXT_PUBLIC_USER_API_URL || process.env.NEXT_PUBLIC_MARKET_API_URL || fallbackUrl).replace(/\/$/, "");
+}
+
+function getRuntimeApiUrl() {
+  if (typeof window === "undefined") return "";
+  return API_URL_BY_APP_HOST[window.location.hostname.toLowerCase()] ?? "";
 }
 
 function getFallbackApiUrl() {

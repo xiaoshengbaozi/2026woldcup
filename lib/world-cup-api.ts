@@ -5,6 +5,10 @@ import { cachedJson, fetchWithTimeout } from "@/lib/request-cache";
 const LOCAL_API_URL = "http://localhost:3001";
 const PRODUCTION_API_URL = "https://api.boyzi.fun";
 const WARMUP_API_URL = "https://api.boyzi.fun";
+const API_URL_BY_APP_HOST: Record<string, string> = {
+  "ball.boyzi.fun": "https://api.boyzi.fun",
+  "ball.boyzi.top": "https://api.boyzi.top",
+};
 const FIXTURE_CACHE_TTL_MS = 5 * 60 * 1000;
 const STANDINGS_CACHE_TTL_MS = 5 * 60 * 1000;
 const PUBLIC_STALE_TTL_MS = 24 * 60 * 60 * 1000;
@@ -62,16 +66,22 @@ type StandingsResponse = {
 };
 
 export function getBackendApiUrl() {
+  const runtimeApiUrl = getRuntimeApiUrl();
   const fallbackUrl =
     typeof window !== "undefined" && isLocalDevHost(window.location)
       ? `${window.location.protocol}//${window.location.hostname}:3001`
       : PRODUCTION_API_URL;
 
-  return (process.env.NEXT_PUBLIC_MARKET_API_URL || fallbackUrl).replace(/\/$/, "");
+  return (runtimeApiUrl || process.env.NEXT_PUBLIC_MARKET_API_URL || fallbackUrl).replace(/\/$/, "");
 }
 
 export function getWarmupBackendApiUrl() {
-  return (process.env.NEXT_PUBLIC_WARMUP_API_URL || WARMUP_API_URL).replace(/\/$/, "");
+  return (getRuntimeApiUrl() || process.env.NEXT_PUBLIC_WARMUP_API_URL || WARMUP_API_URL).replace(/\/$/, "");
+}
+
+function getRuntimeApiUrl() {
+  if (typeof window === "undefined") return "";
+  return API_URL_BY_APP_HOST[window.location.hostname.toLowerCase()] ?? "";
 }
 
 function isLocalDevHost(location: Location) {
