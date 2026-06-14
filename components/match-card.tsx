@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { MapPin } from "lucide-react";
 import Link from "next/link";
 import { detailRows, localizeLocationText } from "@/lib/calendar";
@@ -31,9 +30,7 @@ export function MatchCard({
   });
 
   const card = (
-    <motion.article
-      layout
-      aria-disabled={!isUnlocked}
+    <article
       className={`group relative flex min-w-0 flex-col gap-2 rounded-3xl p-2.5 transition sm:gap-3 sm:p-4 ${
         isUnlocked ? "cursor-pointer" : "cursor-default opacity-70"
       }`}
@@ -59,11 +56,11 @@ export function MatchCard({
           <span className="max-w-[180px] truncate">{venue}</span>
         </span>
       </div>
-    </motion.article>
+    </article>
   );
 
   return isUnlocked ? (
-    <Link href={"/matches/" + slug}>
+    <Link href={"/matches/" + slug} prefetch={false}>
       {card}
     </Link>
   ) : (

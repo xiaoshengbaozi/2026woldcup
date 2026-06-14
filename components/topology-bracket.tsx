@@ -521,7 +521,7 @@ export function TopologyBracket({ matches, timezoneOffset = 0 }: TopologyBracket
     );
 
     return isUnlocked ? (
-      <Link href={"/matches/" + slug} key={id}>
+      <Link href={"/matches/" + slug} prefetch={false} key={id}>
         {card}
       </Link>
     ) : (

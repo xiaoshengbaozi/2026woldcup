@@ -1,20 +1,22 @@
 "use client";
 
-import Hls from "hls.js";
-import { AlertCircle, Play, Radio, RadioTower, RotateCcw, Tv } from "lucide-react";
+import { AlertCircle, Clipboard, Download, ExternalLink, Play, Radio, RadioTower, RotateCcw, Tv } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { fetchLiveChannels, type LiveChannel } from "@/lib/live-channels";
 import type { MatchDetail } from "@/types/match";
 
 type PlayerState = "idle" | "loading" | "ready" | "unsupported" | "error";
+type HlsConstructor = typeof import("hls.js").default;
+type HlsInstance = InstanceType<HlsConstructor>;
 
 export function LivePlayer({ detail }: { detail: MatchDetail }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const hlsRef = useRef<Hls | null>(null);
+  const hlsRef = useRef<HlsInstance | null>(null);
   const [channels, setChannels] = useState<LiveChannel[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [playerState, setPlayerState] = useState<PlayerState>("idle");
   const [message, setMessage] = useState("等待直播源");
+  const [copyNotice, setCopyNotice] = useState("");
   const [loadingChannels, setLoadingChannels] = useState(true);
 
   useEffect(() => {
@@ -44,8 +46,48 @@ export function LivePlayer({ detail }: { detail: MatchDetail }) {
     () => channels.find((channel) => channel.id === selectedId) ?? channels[0],
     [channels, selectedId]
   );
+  const isExternalPlayer = activeChannel?.playbackMode === "external";
 
-  const loadStream = () => {
+  const copyStreamUrl = async () => {
+    if (!activeChannel?.streamUrl) return;
+    try {
+      await navigator.clipboard.writeText(activeChannel.streamUrl);
+      setCopyNotice("已复制直播地址");
+    } catch {
+      setCopyNotice("复制失败，请手动复制地址");
+    }
+    window.setTimeout(() => setCopyNotice(""), 1800);
+  };
+
+  const downloadPlaylist = () => {
+    if (!activeChannel?.streamUrl) return;
+    const title = `${detail.match.summary} - ${activeChannel.name}`.replace(/\s+/g, " ").trim();
+    const playlist = `#EXTM3U\n#EXTINF:-1,${title}\n${activeChannel.streamUrl}\n`;
+    const blob = new Blob([playlist], { type: "audio/x-mpegurl;charset=utf-8" });
+    const href = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = href;
+    link.download = `${detail.slug}-${activeChannel.id}.m3u`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(href);
+  };
+
+  const openExternalPlayer = () => {
+    if (!activeChannel?.streamUrl) return;
+    window.open(activeChannel.streamUrl, "_blank", "noopener,noreferrer");
+  };
+
+  const loadStream = async () => {
+    if (isExternalPlayer) {
+      hlsRef.current?.destroy();
+      hlsRef.current = null;
+      setPlayerState("idle");
+      setMessage("请使用外部播放器打开直播源");
+      return;
+    }
+
     const video = videoRef.current;
     if (!video || !activeChannel?.streamUrl) return;
 
@@ -54,7 +96,9 @@ export function LivePlayer({ detail }: { detail: MatchDetail }) {
     setPlayerState("loading");
     setMessage("正在接入直播信号");
 
-    if (Hls.isSupported()) {
+    const Hls = await loadHls();
+
+    if (Hls?.isSupported()) {
       const hls = new Hls({
         enableWorker: true,
         lowLatencyMode: true,
@@ -102,7 +146,7 @@ export function LivePlayer({ detail }: { detail: MatchDetail }) {
       hlsRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeChannel?.id, activeChannel?.streamUrl]);
+  }, [activeChannel?.id, activeChannel?.streamUrl, isExternalPlayer]);
 
   const hasStream = Boolean(activeChannel?.streamUrl);
 
@@ -131,6 +175,46 @@ export function LivePlayer({ detail }: { detail: MatchDetail }) {
             playsInline
             muted
           />
+          {hasStream && isExternalPlayer && (
+            <div className="absolute inset-0 grid place-items-center bg-[radial-gradient(circle_at_50%_35%,rgba(216,255,62,0.12),transparent_42%),rgba(0,0,0,0.88)] px-5 text-center">
+              <div className="w-full max-w-md">
+                <Tv className="mx-auto h-10 w-10 text-volt/85" />
+                <p className="mt-3 text-lg font-bold text-white">使用外部播放器打开</p>
+                <p className="mt-2 text-sm leading-6 text-white/56">
+                  当前通道已允许 HTTP 源，网页播放器不会直接加载。复制地址或下载播放列表后，用 VLC、PotPlayer、IINA 等播放器打开。
+                </p>
+                <div className="mt-5 grid gap-2">
+                  <button
+                    type="button"
+                    onClick={openExternalPlayer}
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-volt px-4 py-3 text-sm font-bold text-black transition hover:bg-volt/85"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    打开外部播放器
+                  </button>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={copyStreamUrl}
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/[0.08] px-4 py-3 text-sm font-bold text-white transition hover:bg-white/[0.14]"
+                  >
+                    <Clipboard className="h-4 w-4" />
+                    复制地址
+                  </button>
+                  <button
+                    type="button"
+                    onClick={downloadPlaylist}
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/[0.08] px-4 py-3 text-sm font-bold text-white transition hover:bg-white/[0.14]"
+                  >
+                    <Download className="h-4 w-4" />
+                    下载 .m3u
+                  </button>
+                  </div>
+                </div>
+                {copyNotice && <p className="mt-3 text-xs font-semibold text-volt">{copyNotice}</p>}
+              </div>
+            </div>
+          )}
           {!hasStream && (
             <div className="absolute inset-0 grid place-items-center bg-[radial-gradient(circle_at_50%_35%,rgba(216,255,62,0.12),transparent_42%),rgba(0,0,0,0.86)] px-6 text-center">
               <div>
@@ -164,6 +248,7 @@ export function LivePlayer({ detail }: { detail: MatchDetail }) {
           <div className="grid gap-2">
             {channels.length ? channels.map((channel) => {
               const active = channel.id === activeChannel?.id;
+              const modeLabel = channel.playbackMode === "external" ? "外部播放器" : "网页播放";
               return (
                 <button
                   key={channel.id}
@@ -180,7 +265,7 @@ export function LivePlayer({ detail }: { detail: MatchDetail }) {
                     {channel.name}
                   </span>
                   <span className={`mt-1 block text-xs ${active ? "text-black/62" : "text-white/38"}`}>
-                    {channel.platform || "HLS"} 路 {channel.streamUrl ? "已配置" : "待填入"}
+                    {modeLabel} · {channel.streamUrl ? "已配置" : "待填入"}
                   </span>
                 </button>
               );
@@ -194,4 +279,14 @@ export function LivePlayer({ detail }: { detail: MatchDetail }) {
       </div>
     </section>
   );
+}
+
+let hlsLoader: Promise<HlsConstructor | null> | null = null;
+
+function loadHls() {
+  hlsLoader ??= import("hls.js")
+    .then((mod) => mod.default)
+    .catch(() => null);
+
+  return hlsLoader;
 }

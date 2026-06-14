@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { LiveMatchesStrip } from "@/components/live-matches-strip";
 import { getCityFilterGroup, getStageFilterGroup, MatchFilters, readFilterGroupValue } from "@/components/match-filters";
@@ -94,7 +94,7 @@ export default function MatchesPage() {
     [completionFilteredMatches, timezoneOffset]
   );
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (selectedDay && !matchDays.some((day) => day.key === selectedDay)) setSelectedDay("");
   }, [matchDays, selectedDay]);
 
@@ -190,7 +190,7 @@ export default function MatchesPage() {
         <div
           ref={mobileRailSentinelRef}
           data-mobile-match-rail-sentinel="true"
-          style={{ height: isMobileRailPinned ? mobileRailHeight : 0 }}
+          style={{ height: isMobileRailPinned ? mobileRailHeight : 1 }}
         />
         <div
           ref={mobileRailRef}

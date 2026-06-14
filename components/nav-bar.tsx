@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ComponentType } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -21,10 +21,7 @@ import {
   UserRound,
   UsersRound,
 } from "lucide-react";
-import { AvatarSettingsDialog } from "./avatar-settings-dialog";
-import { GlobalSearch } from "./global-search";
-import { MeAuthDialog, type SharedAuthMode } from "./me-auth-dialog";
-import { openCreatorSupportModal } from "./support-creator-modal";
+import type { SharedAuthMode } from "./me-auth-dialog";
 import { ThemeToggle } from "./theme-toggle";
 import { formatNotificationTime } from "@/components/notification-summary";
 import { useUserSession } from "@/components/user-session-provider";
@@ -48,6 +45,18 @@ export function NavBar() {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [avatarSettingsOpen, setAvatarSettingsOpen] = useState(false);
   const [authMode, setAuthMode] = useState<SharedAuthMode | null>(null);
+  const [GlobalSearchComponent, setGlobalSearchComponent] = useState<ComponentType | null>(null);
+  const [MeAuthDialogComponent, setMeAuthDialogComponent] = useState<ComponentType<{
+    mode: SharedAuthMode | null;
+    onClose: () => void;
+    onAuthenticated?: () => void;
+  }> | null>(null);
+  const [AvatarSettingsDialogComponent, setAvatarSettingsDialogComponent] = useState<ComponentType<{
+    open: boolean;
+    home: typeof home;
+    onClose: () => void;
+    onSaved: () => void;
+  }> | null>(null);
 
   const refreshHome = refreshSession;
 
@@ -75,6 +84,51 @@ export function NavBar() {
       if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    let idleId: number | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    const loadSearch = () => {
+      void import("./global-search").then((mod) => {
+        if (active) setGlobalSearchComponent(() => mod.GlobalSearch);
+      });
+    };
+
+    if (typeof window.requestIdleCallback === "function") {
+      idleId = window.requestIdleCallback(loadSearch, { timeout: 2_500 });
+    } else {
+      timeoutId = setTimeout(loadSearch, 1_200);
+    }
+
+    return () => {
+      active = false;
+      if (idleId !== null) window.cancelIdleCallback(idleId);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!authMode || MeAuthDialogComponent) return;
+    let active = true;
+    void import("./me-auth-dialog").then((mod) => {
+      if (active) setMeAuthDialogComponent(() => mod.MeAuthDialog);
+    });
+    return () => {
+      active = false;
+    };
+  }, [MeAuthDialogComponent, authMode]);
+
+  useEffect(() => {
+    if (!avatarSettingsOpen || AvatarSettingsDialogComponent) return;
+    let active = true;
+    void import("./avatar-settings-dialog").then((mod) => {
+      if (active) setAvatarSettingsDialogComponent(() => mod.AvatarSettingsDialog);
+    });
+    return () => {
+      active = false;
+    };
+  }, [AvatarSettingsDialogComponent, avatarSettingsOpen]);
 
   const checkingSession = isSignedIn === null;
   const meActive = pathname.startsWith("/me");
@@ -112,8 +166,9 @@ export function NavBar() {
     setAvatarSettingsOpen(true);
   };
 
-  const openSupport = () => {
+  const openSupport = async () => {
     setPopoverOpen(false);
+    const { openCreatorSupportModal } = await import("./support-creator-modal");
     openCreatorSupportModal();
   };
 
@@ -179,7 +234,7 @@ export function NavBar() {
         </div>
 
         <div className="flex items-center gap-3">
-          <GlobalSearch />
+          {GlobalSearchComponent ? <GlobalSearchComponent /> : <div className="h-8 w-8 rounded-full bg-white/[0.055] ring-1 ring-white/[0.08]" />}
           <ThemeToggle />
           <div ref={popoverRef} className="relative" onMouseEnter={openPopover} onMouseLeave={scheduleClosePopover}>
             <button
@@ -339,8 +394,8 @@ export function NavBar() {
           </div>
         </div>
       </nav>
-      <MeAuthDialog mode={authMode} onClose={() => setAuthMode(null)} onAuthenticated={refreshHome} />
-      <AvatarSettingsDialog open={avatarSettingsOpen} home={home} onClose={() => setAvatarSettingsOpen(false)} onSaved={refreshHome} />
+      {MeAuthDialogComponent ? <MeAuthDialogComponent mode={authMode} onClose={() => setAuthMode(null)} onAuthenticated={refreshHome} /> : null}
+      {AvatarSettingsDialogComponent ? <AvatarSettingsDialogComponent open={avatarSettingsOpen} home={home} onClose={() => setAvatarSettingsOpen(false)} onSaved={refreshHome} /> : null}
     </>
   );
 }

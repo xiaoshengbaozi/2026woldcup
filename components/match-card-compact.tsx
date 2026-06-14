@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { MapPin } from "lucide-react";
 import Link from "next/link";
 import { detailRows } from "@/lib/calendar";
@@ -35,9 +34,7 @@ export function MatchCardCompact({
   });
 
   const card = (
-    <motion.article
-      layout
-      aria-disabled={!isUnlocked}
+    <article
       className={`group relative flex min-w-0 flex-col gap-1.5 rounded-[1.25rem] p-2 transition sm:gap-2 sm:p-3 ${
         isUnlocked ? "cursor-pointer" : "cursor-default opacity-70"
       }`}
@@ -59,11 +56,11 @@ export function MatchCardCompact({
 
         <TeamBlockCompact team={teams.away} align="right" />
       </div>
-    </motion.article>
+    </article>
   );
 
   return isUnlocked ? (
-    <Link href={"/matches/" + slug}>
+    <Link href={"/matches/" + slug} prefetch={false}>
       {card}
     </Link>
   ) : (

@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { AnimatePresence, motion } from "framer-motion";
 import { Bell, X } from "lucide-react";
 import { useUserSession } from "@/components/user-session-provider";
 import { userApi, type UserSessionPayload } from "@/lib/user-system";
@@ -45,21 +44,15 @@ export function UserNotificationToast() {
   }
 
   return createPortal(
-    <AnimatePresence>
-      {visible && (
+    visible ? (
         <div className="pointer-events-none fixed inset-x-0 top-[calc(env(safe-area-inset-top)+0.75rem)] z-[1000] flex justify-center px-4">
-          <motion.div
-            initial={{ opacity: 0, y: -18, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -12, scale: 0.98 }}
-            transition={{ duration: 0.22, ease: "easeOut" }}
-            className="pointer-events-auto w-full max-w-[min(92vw,440px)] overflow-visible rounded-[1.75rem] bg-ink-950/92 p-4 text-white shadow-[0_28px_90px_rgba(0,0,0,.58),0_0_44px_rgba(216,255,62,.14)] ring-1 ring-volt/25 backdrop-blur-2xl sm:p-5"
+          <div
+            className="pointer-events-auto w-full max-w-[min(92vw,440px)] overflow-visible rounded-[1.75rem] bg-ink-950/92 p-4 text-white shadow-[0_28px_90px_rgba(0,0,0,.58),0_0_44px_rgba(216,255,62,.14)] ring-1 ring-volt/25 backdrop-blur-2xl transition duration-200 ease-out sm:p-5"
           >
             <NotificationContent item={active} count={notifications.length} onClose={closeAll} />
-          </motion.div>
+          </div>
         </div>
-      )}
-    </AnimatePresence>,
+      ) : null,
     document.body
   );
 }

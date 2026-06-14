@@ -209,6 +209,7 @@ function MatchTickerItem({ match, isLive, stageLabel, currentTime }: { match: Ma
   return isUnlocked ? (
     <Link
       href={"/matches/" + slug}
+      prefetch={false}
       className="inline-flex h-full shrink-0 items-center gap-3 border-r border-white/[0.04] px-3 text-[10px] uppercase tracking-[0.12em] text-white/52 transition-colors duration-150 hover:bg-white/[0.04]"
       style={{ width: TICKER_ITEM_WIDTH }}
     >

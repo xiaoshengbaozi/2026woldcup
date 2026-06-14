@@ -7,7 +7,7 @@
   src: url("/fonts/ScreenMatrix-1.ttf") format("truetype");
   font-weight: normal;
   font-style: normal;
-  font-display: swap;
+  font-display: optional;
 }
 
 @font-face {
@@ -15,7 +15,7 @@
   src: url("/fonts/Sounso-Undividedad-2.ttf") format("truetype");
   font-weight: normal;
   font-style: normal;
-  font-display: swap;
+  font-display: optional;
 }
 
 :root {
