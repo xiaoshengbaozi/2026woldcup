@@ -212,7 +212,12 @@ export function createWorldCupCache(options: WorldCupCacheOptions) {
       }
 
       try {
-        const data = await getWorldCupPlayerProfile(options.apiFootball, playerProfileUrl(playerId, season));
+        const data = enrichPlayerProfileFromSquads(
+          await getWorldCupPlayerProfile(options.apiFootball, playerProfileUrl(playerId, season)),
+          cache["squads"]?.data,
+          playerId,
+          season
+        );
         bucket.data.profiles[cacheKey] = {
           updatedAt: new Date().toISOString(),
           data,
@@ -383,6 +388,83 @@ function toPlayerProfileEnvelope(cacheKey: string, data: unknown, updatedAt: str
       ...asObject(data),
     },
     error,
+  };
+}
+
+function enrichPlayerProfileFromSquads(profileData: unknown, squadsData: unknown, playerId: number, season: string) {
+  const data = asObject(profileData);
+  const squadHit = findSquadPlayer(squadsData, playerId);
+  if (!squadHit) return profileData;
+
+  const player = asObject(data.player);
+  const team = asObject(squadHit.squad.team);
+  const squadPlayer = asObject(squadHit.player);
+  const seasonStats = Array.isArray(data.seasonStats) ? data.seasonStats : [];
+
+  return {
+    ...data,
+    player: {
+      id: player.id ?? squadPlayer.id ?? playerId,
+      name: player.name ?? squadPlayer.nameCn ?? squadPlayer.nameEn ?? "",
+      nameCn: player.nameCn ?? squadPlayer.nameCn ?? squadPlayer.nameEn ?? "",
+      nameEn: player.nameEn ?? squadPlayer.nameEn ?? squadPlayer.nameCn ?? "",
+      age: player.age ?? squadPlayer.age ?? null,
+      number: player.number ?? squadPlayer.number ?? null,
+      position: player.position ?? squadPlayer.position ?? "",
+      photo: player.photo ?? squadPlayer.photo ?? "",
+      ...player,
+    },
+    currentTeam: data.currentTeam ?? {
+      id: team.id ?? null,
+      name: team.name ?? team.englishName ?? "",
+      logo: team.logo ?? "",
+    },
+    currentSeason: data.currentSeason ?? Number(season),
+    seasonStats: seasonStats.length ? seasonStats : [buildSquadFallbackStatistic(squadHit, season)],
+  };
+}
+
+function findSquadPlayer(squadsData: unknown, playerId: number) {
+  const squads = (asObject(squadsData).squads ?? []) as Array<Record<string, unknown>>;
+  for (const squad of squads) {
+    const players = (asObject(squad).players ?? []) as Array<Record<string, unknown>>;
+    const player = players.find((item) => Number(item.id) === playerId);
+    if (player) return { squad, player };
+  }
+  return null;
+}
+
+function buildSquadFallbackStatistic(
+  hit: { squad: Record<string, unknown>; player: Record<string, unknown> },
+  season: string
+) {
+  const team = asObject(hit.squad.team);
+  const player = asObject(hit.player);
+  return {
+    team: {
+      id: team.id ?? null,
+      name: team.name ?? team.englishName ?? "",
+      logo: team.logo ?? "",
+    },
+    league: {
+      id: Number(process.env.WORLDCUP_LEAGUE_ID || "1"),
+      name: "FIFA World Cup",
+      country: "World",
+      season: Number(season),
+      logo: "",
+    },
+    games: {
+      appearences: 0,
+      lineups: 0,
+      minutes: 0,
+      position: player.positionCn ?? player.position ?? null,
+      rating: player.rating ?? null,
+    },
+    goals: { total: 0, assists: 0 },
+    shots: { total: 0, on: 0 },
+    passes: { total: 0, key: 0, accuracy: 0 },
+    tackles: { total: 0, interceptions: 0 },
+    cards: { yellow: 0, red: 0 },
   };
 }
 
