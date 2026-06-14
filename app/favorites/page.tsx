@@ -163,28 +163,68 @@ function StackCard({
     : null;
   const displayX = isTop ? stackStyle.x + dragX : stackStyle.x;
 
-  const startDrag = (event: React.PointerEvent<HTMLElement>) => {
-    if (!isTop || (event.target as HTMLElement).closest("a,button")) return;
-    dragStartRef.current = event.clientX;
-    event.currentTarget.setPointerCapture(event.pointerId);
-  };
-
-  const moveDrag = (event: React.PointerEvent<HTMLElement>) => {
-    if (dragStartRef.current === null) return;
-    const nextX = event.clientX - dragStartRef.current;
+  const updateDrag = (nextX: number) => {
     const clampedX = Math.max(-132, Math.min(88, nextX));
     dragXRef.current = clampedX;
     setDragX(clampedX);
   };
 
-  const endDrag = (event: React.PointerEvent<HTMLElement>) => {
-    if (dragStartRef.current === null) return;
-    event.currentTarget.releasePointerCapture(event.pointerId);
-    const shouldAdvance = dragXRef.current < -76;
+  const resetDrag = () => {
     dragStartRef.current = null;
     dragXRef.current = 0;
     setDragX(0);
+  };
+
+  const finishDrag = () => {
+    const shouldAdvance = dragXRef.current < -52;
+    resetDrag();
     if (shouldAdvance) onAdvance();
+  };
+
+  const startDrag = (event: React.PointerEvent<HTMLElement>) => {
+    if (!isTop || (event.target as HTMLElement).closest("a,button")) return;
+    if (event.pointerType === "touch") return;
+    dragStartRef.current = event.clientX;
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      // Some mobile browsers may already route the pointer to the card.
+    }
+  };
+
+  const moveDrag = (event: React.PointerEvent<HTMLElement>) => {
+    if (dragStartRef.current === null) return;
+    updateDrag(event.clientX - dragStartRef.current);
+  };
+
+  const endDrag = (event: React.PointerEvent<HTMLElement>) => {
+    if (dragStartRef.current === null) return;
+    try {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    } catch {
+      // Pointer capture can already be released after a native touch gesture.
+    }
+    finishDrag();
+  };
+
+  const startTouchDrag = (event: React.TouchEvent<HTMLElement>) => {
+    if (!isTop || (event.target as HTMLElement).closest("a,button")) return;
+    const touch = event.touches[0];
+    if (!touch) return;
+    dragStartRef.current = touch.clientX;
+  };
+
+  const moveTouchDrag = (event: React.TouchEvent<HTMLElement>) => {
+    if (dragStartRef.current === null) return;
+    const touch = event.touches[0];
+    if (!touch) return;
+    const nextX = touch.clientX - dragStartRef.current;
+    updateDrag(nextX);
+  };
+
+  const endTouchDrag = () => {
+    if (dragStartRef.current === null) return;
+    finishDrag();
   };
 
   return (
@@ -193,17 +233,22 @@ function StackCard({
       onPointerMove={moveDrag}
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
+      onTouchStart={startTouchDrag}
+      onTouchMove={moveTouchDrag}
+      onTouchEnd={endTouchDrag}
+      onTouchCancel={resetDrag}
       onClick={() => {
         if (!isTop) onSelect();
       }}
       className={`absolute inset-x-0 top-0 overflow-hidden rounded-[2.25rem] p-4 shadow-[0_16px_42px_rgba(0,0,0,.34),0_0_24px_rgba(216,255,62,.08)] transition-[opacity,transform] duration-300 ease-out sm:shadow-[0_24px_72px_rgba(0,0,0,.5),0_0_34px_rgba(216,255,62,.12)] ${
         isTop
-          ? "z-30 cursor-grab bg-volt text-black active:cursor-grabbing"
+          ? "z-30 cursor-grab touch-pan-y select-none bg-volt text-black active:cursor-grabbing"
           : "z-20 cursor-pointer bg-[#101411]/92 text-white ring-1 ring-white/[0.08] backdrop-blur-3xl"
       }`}
       style={{
         zIndex: 30 - depth,
         opacity: stackStyle.opacity,
+        touchAction: isTop ? "pan-y" : undefined,
         transform: `translate3d(${displayX}px, ${stackStyle.y}px, 0) scale(${stackStyle.scale}) rotate(${isTop ? dragX * 0.018 : 0}deg)`,
       }}
     >

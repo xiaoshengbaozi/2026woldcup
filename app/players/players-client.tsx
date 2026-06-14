@@ -292,35 +292,37 @@ export function PlayersClient() {
               <div
                 ref={mobileFiltersSentinelRef}
                 data-mobile-players-filters-sentinel="true"
-                style={{ height: isMobileFiltersPinned ? mobileFiltersHeight : 0 }}
+                className="h-px"
               />
-              <div
-                ref={mobileFiltersRef}
-                data-mobile-players-filters="true"
-                className={`${
-                  isMobileFiltersPinned
-                    ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+3.5rem)] z-[75]"
-                    : "relative -mx-3 bg-black/58 backdrop-blur-2xl"
-                } px-3 py-1.5`}
-              >
-                <SquadFilters
-                  query={playerQuery}
-                  regions={regionOptions}
-                  countries={countryOptions}
-                  region={regionFilter}
-                  country={countryFilter}
-                  sortRule={sortRule}
-                  sortDirection={sortDirection}
-                  resultCount={squadPlayers.length}
-                  onQueryChange={setPlayerQuery}
-                  onRegionChange={(value) => {
-                    setRegionFilter(value);
-                    setCountryFilter("");
-                  }}
-                  onCountryChange={setCountryFilter}
-                  onSortRuleChange={setSortRule}
-                  onSortDirectionChange={setSortDirection}
-                />
+              <div className="relative -mx-3" style={{ height: mobileFiltersHeight || undefined }}>
+                <div
+                  ref={mobileFiltersRef}
+                  data-mobile-players-filters="true"
+                  className={`${
+                    isMobileFiltersPinned
+                      ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+3.5rem)]"
+                      : "absolute left-0 right-0 top-0"
+                  } z-[86] px-3 py-1.5 [backface-visibility:hidden] [transform:translateZ(0)]`}
+                >
+                  <SquadFilters
+                    query={playerQuery}
+                    regions={regionOptions}
+                    countries={countryOptions}
+                    region={regionFilter}
+                    country={countryFilter}
+                    sortRule={sortRule}
+                    sortDirection={sortDirection}
+                    resultCount={squadPlayers.length}
+                    onQueryChange={setPlayerQuery}
+                    onRegionChange={(value) => {
+                      setRegionFilter(value);
+                      setCountryFilter("");
+                    }}
+                    onCountryChange={setCountryFilter}
+                    onSortRuleChange={setSortRule}
+                    onSortDirectionChange={setSortDirection}
+                  />
+                </div>
               </div>
             </div>
 

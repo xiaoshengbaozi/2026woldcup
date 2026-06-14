@@ -95,6 +95,8 @@ export default function RootLayout({
     <html lang="zh-CN" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <link rel="preload" href="/fonts/Sounso-Undividedad-2.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
+        <link rel="preload" href="/fonts/ScreenMatrix-1.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
       </head>
       <body className={interTight.variable}>
         <SiteAnalyticsProvider>

@@ -79,6 +79,20 @@ export function LivePlayer({ detail }: { detail: MatchDetail }) {
     window.open(activeChannel.streamUrl, "_blank", "noopener,noreferrer");
   };
 
+  const openPlayerLink = (href: string) => {
+    window.location.href = href;
+  };
+
+  const externalPlayerLinks = useMemo(() => {
+    const url = activeChannel?.streamUrl || "";
+    const encodedUrl = encodeURIComponent(url);
+    return [
+      { name: "PotPlayer", href: `potplayer://${url}` },
+      { name: "VLC", href: `vlc://${url}` },
+      { name: "IINA", href: `iina://weblink?url=${encodedUrl}` },
+    ];
+  }, [activeChannel?.streamUrl]);
+
   const loadStream = async () => {
     if (isExternalPlayer) {
       hlsRef.current?.destroy();
@@ -179,20 +193,30 @@ export function LivePlayer({ detail }: { detail: MatchDetail }) {
             <div className="absolute inset-0 grid place-items-center bg-[radial-gradient(circle_at_50%_35%,rgba(216,255,62,0.12),transparent_42%),rgba(0,0,0,0.88)] px-5 text-center">
               <div className="w-full max-w-md">
                 <Tv className="mx-auto h-10 w-10 text-volt/85" />
-                <p className="mt-3 text-lg font-bold text-white">使用外部播放器打开</p>
-                <p className="mt-2 text-sm leading-6 text-white/56">
-                  当前通道已允许 HTTP 源，网页播放器不会直接加载。复制地址或下载播放列表后，用 VLC、PotPlayer、IINA 等播放器打开。
-                </p>
+                <p className="mt-3 text-lg font-bold text-white">选择播放器</p>
                 <div className="mt-5 grid gap-2">
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {externalPlayerLinks.map((player) => (
+                      <button
+                        key={player.name}
+                        type="button"
+                        onClick={() => openPlayerLink(player.href)}
+                        className="inline-flex items-center justify-center gap-2 rounded-2xl bg-volt px-4 py-3 text-sm font-bold text-black transition hover:bg-volt/85"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        {player.name}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
                   <button
                     type="button"
                     onClick={openExternalPlayer}
-                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-volt px-4 py-3 text-sm font-bold text-black transition hover:bg-volt/85"
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/[0.08] px-4 py-3 text-sm font-bold text-white transition hover:bg-white/[0.14]"
                   >
                     <ExternalLink className="h-4 w-4" />
-                    打开外部播放器
+                    系统默认
                   </button>
-                  <div className="grid gap-2 sm:grid-cols-2">
                   <button
                     type="button"
                     onClick={copyStreamUrl}
@@ -201,6 +225,7 @@ export function LivePlayer({ detail }: { detail: MatchDetail }) {
                     <Clipboard className="h-4 w-4" />
                     复制地址
                   </button>
+                  </div>
                   <button
                     type="button"
                     onClick={downloadPlaylist}
@@ -209,7 +234,6 @@ export function LivePlayer({ detail }: { detail: MatchDetail }) {
                     <Download className="h-4 w-4" />
                     下载 .m3u
                   </button>
-                  </div>
                 </div>
                 {copyNotice && <p className="mt-3 text-xs font-semibold text-volt">{copyNotice}</p>}
               </div>

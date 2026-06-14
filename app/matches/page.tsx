@@ -108,15 +108,6 @@ export default function MatchesPage() {
     if (!cities.includes(activeCity)) setActiveCity("全部城市");
   }, [activeCity, cities, setActiveCity]);
 
-  useEffect(() => {
-    window.dispatchEvent(new CustomEvent("mobile-top-rail-change", {
-      detail: { pinned: isMobileRailPinned, height: mobileRailHeight + 12 }
-    }));
-    return () => {
-      window.dispatchEvent(new CustomEvent("mobile-top-rail-change", { detail: { pinned: false } }));
-    };
-  }, [isMobileRailPinned, mobileRailHeight]);
-
   const totalMatchDays = new Set(scheduleMatches.map((match) => match.start.toDateString())).size;
 
   const totalTeams = 48;
@@ -187,42 +178,40 @@ export default function MatchesPage() {
       </div>
 
       <div className="-mt-3 sm:hidden">
-        <div
-          ref={mobileRailSentinelRef}
-          data-mobile-match-rail-sentinel="true"
-          style={{ height: isMobileRailPinned ? mobileRailHeight : 1 }}
-        />
-        <div
-          ref={mobileRailRef}
-          data-mobile-match-rail="true"
-          className={`${
-            isMobileRailPinned
-              ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+3.5rem)] z-[75]"
-              : "relative -mx-3 bg-black/58 backdrop-blur-2xl"
-          } px-3 py-1.5`}
-        >
-          <div className="space-y-2">
-            <MatchFilters
-              query={query}
-              completionFilter={completionFilter}
-              stage={stage}
-              stages={stages}
-              activeCity={activeCity}
-              cities={cities}
-              timezoneOffset={timezoneOffset}
-              layout={layout}
-              onQueryChange={setQuery}
-              onCompletionFilterChange={setCompletionFilter}
-              onStageChange={setStage}
-              onCityChange={setActiveCity}
-              onTimezoneChange={setTimezoneOffset}
-              onLayoutChange={setLayout}
-            />
-            <MobileMatchDayStrip
-              days={matchDays}
-              selectedDay={selectedDay}
-              onSelectDay={setSelectedDay}
-            />
+        <div ref={mobileRailSentinelRef} data-mobile-match-rail-sentinel="true" className="h-px" />
+        <div className="relative -mx-3" style={{ height: mobileRailHeight || undefined }}>
+          <div
+            ref={mobileRailRef}
+            data-mobile-match-rail="true"
+            className={`${
+              isMobileRailPinned
+                ? "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+3.5rem)]"
+                : "absolute left-0 right-0 top-0"
+            } z-[86] px-3 py-1.5 [backface-visibility:hidden] [transform:translateZ(0)]`}
+          >
+            <div className="space-y-2">
+              <MatchFilters
+                query={query}
+                completionFilter={completionFilter}
+                stage={stage}
+                stages={stages}
+                activeCity={activeCity}
+                cities={cities}
+                timezoneOffset={timezoneOffset}
+                layout={layout}
+                onQueryChange={setQuery}
+                onCompletionFilterChange={setCompletionFilter}
+                onStageChange={setStage}
+                onCityChange={setActiveCity}
+                onTimezoneChange={setTimezoneOffset}
+                onLayoutChange={setLayout}
+              />
+              <MobileMatchDayStrip
+                days={matchDays}
+                selectedDay={selectedDay}
+                onSelectDay={setSelectedDay}
+              />
+            </div>
           </div>
         </div>
       </div>
