@@ -141,6 +141,10 @@ export async function getWorldCupFixtures(apiFootball: ApiFootballService, url: 
   const payload = await apiFootball.request("fixtures", params);
   const upstream = payload.upstream as ApiFootballFixturesResponse;
   assertNoApiFootballErrors(upstream);
+  const fixtures = (upstream.response ?? []).map(normalizeFixture);
+  const overlays = shouldOverlayFreshFixtures(params)
+    ? await getFreshFixtureOverlays(apiFootball, params)
+    : [];
 
   return {
     source: "api-football",
@@ -150,7 +154,7 @@ export async function getWorldCupFixtures(apiFootball: ApiFootballService, url: 
     league: Number(params.get("league") || DEFAULT_LEAGUE),
     season: Number(params.get("season") || DEFAULT_SEASON),
     count: upstream.response?.length ?? 0,
-    fixtures: (upstream.response ?? []).map(normalizeFixture),
+    fixtures: overlayFreshFixtures(fixtures, overlays),
   };
 }
 
@@ -171,6 +175,71 @@ export async function getWorldCupLiveFixtures(apiFootball: ApiFootballService, u
     count: upstream.response?.length ?? 0,
     fixtures: (upstream.response ?? []).map(normalizeFixture),
   };
+}
+
+function shouldOverlayFreshFixtures(params: URLSearchParams) {
+  return !params.has("date") && !params.has("next") && !params.has("last") && !params.has("from") && !params.has("to") && !params.has("id") && !params.has("live");
+}
+
+async function getFreshFixtureOverlays(apiFootball: ApiFootballService, params: URLSearchParams) {
+  const liveParams = new URLSearchParams(params);
+  liveParams.set("live", "all");
+
+  const todayParams = new URLSearchParams(params);
+  todayParams.set("date", formatApiFootballDate(new Date()));
+
+  const settled = await Promise.allSettled([
+    apiFootball.request("fixtures", liveParams),
+    apiFootball.request("fixtures", todayParams),
+  ]);
+
+  return settled.flatMap((result) => {
+    if (result.status !== "fulfilled") return [];
+    const upstream = result.value.upstream as ApiFootballFixturesResponse;
+    try {
+      assertNoApiFootballErrors(upstream);
+    } catch {
+      return [];
+    }
+    return (upstream.response ?? []).map(normalizeFixture);
+  });
+}
+
+function overlayFreshFixtures(fixtures: NormalizedWorldCupFixture[], overlays: NormalizedWorldCupFixture[]) {
+  if (!overlays.length) return fixtures;
+
+  const byId = new Map(overlays.filter((fixture) => fixture.apiFixtureId).map((fixture) => [fixture.apiFixtureId, fixture]));
+  const byIdentity = new Map(overlays.map((fixture) => [getFixtureIdentity(fixture), fixture]));
+
+  return fixtures.map((fixture) => {
+    const overlay = byId.get(fixture.apiFixtureId) ?? byIdentity.get(getFixtureIdentity(fixture));
+    return overlay ? mergeFreshFixture(fixture, overlay) : fixture;
+  });
+}
+
+function mergeFreshFixture(base: NormalizedWorldCupFixture, overlay: NormalizedWorldCupFixture): NormalizedWorldCupFixture {
+  return {
+    ...base,
+    status: overlay.status,
+    statusLabel: overlay.statusLabel,
+    elapsed: overlay.elapsed,
+    score: overlay.score,
+    homeTeam: overlay.homeTeam,
+    awayTeam: overlay.awayTeam,
+    weather: overlay.weather || base.weather,
+  };
+}
+
+function getFixtureIdentity(fixture: NormalizedWorldCupFixture) {
+  return [
+    Date.parse(fixture.startIso) || 0,
+    normalizeFixtureTeamName(fixture.homeTeam.name),
+    normalizeFixtureTeamName(fixture.awayTeam.name),
+  ].join("|");
+}
+
+function normalizeFixtureTeamName(value: string) {
+  return value.replace(/[^\p{L}\p{N}]/gu, "").toLowerCase();
 }
 
 export async function getWorldCupRounds(apiFootball: ApiFootballService, url: URL) {
