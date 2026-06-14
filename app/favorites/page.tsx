@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ComponentType } from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import Link from "next/link";
 import {
   Bell,
@@ -151,6 +151,9 @@ function StackCard({
 }) {
   const isTop = depth === 0;
   const stackStyle = stackDepthStyles[depth] ?? stackDepthStyles[stackDepthStyles.length - 1];
+  const dragStartRef = useRef<number | null>(null);
+  const dragXRef = useRef(0);
+  const [dragX, setDragX] = useState(0);
   const kickoff = match.startsAt ? new Date(match.startsAt) : null;
   const display = match.sourceMatch && kickoff
     ? getMatchLiveDisplay({ match: match.sourceMatch, kickoff, scheduledStageLabel: match.stage })
@@ -158,9 +161,38 @@ function StackCard({
   const finishedScore = match.sourceMatch?.status === "finished"
     ? getMatchScore(match.sourceMatch)
     : null;
+  const displayX = isTop ? stackStyle.x + dragX : stackStyle.x;
+
+  const startDrag = (event: React.PointerEvent<HTMLElement>) => {
+    if (!isTop || (event.target as HTMLElement).closest("a,button")) return;
+    dragStartRef.current = event.clientX;
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const moveDrag = (event: React.PointerEvent<HTMLElement>) => {
+    if (dragStartRef.current === null) return;
+    const nextX = event.clientX - dragStartRef.current;
+    const clampedX = Math.max(-132, Math.min(88, nextX));
+    dragXRef.current = clampedX;
+    setDragX(clampedX);
+  };
+
+  const endDrag = (event: React.PointerEvent<HTMLElement>) => {
+    if (dragStartRef.current === null) return;
+    event.currentTarget.releasePointerCapture(event.pointerId);
+    const shouldAdvance = dragXRef.current < -76;
+    dragStartRef.current = null;
+    dragXRef.current = 0;
+    setDragX(0);
+    if (shouldAdvance) onAdvance();
+  };
 
   return (
     <article
+      onPointerDown={startDrag}
+      onPointerMove={moveDrag}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
       onClick={() => {
         if (!isTop) onSelect();
       }}
@@ -172,7 +204,7 @@ function StackCard({
       style={{
         zIndex: 30 - depth,
         opacity: stackStyle.opacity,
-        transform: `translate3d(${stackStyle.x}px, ${stackStyle.y}px, 0) scale(${stackStyle.scale})`,
+        transform: `translate3d(${displayX}px, ${stackStyle.y}px, 0) scale(${stackStyle.scale}) rotate(${isTop ? dragX * 0.018 : 0}deg)`,
       }}
     >
       {isTop && (
