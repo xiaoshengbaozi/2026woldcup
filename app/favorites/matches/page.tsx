@@ -68,26 +68,28 @@ function FavoriteMatchListCard({ match, index }: { match: FavoriteMatchCard; ind
       className="favorite-match-list-card hero-card premium-mobile-surface relative overflow-hidden rounded-[2rem] px-4 py-4 transition"
     >
       <div className="premium-mobile-hairline" />
-      <div className="relative flex items-center justify-between gap-3 px-1 text-xs font-semibold text-white/48">
-        <span className="inline-flex min-w-0 items-center gap-1.5">
-          <Zap className="h-3.5 w-3.5 shrink-0 text-volt" />
-          <span className="truncate">{match.tag}</span>
-        </span>
-        <UserActionButton
-          kind="match"
-          iconOnly
-          payload={{
-            id: match.id,
-            matchId: match.id,
-            title: match.title,
-            stage: match.stage,
-            startsAt: match.startsAt,
-          }}
-          className="favorite-match-reminder-button h-9 w-9 min-w-9"
-        />
-      </div>
+      {!isFinished && (
+        <div className="relative flex items-center justify-between gap-3 px-1 text-xs font-semibold text-white/48">
+          <span className="inline-flex min-w-0 items-center gap-1.5">
+            <Zap className="h-3.5 w-3.5 shrink-0 text-volt" />
+            <span className="truncate">{match.tag}</span>
+          </span>
+          <UserActionButton
+            kind="match"
+            iconOnly
+            payload={{
+              id: match.id,
+              matchId: match.id,
+              title: match.title,
+              stage: match.stage,
+              startsAt: match.startsAt,
+            }}
+            className="favorite-match-reminder-button h-9 w-9 min-w-9"
+          />
+        </div>
+      )}
 
-      <div className="relative mt-4 grid grid-cols-[minmax(0,1fr)_76px_minmax(0,1fr)] items-end gap-3 px-2">
+      <div className={`relative grid grid-cols-[minmax(0,1fr)_76px_minmax(0,1fr)] items-end gap-3 px-2 ${isFinished ? "mt-1" : "mt-4"}`}>
         <TeamColumn team={match.home} align="left" score={finishedScore?.home} />
         <div className="grid place-items-center pb-1">
           <div className="favorite-match-logo-frame relative grid h-[58px] w-[68px] place-items-center">
@@ -119,7 +121,7 @@ function FavoriteMatchListCard({ match, index }: { match: FavoriteMatchCard; ind
         <MatchInfo icon={<Star className="h-3 w-3" />} label="阶段" value={compactFavoriteMatchStage(match.stage)} />
       </div>
 
-      <FavoriteProbabilityInline selection={oddsSelection} />
+      {!isFinished && <FavoriteProbabilityInline selection={oddsSelection} />}
 
       <div className="relative mt-4 flex items-center justify-between gap-3">
         <p className="flex min-w-0 items-center gap-1.5 pl-2 text-xs font-medium text-white/50">

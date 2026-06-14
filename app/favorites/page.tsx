@@ -43,7 +43,7 @@ export default function FavoritesPage() {
   const favoriteCards = useMemo(() => buildFavoriteMatchCards(home, scheduleMatches), [home, scheduleMatches]);
 
   const visibleCards = useMemo(() => {
-    return favoriteCards.filter((match) => !dismissedFavoriteIds.has(match.id));
+    return favoriteCards.filter((match) => !isFinishedFavoriteMatch(match) && !dismissedFavoriteIds.has(match.id));
   }, [dismissedFavoriteIds, favoriteCards]);
 
   const removeFavoriteCard = (id: string) => {
@@ -634,6 +634,10 @@ function getStackMatches(matches: FavoriteMatchCard[], activeIndex: number) {
 function getNextIndex(current: number, total: number) {
   if (total <= 1) return current;
   return (current + 1) % total;
+}
+
+function isFinishedFavoriteMatch(match: FavoriteMatchCard) {
+  return match.sourceMatch?.status === "finished";
 }
 
 function getTeamCode(team: Team) {
