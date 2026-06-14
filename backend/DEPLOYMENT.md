@@ -33,6 +33,7 @@ This backend is a single Bun service that provides:
 - `GET /api/worldcup/rounds`
 - `GET /api/worldcup/standings`
 - `GET /api/worldcup/match-detail?fixture=:fixtureId`
+- `GET /api/worldcup-cache/fixtures`
 - `GET /api/worldcup-cache/live`
 - `GET /api/worldcup-cache/today`
 - `GET /api/worldcup-cache/upcoming`
