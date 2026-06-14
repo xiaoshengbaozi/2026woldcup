@@ -9,6 +9,7 @@ import type { HistoryBuffer } from "./historyBuffer";
 import type { PlayerXTimelineService } from "./playerXTimeline";
 import type { SnapshotCache } from "./snapshotCache";
 import type { UserSystem } from "./userSystem";
+import type { WorldCupCacheKey, WorldCupCacheService } from "./worldCupCache";
 import { renderAdminPageHtml } from "./adminPage";
 import { deleteLiveChannel, getPublicLiveChannels, readLiveChannels, upsertLiveChannel } from "./liveChannels";
 import type { CountryData, MatchLinesResponse } from "./types";
@@ -63,6 +64,7 @@ interface HttpServerOptions {
   };
   apiFootball?: ApiFootballService;
   playerXTimeline?: PlayerXTimelineService;
+  worldCupCache?: WorldCupCacheService;
   getState: () => {
     countries: CountryData[];
     sequenceNumber: number;
@@ -224,6 +226,11 @@ export function createHttpServer(options: HttpServerOptions) {
       return;
     }
 
+    if (req.method === "GET" && url.pathname.startsWith("/api/worldcup-cache/")) {
+      handleWorldCupCacheRequest(options.worldCupCache, url, res);
+      return;
+    }
+
     if (req.method === "GET" && url.pathname === "/api/snapshot") {
       const snapshot = options.snapshotCache.getLatest();
       sendCachedJson(res, toLightweightSnapshot(snapshot), CACHE_PUBLIC_SHORT);
@@ -263,6 +270,50 @@ export function createHttpServer(options: HttpServerOptions) {
 
     sendJson(res, { error: "not_found", path: url.pathname }, 404);
   });
+}
+
+function handleWorldCupCacheRequest(
+  worldCupCache: WorldCupCacheService | undefined,
+  url: URL,
+  res: http.ServerResponse
+) {
+  if (!worldCupCache) {
+    sendJson(res, { error: "worldcup_cache_unavailable" }, 503);
+    return;
+  }
+
+  const key = parseWorldCupCacheKey(url.pathname);
+  if (!key) {
+    sendJson(res, { error: "worldcup_cache_key_not_found" }, 404);
+    return;
+  }
+
+  if (url.searchParams.get("refresh") === "1") {
+    worldCupCache.syncAll().catch((error) => {
+      console.error("[WorldCupCache] Manual refresh failed:", error);
+    });
+  }
+
+  const payload = worldCupCache.get(key);
+  if (!payload) {
+    sendJson(res, { error: "worldcup_cache_warming", key }, 503, { "Cache-Control": "no-store" });
+    return;
+  }
+
+  sendCachedJson(res, payload, getWorldCupCacheEnvelopeHeader(key), payload.ok ? 200 : 503);
+}
+
+function parseWorldCupCacheKey(pathname: string): WorldCupCacheKey | null {
+  const key = pathname.replace(/^\/api\/worldcup-cache\/?/, "").replace(/\/+$/, "");
+  const allowed = new Set<WorldCupCacheKey>(["live", "today", "upcoming", "standings", "markets", "news", "meta"]);
+  return allowed.has(key as WorldCupCacheKey) ? (key as WorldCupCacheKey) : null;
+}
+
+function getWorldCupCacheEnvelopeHeader(key: WorldCupCacheKey) {
+  if (key === "markets") return CACHE_PUBLIC_SHORT;
+  if (key === "live" || key === "today" || key === "meta") return CACHE_PUBLIC_SHORT;
+  if (key === "news") return CACHE_PUBLIC_MEDIUM;
+  return CACHE_PUBLIC_MEDIUM;
 }
 
 function isFailoverOriginActive() {

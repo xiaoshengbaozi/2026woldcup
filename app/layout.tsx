@@ -13,6 +13,7 @@ import { PwaRegister } from "@/components/pwa-register";
 import { UserActionFeedbackLayer } from "@/components/user-action-feedback";
 import { UserSessionProvider } from "@/components/user-session-provider";
 import { WechatShareBridge } from "@/components/wechat-share-bridge";
+import { NativeRuntimeInit } from "@/components/native-runtime-init";
 
 const interTight = Inter_Tight({
   subsets: ["latin"],
@@ -84,8 +85,6 @@ export const viewport: Viewport = {
 };
 
 const themeScript = "(function(){try{var t=localStorage.getItem('wc-theme');if(t!=='light'&&t!=='dark')t='dark';document.documentElement.setAttribute('data-theme',t)}catch(e){document.documentElement.setAttribute('data-theme','dark')}})()";
-const nativeRuntimeScript = "(function(){try{var c=window.Capacitor;if(!c||!c.isNativePlatform||!c.isNativePlatform())return;document.documentElement.dataset.nativeApp='capacitor';document.body.dataset.nativeApp='capacitor';document.body.style.overflowX='hidden';document.body.style.overflowY='auto'}catch(e){}})()";
-
 export default function RootLayout({
   children
 }: Readonly<{
@@ -103,7 +102,7 @@ export default function RootLayout({
           <UserSessionProvider>
             <MobileTopBarProvider>
               <ThemeInit />
-              <script dangerouslySetInnerHTML={{ __html: nativeRuntimeScript }} />
+              <NativeRuntimeInit />
               <PwaRegister />
               <Suspense fallback={null}>
                 <WechatShareBridge />

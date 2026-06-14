@@ -165,7 +165,7 @@ export async function userApi<T>(path: string, init?: RequestInit) {
     },
   }, 8_000);
 
-  const payload = await response.json().catch(() => null);
+  const payload = (await response.json().catch(() => null)) as (T & { error?: string }) | null;
   if (!response.ok) {
     throw new Error(payload?.error || `request_failed_${response.status}`);
   }

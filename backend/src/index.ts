@@ -13,6 +13,7 @@ import { createReminderWorker } from "./reminderWorker";
 import { createSnapshotCache } from "./snapshotCache";
 import { UserStore } from "./userStore";
 import { createUserSystem } from "./userSystem";
+import { createWorldCupCache } from "./worldCupCache";
 import { createWsServer } from "./wsServer";
 import type { CountryData, HistoryPoint } from "./types";
 
@@ -55,10 +56,16 @@ async function main() {
   const matchLines = createMatchLinesService();
   const apiFootball = createApiFootballService();
   const playerXTimeline = createPlayerXTimelineService();
+  let currentCountries: Map<string, CountryData> = new Map();
+  const worldCupCache = createWorldCupCache({
+    apiFootball,
+    getMarkets: () => Array.from(currentCountries.values()),
+  });
   const userStore = new UserStore();
   await userStore.ready();
   const userSystem = createUserSystem(userStore, apiFootball, playerXTimeline);
   matchLines.start();
+  worldCupCache.start();
   if (process.env.ENABLE_EMBEDDED_REMINDER_WORKER === "true") {
     createReminderWorker(userStore, { apiFootball }).start();
   }
@@ -67,7 +74,6 @@ async function main() {
   const polymarket = createPolymarketClient(POLYMARKET_API_KEY);
 
   // 3. State for delta computation
-  let currentCountries: Map<string, CountryData> = new Map();
   let sequenceNumber = 0;
   let lastPolymarketUpdate: number | null = null;
   let lastSnapshotCacheAt = 0;
@@ -162,6 +168,7 @@ async function main() {
     wsServer,
     apiFootball,
     playerXTimeline,
+    worldCupCache,
     userSystem,
     getState: () => ({
       countries: Array.from(currentCountries.values()),

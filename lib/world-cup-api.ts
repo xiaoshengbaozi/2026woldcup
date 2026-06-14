@@ -65,6 +65,12 @@ type StandingsResponse = {
   standings?: NormalizedWorldCupStandingRow[];
 };
 
+type WorldCupCacheEnvelope<T> = {
+  ok: boolean;
+  data?: T | null;
+  error?: string;
+};
+
 export function getBackendApiUrl() {
   const runtimeApiUrl = getRuntimeApiUrl();
   const fallbackUrl =
@@ -100,6 +106,7 @@ function isLocalDevHost(location: Location) {
 
 export async function fetchWorldCupFixtures(options: { season?: number; league?: number; forceRefresh?: boolean } = {}) {
   const apiUrl = getBackendApiUrl();
+  const cacheUrl = `${apiUrl}/api/worldcup-cache/upcoming${options.forceRefresh ? "?refresh=1" : ""}`;
   const params = new URLSearchParams({
     league: String(options.league ?? 1),
     season: String(options.season ?? 2026),
@@ -107,6 +114,7 @@ export async function fetchWorldCupFixtures(options: { season?: number; league?:
   if (options.forceRefresh) params.set("forceRefresh", String(Date.now()));
 
   const url = `${apiUrl}/api/worldcup/fixtures?${params}`;
+  const fetchCachedFixtures = () => fetchWorldCupCacheData<FixturesResponse>(cacheUrl, "World Cup cached fixtures");
   const fetchFixtures = async () => {
     const response = await fetchWithTimeout(url, { cache: "no-store" }, PUBLIC_REQUEST_TIMEOUT_MS);
     const payload = (await response.json()) as FixturesResponse & { error?: string };
@@ -118,9 +126,17 @@ export async function fetchWorldCupFixtures(options: { season?: number; league?:
     return payload;
   };
 
-  let payload = options.forceRefresh
-    ? await fetchFixtures()
-    : await cachedJson<FixturesResponse & { error?: string }>(url, FIXTURE_CACHE_TTL_MS, fetchFixtures, { persist: true, staleTtlMs: PUBLIC_STALE_TTL_MS });
+  let payload: FixturesResponse & { error?: string };
+
+  try {
+    payload = options.forceRefresh
+      ? await fetchCachedFixtures()
+      : await cachedJson<FixturesResponse & { error?: string }>(cacheUrl, FIXTURE_CACHE_TTL_MS, fetchCachedFixtures, { persist: true, staleTtlMs: PUBLIC_STALE_TTL_MS });
+  } catch {
+    payload = options.forceRefresh
+      ? await fetchFixtures()
+      : await cachedJson<FixturesResponse & { error?: string }>(url, FIXTURE_CACHE_TTL_MS, fetchFixtures, { persist: true, staleTtlMs: PUBLIC_STALE_TTL_MS });
+  }
 
   if (!options.forceRefresh && !(payload.fixtures ?? []).length) {
     payload = await fetchFixtures();
@@ -161,13 +177,14 @@ export async function fetchWorldCupWarmupFixtures(options: { season?: number; le
 
 export async function fetchWorldCupStandings(options: { season?: number; league?: number } = {}) {
   const apiUrl = getBackendApiUrl();
+  const cacheUrl = `${apiUrl}/api/worldcup-cache/standings`;
   const params = new URLSearchParams({
     league: String(options.league ?? 1),
     season: String(options.season ?? 2026),
   });
 
   const url = `${apiUrl}/api/worldcup/standings?${params}`;
-  const payload = await cachedJson<StandingsResponse & { error?: string }>(url, STANDINGS_CACHE_TTL_MS, async () => {
+  const fetchStandings = async () => {
     const response = await fetchWithTimeout(url, { cache: "no-store" }, PUBLIC_REQUEST_TIMEOUT_MS);
     const payload = (await response.json()) as StandingsResponse & { error?: string };
 
@@ -176,9 +193,33 @@ export async function fetchWorldCupStandings(options: { season?: number; league?
     }
 
     return payload;
-  }, { persist: true, staleTtlMs: PUBLIC_STALE_TTL_MS });
+  };
+
+  let payload: StandingsResponse & { error?: string };
+
+  try {
+    payload = await cachedJson<StandingsResponse & { error?: string }>(
+      cacheUrl,
+      STANDINGS_CACHE_TTL_MS,
+      () => fetchWorldCupCacheData<StandingsResponse>(cacheUrl, "World Cup cached standings"),
+      { persist: true, staleTtlMs: PUBLIC_STALE_TTL_MS }
+    );
+  } catch {
+    payload = await cachedJson<StandingsResponse & { error?: string }>(url, STANDINGS_CACHE_TTL_MS, fetchStandings, { persist: true, staleTtlMs: PUBLIC_STALE_TTL_MS });
+  }
 
   return payload.standings ?? [];
+}
+
+async function fetchWorldCupCacheData<T>(url: string, label: string) {
+  const response = await fetchWithTimeout(url, { cache: "no-store" }, PUBLIC_REQUEST_TIMEOUT_MS);
+  const envelope = (await response.json()) as WorldCupCacheEnvelope<T>;
+
+  if (!response.ok || !envelope.ok || !envelope.data) {
+    throw new Error(envelope.error || `${label} returned ${response.status}`);
+  }
+
+  return envelope.data;
 }
 
 function toMatch(fixture: NormalizedWorldCupFixture): Match {

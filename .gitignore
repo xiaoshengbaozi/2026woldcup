@@ -17,10 +17,12 @@ backend/dist/
 backend/.env
 /data/user-system.json
 /data/api-football-cache.json
+/data/worldcup-cache.json
 /data/live-channels.json
 /data/site-analytics.json
 /backend/data/user-system.json
 /backend/data/api-football-cache.json
+/backend/data/worldcup-cache.json
 /backend/data/live-channels.json
 /backend/data/site-analytics.json
 scripts/__pycache__/

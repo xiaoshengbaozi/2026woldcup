@@ -280,7 +280,7 @@ export default function NewsPage() {
             cache: "no-store",
             signal: controller.signal,
           }, requestTimeoutMs);
-          const data = await response.json().catch(() => null);
+          const data = (await response.json().catch(() => null)) as (ArticleResponse & { error?: string }) | null;
           if (!response.ok) throw new Error(data?.error || `Article API returned ${response.status}`);
           return data as ArticleResponse & { error?: string };
         };

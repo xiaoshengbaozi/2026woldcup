@@ -33,6 +33,13 @@ This backend is a single Bun service that provides:
 - `GET /api/worldcup/rounds`
 - `GET /api/worldcup/standings`
 - `GET /api/worldcup/match-detail?fixture=:fixtureId`
+- `GET /api/worldcup-cache/live`
+- `GET /api/worldcup-cache/today`
+- `GET /api/worldcup-cache/upcoming`
+- `GET /api/worldcup-cache/standings`
+- `GET /api/worldcup-cache/markets`
+- `GET /api/worldcup-cache/news`
+- `GET /api/worldcup-cache/meta`
 - `GET /api/history/:countryCode?from=&to=`
 - `WS /` frontend realtime feed
 
@@ -102,6 +109,26 @@ curl "https://api.your-domain.com/api/football/fixtures?league=1&season=2026"
 ```
 
 Use `/api/football/leagues?search=world%20cup` to confirm the upstream league id before hard-coding tournament queries.
+
+## VPS Cache Warmer
+
+The backend also warms frontend-ready cache files on the VPS. It stores the cache at `WORLDCUP_CACHE_FILE` and keeps stale data when an upstream request fails.
+
+```bash
+WORLDCUP_CACHE_FILE=../data/worldcup-cache.json
+WORLDCUP_CACHE_LIVE_INTERVAL_MS=60000
+WORLDCUP_CACHE_FOOTBALL_INTERVAL_MS=300000
+WORLDCUP_CACHE_NEWS_INTERVAL_MS=600000
+WORLDCUP_RSS_FEEDS=https://www.fifa.com/fifaplus/en/tournaments/mens/worldcup/canadamexicousa2026/rss.xml
+```
+
+Read the warmed cache through:
+
+```bash
+curl "https://api.your-domain.com/api/worldcup-cache/live"
+curl "https://api.your-domain.com/api/worldcup-cache/today"
+curl "https://api.your-domain.com/api/worldcup-cache/meta"
+```
 
 For frontend-ready Chinese data, use the normalized World Cup endpoints:
 
