@@ -9,6 +9,7 @@ import {
 } from "./worldCupData";
 
 export type WorldCupCacheKey =
+  | "fixtures"
   | "live"
   | "today"
   | "upcoming"
@@ -58,6 +59,13 @@ export function createWorldCupCache(options: WorldCupCacheOptions) {
   let started = false;
 
   const targets: SyncTarget[] = [
+    {
+      key: "fixtures",
+      ttlSeconds: 300,
+      intervalMs: FOOTBALL_INTERVAL_MS,
+      source: "api-football",
+      load: () => getWorldCupFixtures(options.apiFootball, tournamentUrl("/api/worldcup/fixtures")),
+    },
     {
       key: "live",
       ttlSeconds: 90,

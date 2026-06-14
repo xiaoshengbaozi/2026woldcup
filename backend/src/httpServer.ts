@@ -305,7 +305,7 @@ function handleWorldCupCacheRequest(
 
 function parseWorldCupCacheKey(pathname: string): WorldCupCacheKey | null {
   const key = pathname.replace(/^\/api\/worldcup-cache\/?/, "").replace(/\/+$/, "");
-  const allowed = new Set<WorldCupCacheKey>(["live", "today", "upcoming", "standings", "markets", "news", "meta"]);
+  const allowed = new Set<WorldCupCacheKey>(["fixtures", "live", "today", "upcoming", "standings", "markets", "news", "meta"]);
   return allowed.has(key as WorldCupCacheKey) ? (key as WorldCupCacheKey) : null;
 }
 

@@ -106,7 +106,7 @@ function isLocalDevHost(location: Location) {
 
 export async function fetchWorldCupFixtures(options: { season?: number; league?: number; forceRefresh?: boolean } = {}) {
   const apiUrl = getBackendApiUrl();
-  const cacheUrl = `${apiUrl}/api/worldcup-cache/upcoming${options.forceRefresh ? "?refresh=1" : ""}`;
+  const cacheUrl = `${apiUrl}/api/worldcup-cache/fixtures${options.forceRefresh ? "?refresh=1" : ""}`;
   const params = new URLSearchParams({
     league: String(options.league ?? 1),
     season: String(options.season ?? 2026),
