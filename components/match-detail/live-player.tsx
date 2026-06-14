@@ -4,13 +4,17 @@ import { AlertCircle, Clipboard, Download, ExternalLink, Play, Radio, RadioTower
 import { useEffect, useMemo, useRef, useState } from "react";
 import { fetchLiveChannels, type LiveChannel } from "@/lib/live-channels";
 import type { MatchDetail } from "@/types/match";
+import type Artplayer from "artplayer";
+import type { Option as ArtPlayerOption } from "artplayer";
 
 type PlayerState = "idle" | "loading" | "ready" | "unsupported" | "error";
 type HlsConstructor = typeof import("hls.js").default;
 type HlsInstance = InstanceType<HlsConstructor>;
+type ArtPlayerConstructor = typeof import("artplayer").default;
 
 export function LivePlayer({ detail }: { detail: MatchDetail }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const playerRef = useRef<HTMLDivElement>(null);
+  const artRef = useRef<Artplayer | null>(null);
   const hlsRef = useRef<HlsInstance | null>(null);
   const [channels, setChannels] = useState<LiveChannel[]>([]);
   const [selectedId, setSelectedId] = useState("");
@@ -86,79 +90,80 @@ export function LivePlayer({ detail }: { detail: MatchDetail }) {
   const externalPlayerLinks = useMemo(() => {
     const url = activeChannel?.streamUrl || "";
     const encodedUrl = encodeURIComponent(url);
+    const mxPlayerIntent = buildMxPlayerIntent(url);
     return [
       { name: "PotPlayer", href: `potplayer://${url}` },
       { name: "VLC", href: `vlc://${url}` },
       { name: "IINA", href: `iina://weblink?url=${encodedUrl}` },
+      { name: "nPlayer", href: `nplayer-${url}` },
+      { name: "MX Player", href: mxPlayerIntent },
     ];
   }, [activeChannel?.streamUrl]);
 
   const loadStream = async () => {
     if (isExternalPlayer) {
-      hlsRef.current?.destroy();
-      hlsRef.current = null;
+      destroyPlayer();
       setPlayerState("idle");
       setMessage("请使用外部播放器打开直播源");
       return;
     }
 
-    const video = videoRef.current;
-    if (!video || !activeChannel?.streamUrl) return;
+    const container = playerRef.current;
+    if (!container || !activeChannel?.streamUrl) return;
 
-    hlsRef.current?.destroy();
-    hlsRef.current = null;
+    destroyPlayer();
     setPlayerState("loading");
     setMessage("正在接入直播信号");
 
-    const Hls = await loadHls();
-
-    if (Hls?.isSupported()) {
-      const hls = new Hls({
-        enableWorker: true,
-        lowLatencyMode: true,
-        backBufferLength: 90,
-      });
-
-      hlsRef.current = hls;
-      hls.loadSource(activeChannel.streamUrl);
-      hls.attachMedia(video);
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        setPlayerState("ready");
-        setMessage("直播信号已连接");
-      });
-      hls.on(Hls.Events.ERROR, (_, data) => {
-        if (!data.fatal) return;
-        setPlayerState("error");
-        setMessage(
-          data.details === "manifestLoadError"
-            ? "直播源不支持浏览器直连，请更换支持 HTTPS/CORS 的 m3u8 源"
-            : data.details || "直播加载失败"
-        );
-        hls.destroy();
-        hlsRef.current = null;
-      });
+    const ArtPlayer = await loadArtPlayer();
+    if (!ArtPlayer) {
+      setPlayerState("unsupported");
+      setMessage("播放器加载失败");
       return;
     }
 
-    if (video.canPlayType("application/vnd.apple.mpegurl")) {
-      video.src = activeChannel.streamUrl;
-      video.load();
+    const art = new ArtPlayer({
+      container,
+      url: activeChannel.streamUrl,
+      type: "m3u8",
+      autoplay: false,
+      muted: true,
+      isLive: true,
+      fullscreen: true,
+      fullscreenWeb: true,
+      pip: true,
+      theme: "#d8ff3e",
+      volume: 0.75,
+      moreVideoAttr: {
+        playsInline: true,
+        crossOrigin: "anonymous",
+      },
+      customType: {
+        m3u8: playHlsStream,
+      },
+    } satisfies ArtPlayerOption);
+
+    artRef.current = art;
+    art.on("ready", () => {
       setPlayerState("ready");
-      setMessage("原生 HLS 播放");
-      return;
-    }
+      setMessage("直播信号已连接");
+    });
+    art.on("video:error", () => {
+      setPlayerState("error");
+      setMessage("直播加载失败，请更换支持 HTTPS/CORS 的 m3u8 源");
+    });
+  };
 
-    setPlayerState("unsupported");
-    setMessage("当前浏览器不支持 HLS 播放");
+  const destroyPlayer = () => {
+    artRef.current?.destroy(false);
+    artRef.current = null;
+    hlsRef.current?.destroy();
+    hlsRef.current = null;
   };
 
   useEffect(() => {
     loadStream();
-
-    return () => {
-      hlsRef.current?.destroy();
-      hlsRef.current = null;
-    };
+    return destroyPlayer;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeChannel?.id, activeChannel?.streamUrl, isExternalPlayer]);
 
@@ -172,7 +177,7 @@ export function LivePlayer({ detail }: { detail: MatchDetail }) {
             <RadioTower className="h-4 w-4" />
             Live Studio
           </div>
-          <h2 className="mt-1 text-xl font-bold text-white sm:text-2xl">直播通道测试</h2>
+          <h2 className="mt-1 text-xl font-bold text-white sm:text-2xl">直播通道</h2>
         </div>
         <div className="glass-chip flex items-center gap-2 px-3 py-2 text-xs text-white/62">
           <span className={`h-2 w-2 rounded-full ${playerState === "ready" ? "bg-volt" : "bg-white/30"}`} />
@@ -182,13 +187,8 @@ export function LivePlayer({ detail }: { detail: MatchDetail }) {
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
         <div className="relative aspect-video overflow-hidden rounded-[1.5rem] bg-black shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] ring-1 ring-white/[0.08]">
-          <video
-            ref={videoRef}
-            className="h-full w-full bg-black object-contain"
-            controls
-            playsInline
-            muted
-          />
+          <div ref={playerRef} className="h-full w-full bg-black" />
+
           {hasStream && isExternalPlayer && (
             <div className="absolute inset-0 grid place-items-center bg-[radial-gradient(circle_at_50%_35%,rgba(216,255,62,0.12),transparent_42%),rgba(0,0,0,0.88)] px-5 text-center">
               <div className="w-full max-w-md">
@@ -209,22 +209,22 @@ export function LivePlayer({ detail }: { detail: MatchDetail }) {
                     ))}
                   </div>
                   <div className="grid gap-2 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    onClick={openExternalPlayer}
-                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/[0.08] px-4 py-3 text-sm font-bold text-white transition hover:bg-white/[0.14]"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    系统默认
-                  </button>
-                  <button
-                    type="button"
-                    onClick={copyStreamUrl}
-                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/[0.08] px-4 py-3 text-sm font-bold text-white transition hover:bg-white/[0.14]"
-                  >
-                    <Clipboard className="h-4 w-4" />
-                    复制地址
-                  </button>
+                    <button
+                      type="button"
+                      onClick={openExternalPlayer}
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/[0.08] px-4 py-3 text-sm font-bold text-white transition hover:bg-white/[0.14]"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      系统默认
+                    </button>
+                    <button
+                      type="button"
+                      onClick={copyStreamUrl}
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/[0.08] px-4 py-3 text-sm font-bold text-white transition hover:bg-white/[0.14]"
+                    >
+                      <Clipboard className="h-4 w-4" />
+                      复制地址
+                    </button>
                   </div>
                   <button
                     type="button"
@@ -239,6 +239,7 @@ export function LivePlayer({ detail }: { detail: MatchDetail }) {
               </div>
             </div>
           )}
+
           {!hasStream && (
             <div className="absolute inset-0 grid place-items-center bg-[radial-gradient(circle_at_50%_35%,rgba(216,255,62,0.12),transparent_42%),rgba(0,0,0,0.86)] px-6 text-center">
               <div>
@@ -247,6 +248,7 @@ export function LivePlayer({ detail }: { detail: MatchDetail }) {
               </div>
             </div>
           )}
+
           {playerState === "error" || playerState === "unsupported" ? (
             <div className="absolute bottom-4 left-4 right-4 rounded-2xl bg-black/72 p-3 text-xs text-white/70 backdrop-blur-xl ring-1 ring-white/[0.08]">
               <div className="flex items-start gap-2">
@@ -303,9 +305,53 @@ export function LivePlayer({ detail }: { detail: MatchDetail }) {
       </div>
     </section>
   );
+
+  async function playHlsStream(video: HTMLVideoElement, url: string) {
+    const Hls = await loadHls();
+
+    if (Hls?.isSupported()) {
+      const hls = new Hls({
+        enableWorker: true,
+        lowLatencyMode: true,
+        backBufferLength: 90,
+      });
+
+      hlsRef.current = hls;
+      hls.loadSource(url);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        setPlayerState("ready");
+        setMessage("直播信号已连接");
+      });
+      hls.on(Hls.Events.ERROR, (_, data) => {
+        if (!data.fatal) return;
+        setPlayerState("error");
+        setMessage(
+          data.details === "manifestLoadError"
+            ? "直播源不支持浏览器直连，请更换支持 HTTPS/CORS 的 m3u8 源"
+            : data.details || "直播加载失败"
+        );
+        hls.destroy();
+        hlsRef.current = null;
+      });
+      return;
+    }
+
+    if (video.canPlayType("application/vnd.apple.mpegurl")) {
+      video.src = url;
+      video.load();
+      setPlayerState("ready");
+      setMessage("原生 HLS 播放");
+      return;
+    }
+
+    setPlayerState("unsupported");
+    setMessage("当前浏览器不支持 HLS 播放");
+  }
 }
 
 let hlsLoader: Promise<HlsConstructor | null> | null = null;
+let artPlayerLoader: Promise<ArtPlayerConstructor | null> | null = null;
 
 function loadHls() {
   hlsLoader ??= import("hls.js")
@@ -313,4 +359,22 @@ function loadHls() {
     .catch(() => null);
 
   return hlsLoader;
+}
+
+function loadArtPlayer() {
+  artPlayerLoader ??= import("artplayer")
+    .then((mod) => mod.default)
+    .catch(() => null);
+
+  return artPlayerLoader;
+}
+
+function buildMxPlayerIntent(url: string) {
+  try {
+    const parsed = new URL(url);
+    const target = `${parsed.host}${parsed.pathname}${parsed.search}${parsed.hash}`;
+    return `intent://${target}#Intent;scheme=${parsed.protocol.replace(":", "")};package=com.mxtech.videoplayer.ad;end`;
+  } catch {
+    return `intent://${url}#Intent;package=com.mxtech.videoplayer.ad;end`;
+  }
 }
