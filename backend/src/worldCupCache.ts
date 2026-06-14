@@ -158,8 +158,10 @@ export function createWorldCupCache(options: WorldCupCacheOptions) {
     } catch (error) {
       const message = getErrorMessage(error);
       const previous = cache[target.key];
-      cache[target.key] = previous
-        ? { ...previous, ok: true, error: `serving stale: ${message}` }
+      const diskPrevious = loadCache(cacheFile)[target.key];
+      const stale = previous?.data ? previous : diskPrevious?.data ? diskPrevious : previous;
+      cache[target.key] = stale
+        ? { ...stale, ok: true, error: `serving stale: ${message}` } as WorldCupCacheEnvelope
         : {
             ok: false,
             key: target.key,
