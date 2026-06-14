@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import {
   ArrowRight,
   BarChart3,
@@ -104,21 +103,17 @@ function ProgressCard({
       </div>
       <div className="relative mt-[0.6rem] h-[18px]">
         <div className="absolute left-0 right-0 top-1/2 h-2 -translate-y-1/2 overflow-hidden rounded-full bg-white/[0.06] shadow-[inset_0_1px_8px_rgba(0,0,0,.42)]">
-          <motion.div initial={{ width: 0 }} animate={{ width: `${progressMarker}%` }} transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }} className="h-full rounded-full bg-gradient-to-r from-volt to-flare shadow-[0_0_22px_rgba(216,255,62,.45)]" />
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-volt to-flare shadow-[0_0_22px_rgba(216,255,62,.45)] transition-[width] duration-700 ease-out"
+            style={{ width: `${progressMarker}%` }}
+          />
         </div>
-        <motion.div
-          initial={{ left: "0%" }}
-          animate={{ left: `${progressMarker}%` }}
-          transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+        <div
           className="pointer-events-none absolute top-1/2 grid h-[18px] w-[18px] -translate-x-1/2 -translate-y-1/2 place-items-center"
+          style={{ left: `${progressMarker}%` }}
           aria-hidden="true"
         >
-          <motion.span
-            initial={{ opacity: 0, scale: 0.72, rotate: -18 }}
-            animate={{ opacity: 1, scale: 1, rotate: 0 }}
-            transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
-            className="grid h-[18px] w-[18px] place-items-center"
-          >
+          <span className="grid h-[18px] w-[18px] place-items-center">
             <svg viewBox="0 0 32 32" className="h-[18px] w-[18px] drop-shadow-[0_0_10px_rgba(216,255,62,.42)]">
               <circle cx="16" cy="16" r="14" fill={`url(#${gradientId})`} />
               <path d="m16 7.4 5.1 3.7-1.95 5.95h-6.3L10.9 11.1 16 7.4Z" fill="#111" />
@@ -132,8 +127,8 @@ function ProgressCard({
                 </radialGradient>
               </defs>
             </svg>
-          </motion.span>
-        </motion.div>
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -243,20 +238,20 @@ export function WorldCupHero({ matches, progress, completedCount, ongoingCount, 
                 </div>
                 <div className="flex h-full -translate-x-[15%] items-stretch justify-end sm:hidden">
                   <OptimizedImage
-                    src="/logos/world-cup-2026-inverted.svg"
+                    src="/logos/world-cup-2026-alternate-light.webp"
                     alt=""
                     className="site-logo-dark pointer-events-none h-full w-auto object-contain opacity-90 drop-shadow-[0_12px_34px_rgba(0,0,0,.55)]"
-                    width={72}
-                    height={188}
+                    width={596}
+                    height={842}
                     priority
                     aria-hidden="true"
                   />
                   <OptimizedImage
-                    src="/logos/world-cup-2026-alternate.svg"
+                    src="/logos/world-cup-2026-alternate-dark.webp"
                     alt=""
                     className="site-logo-light pointer-events-none h-full w-auto object-contain opacity-90 drop-shadow-[0_12px_34px_rgba(0,0,0,.18)]"
-                    width={72}
-                    height={188}
+                    width={596}
+                    height={842}
                     priority
                     aria-hidden="true"
                   />
@@ -289,6 +284,8 @@ export function WorldCupHero({ matches, progress, completedCount, ongoingCount, 
               alt=""
               aria-hidden="true"
               className="next-match-media absolute inset-0 h-full w-full object-cover object-[78%_50%] opacity-[.82] saturate-[1.08]"
+              sizes="(min-width: 1024px) 640px, calc(100vw - 24px)"
+              srcSet={nextMatchBackground ? undefined : "/estadio-azteca-aerial-720.webp 720w, /estadio-azteca-aerial.webp 1920w"}
               width={980}
               height={420}
               priority

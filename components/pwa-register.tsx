@@ -6,6 +6,12 @@ export function PwaRegister() {
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
     if (!window.isSecureContext && window.location.hostname !== "localhost") return;
+    if (process.env.NODE_ENV !== "production") {
+      void navigator.serviceWorker.getRegistrations().then((registrations) => {
+        registrations.forEach((registration) => void registration.unregister());
+      });
+      return;
+    }
 
     const register = async () => {
       try {

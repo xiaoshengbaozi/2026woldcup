@@ -752,12 +752,14 @@ function clampNumber(value: unknown, min: number, max: number, fallback: number)
 
 function normalizeTeam(team: ApiFootballTeam | undefined): NormalizedTeam {
   const englishName = team?.name ?? "TBD";
-  const code = TEAM_NAME_TO_CODE[normalizeName(englishName)] ?? "";
+  const officialTeam = team?.id ? TEAM_ID_TO_OFFICIAL_TEAM[team.id] : undefined;
+  const code = officialTeam?.[0] ?? TEAM_NAME_TO_CODE[normalizeName(englishName)] ?? "";
+  const canonicalEnglishName = officialTeam?.[1] ?? englishName;
 
   return {
     id: team?.id ?? null,
-    name: code ? TEAM_CODE_TO_CN[code] : englishName,
-    englishName,
+    name: code ? TEAM_CODE_TO_CN[code] : canonicalEnglishName,
+    englishName: canonicalEnglishName,
     code,
     logo: team?.logo ?? "",
   };
@@ -1152,6 +1154,9 @@ const TEAM_NAME_TO_CODE: Record<string, string> = {
   ghana: "GHA",
   haiti: "HAI",
   iran: "IRN",
+  "ir iran": "IRN",
+  "iran islamic republic": "IRN",
+  "islamic republic of iran": "IRN",
   iraq: "IRQ",
   "ivory coast": "CIV",
   japan: "JPN",
