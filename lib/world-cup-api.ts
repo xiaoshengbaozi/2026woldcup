@@ -10,6 +10,7 @@ const API_URL_BY_APP_HOST: Record<string, string> = {
   "ball.boyzi.top": "https://api.boyzi.top",
 };
 const FIXTURE_CACHE_TTL_MS = 5 * 60 * 1000;
+const LIVE_FIXTURE_CACHE_TTL_MS = 30 * 1000;
 const STANDINGS_CACHE_TTL_MS = 5 * 60 * 1000;
 const PUBLIC_STALE_TTL_MS = 24 * 60 * 60 * 1000;
 const PUBLIC_REQUEST_TIMEOUT_MS = 6_000;
@@ -36,6 +37,11 @@ export type NormalizedWorldCupFixture = {
 
 type FixturesResponse = {
   fixtures?: NormalizedWorldCupFixture[];
+};
+
+type LiveCachePayload = {
+  live?: FixturesResponse | null;
+  today?: FixturesResponse | null;
 };
 
 export type NormalizedWorldCupStandingRow = {
@@ -142,7 +148,7 @@ export async function fetchWorldCupFixtures(options: { season?: number; league?:
     payload = await fetchFixtures();
   }
 
-  return (payload.fixtures ?? []).map(toMatch);
+  return mergeWithLiveCache(apiUrl, payload, options.forceRefresh).then((nextPayload) => (nextPayload.fixtures ?? []).map(toMatch));
 }
 
 export async function fetchWorldCupWarmupFixtures(options: { season?: number; league?: number; from?: string; to?: string; forceRefresh?: boolean } = {}) {
@@ -220,6 +226,69 @@ async function fetchWorldCupCacheData<T>(url: string, label: string) {
   }
 
   return envelope.data;
+}
+
+async function mergeWithLiveCache(apiUrl: string, payload: FixturesResponse, forceRefresh?: boolean) {
+  const fixtures = payload.fixtures ?? [];
+  if (!fixtures.length) return payload;
+
+  try {
+    const liveCacheUrl = `${apiUrl}/api/worldcup-cache/live${forceRefresh ? "?refresh=1" : ""}`;
+    const livePayload = forceRefresh
+      ? await fetchWorldCupCacheData<LiveCachePayload>(liveCacheUrl, "World Cup live cache")
+      : await cachedJson<LiveCachePayload>(
+          liveCacheUrl,
+          LIVE_FIXTURE_CACHE_TTL_MS,
+          () => fetchWorldCupCacheData<LiveCachePayload>(liveCacheUrl, "World Cup live cache"),
+          { persist: true, staleTtlMs: 10 * 60 * 1000 }
+        );
+    const overlays = [...(livePayload.today?.fixtures ?? []), ...(livePayload.live?.fixtures ?? [])];
+    return { ...payload, fixtures: overlayFixtures(fixtures, overlays) };
+  } catch {
+    return payload;
+  }
+}
+
+function overlayFixtures(baseFixtures: NormalizedWorldCupFixture[], overlays: NormalizedWorldCupFixture[]) {
+  if (!overlays.length) return baseFixtures;
+
+  const byId = new Map<number, NormalizedWorldCupFixture>();
+  const byIdentity = new Map<string, NormalizedWorldCupFixture>();
+
+  for (const overlay of overlays) {
+    if (overlay.apiFixtureId) byId.set(overlay.apiFixtureId, overlay);
+    byIdentity.set(getFixtureIdentity(overlay), overlay);
+  }
+
+  return baseFixtures.map((fixture) => {
+    const overlay = (fixture.apiFixtureId ? byId.get(fixture.apiFixtureId) : undefined) ?? byIdentity.get(getFixtureIdentity(fixture));
+    return overlay ? mergeFixture(fixture, overlay) : fixture;
+  });
+}
+
+function mergeFixture(base: NormalizedWorldCupFixture, overlay: NormalizedWorldCupFixture) {
+  return {
+    ...base,
+    status: overlay.status ?? base.status,
+    statusLabel: overlay.statusLabel ?? base.statusLabel,
+    elapsed: overlay.elapsed ?? base.elapsed,
+    score: overlay.score ?? base.score,
+    homeTeam: overlay.homeTeam ?? base.homeTeam,
+    awayTeam: overlay.awayTeam ?? base.awayTeam,
+    weather: overlay.weather || base.weather,
+  };
+}
+
+function getFixtureIdentity(fixture: NormalizedWorldCupFixture) {
+  return [
+    Date.parse(fixture.startIso) || 0,
+    normalizeFixtureTeam(fixture.homeTeam?.name),
+    normalizeFixtureTeam(fixture.awayTeam?.name),
+  ].join("|");
+}
+
+function normalizeFixtureTeam(value?: string) {
+  return (value || "").replace(/[^\p{L}\p{N}]/gu, "").toLowerCase();
 }
 
 function toMatch(fixture: NormalizedWorldCupFixture): Match {

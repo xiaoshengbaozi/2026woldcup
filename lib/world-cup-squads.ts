@@ -27,6 +27,12 @@ type SquadsPayload = {
   squads?: SquadResponse[];
 };
 
+type WorldCupCacheEnvelope<T> = {
+  ok: boolean;
+  data?: T | null;
+  error?: string;
+};
+
 export type OfficialSquadMeta = {
   source: "fifa_official";
   status: "imported" | "missing_official_list";
@@ -63,8 +69,10 @@ export async function fetchWorldCupSquadDetails(teamIds: number[]) {
   const params = new URLSearchParams();
   ids.forEach((id) => params.append("team", String(id)));
 
-  const url = `${getBackendApiUrl()}/api/worldcup/squads?${params}`;
-  const payload = await cachedJson<SquadsPayload & { error?: string }>(url, 10 * 60 * 1000, async () => {
+  const apiUrl = getBackendApiUrl();
+  const cacheUrl = `${apiUrl}/api/worldcup-cache/squads`;
+  const url = `${apiUrl}/api/worldcup/squads?${params}`;
+  const fetchSquads = async () => {
     const response = await fetchWithTimeout(url, { cache: "no-store" }, 6_000);
     const payload = (await response.json()) as SquadsPayload & { error?: string };
 
@@ -73,7 +81,21 @@ export async function fetchWorldCupSquadDetails(teamIds: number[]) {
     }
 
     return payload;
-  }, { persist: true, staleTtlMs: 7 * 24 * 60 * 60 * 1000 });
+  };
+
+  let payload: SquadsPayload & { error?: string };
+
+  try {
+    const cachedPayload = await cachedJson<SquadsPayload & { error?: string }>(
+      cacheUrl,
+      10 * 60 * 1000,
+      () => fetchWorldCupCacheData<SquadsPayload>(cacheUrl, "World Cup cached squads"),
+      { persist: true, staleTtlMs: 7 * 24 * 60 * 60 * 1000 }
+    );
+    payload = filterSquadsPayload(cachedPayload, ids);
+  } catch {
+    payload = await cachedJson<SquadsPayload & { error?: string }>(url, 10 * 60 * 1000, fetchSquads, { persist: true, staleTtlMs: 7 * 24 * 60 * 60 * 1000 });
+  }
 
   const squads = new Map<number, WorldCupSquadDetail>();
   for (const squad of payload.squads ?? []) {
@@ -89,6 +111,25 @@ export async function fetchWorldCupSquadDetails(teamIds: number[]) {
   }
 
   return squads;
+}
+
+async function fetchWorldCupCacheData<T>(url: string, label: string) {
+  const response = await fetchWithTimeout(url, { cache: "no-store" }, 6_000);
+  const envelope = (await response.json()) as WorldCupCacheEnvelope<T>;
+
+  if (!response.ok || !envelope.ok || !envelope.data) {
+    throw new Error(envelope.error || `${label} returned ${response.status}`);
+  }
+
+  return envelope.data;
+}
+
+function filterSquadsPayload(payload: SquadsPayload & { error?: string }, teamIds: number[]) {
+  const wanted = new Set(teamIds);
+  return {
+    ...payload,
+    squads: (payload.squads ?? []).filter((squad) => squad.team.id && wanted.has(squad.team.id)),
+  };
 }
 
 function toLineupPlayer(player: SquadPlayerResponse, index: number): LineupPlayer {

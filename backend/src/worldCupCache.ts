@@ -5,8 +5,10 @@ import type { CountryData } from "./types";
 import {
   getWorldCupFixtures,
   getWorldCupLiveFixtures,
+  getWorldCupSquads,
   getWorldCupStandings,
 } from "./worldCupData";
+import { getWorldCupTopScorers } from "./playerProfileData";
 
 export type WorldCupCacheKey =
   | "fixtures"
@@ -14,6 +16,8 @@ export type WorldCupCacheKey =
   | "today"
   | "upcoming"
   | "standings"
+  | "top-scorers"
+  | "squads"
   | "markets"
   | "news"
   | "meta";
@@ -93,6 +97,20 @@ export function createWorldCupCache(options: WorldCupCacheOptions) {
       intervalMs: FOOTBALL_INTERVAL_MS,
       source: "api-football",
       load: () => getWorldCupStandings(options.apiFootball, tournamentUrl("/api/worldcup/standings")),
+    },
+    {
+      key: "top-scorers",
+      ttlSeconds: 300,
+      intervalMs: FOOTBALL_INTERVAL_MS,
+      source: "api-football",
+      load: () => getWorldCupTopScorers(options.apiFootball, tournamentUrl("/api/worldcup/top-scorers")),
+    },
+    {
+      key: "squads",
+      ttlSeconds: 3600,
+      intervalMs: numberFromEnv("WORLDCUP_CACHE_SQUADS_INTERVAL_MS", 6 * 60 * 60_000),
+      source: "api-football",
+      load: () => buildSquadsCache(options.apiFootball),
     },
     {
       key: "markets",
@@ -178,6 +196,17 @@ export function createWorldCupCache(options: WorldCupCacheOptions) {
   };
 }
 
+async function buildSquadsCache(apiFootball: ApiFootballService) {
+  const standings = await getWorldCupStandings(apiFootball, tournamentUrl("/api/worldcup/standings"));
+  const teamIds = extractTeamIdsFromStandings(standings);
+
+  if (!teamIds.length) {
+    throw new Error("worldcup_squads_missing_team_ids");
+  }
+
+  return getWorldCupSquads(apiFootball, squadsUrl(teamIds));
+}
+
 export type WorldCupCacheService = ReturnType<typeof createWorldCupCache>;
 
 async function buildLiveSummary(apiFootball: ApiFootballService, getMarkets: () => CountryData[]) {
@@ -216,6 +245,24 @@ function upcomingUrl() {
   const url = tournamentUrl("/api/worldcup/fixtures");
   url.searchParams.set("next", process.env.WORLDCUP_CACHE_UPCOMING_LIMIT || "20");
   return url;
+}
+
+function squadsUrl(teamIds: number[]) {
+  const url = new URL("/api/worldcup/squads", "http://localhost");
+  teamIds.forEach((teamId) => url.searchParams.append("team", String(teamId)));
+  return url;
+}
+
+function extractTeamIdsFromStandings(payload: unknown) {
+  const ids = new Set<number>();
+  const rows = (payload as { standings?: Array<{ team?: { id?: number | null } }> })?.standings ?? [];
+
+  for (const row of rows) {
+    const teamId = Number(row.team?.id);
+    if (Number.isFinite(teamId) && teamId > 0) ids.add(teamId);
+  }
+
+  return [...ids];
 }
 
 async function fetchRssNews() {

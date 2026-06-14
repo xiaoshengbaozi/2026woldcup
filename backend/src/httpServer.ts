@@ -305,13 +305,14 @@ function handleWorldCupCacheRequest(
 
 function parseWorldCupCacheKey(pathname: string): WorldCupCacheKey | null {
   const key = pathname.replace(/^\/api\/worldcup-cache\/?/, "").replace(/\/+$/, "");
-  const allowed = new Set<WorldCupCacheKey>(["fixtures", "live", "today", "upcoming", "standings", "markets", "news", "meta"]);
+  const allowed = new Set<WorldCupCacheKey>(["fixtures", "live", "today", "upcoming", "standings", "top-scorers", "squads", "markets", "news", "meta"]);
   return allowed.has(key as WorldCupCacheKey) ? (key as WorldCupCacheKey) : null;
 }
 
 function getWorldCupCacheEnvelopeHeader(key: WorldCupCacheKey) {
   if (key === "markets") return CACHE_PUBLIC_SHORT;
   if (key === "live" || key === "today" || key === "meta") return CACHE_PUBLIC_SHORT;
+  if (key === "squads") return CACHE_PUBLIC_LONG;
   if (key === "news") return CACHE_PUBLIC_MEDIUM;
   return CACHE_PUBLIC_MEDIUM;
 }
