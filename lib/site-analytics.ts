@@ -18,7 +18,7 @@ export async function sendSiteAnalytics(action: "view" | "heartbeat", sessionId:
     body: JSON.stringify({ action, sessionId }),
   }, 5_000);
 
-  const payload = await response.json().catch(() => null);
+  const payload = (await response.json().catch(() => null)) as (SiteAnalyticsStats & { error?: string }) | null;
   if (!response.ok) throw new Error(payload?.error || `site_analytics_${response.status}`);
   if (!hasSiteAnalyticsStats(payload)) return null;
 

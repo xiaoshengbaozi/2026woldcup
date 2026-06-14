@@ -1,4 +1,4 @@
-const CACHE_VERSION = "cyberball-pwa-v2";
+const CACHE_VERSION = "cyberball-pwa-v3";
 const APP_SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const IMAGE_CACHE = `${CACHE_VERSION}-images`;
@@ -121,7 +121,6 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (isSameOrigin(request) && request.url.includes("/_next/static/")) {
-    event.respondWith(cacheFirst(request, APP_SHELL_CACHE));
     return;
   }
 

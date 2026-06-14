@@ -53,7 +53,7 @@ async function fetchJson(path: string) {
     headers: { "Content-Type": "application/json" },
     cache: "no-store",
   });
-  const payload = await response.json().catch(() => null);
+  const payload = (await response.json().catch(() => null)) as (PlayerXTimelinePayload & { error?: string }) | null;
   if (!response.ok) throw new Error(payload?.error || `x_timeline_failed_${response.status}`);
   return payload as PlayerXTimelinePayload;
 }
