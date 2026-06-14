@@ -294,6 +294,23 @@ function handleWorldCupCacheRequest(
     });
   }
 
+  if (key === "player-profile") {
+    const playerId = Number(url.searchParams.get("player") ?? url.searchParams.get("id"));
+    const season = url.searchParams.get("season") || "2025";
+    if (!Number.isFinite(playerId) || playerId <= 0) {
+      sendJson(res, { error: "missing_player" }, 400, { "Cache-Control": "no-store" });
+      return;
+    }
+
+    worldCupCache
+      .getPlayerProfile(playerId, season)
+      .then((payload) => sendCachedJson(res, payload, CACHE_PUBLIC_LONG))
+      .catch((error: Error & { statusCode?: number; details?: unknown }) => {
+        sendJson(res, { error: error.message || "player_profile_cache_failed", details: error.details }, error.statusCode ?? 500, { "Cache-Control": "no-store" });
+      });
+    return;
+  }
+
   const payload = worldCupCache.get(key);
   if (!payload) {
     sendJson(res, { error: "worldcup_cache_warming", key }, 503, { "Cache-Control": "no-store" });
@@ -305,14 +322,14 @@ function handleWorldCupCacheRequest(
 
 function parseWorldCupCacheKey(pathname: string): WorldCupCacheKey | null {
   const key = pathname.replace(/^\/api\/worldcup-cache\/?/, "").replace(/\/+$/, "");
-  const allowed = new Set<WorldCupCacheKey>(["fixtures", "live", "today", "upcoming", "standings", "top-scorers", "squads", "markets", "news", "meta"]);
+  const allowed = new Set<WorldCupCacheKey>(["fixtures", "live", "today", "upcoming", "standings", "top-scorers", "squads", "player-profile", "markets", "news", "meta"]);
   return allowed.has(key as WorldCupCacheKey) ? (key as WorldCupCacheKey) : null;
 }
 
 function getWorldCupCacheEnvelopeHeader(key: WorldCupCacheKey) {
   if (key === "markets") return CACHE_PUBLIC_SHORT;
   if (key === "live" || key === "today" || key === "meta") return CACHE_PUBLIC_SHORT;
-  if (key === "squads") return CACHE_PUBLIC_LONG;
+  if (key === "squads" || key === "player-profile") return CACHE_PUBLIC_LONG;
   if (key === "news") return CACHE_PUBLIC_MEDIUM;
   return CACHE_PUBLIC_MEDIUM;
 }

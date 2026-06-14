@@ -9,6 +9,12 @@ type ApiFootballPayload<T> = {
   error?: string;
 };
 
+type WorldCupCacheEnvelope<T> = {
+  ok: boolean;
+  data?: T | null;
+  error?: string;
+};
+
 type ApiPlayer = {
   id: number;
   name: string;
@@ -122,8 +128,9 @@ export type PlayerProfileData = {
 
 export async function fetchApiFootballPlayerProfileData(playerId: string): Promise<PlayerProfileData> {
   const apiUrl = getBackendApiUrl();
+  const cacheUrl = `${apiUrl}/api/worldcup-cache/player-profile?player=${encodeURIComponent(playerId)}&season=2025`;
   const url = `${apiUrl}/api/worldcup/player-profile?player=${playerId}&season=2025`;
-  const payload = await cachedJson<PlayerProfileData & { error?: string }>(url, 24 * 60 * 60 * 1000, async () => {
+  const fetchProfile = async () => {
     const response = await fetchWithTimeout(url, { cache: "no-store" }, 6_000);
     const payload = (await response.json()) as PlayerProfileData & { error?: string };
 
@@ -132,7 +139,20 @@ export async function fetchApiFootballPlayerProfileData(playerId: string): Promi
     }
 
     return payload;
-  }, { persist: true, staleTtlMs: 7 * 24 * 60 * 60 * 1000 });
+  };
+
+  let payload: PlayerProfileData & { error?: string };
+
+  try {
+    payload = await cachedJson<PlayerProfileData & { error?: string }>(
+      cacheUrl,
+      24 * 60 * 60 * 1000,
+      () => fetchWorldCupCacheData<PlayerProfileData>(cacheUrl, "World Cup cached player profile"),
+      { persist: true, staleTtlMs: 7 * 24 * 60 * 60 * 1000 }
+    );
+  } catch {
+    payload = await cachedJson<PlayerProfileData & { error?: string }>(url, 24 * 60 * 60 * 1000, fetchProfile, { persist: true, staleTtlMs: 7 * 24 * 60 * 60 * 1000 });
+  }
 
   return payload;
 }
@@ -149,6 +169,17 @@ async function getApiFootball<T>(url: string) {
     return payload;
   }, { persist: true, staleTtlMs: 7 * 24 * 60 * 60 * 1000 });
   return payload.upstream?.response ?? ([] as T);
+}
+
+async function fetchWorldCupCacheData<T>(url: string, label: string) {
+  const response = await fetchWithTimeout(url, { cache: "no-store" }, 6_000);
+  const envelope = (await response.json()) as WorldCupCacheEnvelope<T>;
+
+  if (!response.ok || !envelope.ok || !envelope.data) {
+    throw new Error(envelope.error || `${label} returned ${response.status}`);
+  }
+
+  return envelope.data;
 }
 
 function valueOr<T>(result: PromiseSettledResult<T>) {
