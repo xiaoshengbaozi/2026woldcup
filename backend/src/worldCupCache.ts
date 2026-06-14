@@ -8,7 +8,7 @@ import {
   getWorldCupSquads,
   getWorldCupStandings,
 } from "./worldCupData";
-import { getWorldCupTopScorers } from "./playerProfileData";
+import { getWorldCupPlayerProfile, getWorldCupTopScorers } from "./playerProfileData";
 
 export type WorldCupCacheKey =
   | "fixtures"
@@ -18,6 +18,7 @@ export type WorldCupCacheKey =
   | "standings"
   | "top-scorers"
   | "squads"
+  | "player-profile"
   | "markets"
   | "news"
   | "meta";
@@ -33,6 +34,14 @@ export type WorldCupCacheEnvelope<T = unknown> = {
 };
 
 type StoredCache = Partial<Record<WorldCupCacheKey, WorldCupCacheEnvelope>>;
+
+type PlayerProfileCacheData = {
+  profiles: Record<string, {
+    updatedAt: string;
+    data: unknown;
+    error?: string;
+  }>;
+};
 
 type WorldCupCacheOptions = {
   apiFootball: ApiFootballService;
@@ -68,7 +77,7 @@ export function createWorldCupCache(options: WorldCupCacheOptions) {
       ttlSeconds: 300,
       intervalMs: FOOTBALL_INTERVAL_MS,
       source: "api-football",
-      load: () => getWorldCupFixtures(options.apiFootball, tournamentUrl("/api/worldcup/fixtures")),
+      load: () => buildFixturesCache(options.apiFootball),
     },
     {
       key: "live",
@@ -192,6 +201,38 @@ export function createWorldCupCache(options: WorldCupCacheOptions) {
       return cache[key] ?? null;
     },
 
+    async getPlayerProfile(playerId: number, season = "2025") {
+      const cacheKey = `${playerId}:${season}`;
+      const bucket = ensurePlayerProfileBucket(cache);
+      const cached = bucket.data.profiles[cacheKey];
+      const maxAgeMs = numberFromEnv("WORLDCUP_CACHE_PLAYER_PROFILE_MAX_AGE_MS", 24 * 60 * 60_000);
+
+      if (cached && Date.now() - Date.parse(cached.updatedAt) <= maxAgeMs && !cached.error) {
+        return toPlayerProfileEnvelope(cacheKey, cached.data, cached.updatedAt);
+      }
+
+      try {
+        const data = await getWorldCupPlayerProfile(options.apiFootball, playerProfileUrl(playerId, season));
+        bucket.data.profiles[cacheKey] = {
+          updatedAt: new Date().toISOString(),
+          data,
+        };
+        bucket.updatedAt = new Date().toISOString();
+        updateMeta(cache, cacheFile);
+        saveCache(cacheFile, cache);
+        return toPlayerProfileEnvelope(cacheKey, data, bucket.data.profiles[cacheKey].updatedAt);
+      } catch (error) {
+        if (cached) {
+          cached.error = `serving stale: ${getErrorMessage(error)}`;
+          bucket.updatedAt = new Date().toISOString();
+          updateMeta(cache, cacheFile);
+          saveCache(cacheFile, cache);
+          return toPlayerProfileEnvelope(cacheKey, cached.data, cached.updatedAt, cached.error);
+        }
+        throw error;
+      }
+    },
+
     syncAll,
   };
 }
@@ -208,6 +249,15 @@ async function buildSquadsCache(apiFootball: ApiFootballService) {
 }
 
 export type WorldCupCacheService = ReturnType<typeof createWorldCupCache>;
+
+async function buildFixturesCache(apiFootball: ApiFootballService) {
+  const [fixtures, live] = await Promise.all([
+    getWorldCupFixtures(apiFootball, tournamentUrl("/api/worldcup/fixtures")),
+    getWorldCupLiveFixtures(apiFootball, tournamentUrl("/api/worldcup/live")),
+  ]);
+
+  return mergeFixturePayload(fixtures, live);
+}
 
 async function buildLiveSummary(apiFootball: ApiFootballService, getMarkets: () => CountryData[]) {
   const [live, today, standings, news] = await Promise.allSettled([
@@ -228,6 +278,42 @@ async function buildLiveSummary(apiFootball: ApiFootballService, getMarkets: () 
       markets: getMarkets(),
     },
     news: valueOrNull(news),
+  };
+}
+
+function mergeFixturePayload(basePayload: unknown, livePayload: unknown) {
+  const base = basePayload as { fixtures?: Array<Record<string, unknown>> };
+  const live = livePayload as { fixtures?: Array<Record<string, unknown>> };
+  const fixtures = base.fixtures ?? [];
+  const overlays = live.fixtures ?? [];
+
+  if (!fixtures.length || !overlays.length) return basePayload;
+
+  const overlaysById = new Map(
+    overlays
+      .map((fixture) => [Number(fixture.apiFixtureId), fixture] as const)
+      .filter(([id]) => Number.isFinite(id) && id > 0)
+  );
+
+  return {
+    ...(basePayload as object),
+    fixtures: fixtures.map((fixture) => {
+      const overlay = overlaysById.get(Number(fixture.apiFixtureId));
+      return overlay ? mergeFixture(fixture, overlay) : fixture;
+    }),
+  };
+}
+
+function mergeFixture(base: Record<string, unknown>, overlay: Record<string, unknown>) {
+  return {
+    ...base,
+    status: overlay.status ?? base.status,
+    statusLabel: overlay.statusLabel ?? base.statusLabel,
+    elapsed: overlay.elapsed ?? base.elapsed,
+    score: overlay.score ?? base.score,
+    homeTeam: overlay.homeTeam ?? base.homeTeam,
+    awayTeam: overlay.awayTeam ?? base.awayTeam,
+    weather: overlay.weather || base.weather,
   };
 }
 
@@ -263,6 +349,49 @@ function extractTeamIdsFromStandings(payload: unknown) {
   }
 
   return [...ids];
+}
+
+function ensurePlayerProfileBucket(cache: StoredCache) {
+  const current = cache["player-profile"];
+  if (current && isPlayerProfileCacheData(current.data)) return current as WorldCupCacheEnvelope<PlayerProfileCacheData>;
+
+  const bucket: WorldCupCacheEnvelope<PlayerProfileCacheData> = {
+    ok: true,
+    key: "player-profile",
+    updatedAt: new Date().toISOString(),
+    source: "api-football",
+    ttlSeconds: 24 * 60 * 60,
+    data: { profiles: {} },
+  };
+  cache["player-profile"] = bucket;
+  return bucket;
+}
+
+function isPlayerProfileCacheData(value: unknown): value is PlayerProfileCacheData {
+  return Boolean(value && typeof value === "object" && "profiles" in value && typeof (value as PlayerProfileCacheData).profiles === "object");
+}
+
+function toPlayerProfileEnvelope(cacheKey: string, data: unknown, updatedAt: string, error?: string): WorldCupCacheEnvelope {
+  return {
+    ok: true,
+    key: "player-profile",
+    updatedAt,
+    source: "api-football",
+    ttlSeconds: 24 * 60 * 60,
+    data: {
+      cacheKey,
+      ...asObject(data),
+    },
+    error,
+  };
+}
+
+function asObject(value: unknown) {
+  return value && typeof value === "object" ? (value as Record<string, unknown>) : { value };
+}
+
+function playerProfileUrl(playerId: number, season: string) {
+  return new URL(`/api/worldcup/player-profile?player=${playerId}&season=${encodeURIComponent(season)}`, "http://localhost");
 }
 
 async function fetchRssNews() {
