@@ -3,6 +3,8 @@ create table if not exists users (
   email text not null unique,
   password_hash text not null,
   password_salt text not null,
+  auth_provider text,
+  auth_provider_subject text,
   email_verified_at timestamptz,
   email_verification_token_hash text,
   email_verification_expires_at timestamptz,
@@ -23,6 +25,8 @@ create table if not exists users (
 );
 
 alter table users add column if not exists email_verified_at timestamptz;
+alter table users add column if not exists auth_provider text;
+alter table users add column if not exists auth_provider_subject text;
 alter table users add column if not exists email_verification_token_hash text;
 alter table users add column if not exists email_verification_expires_at timestamptz;
 alter table users add column if not exists email_verification_sent_at timestamptz;
@@ -175,6 +179,9 @@ create index if not exists idx_user_notifications_unread
 
 create index if not exists idx_invitation_codes_status
   on invitation_codes (disabled_at, expires_at, used_count);
+
+create index if not exists idx_users_auth_provider
+  on users (auth_provider, auth_provider_subject);
 
 create table if not exists live_channels (
   id text primary key,

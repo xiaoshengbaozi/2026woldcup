@@ -4,7 +4,7 @@ import { FormEvent, type ReactNode, useEffect, useMemo, useRef, useState } from 
 import Image from "next/image";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronRight, KeyRound, LogIn, Trophy, UserPlus, UserRound, X } from "lucide-react";
+import { ChevronRight, Github, KeyRound, LogIn, ShieldCheck, Trophy, UserPlus, UserRound, X } from "lucide-react";
 import {
   fallbackUserPreferenceCatalog,
   getPlayerAvatar,
@@ -16,7 +16,7 @@ import { useUserPreferenceCatalog } from "@/lib/use-user-preferences";
 import { injectMockData } from "@/lib/mock-data";
 import { useStore } from "@/lib/store";
 import { getFlagCode } from "@/lib/world-cup-2026";
-import { userApi } from "@/lib/user-system";
+import { getUserApiUrl, userApi } from "@/lib/user-system";
 import { AvatarPicker } from "@/components/avatar-picker";
 
 export type SharedAuthMode = "login" | "register";
@@ -148,6 +148,14 @@ export function MeAuthDialog({ mode, onClose, onAuthenticated, resetToken }: MeA
     } finally {
       setBusy("");
     }
+  }
+
+  function startLinuxdoLogin() {
+    window.location.href = `${getUserApiUrl()}/api/auth/linuxdo`;
+  }
+
+  function startGitHubLogin() {
+    window.location.href = `${getUserApiUrl()}/api/auth/github`;
   }
 
   async function submitForgotPassword(event: FormEvent<HTMLFormElement>) {
@@ -294,6 +302,8 @@ export function MeAuthDialog({ mode, onClose, onAuthenticated, resetToken }: MeA
               onEmailChange={setEmail}
               onPasswordChange={setPassword}
               onRememberChange={setRememberLogin}
+              onLinuxdoLogin={startLinuxdoLogin}
+              onGitHubLogin={startGitHubLogin}
               onForgotPassword={() => {
                 setError("");
                 setLoginView("forgot");
@@ -423,6 +433,8 @@ function LoginForm({
   onEmailChange,
   onPasswordChange,
   onRememberChange,
+  onLinuxdoLogin,
+  onGitHubLogin,
   onForgotPassword,
   onSwitchToRegister,
   onSubmit,
@@ -435,12 +447,37 @@ function LoginForm({
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
   onRememberChange: (value: boolean) => void;
+  onLinuxdoLogin: () => void;
+  onGitHubLogin: () => void;
   onForgotPassword: () => void;
   onSwitchToRegister: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
   return (
     <form onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2">
+      <div className="sm:col-span-2 grid gap-2 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={onLinuxdoLogin}
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-white/12 bg-white/[0.07] px-4 text-sm font-bold text-white/86 transition hover:bg-white/[0.12] hover:text-white"
+        >
+          <ShieldCheck className="h-4 w-4 text-volt" />
+          使用 Linux.do 登录
+        </button>
+        <button
+          type="button"
+          onClick={onGitHubLogin}
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-white/12 bg-white/[0.07] px-4 text-sm font-bold text-white/86 transition hover:bg-white/[0.12] hover:text-white"
+        >
+          <Github className="h-4 w-4 text-volt" />
+          使用 GitHub 登录
+        </button>
+      </div>
+      <div className="sm:col-span-2 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.14em] text-white/28">
+        <span className="h-px flex-1 bg-white/10" />
+        或使用邮箱
+        <span className="h-px flex-1 bg-white/10" />
+      </div>
       <AuthInput label="邮箱" type="email" value={email} required onChange={onEmailChange} />
       <AuthInput label="密码" type="password" value={password} required onChange={onPasswordChange} />
       <div className="sm:col-span-2 flex flex-wrap items-center justify-between gap-3 text-sm">

@@ -21,8 +21,11 @@ const EMAIL_RESEND_MIN_INTERVAL_MS = 60 * 1000;
 const PASSWORD_RESET_EXPIRES_MS = 30 * 60 * 1000;
 const PASSWORD_RESET_RESEND_MIN_INTERVAL_MS = 60 * 1000;
 const TELEGRAM_BINDING_EXPIRES_MS = 10 * 60 * 1000;
+const LINUXDO_OIDC_PROVIDER = "linuxdo";
+const GITHUB_OAUTH_PROVIDER = "github";
 
 const rateLimits = new Map<string, { count: number; resetAt: number }>();
+const oidcStates = new Map<string, { provider: string; expiresAt: number }>();
 
 interface SessionRecord {
   userId: string;
@@ -164,6 +167,28 @@ export class UserSystem {
         const user = this.store.resetPasswordWithToken(hashPasswordResetToken(String(body.token || "")), String(body.password || ""));
         this.issueSession(req, res, user, true);
         sendJson(res, { user: toPublicUser(user) });
+        return true;
+      }
+
+      if (req.method === "GET" && url.pathname === "/api/auth/linuxdo") {
+        enforceRateLimit(req, "linuxdo-login", RATE_LIMIT_MAX_ATTEMPTS);
+        redirect(res, buildLinuxdoAuthorizeUrl(req));
+        return true;
+      }
+
+      if (req.method === "GET" && url.pathname === "/api/auth/linuxdo/callback") {
+        await this.handleLinuxdoCallback(req, res, url);
+        return true;
+      }
+
+      if (req.method === "GET" && url.pathname === "/api/auth/github") {
+        enforceRateLimit(req, "github-login", RATE_LIMIT_MAX_ATTEMPTS);
+        redirect(res, buildGitHubAuthorizeUrl(req));
+        return true;
+      }
+
+      if (req.method === "GET" && url.pathname === "/api/auth/github/callback") {
+        await this.handleGitHubCallback(req, res, url);
         return true;
       }
 
@@ -443,6 +468,67 @@ export class UserSystem {
       secure: cookieOptions.secure,
       path: "/",
     }));
+  }
+
+  private async handleLinuxdoCallback(req: http.IncomingMessage, res: http.ServerResponse, url: URL) {
+    try {
+      const error = url.searchParams.get("error");
+      if (error) throw Object.assign(new Error(error), { statusCode: 403 });
+
+      const code = String(url.searchParams.get("code") || "");
+      const state = String(url.searchParams.get("state") || "");
+      consumeOidcState(state, LINUXDO_OIDC_PROVIDER);
+
+      const config = getLinuxdoOidcConfig(req);
+      const token = await exchangeOidcCode(config, code);
+      const profile = await fetchOidcUser(config.userUrl, token.accessToken);
+      const identity = normalizeLinuxdoProfile(profile);
+      const user = this.store.upsertExternalUser({
+        provider: LINUXDO_OIDC_PROVIDER,
+        subject: identity.subject,
+        email: identity.email,
+        displayName: identity.displayName,
+        avatarUrl: identity.avatarUrl,
+      });
+      if (user.disabledAt) throw Object.assign(new Error("user_disabled"), { statusCode: 403 });
+
+      this.issueSession(req, res, user, true);
+      redirect(res, `${getPublicAppUrl()}/me?oauth=linuxdo_success`);
+    } catch (error) {
+      console.warn("[Auth] Linux.do login failed:", error instanceof Error ? error.message : error);
+      redirect(res, `${getPublicAppUrl()}/me?auth=login&oauth=linuxdo_failed`);
+    }
+  }
+
+  private async handleGitHubCallback(req: http.IncomingMessage, res: http.ServerResponse, url: URL) {
+    try {
+      const error = url.searchParams.get("error");
+      if (error) throw Object.assign(new Error(error), { statusCode: 403 });
+
+      const code = String(url.searchParams.get("code") || "");
+      const state = String(url.searchParams.get("state") || "");
+      consumeOidcState(state, GITHUB_OAUTH_PROVIDER);
+
+      const config = getGitHubOAuthConfig(req);
+      const token = await exchangeGitHubCode(config, code);
+      const profile = await fetchGitHubUser(config.userUrl, token.accessToken);
+      const email = await resolveGitHubEmail(config.emailsUrl, token.accessToken, profile);
+      const identity = normalizeGitHubProfile(profile, email);
+      const user = this.store.upsertExternalUser({
+        provider: GITHUB_OAUTH_PROVIDER,
+        subject: identity.subject,
+        email: identity.email,
+        displayName: identity.displayName,
+        avatarUrl: identity.avatarUrl,
+      });
+      if (user.disabledAt) throw Object.assign(new Error("user_disabled"), { statusCode: 403 });
+
+      this.issueSession(req, res, user, true);
+      redirect(res, `${getPublicAppUrl()}/me?oauth=github_success`);
+    } catch (error) {
+      console.warn("[Auth] GitHub login failed:", error instanceof Error ? error.message : error);
+      redirect(res, `${getPublicAppUrl()}/me?auth=login&oauth=github_failed`);
+    }
   }
 
   private async handleAdminRequest(req: http.IncomingMessage, res: http.ServerResponse, url: URL) {
@@ -1313,6 +1399,225 @@ function buildPasswordResetEmailHtml(displayName: string, resetUrl: string) {
 function hashPasswordResetToken(token: string) {
   if (!token || token.length < 24) throw Object.assign(new Error("invalid_password_reset_token"), { statusCode: 400 });
   return createHash("sha256").update(token).digest("hex");
+}
+
+type LinuxdoOidcConfig = {
+  clientId: string;
+  clientSecret: string;
+  authorizeUrl: string;
+  tokenUrl: string;
+  userUrl: string;
+  redirectUri: string;
+  scope: string;
+};
+
+function buildLinuxdoAuthorizeUrl(req: http.IncomingMessage) {
+  const config = getLinuxdoOidcConfig(req);
+  const state = randomBytes(24).toString("hex");
+  oidcStates.set(state, { provider: LINUXDO_OIDC_PROVIDER, expiresAt: Date.now() + 10 * 60 * 1000 });
+
+  const params = new URLSearchParams({
+    response_type: "code",
+    client_id: config.clientId,
+    redirect_uri: config.redirectUri,
+    scope: config.scope,
+    state,
+  });
+  return `${config.authorizeUrl}?${params.toString()}`;
+}
+
+function consumeOidcState(state: string, provider: string) {
+  const record = oidcStates.get(state);
+  oidcStates.delete(state);
+  if (!record || record.provider !== provider || record.expiresAt <= Date.now()) {
+    throw Object.assign(new Error("invalid_oidc_state"), { statusCode: 403 });
+  }
+
+  for (const [key, value] of oidcStates.entries()) {
+    if (value.expiresAt <= Date.now()) oidcStates.delete(key);
+  }
+}
+
+function getLinuxdoOidcConfig(req: http.IncomingMessage): LinuxdoOidcConfig {
+  const clientId = process.env.LINUXDO_OIDC_CLIENT_ID || "";
+  const clientSecret = process.env.LINUXDO_OIDC_CLIENT_SECRET || "";
+  if (!clientId || !clientSecret) throw Object.assign(new Error("linuxdo_oidc_not_configured"), { statusCode: 503 });
+
+  return {
+    clientId,
+    clientSecret,
+    authorizeUrl: process.env.LINUXDO_OIDC_AUTHORIZE_URL || "https://connect.linux.do/oauth2/authorize",
+    tokenUrl: process.env.LINUXDO_OIDC_TOKEN_URL || "https://connect.linux.do/oauth2/token",
+    userUrl: process.env.LINUXDO_OIDC_USER_URL || "https://connect.linux.do/api/user",
+    redirectUri: normalizeConfiguredUrl(process.env.LINUXDO_OIDC_REDIRECT_URI) || `${getRequestBaseUrl(req)}/api/auth/linuxdo/callback`,
+    scope: process.env.LINUXDO_OIDC_SCOPE || "openid profile email",
+  };
+}
+
+async function exchangeOidcCode(config: LinuxdoOidcConfig, code: string) {
+  if (!code) throw Object.assign(new Error("missing_oidc_code"), { statusCode: 400 });
+  const response = await fetch(config.tokenUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
+    body: new URLSearchParams({
+      grant_type: "authorization_code",
+      code,
+      redirect_uri: config.redirectUri,
+      client_id: config.clientId,
+      client_secret: config.clientSecret,
+    }),
+  });
+  const payload = await response.json().catch(() => null) as Record<string, unknown> | null;
+  if (!response.ok || !payload?.access_token) {
+    throw Object.assign(new Error("linuxdo_token_exchange_failed"), { statusCode: 502 });
+  }
+  return { accessToken: String(payload.access_token) };
+}
+
+async function fetchOidcUser(userUrl: string, accessToken: string) {
+  const response = await fetch(userUrl, {
+    headers: { Accept: "application/json", Authorization: `Bearer ${accessToken}` },
+  });
+  const payload = await response.json().catch(() => null) as Record<string, unknown> | null;
+  if (!response.ok || !payload) throw Object.assign(new Error("linuxdo_user_fetch_failed"), { statusCode: 502 });
+  return payload;
+}
+
+function normalizeLinuxdoProfile(profile: Record<string, unknown>) {
+  const subject = firstString(profile, ["sub", "id", "user_id", "uid"]);
+  if (!subject) throw Object.assign(new Error("linuxdo_missing_subject"), { statusCode: 502 });
+  const email = firstString(profile, ["email", "mail"]) || `${subject}@linuxdo.local`;
+  const displayName = firstString(profile, ["name", "username", "login", "nickname", "display_name"]) || email.split("@")[0];
+  const avatarUrl = firstString(profile, ["picture", "avatar_url", "avatar", "profile_image"]);
+  return { subject, email, displayName, avatarUrl };
+}
+
+type GitHubOAuthConfig = {
+  clientId: string;
+  clientSecret: string;
+  authorizeUrl: string;
+  tokenUrl: string;
+  userUrl: string;
+  emailsUrl: string;
+  redirectUri: string;
+  scope: string;
+};
+
+function buildGitHubAuthorizeUrl(req: http.IncomingMessage) {
+  const config = getGitHubOAuthConfig(req);
+  const state = randomBytes(24).toString("hex");
+  oidcStates.set(state, { provider: GITHUB_OAUTH_PROVIDER, expiresAt: Date.now() + 10 * 60 * 1000 });
+
+  const params = new URLSearchParams({
+    client_id: config.clientId,
+    redirect_uri: config.redirectUri,
+    scope: config.scope,
+    state,
+    allow_signup: "true",
+  });
+  return `${config.authorizeUrl}?${params.toString()}`;
+}
+
+function getGitHubOAuthConfig(req: http.IncomingMessage): GitHubOAuthConfig {
+  const clientId = process.env.GITHUB_OAUTH_CLIENT_ID || "";
+  const clientSecret = process.env.GITHUB_OAUTH_CLIENT_SECRET || "";
+  if (!clientId || !clientSecret) throw Object.assign(new Error("github_oauth_not_configured"), { statusCode: 503 });
+
+  return {
+    clientId,
+    clientSecret,
+    authorizeUrl: process.env.GITHUB_OAUTH_AUTHORIZE_URL || "https://github.com/login/oauth/authorize",
+    tokenUrl: process.env.GITHUB_OAUTH_TOKEN_URL || "https://github.com/login/oauth/access_token",
+    userUrl: process.env.GITHUB_OAUTH_USER_URL || "https://api.github.com/user",
+    emailsUrl: process.env.GITHUB_OAUTH_EMAILS_URL || "https://api.github.com/user/emails",
+    redirectUri: normalizeConfiguredUrl(process.env.GITHUB_OAUTH_REDIRECT_URI) || `${getRequestBaseUrl(req)}/api/auth/github/callback`,
+    scope: process.env.GITHUB_OAUTH_SCOPE || "read:user user:email",
+  };
+}
+
+async function exchangeGitHubCode(config: GitHubOAuthConfig, code: string) {
+  if (!code) throw Object.assign(new Error("missing_github_code"), { statusCode: 400 });
+  const response = await fetch(config.tokenUrl, {
+    method: "POST",
+    headers: { Accept: "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify({
+      client_id: config.clientId,
+      client_secret: config.clientSecret,
+      code,
+      redirect_uri: config.redirectUri,
+    }),
+  });
+  const payload = await response.json().catch(() => null) as Record<string, unknown> | null;
+  if (!response.ok || !payload?.access_token) {
+    throw Object.assign(new Error("github_token_exchange_failed"), { statusCode: 502 });
+  }
+  return { accessToken: String(payload.access_token) };
+}
+
+async function fetchGitHubUser(userUrl: string, accessToken: string) {
+  const response = await fetch(userUrl, {
+    headers: {
+      Accept: "application/vnd.github+json",
+      Authorization: `Bearer ${accessToken}`,
+      "User-Agent": "Cyberball",
+      "X-GitHub-Api-Version": "2022-11-28",
+    },
+  });
+  const payload = await response.json().catch(() => null) as Record<string, unknown> | null;
+  if (!response.ok || !payload) throw Object.assign(new Error("github_user_fetch_failed"), { statusCode: 502 });
+  return payload;
+}
+
+async function resolveGitHubEmail(emailsUrl: string, accessToken: string, profile: Record<string, unknown>) {
+  const publicEmail = firstString(profile, ["email"]);
+  if (publicEmail) return publicEmail;
+
+  const response = await fetch(emailsUrl, {
+    headers: {
+      Accept: "application/vnd.github+json",
+      Authorization: `Bearer ${accessToken}`,
+      "User-Agent": "Cyberball",
+      "X-GitHub-Api-Version": "2022-11-28",
+    },
+  });
+  const payload = await response.json().catch(() => null) as unknown;
+  if (response.ok && Array.isArray(payload)) {
+    const primary = payload.find((item) => isGitHubEmailRecord(item) && item.primary && item.verified);
+    if (isGitHubEmailRecord(primary)) return primary.email;
+    const verified = payload.find((item) => isGitHubEmailRecord(item) && item.verified);
+    if (isGitHubEmailRecord(verified)) return verified.email;
+  }
+
+  const subject = firstString(profile, ["id"]);
+  return `${subject || randomBytes(8).toString("hex")}@github.local`;
+}
+
+function isGitHubEmailRecord(value: unknown): value is { email: string; primary?: boolean; verified?: boolean } {
+  return Boolean(value && typeof value === "object" && typeof (value as { email?: unknown }).email === "string");
+}
+
+function normalizeGitHubProfile(profile: Record<string, unknown>, email: string) {
+  const subject = firstString(profile, ["id", "node_id"]);
+  if (!subject) throw Object.assign(new Error("github_missing_subject"), { statusCode: 502 });
+  const displayName = firstString(profile, ["name", "login"]) || email.split("@")[0];
+  const avatarUrl = firstString(profile, ["avatar_url"]);
+  return { subject, email, displayName, avatarUrl };
+}
+
+function firstString(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+    if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  }
+  return "";
+}
+
+function normalizeConfiguredUrl(value: string | undefined) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  const markdownMatch = raw.match(/^\[[^\]]+\]\((https?:\/\/[^)]+)\)$/);
+  return markdownMatch?.[1] || raw;
 }
 
 function getRequestBaseUrl(req: http.IncomingMessage) {

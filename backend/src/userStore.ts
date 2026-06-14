@@ -135,6 +135,8 @@ export interface WorldCupUser {
   email: string;
   passwordHash: string;
   passwordSalt: string;
+  authProvider?: string | null;
+  authProviderSubject?: string | null;
   emailVerifiedAt?: number | null;
   emailVerificationTokenHash?: string | null;
   emailVerificationExpiresAt?: number | null;
@@ -185,6 +187,11 @@ export class UserStore {
   getUserByEmail(email: string) {
     const normalized = normalizeEmail(email);
     return this.data.users.find((user) => user.email === normalized) ?? null;
+  }
+
+  getUserByAuthProvider(provider: string, subject: string) {
+    const normalizedProvider = provider.trim().toLowerCase();
+    return this.data.users.find((user) => user.authProvider === normalizedProvider && user.authProviderSubject === subject) ?? null;
   }
 
   getUserById(id: string) {
@@ -278,6 +285,8 @@ export class UserStore {
       email,
       passwordHash: hashPassword(input.password, salt),
       passwordSalt: salt,
+      authProvider: null,
+      authProviderSubject: null,
       emailVerifiedAt: null,
       emailVerificationTokenHash: null,
       emailVerificationExpiresAt: null,
@@ -318,6 +327,80 @@ export class UserStore {
     this.data.users.push(user);
     void this.saveUser(user);
     return user;
+  }
+
+  upsertExternalUser(input: { provider: string; subject: string; email: string; displayName?: string; avatarUrl?: string }) {
+    const provider = input.provider.trim().toLowerCase();
+    const subject = input.subject.trim();
+    const email = normalizeEmail(input.email);
+    if (!provider || !subject || !email) throw createUserStoreError("invalid_external_identity", 400);
+
+    const existingByProvider = this.getUserByAuthProvider(provider, subject);
+    const existingByEmail = this.getUserByEmail(email);
+    const now = Date.now();
+    const user = existingByProvider ?? existingByEmail;
+    if (user) {
+      user.authProvider = provider;
+      user.authProviderSubject = subject;
+      user.emailVerifiedAt = user.emailVerifiedAt ?? now;
+      user.profile = {
+        ...user.profile,
+        displayName: user.profile.displayName || input.displayName?.trim() || email.split("@")[0],
+        avatarUrl: user.profile.avatarUrl ?? input.avatarUrl ?? null,
+      };
+      this.touch(user);
+      return user;
+    }
+
+    const salt = randomBytes(16).toString("hex");
+    const randomPassword = randomBytes(32).toString("hex");
+    const created: WorldCupUser = {
+      id: randomUUID(),
+      email,
+      passwordHash: hashPassword(randomPassword, salt),
+      passwordSalt: salt,
+      authProvider: provider,
+      authProviderSubject: subject,
+      emailVerifiedAt: now,
+      emailVerificationTokenHash: null,
+      emailVerificationExpiresAt: null,
+      emailVerificationSentAt: null,
+      passwordResetTokenHash: null,
+      passwordResetExpiresAt: null,
+      passwordResetSentAt: null,
+      disabledAt: null,
+      createdAt: now,
+      updatedAt: now,
+      profile: {
+        displayName: input.displayName?.trim() || email.split("@")[0],
+        signature: pickRandomSignature(),
+        homeTeamId: null,
+        avatarPlayerId: "lionel-messi",
+        avatarUrl: input.avatarUrl ?? null,
+        timezone: "Asia/Shanghai",
+        language: "zh-CN",
+      },
+      followedTeams: [],
+      followedPlayers: [],
+      favoriteMatches: [],
+      reminders: [],
+      predictions: [],
+      predictionArchives: [],
+      watchHistory: [],
+      newsSubscriptions: DEFAULT_TOPICS.map((topic) => ({
+        id: slugify(topic),
+        topic,
+        enabled: topic !== "赛前发布会",
+        updatedAt: now,
+      })),
+      notifications: [],
+      telegram: null,
+      telegramBinding: null,
+    };
+
+    this.data.users.push(created);
+    void this.saveUser(created);
+    return created;
   }
 
   verifyPassword(user: WorldCupUser, password: string) {
@@ -947,6 +1030,8 @@ async function withClient<T>(pool: Pool, callback: (client: PoolClient) => Promi
 
 async function ensureUserTelegramColumns(pool: Pool) {
   await pool.query(`
+    alter table users add column if not exists auth_provider text;
+    alter table users add column if not exists auth_provider_subject text;
     alter table users add column if not exists telegram_chat_id text;
     alter table users add column if not exists telegram_username text;
     alter table users add column if not exists telegram_first_name text;
@@ -956,6 +1041,7 @@ async function ensureUserTelegramColumns(pool: Pool) {
     alter table users add column if not exists telegram_binding_code_hash text;
     alter table users add column if not exists telegram_binding_expires_at timestamptz;
     alter table users add column if not exists telegram_binding_created_at timestamptz;
+    create index if not exists idx_users_auth_provider on users (auth_provider, auth_provider_subject);
   `);
 }
 
@@ -964,6 +1050,7 @@ async function upsertUserRow(client: PoolClient, user: WorldCupUser) {
     `
     insert into users (
       id, email, password_hash, password_salt,
+      auth_provider, auth_provider_subject,
       email_verified_at, email_verification_token_hash, email_verification_expires_at, email_verification_sent_at,
       password_reset_token_hash, password_reset_expires_at, password_reset_sent_at,
       disabled_at, display_name, signature, home_team_id, avatar_player_id, avatar_url, timezone, language,
@@ -973,17 +1060,20 @@ async function upsertUserRow(client: PoolClient, user: WorldCupUser) {
     )
     values (
       $1, $2, $3, $4,
-      to_timestamp($5::double precision / 1000), $6, to_timestamp($7::double precision / 1000), to_timestamp($8::double precision / 1000),
-      $9, to_timestamp($10::double precision / 1000), to_timestamp($11::double precision / 1000),
-      to_timestamp($12::double precision / 1000), $13, $14, $15, $16, $17, $18, $19,
-      $20, $21, $22, to_timestamp($23::double precision / 1000), $24,
-      to_timestamp($25::double precision / 1000), $26, to_timestamp($27::double precision / 1000), to_timestamp($28::double precision / 1000),
-      to_timestamp($29::double precision / 1000), to_timestamp($30::double precision / 1000)
+      $5, $6,
+      to_timestamp($7::double precision / 1000), $8, to_timestamp($9::double precision / 1000), to_timestamp($10::double precision / 1000),
+      $11, to_timestamp($12::double precision / 1000), to_timestamp($13::double precision / 1000),
+      to_timestamp($14::double precision / 1000), $15, $16, $17, $18, $19, $20, $21,
+      $22, $23, $24, to_timestamp($25::double precision / 1000), $26,
+      to_timestamp($27::double precision / 1000), $28, to_timestamp($29::double precision / 1000), to_timestamp($30::double precision / 1000),
+      to_timestamp($31::double precision / 1000), to_timestamp($32::double precision / 1000)
     )
     on conflict (id) do update set
       email = excluded.email,
       password_hash = excluded.password_hash,
       password_salt = excluded.password_salt,
+      auth_provider = excluded.auth_provider,
+      auth_provider_subject = excluded.auth_provider_subject,
       email_verified_at = excluded.email_verified_at,
       email_verification_token_hash = excluded.email_verification_token_hash,
       email_verification_expires_at = excluded.email_verification_expires_at,
@@ -1015,6 +1105,8 @@ async function upsertUserRow(client: PoolClient, user: WorldCupUser) {
       user.email,
       user.passwordHash,
       user.passwordSalt,
+      user.authProvider ?? null,
+      user.authProviderSubject ?? null,
       user.emailVerifiedAt ?? null,
       user.emailVerificationTokenHash ?? null,
       user.emailVerificationExpiresAt ?? null,
@@ -1142,6 +1234,8 @@ function rowToUser(
     email: String(row.email),
     passwordHash: String(row.password_hash),
     passwordSalt: String(row.password_salt),
+    authProvider: nullableString(row.auth_provider),
+    authProviderSubject: nullableString(row.auth_provider_subject),
     emailVerifiedAt: dateToMs(row.email_verified_at),
     emailVerificationTokenHash: nullableString(row.email_verification_token_hash),
     emailVerificationExpiresAt: dateToMs(row.email_verification_expires_at),
@@ -1348,7 +1442,7 @@ function parseJsonObject(value: unknown) {
 }
 
 export function toPublicUser(user: WorldCupUser) {
-  const { passwordHash, passwordSalt, emailVerificationTokenHash, emailVerificationExpiresAt, passwordResetTokenHash, passwordResetExpiresAt, telegramBinding, ...publicUser } = user;
+  const { passwordHash, passwordSalt, authProviderSubject, emailVerificationTokenHash, emailVerificationExpiresAt, passwordResetTokenHash, passwordResetExpiresAt, telegramBinding, ...publicUser } = user;
   return publicUser;
 }
 
@@ -1462,6 +1556,8 @@ function loadBuiltInSignatures() {
 function normalizeStoredUser(user: WorldCupUser) {
   return {
     ...user,
+    authProvider: user.authProvider ?? null,
+    authProviderSubject: user.authProviderSubject ?? null,
     emailVerifiedAt: user.emailVerifiedAt ?? null,
     emailVerificationTokenHash: user.emailVerificationTokenHash ?? null,
     emailVerificationExpiresAt: user.emailVerificationExpiresAt ?? null,
