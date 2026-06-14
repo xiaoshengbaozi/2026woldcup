@@ -15,6 +15,7 @@ import { TeamSquadCard } from "@/components/team-profile/team-squad-card";
 import { MobileSecondaryPageActions } from "@/components/mobile-secondary-page-actions";
 import { UserActionButton } from "@/components/user-action-button";
 import { getFlagUrl } from "@/lib/world-cup-2026";
+import type { Match } from "@/types/match";
 import type { TeamProfile } from "@/types/team-profile";
 import "./team-profile.css";
 
@@ -291,6 +292,69 @@ export function TeamProfile({ data }: TeamProfileProps) {
         </div>
       </div>
     ) : null;
+
+  const renderFixtureCard = (match: Match, index: number) => {
+    const teams = parseTeams(match.summary);
+    const matchDate = formatDate(match.start);
+    const matchTime = formatTime(match.start);
+    const matchRoundLabel = getFixtureRoundLabel(match.stage, match.summary, index);
+    const hasScore = typeof match.score?.home === "number" && typeof match.score?.away === "number";
+    const scoreLabel = hasScore ? `${match.score?.home} - ${match.score?.away}` : "";
+
+    return (
+      <Link
+        key={match.uid}
+        href={`/matches/${generateMatchRouteSlug(match)}/`}
+        className="tp-fixture-card"
+        aria-label={`${teams.home.name} vs ${teams.away.name}`}
+      >
+        <div className="tp-fixture-teams">
+          <div className="tp-fixture-team">
+            <div className="tp-fixture-flag">
+              {teams.home.image ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={teams.home.image} alt="" />
+              ) : (
+                <span>{teams.home.badge}</span>
+              )}
+            </div>
+            <span className="tp-fixture-team-name">{teams.home.name}</span>
+          </div>
+          {hasScore ? (
+            <div className="tp-fixture-score" aria-label={`比分 ${scoreLabel}`}>
+              <span>{match.score?.home}</span>
+              <span className="tp-fixture-score-separator">-</span>
+              <span>{match.score?.away}</span>
+              {match.statusLabel && <small>{match.statusLabel}</small>}
+            </div>
+          ) : (
+            <div className="tp-fixture-kickoff">
+              <span>{matchDate}</span>
+              <span>{matchTime}</span>
+            </div>
+          )}
+          <div className="tp-fixture-team tp-fixture-team--right">
+            <div className="tp-fixture-flag">
+              {teams.away.image ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={teams.away.image} alt="" />
+              ) : (
+                <span>{teams.away.badge}</span>
+              )}
+            </div>
+            <span className="tp-fixture-team-name">{teams.away.name}</span>
+          </div>
+        </div>
+        {match.location && (
+          <div className="tp-fixture-meta">
+            <span className="tp-fixture-round">{matchRoundLabel}</span>
+            <span className="tp-fixture-venue">{localizeLocationText(match.location)}</span>
+          </div>
+        )}
+      </Link>
+    );
+  };
+
   const renderFixturesCard = (className = "tp-fixtures tp-side-card") => (
     <section className={className}>
       <div className="tp-side-card-heading">
@@ -299,55 +363,7 @@ export function TeamProfile({ data }: TeamProfileProps) {
       </div>
       {groupMatches.length > 0 ? (
         <div className="tp-fixtures-grid">
-          {groupMatches.map((match, index) => {
-            const teams = parseTeams(match.summary);
-            const matchDate = formatDate(match.start);
-            const matchTime = formatTime(match.start);
-            const matchRoundLabel = getFixtureRoundLabel(match.stage, match.summary, index);
-            return (
-              <Link
-                key={match.uid}
-                href={`/matches/${generateMatchRouteSlug(match)}/`}
-                className="tp-fixture-card"
-                aria-label={`${teams.home.name} vs ${teams.away.name}`}
-              >
-                <div className="tp-fixture-teams">
-                  <div className="tp-fixture-team">
-                    <div className="tp-fixture-flag">
-                      {teams.home.image ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={teams.home.image} alt="" />
-                      ) : (
-                        <span>{teams.home.badge}</span>
-                      )}
-                    </div>
-                    <span className="tp-fixture-team-name">{teams.home.name}</span>
-                  </div>
-                  <div className="tp-fixture-kickoff">
-                    <span>{matchDate}</span>
-                    <span>{matchTime}</span>
-                  </div>
-                  <div className="tp-fixture-team tp-fixture-team--right">
-                    <div className="tp-fixture-flag">
-                      {teams.away.image ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={teams.away.image} alt="" />
-                      ) : (
-                        <span>{teams.away.badge}</span>
-                      )}
-                    </div>
-                    <span className="tp-fixture-team-name">{teams.away.name}</span>
-                  </div>
-                </div>
-                {match.location && (
-                  <div className="tp-fixture-meta">
-                    <span className="tp-fixture-round">{matchRoundLabel}</span>
-                    <span className="tp-fixture-venue">{localizeLocationText(match.location)}</span>
-                  </div>
-                )}
-              </Link>
-            );
-          })}
+          {groupMatches.map(renderFixtureCard)}
         </div>
       ) : (
         <div className="tp-empty-state">赛程确认后自动同步</div>
@@ -444,55 +460,7 @@ export function TeamProfile({ data }: TeamProfileProps) {
             </div>
             {groupMatches.length > 0 ? (
               <div className="tp-fixtures-grid">
-                {groupMatches.map((match, index) => {
-                  const teams = parseTeams(match.summary);
-                  const matchDate = formatDate(match.start);
-                  const matchTime = formatTime(match.start);
-                  const matchRoundLabel = getFixtureRoundLabel(match.stage, match.summary, index);
-                  return (
-                    <Link
-                      key={match.uid}
-                      href={`/matches/${generateMatchRouteSlug(match)}/`}
-                      className="tp-fixture-card"
-                      aria-label={`${teams.home.name} vs ${teams.away.name}`}
-                    >
-                      <div className="tp-fixture-teams">
-                        <div className="tp-fixture-team">
-                          <div className="tp-fixture-flag">
-                            {teams.home.image ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img src={teams.home.image} alt="" />
-                            ) : (
-                              <span>{teams.home.badge}</span>
-                            )}
-                          </div>
-                          <span className="tp-fixture-team-name">{teams.home.name}</span>
-                        </div>
-                        <div className="tp-fixture-kickoff">
-                          <span>{matchDate}</span>
-                          <span>{matchTime}</span>
-                        </div>
-                        <div className="tp-fixture-team tp-fixture-team--right">
-                          <div className="tp-fixture-flag">
-                            {teams.away.image ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img src={teams.away.image} alt="" />
-                            ) : (
-                              <span>{teams.away.badge}</span>
-                            )}
-                          </div>
-                          <span className="tp-fixture-team-name">{teams.away.name}</span>
-                        </div>
-                      </div>
-                      {match.location && (
-                        <div className="tp-fixture-meta">
-                          <span className="tp-fixture-round">{matchRoundLabel}</span>
-                          <span className="tp-fixture-venue">{localizeLocationText(match.location)}</span>
-                        </div>
-                      )}
-                    </Link>
-                  );
-                })}
+                {groupMatches.map(renderFixtureCard)}
               </div>
             ) : (
               <div className="tp-empty-state">赛程确认后自动同步</div>

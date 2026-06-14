@@ -1027,11 +1027,11 @@ function buildPreferencePlayers(squads: Array<{ team: { id: number | null; name:
 }
 
 function getPreferenceSquadTeamLimit() {
-  return clampNumber(process.env.USER_PREFERENCE_SQUAD_TEAM_LIMIT, 1, 48, 12);
+  return clampNumber(process.env.USER_PREFERENCE_SQUAD_TEAM_LIMIT, 1, 48, 48);
 }
 
 function getPreferencePlayersPerTeam() {
-  return clampNumber(process.env.USER_PREFERENCE_PLAYERS_PER_TEAM, 1, 12, 6);
+  return clampNumber(process.env.USER_PREFERENCE_PLAYERS_PER_TEAM, 1, 26, 26);
 }
 
 function buildFallbackPreferenceCatalog(): UserPreferenceCatalog {

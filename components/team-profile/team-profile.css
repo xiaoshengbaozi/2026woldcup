@@ -1343,6 +1343,43 @@
   text-shadow: 0 0 18px rgba(216,255,62,0.16);
 }
 
+.tp-fixture-score {
+  display: grid;
+  min-width: 92px;
+  grid-template-columns: minmax(20px, 1fr) auto minmax(20px, 1fr);
+  align-items: center;
+  justify-items: center;
+  column-gap: 5px;
+  color: rgba(255,255,255,0.92);
+  font-family: "ScreenMatrix", "SF Mono", "Fira Code", Consolas, monospace;
+  font-size: 24px;
+  font-weight: 650;
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 0 18px rgba(216,255,62,0.18);
+}
+
+.tp-fixture-score-separator {
+  color: rgba(216,255,62,0.76);
+  font-size: 16px;
+}
+
+.tp-fixture-score small {
+  grid-column: 1 / -1;
+  margin-top: 5px;
+  max-width: 88px;
+  overflow: hidden;
+  color: rgba(255,255,255,0.5);
+  font-family: inherit;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: none;
+}
+
 .tp-empty-state {
   min-height: 90px;
   display: grid;
@@ -1742,6 +1779,16 @@
   .tp-fixture-kickoff {
     min-width: 70px;
     font-size: 9px;
+  }
+
+  .tp-fixture-score {
+    min-width: 70px;
+    font-size: 20px;
+  }
+
+  .tp-fixture-score small {
+    max-width: 66px;
+    font-size: 8px;
   }
 
   .tp-fixture-team-name {

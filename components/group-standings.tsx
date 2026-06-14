@@ -441,6 +441,16 @@ function repairApiGroupRows(grouped: Map<string, NormalizedWorldCupStandingRow[]
       row.team.code = replacementCode;
       row.team.name = replacementTeam.nameCn || replacementTeam.name;
       row.team.englishName = replacementTeam.name;
+      row.points = 0;
+      row.played = 0;
+      row.win = 0;
+      row.draw = 0;
+      row.lose = 0;
+      row.goalsFor = 0;
+      row.goalsAgainst = 0;
+      row.goalsDiff = 0;
+      row.form = "";
+      row.description = "";
     }
   }
 }
