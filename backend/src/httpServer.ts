@@ -221,6 +221,27 @@ export function createHttpServer(options: HttpServerOptions) {
       return;
     }
 
+    if (req.method === "GET" && url.pathname === "/api/worldcup/fixtures" && options.worldCupCache && shouldServeCachedFixturePayload(url)) {
+      const cached = options.worldCupCache.get("fixtures");
+      if (cached?.ok && cached.data) {
+        const live = options.worldCupCache.get("live");
+        sendCachedJson(res, mergeCachedFixturePayload(cached.data, live?.data), CACHE_PUBLIC_SHORT);
+        return;
+      }
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/worldcup/player-profile" && options.worldCupCache) {
+      const playerId = Number(url.searchParams.get("player") ?? url.searchParams.get("id"));
+      const season = url.searchParams.get("season") || "2025";
+      if (Number.isFinite(playerId) && playerId > 0) {
+        options.worldCupCache
+          .getPlayerProfile(playerId, season)
+          .then((payload) => sendCachedJson(res, payload.data, CACHE_PUBLIC_LONG))
+          .catch(() => handleWorldCupRequest(options.apiFootball, url, res));
+        return;
+      }
+    }
+
     if (req.method === "GET" && url.pathname.startsWith("/api/worldcup/")) {
       handleWorldCupRequest(options.apiFootball, url, res);
       return;
@@ -332,6 +353,56 @@ function getWorldCupCacheEnvelopeHeader(key: WorldCupCacheKey) {
   if (key === "squads" || key === "player-profile") return CACHE_PUBLIC_LONG;
   if (key === "news") return CACHE_PUBLIC_MEDIUM;
   return CACHE_PUBLIC_MEDIUM;
+}
+
+function shouldServeCachedFixturePayload(url: URL) {
+  const params = url.searchParams;
+  return !params.has("date") && !params.has("next") && !params.has("last") && !params.has("from") && !params.has("to") && !params.has("id") && !params.has("live");
+}
+
+function mergeCachedFixturePayload(baseData: unknown, liveData: unknown) {
+  const base = asRecord(baseData);
+  const live = asRecord(liveData);
+  const fixtures = Array.isArray(base.fixtures) ? base.fixtures as Array<Record<string, unknown>> : [];
+  const liveFixtures = getLiveCacheFixtures(live);
+  if (!fixtures.length || !liveFixtures.length) return baseData;
+
+  const liveById = new Map(
+    liveFixtures
+      .map((fixture) => [Number(fixture.apiFixtureId), fixture] as const)
+      .filter(([id]) => Number.isFinite(id) && id > 0)
+  );
+
+  return {
+    ...base,
+    fixtures: fixtures.map((fixture) => {
+      const overlay = liveById.get(Number(fixture.apiFixtureId));
+      return overlay
+        ? {
+            ...fixture,
+            status: overlay.status ?? fixture.status,
+            statusLabel: overlay.statusLabel ?? fixture.statusLabel,
+            elapsed: overlay.elapsed ?? fixture.elapsed,
+            score: overlay.score ?? fixture.score,
+            homeTeam: overlay.homeTeam ?? fixture.homeTeam,
+            awayTeam: overlay.awayTeam ?? fixture.awayTeam,
+          }
+        : fixture;
+    }),
+  };
+}
+
+function getLiveCacheFixtures(liveData: Record<string, unknown>) {
+  const live = asRecord(liveData.live);
+  const today = asRecord(liveData.today);
+  return [
+    ...(Array.isArray(today.fixtures) ? today.fixtures as Array<Record<string, unknown>> : []),
+    ...(Array.isArray(live.fixtures) ? live.fixtures as Array<Record<string, unknown>> : []),
+  ];
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" ? value as Record<string, unknown> : {};
 }
 
 function isFailoverOriginActive() {
