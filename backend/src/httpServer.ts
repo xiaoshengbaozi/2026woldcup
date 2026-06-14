@@ -221,11 +221,10 @@ export function createHttpServer(options: HttpServerOptions) {
       return;
     }
 
-    if (req.method === "GET" && url.pathname === "/api/worldcup/fixtures" && options.worldCupCache && shouldServeCachedFixturePayload(url)) {
-      const cached = options.worldCupCache.get("fixtures");
-      if (cached?.ok && cached.data) {
-        const live = options.worldCupCache.get("live");
-        sendCachedJson(res, mergeCachedFixturePayload(cached.data, live?.data), CACHE_PUBLIC_SHORT);
+    if (req.method === "GET" && url.pathname === "/api/worldcup/fixtures" && options.worldCupCache) {
+      const cachedFixturePayload = getCachedFixturePayload(options.worldCupCache, url);
+      if (cachedFixturePayload) {
+        sendCachedJson(res, cachedFixturePayload, CACHE_PUBLIC_SHORT);
         return;
       }
     }
@@ -360,6 +359,29 @@ function shouldServeCachedFixturePayload(url: URL) {
   return !params.has("date") && !params.has("next") && !params.has("last") && !params.has("from") && !params.has("to") && !params.has("id") && !params.has("live");
 }
 
+function getCachedFixturePayload(worldCupCache: WorldCupCacheService, url: URL) {
+  if (shouldServeCachedFixturePayload(url)) {
+    const cached = worldCupCache.get("fixtures");
+    if (cached?.ok && cached.data) {
+      const live = worldCupCache.get("live");
+      return mergeCachedFixturePayload(cached.data, live?.data);
+    }
+  }
+
+  if (url.searchParams.has("date")) {
+    const date = url.searchParams.get("date");
+    const today = worldCupCache.get("today");
+    const live = worldCupCache.get("live");
+    const todayPayload = today?.ok && today.data ? filterCachedFixturePayloadByDate(today.data, date, live?.data) : null;
+    if (todayPayload && getFixtureCount(todayPayload) > 0) return todayPayload;
+
+    const fixtures = worldCupCache.get("fixtures");
+    if (fixtures?.ok && fixtures.data) return filterCachedFixturePayloadByDate(fixtures.data, date, live?.data);
+  }
+
+  return null;
+}
+
 function mergeCachedFixturePayload(baseData: unknown, liveData: unknown) {
   const base = asRecord(baseData);
   const live = asRecord(liveData);
@@ -390,6 +412,36 @@ function mergeCachedFixturePayload(baseData: unknown, liveData: unknown) {
         : fixture;
     }),
   };
+}
+
+function filterCachedFixturePayloadByDate(baseData: unknown, date: string | null, liveData: unknown) {
+  const merged = mergeCachedFixturePayload(baseData, liveData);
+  const base = asRecord(merged);
+  const fixtures = Array.isArray(base.fixtures) ? base.fixtures as Array<Record<string, unknown>> : [];
+  const filtered = date ? fixtures.filter((fixture) => fixtureMatchesApiDate(fixture, date)) : fixtures;
+  return {
+    ...base,
+    count: filtered.length,
+    fixtures: filtered,
+  };
+}
+
+function fixtureMatchesApiDate(fixture: Record<string, unknown>, date: string) {
+  const startIso = typeof fixture.startIso === "string" ? fixture.startIso : "";
+  if (!startIso) return false;
+  return startIso.slice(0, 10) === date || formatDateInOffset(startIso, 8) === date;
+}
+
+function getFixtureCount(payload: unknown) {
+  const fixtures = asRecord(payload).fixtures;
+  return Array.isArray(fixtures) ? fixtures.length : 0;
+}
+
+function formatDateInOffset(value: string, offsetHours: number) {
+  const timestamp = Date.parse(value);
+  if (!Number.isFinite(timestamp)) return "";
+  const date = new Date(timestamp + offsetHours * 60 * 60_000);
+  return date.toISOString().slice(0, 10);
 }
 
 function getLiveCacheFixtures(liveData: Record<string, unknown>) {
