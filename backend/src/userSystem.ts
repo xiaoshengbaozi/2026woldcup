@@ -493,10 +493,10 @@ export class UserSystem {
       if (user.disabledAt) throw Object.assign(new Error("user_disabled"), { statusCode: 403 });
 
       this.issueSession(req, res, user, true);
-      redirect(res, `${getPublicAppUrl()}/me?oauth=linuxdo_success`);
+      redirect(res, `${getOAuthPublicAppUrl(req)}/me?oauth=linuxdo_success`);
     } catch (error) {
       console.warn("[Auth] Linux.do login failed:", error instanceof Error ? error.message : error);
-      redirect(res, `${getPublicAppUrl()}/me?auth=login&oauth=linuxdo_failed`);
+      redirect(res, `${getOAuthPublicAppUrl(req)}/me?auth=login&oauth=linuxdo_failed`);
     }
   }
 
@@ -524,10 +524,10 @@ export class UserSystem {
       if (user.disabledAt) throw Object.assign(new Error("user_disabled"), { statusCode: 403 });
 
       this.issueSession(req, res, user, true);
-      redirect(res, `${getPublicAppUrl()}/me?oauth=github_success`);
+      redirect(res, `${getOAuthPublicAppUrl(req)}/me?oauth=github_success`);
     } catch (error) {
       console.warn("[Auth] GitHub login failed:", error instanceof Error ? error.message : error);
-      redirect(res, `${getPublicAppUrl()}/me?auth=login&oauth=github_failed`);
+      redirect(res, `${getOAuthPublicAppUrl(req)}/me?auth=login&oauth=github_failed`);
     }
   }
 
@@ -1628,6 +1628,16 @@ function getRequestBaseUrl(req: http.IncomingMessage) {
 
 function getPublicAppUrl() {
   return (process.env.PUBLIC_APP_URL || "https://ball.boyzi.fun").replace(/\/$/, "");
+}
+
+function getOAuthPublicAppUrl(req: http.IncomingMessage) {
+  const host = (getHeaderValue(req.headers["x-forwarded-host"]) || getHeaderValue(req.headers.host) || "")
+    .split(",")[0]
+    .trim()
+    .toLowerCase();
+  if (host === "api.boyzi.top") return "https://ball.boyzi.top";
+  if (host === "api.boyzi.fun") return "https://ball.boyzi.fun";
+  return getPublicAppUrl();
 }
 
 function getHeaderValue(value: string | string[] | undefined) {
