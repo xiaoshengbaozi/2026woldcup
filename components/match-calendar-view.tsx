@@ -542,8 +542,9 @@ function TimedMatchCard({
   );
 
   return isUnlocked ? (
-    <Link
-      href={"/matches/" + slug}
+      <Link
+        href={"/matches/" + slug}
+        prefetch={false}
       className={`block border-l-[3px] px-2 py-1.5 transition hover:bg-white/[0.06] ${eventTones[toneIdx]}`}
     >
       {content}
@@ -596,8 +597,9 @@ function SelectedDayMatchRow({ match, displayStart }: { match: Match; displaySta
   );
 
   return isUnlocked ? (
-    <Link
-      href={"/matches/" + slug}
+      <Link
+        href={"/matches/" + slug}
+        prefetch={false}
       className="group block rounded-2xl bg-white/[0.04] px-3 py-2.5 transition hover:bg-white/[0.07]"
     >
       {content}

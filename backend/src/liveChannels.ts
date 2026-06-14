@@ -7,6 +7,7 @@ export type LiveChannel = {
   matchId: string;
   matchIds?: string[];
   matchType?: "official" | "warmup";
+  playbackMode?: "web" | "external";
   name: string;
   platform: string;
   streamUrl: string;
@@ -66,14 +67,16 @@ export async function upsertLiveChannel(input: Partial<LiveChannel>) {
   const now = new Date().toISOString();
   const id = String(input.id || "").trim() || `channel-${Date.now()}`;
   const current = channels.find((channel) => channel.id === id);
-  const streamUrl = normalizeStreamUrl(input.streamUrl);
+  const playbackMode = input.playbackMode === "external" ? "external" : "web";
+  const streamUrl = normalizeStreamUrl(input.streamUrl, playbackMode);
   const next: LiveChannel = {
     id,
     matchId,
     matchIds,
     matchType: input.matchType === "warmup" ? "warmup" : "official",
+    playbackMode,
     name,
-    platform: String(input.platform || "HLS").trim() || "HLS",
+    platform: String(input.platform || (playbackMode === "external" ? "External Player" : "HLS")).trim() || "HLS",
     streamUrl,
     isActive: typeof input.isActive === "boolean" ? input.isActive : current?.isActive ?? true,
     sortOrder: Number.isFinite(Number(input.sortOrder)) ? Number(input.sortOrder) : current?.sortOrder ?? channels.length + 1,
@@ -96,7 +99,7 @@ export async function deleteLiveChannel(id: string) {
   return { deleted: next.length !== channels.length };
 }
 
-function normalizeStreamUrl(value: unknown) {
+function normalizeStreamUrl(value: unknown, playbackMode: "web" | "external" = "web") {
   const streamUrl = String(value || "").trim();
   if (!streamUrl) return "";
 
@@ -107,12 +110,22 @@ function normalizeStreamUrl(value: unknown) {
     throw Object.assign(new Error("invalid_stream_url"), { statusCode: 400 });
   }
 
-  if (parsed.protocol !== "https:") {
+  if (playbackMode === "web" && parsed.protocol !== "https:") {
     throw Object.assign(new Error("stream_url_must_be_https"), { statusCode: 400 });
   }
 
-  if (!parsed.pathname.toLowerCase().endsWith(".m3u8")) {
+  if (playbackMode === "external" && parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    throw Object.assign(new Error("stream_url_must_be_http_or_https"), { statusCode: 400 });
+  }
+
+  const pathname = parsed.pathname.toLowerCase();
+  const isPlaylist = pathname.endsWith(".m3u8") || pathname.endsWith(".m3u");
+  if (playbackMode === "web" && !pathname.endsWith(".m3u8")) {
     throw Object.assign(new Error("stream_url_must_be_hls"), { statusCode: 400 });
+  }
+
+  if (playbackMode === "external" && !isPlaylist) {
+    throw Object.assign(new Error("stream_url_must_be_playlist"), { statusCode: 400 });
   }
 
   if (isPrivateHost(parsed.hostname)) {
@@ -230,6 +243,7 @@ function normalizeChannels(value: unknown): LiveChannel[] {
       matchId: String(channel.matchId || ""),
       matchIds: normalizeMatchIds(channel.matchIds, channel.matchId),
       matchType: channel.matchType === "warmup" ? "warmup" : "official",
+      playbackMode: channel.playbackMode === "external" ? "external" : "web",
       name: String(channel.name || "未命名通道"),
       platform: String(channel.platform || "HLS"),
       streamUrl: String(channel.streamUrl || ""),

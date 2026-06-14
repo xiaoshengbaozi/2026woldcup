@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import Link from "next/link";
-import { AnimatePresence, motion } from "framer-motion";
 import {
   Bell,
-  BarChart3,
   CalendarDays,
   ArrowRight,
   CloudSun,
@@ -14,20 +12,16 @@ import {
   MapPin,
   Radio,
   Star,
-  Zap,
 } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { StatCard } from "@/components/stat-card";
 import { UserActionButton } from "@/components/user-action-button";
 import { useUserSession } from "@/components/user-session-provider";
 import { buildFavoriteMatchCards, compactFavoriteMatchStage, formatFavoriteVenueLine, getFavoriteTeamCode, type FavoriteMatchCard } from "@/lib/favorite-matches";
-import { buildOddsSelectionForTeams, sameOddsMarket, type OddsSelection } from "@/lib/match-odds-selection";
 import { getMatchLiveDisplay, getMatchScore } from "@/lib/match-live-display";
-import { useMatchLines } from "@/lib/use-match-lines";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
-import { fetchCurrentWeather, weatherLabel, type WeatherState } from "@/lib/weather";
+import type { WeatherState } from "@/lib/weather";
 import type { Team } from "@/types/match";
-import type { MatchLineMarket } from "@/types/messages";
 
 const stackDepthStyles = [
   { x: 0, y: 0, scale: 1, opacity: 1 },
@@ -79,15 +73,11 @@ export default function FavoritesPage() {
   return (
     <DashboardShell>
       <main className="mx-auto grid w-full max-w-[430px] gap-4 pb-2 sm:max-w-3xl lg:max-w-5xl">
-        <motion.section
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-3 gap-1.5 sm:gap-3"
-        >
+        <section className="grid grid-cols-3 gap-1.5 sm:gap-3">
           <StatCard label="收藏" value={favoriteCards.length || (loading ? "--" : "0")} detail="已收藏" icon={Star} tone="violet" />
           <StatCard label="待开赛" value={upcomingCount} detail="未开始" icon={CalendarDays} tone="emerald" />
           <StatCard label="直播" value={liveCount} detail="进行中" icon={Radio} tone="cyan" />
-        </motion.section>
+        </section>
 
         {activeMatch && (
           <>
@@ -127,7 +117,7 @@ function MatchCardStack({
   return (
     <section className="relative h-[288px] overflow-visible pt-1 sm:h-[326px]">
       <div className="absolute inset-x-8 top-8 h-[210px] rounded-[2rem] bg-volt/[0.055] blur-3xl sm:inset-x-3 sm:h-[232px] sm:bg-volt/10" />
-      <AnimatePresence initial={false}>
+      <>
         {stack.map(({ match, index, depth }) => (
           <StackCard
             key={`${match.id}-${index}`}
@@ -139,7 +129,7 @@ function MatchCardStack({
             onRemove={() => onRemove(match.id)}
           />
         ))}
-      </AnimatePresence>
+      </>
     </section>
   );
 }
@@ -161,6 +151,9 @@ function StackCard({
 }) {
   const isTop = depth === 0;
   const stackStyle = stackDepthStyles[depth] ?? stackDepthStyles[stackDepthStyles.length - 1];
+  const dragStartRef = useRef<number | null>(null);
+  const dragXRef = useRef(0);
+  const [dragX, setDragX] = useState(0);
   const kickoff = match.startsAt ? new Date(match.startsAt) : null;
   const display = match.sourceMatch && kickoff
     ? getMatchLiveDisplay({ match: match.sourceMatch, kickoff, scheduledStageLabel: match.stage })
@@ -168,35 +161,51 @@ function StackCard({
   const finishedScore = match.sourceMatch?.status === "finished"
     ? getMatchScore(match.sourceMatch)
     : null;
+  const displayX = isTop ? stackStyle.x + dragX : stackStyle.x;
+
+  const startDrag = (event: React.PointerEvent<HTMLElement>) => {
+    if (!isTop || (event.target as HTMLElement).closest("a,button")) return;
+    dragStartRef.current = event.clientX;
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const moveDrag = (event: React.PointerEvent<HTMLElement>) => {
+    if (dragStartRef.current === null) return;
+    const nextX = event.clientX - dragStartRef.current;
+    const clampedX = Math.max(-132, Math.min(88, nextX));
+    dragXRef.current = clampedX;
+    setDragX(clampedX);
+  };
+
+  const endDrag = (event: React.PointerEvent<HTMLElement>) => {
+    if (dragStartRef.current === null) return;
+    event.currentTarget.releasePointerCapture(event.pointerId);
+    const shouldAdvance = dragXRef.current < -76;
+    dragStartRef.current = null;
+    dragXRef.current = 0;
+    setDragX(0);
+    if (shouldAdvance) onAdvance();
+  };
 
   return (
-    <motion.article
-      drag={isTop ? "x" : false}
-      dragConstraints={{ left: 0, right: 0 }}
-      dragElastic={0.12}
-      dragMomentum={false}
-      onDragEnd={(_, info) => {
-        if (info.offset.x < -76 || info.velocity.x < -520) onAdvance();
-      }}
+    <article
+      onPointerDown={startDrag}
+      onPointerMove={moveDrag}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
       onClick={() => {
         if (!isTop) onSelect();
       }}
-      initial={{ opacity: 0, x: stackStyle.x + 18, y: stackStyle.y, scale: stackStyle.scale }}
-      animate={{
-        opacity: stackStyle.opacity,
-        x: stackStyle.x,
-        y: stackStyle.y,
-        scale: stackStyle.scale,
-        rotate: 0,
-      }}
-      exit={{ opacity: 0, x: -320, rotate: -4, transition: { duration: 0.18, ease: [0.22, 1, 0.36, 1] } }}
-      transition={{ type: "spring", stiffness: 520, damping: 54, mass: 0.68 }}
-      className={`absolute inset-x-0 top-0 overflow-hidden rounded-[2.25rem] p-4 shadow-[0_16px_42px_rgba(0,0,0,.34),0_0_24px_rgba(216,255,62,.08)] sm:shadow-[0_24px_72px_rgba(0,0,0,.5),0_0_34px_rgba(216,255,62,.12)] ${
+      className={`absolute inset-x-0 top-0 overflow-hidden rounded-[2.25rem] p-4 shadow-[0_16px_42px_rgba(0,0,0,.34),0_0_24px_rgba(216,255,62,.08)] transition-[opacity,transform] duration-300 ease-out sm:shadow-[0_24px_72px_rgba(0,0,0,.5),0_0_34px_rgba(216,255,62,.12)] ${
         isTop
           ? "z-30 cursor-grab bg-volt text-black active:cursor-grabbing"
           : "z-20 cursor-pointer bg-[#101411]/92 text-white ring-1 ring-white/[0.08] backdrop-blur-3xl"
       }`}
-      style={{ zIndex: 30 - depth }}
+      style={{
+        zIndex: 30 - depth,
+        opacity: stackStyle.opacity,
+        transform: `translate3d(${displayX}px, ${stackStyle.y}px, 0) scale(${stackStyle.scale}) rotate(${isTop ? dragX * 0.018 : 0}deg)`,
+      }}
     >
       {isTop && (
         <>
@@ -260,35 +269,40 @@ function StackCard({
           </Link>
         )}
       </div>
-    </motion.article>
+    </article>
   );
 }
 
 function PinnedMatchInfo({ match }: { match: FavoriteMatchCard }) {
-  const { events, timestamp } = useMatchLines();
-  const selection = useMemo(
-    () =>
-      buildOddsSelectionForTeams(
-        {
-          homeTeamCode: match.sourceMatch?.homeTeam?.code || getFavoriteTeamCode(match.home),
-          awayTeamCode: match.sourceMatch?.awayTeam?.code || getFavoriteTeamCode(match.away),
-        },
-        events,
-        timestamp,
-      ),
-    [events, match.away, match.home, match.sourceMatch?.awayTeam?.code, match.sourceMatch?.homeTeam?.code, timestamp],
-  );
-  const odds = getFavoriteMatchLiveOdds(match, selection);
+  const [OddsPanel, setOddsPanel] = useState<ComponentType<{ match: FavoriteMatchCard }> | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    let idleId: number | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    const loadPanel = () => {
+      void import("@/components/favorites/favorite-live-odds-panel").then((mod) => {
+        if (active) setOddsPanel(() => mod.FavoriteLiveOddsPanel);
+      });
+    };
+
+    if (typeof window.requestIdleCallback === "function") {
+      idleId = window.requestIdleCallback(loadPanel, { timeout: 1_800 });
+    } else {
+      timeoutId = setTimeout(loadPanel, 600);
+    }
+
+    return () => {
+      active = false;
+      if (idleId !== null) window.cancelIdleCallback(idleId);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, []);
 
   return (
-    <motion.section
-      key={match.id}
-      initial={{ opacity: 0, scale: 0.985 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-      className="relative"
-    >
-      <FavoriteLiveOddsPanel match={match} odds={odds} selection={selection} />
+    <section key={match.id} className="relative">
+      {OddsPanel ? <OddsPanel match={match} /> : <FavoriteLiveOddsSkeleton />}
 
       <div className="relative mt-3 flex justify-end">
         <Link
@@ -299,7 +313,20 @@ function PinnedMatchInfo({ match }: { match: FavoriteMatchCard }) {
           <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
-    </motion.section>
+    </section>
+  );
+}
+
+function FavoriteLiveOddsSkeleton() {
+  return (
+    <div className="relative mx-auto overflow-hidden rounded-[24px] border border-white/[0.08] bg-[#111113]/80 p-4 shadow-[0_14px_36px_rgba(0,0,0,0.24)] backdrop-blur-xl">
+      <div className="h-3 w-28 rounded-full bg-white/[0.08]" />
+      <div className="mt-4 grid grid-cols-3 gap-2">
+        <div className="h-14 rounded-2xl bg-white/[0.055]" />
+        <div className="h-14 rounded-2xl bg-white/[0.055]" />
+        <div className="h-14 rounded-2xl bg-white/[0.055]" />
+      </div>
+    </div>
   );
 }
 
@@ -319,10 +346,7 @@ function CompactFavoriteCard({
   const kickoff = match.startsAt ? new Date(match.startsAt) : null;
 
   return (
-    <motion.article
-      initial={{ opacity: 0, x: 10 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: Math.min(index * 0.03, 0.18) }}
+    <article
       className={`group relative overflow-hidden rounded-[1.75rem] p-3 shadow-[0_12px_34px_rgba(0,0,0,.24),inset_0_1px_0_rgba(255,255,255,.1)] ring-1 backdrop-blur-3xl transition sm:shadow-[0_18px_54px_rgba(0,0,0,.3),inset_0_1px_0_rgba(255,255,255,.1)] ${
         active
           ? "bg-volt/[0.12] ring-volt/28"
@@ -353,7 +377,7 @@ function CompactFavoriteCard({
 
         <FavoriteAction match={match} signedIn={signedIn} />
       </div>
-    </motion.article>
+    </article>
   );
 }
 
@@ -426,105 +450,6 @@ function InfoTile({ icon, label, value }: { icon: React.ReactNode; label: string
   );
 }
 
-function FavoriteLiveOddsPanel({ match, odds, selection }: { match: FavoriteMatchCard; odds: FavoriteOddsItem[]; selection: OddsSelection }) {
-  const [homeOdds, drawOdds, awayOdds] = odds;
-  const hasLiveOdds = selection.source === "api" && Boolean(homeOdds && drawOdds && awayOdds);
-  const probabilitySegments = hasLiveOdds ? buildFavoriteLiveProbabilitySegments(homeOdds, drawOdds, awayOdds) : [];
-
-  return (
-    <div className="favorites-odds-panel relative mx-auto overflow-hidden rounded-[24px] border border-white/[0.08] bg-[#111113]/90 shadow-[0_14px_36px_rgba(0,0,0,0.24)] backdrop-blur-xl sm:shadow-[0_24px_56px_rgba(0,0,0,0.3)]">
-      <div className="favorites-odds-glow pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(216,255,62,0.12),transparent_34%),radial-gradient(circle_at_92%_18%,rgba(255,154,31,0.10),transparent_36%)]" />
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-volt/30 to-transparent" />
-
-      <div className="favorites-odds-header relative border-b border-white/[0.05] px-4 py-3">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4 text-volt" />
-            <h4 className="text-[11px] font-black uppercase tracking-[0.13em] text-white">比赛预测</h4>
-          </div>
-          <span className={`text-[10px] font-black uppercase tracking-[0.12em] ${hasLiveOdds ? "text-volt" : "text-white/35"}`}>
-            {hasLiveOdds ? "Polymarket 实时" : "暂无盘口"}
-          </span>
-        </div>
-      </div>
-
-      <div className="relative px-4 py-4">
-        <div className="mb-4 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-          <FavoritePredictionTeam team={match.home} align="left" />
-          <div className="flex items-center gap-1.5 text-white/30">
-            <div className="h-px w-6 bg-white/10" />
-            <div className="favorite-prediction-bolt grid h-7 w-7 place-items-center rounded-full border border-white/10 bg-white/[0.035] shadow-[0_0_22px_rgba(216,255,62,0.10)]">
-              <Zap className="h-3.5 w-3.5 text-volt/70" />
-            </div>
-            <div className="h-px w-6 bg-white/10" />
-          </div>
-          <FavoritePredictionTeam team={match.away} align="right" />
-        </div>
-
-        {hasLiveOdds ? (
-          <div className="favorites-probability-card relative overflow-hidden rounded-2xl border border-white/[0.07] bg-black/26 px-4 py-3">
-            <div className="relative grid grid-cols-3 gap-2">
-              {probabilitySegments.map((segment) => (
-                <div key={segment.label} className={`min-w-0 ${segment.alignClass}`}>
-                  <p
-                    className={`favorites-segment-value text-xl font-black leading-none tabular-nums ${segment.valueClass}`}
-                    style={{ fontFamily: "ScreenMatrix, monospace" }}
-                  >
-                    {segment.probability}%
-                  </p>
-                  <p className="favorites-segment-label mt-1 truncate text-[9px] font-black uppercase tracking-[0.12em] text-white/30">{segment.label}</p>
-                </div>
-              ))}
-            </div>
-            <div className="favorites-probability-track relative mt-3 h-2 overflow-hidden rounded-full bg-white/[0.08]">
-              <div className="flex h-full w-full">
-                {probabilitySegments.map((segment) => (
-                  <div
-                    key={`${segment.label}-bar`}
-                    className={`h-full ${segment.barClass}`}
-                    style={{ width: `${segment.width}%` }}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="favorites-probability-card relative rounded-2xl border border-white/[0.07] bg-black/26 px-4 py-6 text-center">
-            <p className="text-sm font-black text-white/70">暂无真实盘口数据</p>
-            <p className="mt-2 text-xs leading-5 text-white/35">还没有匹配到这场比赛的 Polymarket 市场。</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function buildFavoriteLiveProbabilitySegments(homeOdds: FavoriteOddsItem, drawOdds: FavoriteOddsItem, awayOdds: FavoriteOddsItem) {
-  const items = [
-    { label: "主胜", probability: Math.round(homeOdds.value), valueClass: "text-volt", barClass: "bg-volt", alignClass: "text-left" },
-    { label: "平局", probability: Math.round(drawOdds.value), valueClass: "text-white/82", barClass: "bg-white/35", alignClass: "text-center" },
-    { label: "客胜", probability: Math.round(awayOdds.value), valueClass: "text-flare", barClass: "bg-flare", alignClass: "text-right" },
-  ];
-  const total = items.reduce((sum, item) => sum + item.probability, 0) || 1;
-
-  return items.map((item) => ({
-    ...item,
-    width: (item.probability / total) * 100,
-  }));
-}
-
-function FavoritePredictionTeam({ team, align }: { team: Team; align: "left" | "right" }) {
-  const isRight = align === "right";
-
-  return (
-    <div className={`favorite-prediction-team flex min-w-0 items-center gap-2 ${isRight ? "justify-end text-right" : "justify-start text-left"}`}>
-      {!isRight && <TeamMark team={team} muted />}
-      <span className="truncate text-xs font-black text-white/68">{team.name}</span>
-      {isRight && <TeamMark team={team} muted />}
-    </div>
-  );
-}
-
 function WeatherStrip({
   match,
   signedIn,
@@ -546,13 +471,28 @@ function WeatherStrip({
     }
 
     let active = true;
+    let idleId: number | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    const loadWeather = () => {
+      void import("@/lib/weather")
+        .then(({ fetchCurrentWeather }) => fetchCurrentWeather(sourceMatch))
+        .then((data) => {
+          if (active) setWeather(data);
+        });
+    };
+
     setWeather(undefined);
-    fetchCurrentWeather(sourceMatch).then((data) => {
-      if (active) setWeather(data);
-    });
+    if (typeof window.requestIdleCallback === "function") {
+      idleId = window.requestIdleCallback(loadWeather, { timeout: 2_000 });
+    } else {
+      timeoutId = setTimeout(loadWeather, 800);
+    }
 
     return () => {
       active = false;
+      if (idleId !== null) window.cancelIdleCallback(idleId);
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, [match.sourceMatch]);
 
@@ -659,29 +599,8 @@ function getTeamCode(team: Team) {
   return getFavoriteTeamCode(team);
 }
 
-type FavoriteOddsItem = {
-  label: string;
-  value: number;
-  active: boolean;
-};
-
-function getFavoriteMatchLiveOdds(match: FavoriteMatchCard, selection: OddsSelection): FavoriteOddsItem[] {
-  if (selection.source !== "api" || selection.markets.length < 3) return [];
-
-  const [home, draw, away] = selection.markets;
-  const strongest = selection.markets.reduce<MatchLineMarket | null>(
-    (best, market) => (!best || market.yesPrice > best.yesPrice ? market : best),
-    null,
-  );
-  return [
-    { label: `${match.home.name} 胜`, value: home.yesPrice, active: sameOddsMarket(home, strongest) },
-    { label: "平局", value: draw.yesPrice, active: sameOddsMarket(draw, strongest) },
-    { label: `${match.away.name} 胜`, value: away.yesPrice, active: sameOddsMarket(away, strongest) },
-  ];
-}
-
 function getMatchWeatherSummary(match: FavoriteMatchCard, liveWeather?: WeatherState) {
-  if (liveWeather) return weatherLabel(liveWeather);
+  if (liveWeather) return formatWeatherLabel(liveWeather);
 
   const staticWeather = match.sourceMatch?.weather?.trim();
   if (staticWeather && staticWeather !== "待更新" && !/^https?:\/\//i.test(staticWeather)) return staticWeather;
@@ -689,6 +608,24 @@ function getMatchWeatherSummary(match: FavoriteMatchCard, liveWeather?: WeatherS
   return "暂无天气";
 }
 
+function formatWeatherLabel(data?: WeatherState) {
+  if (!data) return "\u5929\u6c14\u540c\u6b65\u4e2d";
+  if (data.error) return "\u5929\u6c14\u6682\u4e0d\u53ef\u7528";
+  return `${weatherIcon(data.code)} ${Math.round(data.temp ?? 0)}\u00b0C`;
+}
+
+function weatherIcon(code?: number) {
+  if (code === undefined) return "\u5929\u6c14";
+  if ([0, 1].includes(code)) return "\u6674";
+  if (code === 2) return "\u5c11\u4e91";
+  if (code === 3) return "\u591a\u4e91";
+  if ([45, 48].includes(code)) return "\u6709\u96fe";
+  if ([51, 53, 55, 56, 57].includes(code)) return "\u6bdb\u6bdb\u96e8";
+  if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return "\u6709\u96e8";
+  if ([71, 73, 75, 77, 85, 86].includes(code)) return "\u6709\u96ea";
+  if ([95, 96, 99].includes(code)) return "\u96f7\u96e8";
+  return "\u5929\u6c14";
+}
 function formatTime(date: Date | null) {
   if (!date || !Number.isFinite(date.getTime())) return "TBD";
   return new Intl.DateTimeFormat("zh-CN", {

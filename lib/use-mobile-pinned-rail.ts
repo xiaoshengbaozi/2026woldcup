@@ -14,13 +14,19 @@ export function useMobilePinnedRail(
   useEffect(() => {
     const query = window.matchMedia(mediaQuery);
     let resizeObserver: ResizeObserver | null = null;
-    let animationFrame = 0;
+    let intersectionObserver: IntersectionObserver | null = null;
+    let heightFrame = 0;
     let pinnedSnapshot = false;
 
-    const pinBuffer = 12;
-    const unpinBuffer = 28;
+    const commitHeight = (nextHeight: number) => {
+      if (heightFrame) window.cancelAnimationFrame(heightFrame);
+      heightFrame = window.requestAnimationFrame(() => {
+        heightFrame = 0;
+        setHeight((current) => (current === nextHeight ? current : nextHeight));
+      });
+    };
 
-    const syncHeight = () => {
+    const readInitialHeight = () => {
       if (!query.matches) {
         setHeight(0);
         return;
@@ -28,45 +34,24 @@ export function useMobilePinnedRail(
 
       const rail = railRef.current;
       if (!rail) return;
-      const nextHeight = rail.offsetHeight;
-      setHeight((current) => (current === nextHeight ? current : nextHeight));
+      commitHeight(rail.getBoundingClientRect().height);
     };
 
-    const syncPinned = () => {
-      if (!query.matches) {
-        pinnedSnapshot = false;
-        setPinned(false);
-        return;
-      }
-
-      const sentinel = sentinelRef.current;
-      if (!sentinel) return;
-
-      const sentinelTop = sentinel.getBoundingClientRect().top;
-      const shouldPin = pinnedSnapshot
-        ? sentinelTop < offsetPx + unpinBuffer
-        : sentinelTop < offsetPx - pinBuffer;
-
+    const updatePinned = (shouldPin: boolean) => {
       if (shouldPin !== pinnedSnapshot) {
         pinnedSnapshot = shouldPin;
         setPinned(shouldPin);
       }
     };
 
-    const scheduleSyncPinned = () => {
-      if (animationFrame) return;
-      animationFrame = window.requestAnimationFrame(() => {
-        animationFrame = 0;
-        syncPinned();
-      });
-    };
-
     const disconnect = () => {
       resizeObserver?.disconnect();
       resizeObserver = null;
-      if (animationFrame) {
-        window.cancelAnimationFrame(animationFrame);
-        animationFrame = 0;
+      intersectionObserver?.disconnect();
+      intersectionObserver = null;
+      if (heightFrame) {
+        window.cancelAnimationFrame(heightFrame);
+        heightFrame = 0;
       }
     };
 
@@ -84,22 +69,29 @@ export function useMobilePinnedRail(
       const rail = railRef.current;
       if (!sentinel || !rail) return;
 
-      syncHeight();
-      syncPinned();
+      readInitialHeight();
 
-      resizeObserver = new ResizeObserver(syncHeight);
+      resizeObserver = new ResizeObserver((entries) => {
+        const entry = entries[0];
+        const blockSize = entry.borderBoxSize?.[0]?.blockSize;
+        commitHeight(blockSize ?? entry.contentRect.height);
+      });
       resizeObserver.observe(rail);
+
+      intersectionObserver = new IntersectionObserver(
+        ([entry]) => updatePinned(!entry.isIntersecting),
+        { rootMargin: `-${offsetPx}px 0px 0px 0px`, threshold: 0 }
+      );
+      intersectionObserver.observe(sentinel);
     };
 
     connect();
-    window.addEventListener("scroll", scheduleSyncPinned, { passive: true });
-    window.addEventListener("resize", syncHeight);
+    window.addEventListener("resize", readInitialHeight);
     query.addEventListener?.("change", connect);
 
     return () => {
       disconnect();
-      window.removeEventListener("scroll", scheduleSyncPinned);
-      window.removeEventListener("resize", syncHeight);
+      window.removeEventListener("resize", readInitialHeight);
       query.removeEventListener?.("change", connect);
     };
   }, [mediaQuery, offsetPx, railRef, sentinelRef]);

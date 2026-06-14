@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "prebuild": "node scripts/generate-article-index.mjs",
+    "postbuild": "node scripts/strip-next-polyfills.mjs",
     "articles:index": "node scripts/generate-article-index.mjs",
     "build": "next build",
     "start": "next start",
@@ -14,6 +15,22 @@
     "android:build": "npm run cap:sync && cd android && gradlew.bat assembleDebug",
     "players:todo": "node scripts/generate-player-translations-todo.mjs",
     "players:stars": "node scripts/generate-match-star-players.mjs"
+  },
+  "browserslist": {
+    "production": [
+      "Chrome >= 109",
+      "Edge >= 109",
+      "Firefox >= 102",
+      "Safari >= 16.4",
+      "iOS >= 16.4",
+      "Android >= 109"
+    ],
+    "development": [
+      "last 1 Chrome version",
+      "last 1 Edge version",
+      "last 1 Firefox version",
+      "last 1 Safari version"
+    ]
   },
   "dependencies": {
     "@capacitor/android": "^8.4.0",

@@ -124,7 +124,7 @@ export function renderAdminPageHtml() {
     .detail-block h3 { margin-bottom: 6px; }
     .detail-block ul { margin: 0; padding-left: 18px; color: var(--muted); }
     .admin-form { display: grid; grid-template-columns: 1.2fr 1fr .7fr auto; gap: 10px; align-items: end; }
-    .live-channel-form { display: grid; grid-template-columns: 1fr 1fr 1.4fr .6fr auto; gap: 10px; align-items: end; }
+    .live-channel-form { display: grid; grid-template-columns: 1fr 1fr 1.2fr 1fr .6fr auto; gap: 10px; align-items: end; }
     .admin-field { display: grid; gap: 6px; color: var(--faint); font-size: 12px; }
     .admin-field input, .admin-field select, .admin-field textarea {
       min-height: 40px; border: 1px solid rgba(255,255,255,.1); border-radius: 16px;
@@ -340,6 +340,7 @@ export function renderAdminPageHtml() {
             <label class="admin-field">主比赛 slug<input id="liveChannelMatchInput" type="text" placeholder="mexico-vs-south-africa" /></label>
             <label class="admin-field">通道名称<input id="liveChannelNameInput" type="text" placeholder="主直播通道" /></label>
             <label class="admin-field">m3u8 地址<input id="liveChannelUrlInput" type="url" placeholder="https://example.com/live/index.m3u8" /></label>
+            <label class="admin-field">播放方式<select id="liveChannelPlaybackModeInput"><option value="web">网页播放</option><option value="external">外部播放器</option></select></label>
             <label class="admin-field">排序<input id="liveChannelSortInput" type="number" min="1" value="1" /></label>
             <button class="action-btn" type="submit">保存通道</button>
           </form>
@@ -997,6 +998,7 @@ export function renderAdminPageHtml() {
       byId("liveChannelMatchIdsInput").value = "";
       byId("liveChannelNameInput").value = "";
       byId("liveChannelUrlInput").value = "";
+      byId("liveChannelPlaybackModeInput").value = "web";
       byId("liveChannelSortInput").value = "1";
       renderLiveChannelMatchPicker();
     }
@@ -1011,6 +1013,7 @@ export function renderAdminPageHtml() {
       byId("liveChannelMatchIdsInput").value = matchIds.join("\\n");
       byId("liveChannelNameInput").value = channel.name || "";
       byId("liveChannelUrlInput").value = channel.streamUrl || "";
+      byId("liveChannelPlaybackModeInput").value = channel.playbackMode || "web";
       byId("liveChannelSortInput").value = channel.sortOrder || 1;
       renderLiveChannelMatchPicker();
     }
@@ -1030,7 +1033,8 @@ export function renderAdminPageHtml() {
           matchIds: matchIds,
           matchType: byId("liveChannelMatchTypeInput").value,
           name: byId("liveChannelNameInput").value,
-          platform: "HLS",
+          playbackMode: byId("liveChannelPlaybackModeInput").value,
+          platform: byId("liveChannelPlaybackModeInput").value === "external" ? "External Player" : "HLS",
           streamUrl: byId("liveChannelUrlInput").value,
           sortOrder: Number(byId("liveChannelSortInput").value || 1),
           isActive: current ? current.isActive : true

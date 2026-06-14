@@ -50,7 +50,7 @@ export function LiveMatchCard({
             <span className={`h-1.5 w-1.5 rounded-full ${isHT ? "bg-amber-400" : isLive ? "bg-volt live-dot" : "bg-flare"}`} />{statusLabel}
           </span>
           {isUnlocked ? (
-            <Link href={"/matches/" + slug} className="live-match-detail-button inline-flex items-center gap-1 rounded-full bg-white/[0.055] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white/70 ring-1 ring-white/10 transition hover:bg-volt hover:text-black hover:shadow-[0_0_18px_rgba(216,255,62,.28)]">
+            <Link href={"/matches/" + slug} prefetch={false} className="live-match-detail-button inline-flex items-center gap-1 rounded-full bg-white/[0.055] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white/70 ring-1 ring-white/10 transition hover:bg-volt hover:text-black hover:shadow-[0_0_18px_rgba(216,255,62,.28)]">
               详情<ArrowRight className="h-3 w-3" />
             </Link>
           ) : (

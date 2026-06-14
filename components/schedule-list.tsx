@@ -1,15 +1,22 @@
-import { motion } from "framer-motion";
 import { Clock } from "lucide-react";
+import dynamic from "next/dynamic";
 import { MatchCard } from "@/components/match-card";
 import { MatchCardCompact } from "@/components/match-card-compact";
-import { MatchCalendarView } from "@/components/match-calendar-view";
-import { TopologyBracket } from "@/components/topology-bracket";
 import { getDayStatus } from "@/lib/calendar";
 import { formatDate } from "@/lib/format";
 import { getStageGroupId } from "@/lib/stage";
 import { buildMatchRoundLabels } from "@/lib/stage-rounds";
 import type { Match } from "@/types/match";
 import type { ScheduleLayout } from "@/app/matches/page";
+
+const MatchCalendarView = dynamic(
+  () => import("@/components/match-calendar-view").then((mod) => mod.MatchCalendarView),
+  { ssr: false, loading: () => null }
+);
+const TopologyBracket = dynamic(
+  () => import("@/components/topology-bracket").then((mod) => mod.TopologyBracket),
+  { ssr: false, loading: () => null }
+);
 
 type DaySectionProps = {
   day: string;
@@ -23,14 +30,9 @@ export function DaySection({ day, matches, index, timezoneOffset, roundLabels }:
   const firstStart = new Date(matches[0].start.getTime() + timezoneOffset * 3600000);
 
   return (
-    <motion.section
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        delay: Math.min(index * 0.035, 0.28),
-        duration: 0.55
-      }}
+    <section
       className="hero-card overflow-hidden p-5 sm:p-6"
+      style={index > 1 ? { contentVisibility: "auto", containIntrinsicSize: "420px" } : undefined}
     >
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-2xl font-medium text-white">
@@ -69,7 +71,7 @@ export function DaySection({ day, matches, index, timezoneOffset, roundLabels }:
           );
         })}
       </div>
-    </motion.section>
+    </section>
   );
 }
 
@@ -83,14 +85,9 @@ type GroupCardProps = {
 
 function GroupCard({ group, matches, index, timezoneOffset, roundLabels }: GroupCardProps) {
   return (
-    <motion.section
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        delay: Math.min(index * 0.025, 0.22),
-        duration: 0.45
-      }}
+    <section
       className="hero-card overflow-hidden p-2.5 sm:p-3"
+      style={index > 5 ? { contentVisibility: "auto", containIntrinsicSize: "260px" } : undefined}
     >
       <div className="mb-2 flex items-center justify-center gap-2">
         <h2 className="text-sm font-medium text-white sm:text-base">
@@ -112,7 +109,7 @@ function GroupCard({ group, matches, index, timezoneOffset, roundLabels }: Group
           </div>
         ))}
       </div>
-    </motion.section>
+    </section>
   );
 }
 
