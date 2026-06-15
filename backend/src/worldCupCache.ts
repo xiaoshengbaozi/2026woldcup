@@ -207,6 +207,16 @@ export function createWorldCupCache(options: WorldCupCacheOptions) {
     );
   }
 
+  async function syncKey(key: WorldCupCacheKey) {
+    if (key === "meta") return syncAll();
+    if (key === "player-profile") return { key, ok: true, skipped: "manual_refresh_unsupported" };
+
+    const target = targets.find((item) => item.key === key);
+    if (!target) return { key, ok: true, skipped: "target_not_found" };
+
+    return syncTarget(target);
+  }
+
   function syncDueTargets() {
     const now = Date.now();
     const windowState = getMatchWindowState(cache, now);
@@ -272,6 +282,7 @@ export function createWorldCupCache(options: WorldCupCacheOptions) {
     },
 
     syncAll,
+    syncKey,
   };
 }
 

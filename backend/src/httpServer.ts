@@ -309,8 +309,8 @@ function handleWorldCupCacheRequest(
   }
 
   if (url.searchParams.get("refresh") === "1") {
-    worldCupCache.syncAll().catch((error) => {
-      console.error("[WorldCupCache] Manual refresh failed:", error);
+    worldCupCache.syncKey(key).catch((error) => {
+      console.error(`[WorldCupCache] Manual refresh failed; key=${key}:`, error);
     });
   }
 
