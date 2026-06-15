@@ -271,7 +271,7 @@ export async function getWorldCupStandings(apiFootball: ApiFootballService, url:
   assertNoApiFootballErrors(upstream);
 
   const groups = upstream.response?.[0]?.league?.standings ?? [];
-  const standings = groups.flatMap((groupRows) => groupRows.map(normalizeStandingRow));
+  const standings = normalizeWorldCupStandingRows(groups);
 
   return {
     source: "api-football",
@@ -465,6 +465,53 @@ function normalizeStandingRow(raw: ApiFootballStanding): NormalizedWorldCupStand
     description: localizeStandingDescription(raw.description),
     updatedAt: raw.update ?? null,
   };
+}
+
+function normalizeWorldCupStandingRows(groups: ApiFootballStanding[][]) {
+  const byTeam = new Map<string, NormalizedWorldCupStandingRow>();
+
+  for (const raw of groups.flat()) {
+    const row = normalizeStandingRow(raw);
+    const groupId = getOfficialStandingGroupId(row.group);
+    if (!groupId) continue;
+
+    const teamKey = row.team.code || String(row.team.id ?? "") || normalizeName(row.team.englishName || row.team.name);
+    if (!teamKey) continue;
+
+    const key = `${groupId}:${teamKey}`;
+    const existing = byTeam.get(key);
+    if (!existing || isBetterStandingRow(row, existing)) {
+      byTeam.set(key, row);
+    }
+  }
+
+  return [...byTeam.values()].sort(compareStandingRows);
+}
+
+function getOfficialStandingGroupId(group: string) {
+  const match = group.trim().toUpperCase().match(/^([A-L])\b|^([A-L])\s/);
+  return match?.[1] ?? match?.[2] ?? null;
+}
+
+function compareStandingRows(a: NormalizedWorldCupStandingRow, b: NormalizedWorldCupStandingRow) {
+  const groupA = getOfficialStandingGroupId(a.group) ?? "";
+  const groupB = getOfficialStandingGroupId(b.group) ?? "";
+  return (
+    groupA.localeCompare(groupB) ||
+    a.rank - b.rank ||
+    b.points - a.points ||
+    b.goalsDiff - a.goalsDiff ||
+    b.goalsFor - a.goalsFor ||
+    a.team.name.localeCompare(b.team.name)
+  );
+}
+
+function isBetterStandingRow(candidate: NormalizedWorldCupStandingRow, current: NormalizedWorldCupStandingRow) {
+  return (
+    candidate.played > current.played ||
+    (candidate.played === current.played && candidate.points > current.points) ||
+    (candidate.played === current.played && candidate.points === current.points && candidate.rank < current.rank)
+  );
 }
 
 function normalizeFixtureStats(items: unknown[]) {
