@@ -205,7 +205,6 @@ export function renderAdminPageHtml() {
         <div class="card metric"><span>客户端</span><strong id="clientCount">--</strong></div>
         <div class="card metric"><span>序列号</span><strong id="sequenceNumber">--</strong></div>
         <div class="card metric"><span>运行时长</span><strong id="uptime">--</strong></div>
-        <div class="card metric"><span>X API</span><strong id="xApiState">--</strong></div>
 
         <div class="card wide">
           <h2>上游状态</h2>
@@ -219,7 +218,6 @@ export function renderAdminPageHtml() {
           <div class="stack">
             <div class="status-row"><i class="dot" id="marketDot"></i><div><h3>市场行情</h3><p id="lastUpdate">--</p></div><span class="badge" id="matchLineCount">--</span></div>
             <div class="status-row"><i class="dot" id="footballDot"></i><div><h3>api-football</h3><p id="footballFreshness">--</p></div><span class="badge" id="footballCache">--</span></div>
-            <div class="status-row"><i class="dot" id="xApiDot"></i><div><h3>X API</h3><p id="xApiFreshness">--</p></div><span class="badge" id="xApiRuntime">--</span></div>
           </div>
         </div>
 
@@ -512,18 +510,10 @@ export function renderAdminPageHtml() {
       const apiConfigured = Boolean(data.upstream.apiFootballConfigured);
       byId("apiFootballState").textContent = apiConfigured ? "已接入" : "未配置";
       byId("footballDot").className = statusDotClass(apiConfigured, false);
-      const xApi = data.upstream.xApi || {};
-      const xConfigured = Boolean(xApi.configured);
-      const xHealthy = xApi.status === "ok" || xApi.status === "idle";
-      byId("xApiState").textContent = xConfigured ? xApi.status || "configured" : "未配置";
-      byId("xApiDot").className = statusDotClass(xConfigured && xHealthy, xConfigured && !xHealthy);
-      byId("xApiFreshness").textContent = xConfigured ? "最近成功 " + fromNow(xApi.lastSuccessAt) + " · 错误 " + (xApi.apiErrors || 0) : "缺少 X_BEARER_TOKEN";
-      byId("xApiRuntime").textContent = "请求 " + (xApi.requestsTotal || 0) + " · 缓存 " + (xApi.cacheEntries || 0);
 
       byId("upstreamRows").innerHTML =
         upstreamRow(data.upstream.polymarketConnected, "Polymarket", data.upstream.polymarketConnected ? "CLOB WebSocket 已连接" : "正在重连市场行情", data.upstream.polymarketConnected ? "在线" : "降级") +
-        upstreamRow(apiConfigured, "api-football", apiConfigured ? "API Key 已配置，可读取赛程与实况" : "缺少 API_FOOTBALL_KEY", apiConfigured ? "已配置" : "不可用") +
-        upstreamRow(xConfigured && xHealthy, "X API", xConfigured ? xApiRuntimeText(xApi) : "缺少 X_BEARER_TOKEN", xConfigured ? (xApi.status || "configured") : "不可用");
+        upstreamRow(apiConfigured, "api-football", apiConfigured ? "API Key 已配置，可读取赛程与实况" : "缺少 API_FOOTBALL_KEY", apiConfigured ? "已配置" : "不可用");
 
       byId("leaders").innerHTML = data.data.leaders.map(function (item) {
         return "<tr><td>" + item.flagEmoji + " " + item.countryName + "</td><td class=\\"muted\\">" + item.countryCode + "</td><td class=\\"prob\\">" + percent(item.impliedProbability) + "</td><td>" + percent(item.delta24h) + "</td><td>" + fmt.format(item.spread) + "¢</td></tr>";
@@ -532,16 +522,6 @@ export function renderAdminPageHtml() {
 
     function upstreamRow(ok, title, text, badge) {
       return "<div class=\\"status-row\\"><i class=\\"" + statusDotClass(ok, false) + "\\"></i><div><h3>" + title + "</h3><p>" + text + "</p></div><span class=\\"badge\\">" + badge + "</span></div>";
-    }
-
-    function xApiRuntimeText(xApi) {
-      return "handles " + (xApi.knownHandleCount || 0) +
-        " · requests " + (xApi.requestsTotal || 0) +
-        " · user " + (xApi.xUserRequests || 0) +
-        " · tweets " + (xApi.xTweetRequests || 0) +
-        " · hits " + (xApi.cacheHits || 0) +
-        " · misses " + (xApi.cacheMisses || 0) +
-        (xApi.lastError ? " · last error " + xApi.lastError : "");
     }
 
     async function refreshLive() {

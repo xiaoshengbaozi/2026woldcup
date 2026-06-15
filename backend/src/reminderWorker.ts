@@ -34,9 +34,8 @@ export function createReminderWorker(store = new UserStore(), options: ReminderW
       const users = store.listUsers();
       const jobs = collectDueReminderJobs(users, now());
       for (const job of jobs) {
-        const beforeIds = new Set(job.user.notifications.map((notification) => notification.id));
         const urgent = isTwentyMinuteReminder(job.reminder);
-        const updatedUser = store.queueNotification(job.user.id, {
+        const result = store.createNotification(job.user.id, {
           type: "match_reminder",
           title: job.reminder.title,
           body: buildWorkerReminderBody(urgent),
@@ -48,10 +47,9 @@ export function createReminderWorker(store = new UserStore(), options: ReminderW
             urgent,
           },
         });
-        const notification = updatedUser.notifications.find((item) => !beforeIds.has(item.id));
         store.markReminderQueued(job.user.id, job.reminder.id, now());
-        if (notification) {
-          await deliverTelegramNotification(store, job.user.id, notification.id, logger);
+        if (result.created) {
+          await deliverTelegramNotification(store, job.user.id, result.notification.id, logger);
         }
       }
 
@@ -60,10 +58,11 @@ export function createReminderWorker(store = new UserStore(), options: ReminderW
       }
 
       if (apiFootball?.isConfigured()) {
+        const notificationIdsBeforeFollowScan = snapshotNotificationIds(store);
         await queueFollowUpdateNotifications(store, apiFootball, logger);
+        await deliverNewTelegramNotifications(store, notificationIdsBeforeFollowScan, logger);
       }
 
-      await deliverPendingTelegramNotifications(store, logger);
     } catch (error) {
       logger.error("[ReminderWorker] tick failed:", error);
     } finally {
@@ -289,7 +288,7 @@ function queueFollowNotification(
   userId: string,
   input: { key: string; title: string; body: string; metadata: Record<string, string | number | boolean | null> }
 ) {
-  store.queueNotification(userId, {
+  store.createNotification(userId, {
     type: "follow_update",
     title: input.title,
     body: input.body,
@@ -577,11 +576,25 @@ function formatApiDate(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
-async function deliverPendingTelegramNotifications(store: UserStore, logger: Pick<Console, "warn" | "error">) {
+function snapshotNotificationIds(store: UserStore) {
+  const byUserId = new Map<string, Set<string>>();
+  for (const user of store.listUsers()) {
+    byUserId.set(user.id, new Set(user.notifications.map((notification) => notification.id)));
+  }
+  return byUserId;
+}
+
+async function deliverNewTelegramNotifications(
+  store: UserStore,
+  existingIdsByUserId: Map<string, Set<string>>,
+  logger: Pick<Console, "warn" | "error">
+) {
   for (const user of store.listUsers()) {
     if (!user.telegram?.chatId || !user.telegram.notificationsEnabled) continue;
+    const existingIds = existingIdsByUserId.get(user.id) ?? new Set<string>();
 
     const pending = user.notifications.filter((notification) => (
+      !existingIds.has(notification.id) &&
       !notification.read &&
       !notification.metadata?.telegramDeliveredAt &&
       (notification.channel === "site" || notification.channel === "telegram")

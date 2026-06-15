@@ -3,16 +3,42 @@
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode, TouchEvent } from "react";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { Plus, Search, UserRound } from "lucide-react";
-import { AvatarSettingsDialog } from "./avatar-settings-dialog";
+import type { AvatarSettingsDialogProps } from "./avatar-settings-dialog";
 import { useUserSession } from "@/components/user-session-provider";
 import { userApi, type PublicUser } from "@/lib/user-system";
-import { MeAuthDialog, type SharedAuthMode } from "./me-auth-dialog";
-import { MobileMeDrawer } from "./mobile-me-drawer";
-import { MobileSearchDrawer } from "./mobile-search-drawer";
+import type { MeAuthDialogProps, SharedAuthMode } from "./me-auth-dialog";
+import type { MobileMeDrawerProps } from "./mobile-me-drawer";
+import type { MobileSearchDrawerProps } from "./mobile-search-drawer";
 import { mobileFloatingSurfaceStyle } from "@/components/mobile-surface-styles";
 import { openCreatorSupportModal } from "@/components/support-creator-modal";
+
+const loadMobileMeDrawer = () => import("./mobile-me-drawer").then((mod) => mod.MobileMeDrawer);
+const loadMeAuthDialog = () => import("./me-auth-dialog").then((mod) => mod.MeAuthDialog);
+const loadAvatarSettingsDialog = () => import("./avatar-settings-dialog").then((mod) => mod.AvatarSettingsDialog);
+const loadMobileSearchDrawer = () => import("./mobile-search-drawer").then((mod) => mod.MobileSearchDrawer);
+
+const MobileMeDrawer = dynamic<MobileMeDrawerProps>(
+  loadMobileMeDrawer,
+  { ssr: false }
+);
+
+const MeAuthDialog = dynamic<MeAuthDialogProps>(
+  loadMeAuthDialog,
+  { ssr: false }
+);
+
+const AvatarSettingsDialog = dynamic<AvatarSettingsDialogProps>(
+  loadAvatarSettingsDialog,
+  { ssr: false }
+);
+
+const MobileSearchDrawer = dynamic<MobileSearchDrawerProps>(
+  loadMobileSearchDrawer,
+  { ssr: false }
+);
 
 export type MobileTopRightAction = {
   ariaLabel: string;
@@ -43,6 +69,10 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [avatarSettingsOpen, setAvatarSettingsOpen] = useState(false);
   const [authMode, setAuthMode] = useState<SharedAuthMode | null>(null);
+  const [drawerLoaded, setDrawerLoaded] = useState(false);
+  const [searchLoaded, setSearchLoaded] = useState(false);
+  const [authLoaded, setAuthLoaded] = useState(false);
+  const [avatarSettingsLoaded, setAvatarSettingsLoaded] = useState(false);
   const [emailBusy, setEmailBusy] = useState(false);
   const [emailNotice, setEmailNotice] = useState("");
   const { home, avatarUrl, loading, refreshSession } = useUserSession();
@@ -82,6 +112,46 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
     if (home?.user.emailVerifiedAt) setEmailNotice("");
   }, [home?.user.emailVerifiedAt]);
 
+  useEffect(() => {
+    if (drawerOpen) setDrawerLoaded(true);
+  }, [drawerOpen]);
+
+  useEffect(() => {
+    if (searchOpen) setSearchLoaded(true);
+  }, [searchOpen]);
+
+  useEffect(() => {
+    if (authMode) setAuthLoaded(true);
+  }, [authMode]);
+
+  useEffect(() => {
+    if (avatarSettingsOpen) setAvatarSettingsLoaded(true);
+  }, [avatarSettingsOpen]);
+
+  const openDrawer = () => {
+    setDrawerLoaded(true);
+    void loadMobileMeDrawer();
+    setDrawerOpen(true);
+  };
+
+  const openSearch = () => {
+    setSearchLoaded(true);
+    void loadMobileSearchDrawer();
+    setSearchOpen(true);
+  };
+
+  const openAuth = (mode: SharedAuthMode) => {
+    setAuthLoaded(true);
+    void loadMeAuthDialog();
+    setAuthMode(mode);
+  };
+
+  const openAvatarSettings = () => {
+    setAvatarSettingsLoaded(true);
+    void loadAvatarSettingsDialog();
+    setAvatarSettingsOpen(true);
+  };
+
   const startEdgeGesture = (event: TouchEvent<HTMLDivElement>) => {
     const touch = event.touches[0];
     if (!touch) return;
@@ -98,7 +168,7 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
     if (deltaX > 48 && Math.abs(deltaY) < 36) {
       event.preventDefault();
       gestureStartRef.current = null;
-      setDrawerOpen(true);
+      openDrawer();
     }
   };
 
@@ -148,7 +218,11 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
         <button
           type="button"
           aria-label="打开我的世界杯"
-          onClick={() => setDrawerOpen(true)}
+          onPointerDown={() => {
+            setDrawerLoaded(true);
+            void loadMobileMeDrawer();
+          }}
+          onClick={openDrawer}
           className={`mobile-floating-surface pointer-events-auto absolute left-4 top-[calc(env(safe-area-inset-top)+1rem)] grid h-[34px] w-[34px] place-items-center overflow-hidden rounded-full bg-white/[0.08] shadow-[0_14px_34px_rgba(0,0,0,.38),0_0_20px_rgba(216,255,62,.1),inset_0_1px_0_rgba(255,255,255,.16)] ring-1 backdrop-blur-2xl transition ${
             drawerOpen || pathname.startsWith("/me") ? "ring-volt/55" : "ring-white/12"
           }`}
@@ -181,7 +255,11 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
           <button
             type="button"
             aria-label="打开全局搜索"
-            onClick={() => setSearchOpen(true)}
+            onPointerDown={() => {
+              setSearchLoaded(true);
+              void loadMobileSearchDrawer();
+            }}
+            onClick={openSearch}
             className={`mobile-floating-surface pointer-events-auto absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)] grid h-[34px] w-[34px] place-items-center rounded-full bg-white/[0.08] text-white/72 shadow-[0_14px_34px_rgba(0,0,0,.38),0_0_20px_rgba(216,255,62,.1),inset_0_1px_0_rgba(255,255,255,.16)] ring-1 backdrop-blur-2xl transition ${
               searchOpen ? "ring-volt/55 text-volt" : "ring-white/12 hover:text-white hover:ring-volt/35"
             }`}
@@ -192,23 +270,25 @@ export function MobileMeEntry({ topRightAction }: MobileMeEntryProps = {}) {
         ) : null}
       </div>
 
-      <MobileMeDrawer
-        open={drawerOpen}
-        home={home}
-        loading={loading}
-        avatarUrl={avatarUrl}
-        onLogin={() => setAuthMode("login")}
-        onRegister={() => setAuthMode("register")}
-        onOpenAvatarSettings={() => setAvatarSettingsOpen(true)}
-        onResendVerification={resendEmailVerification}
-        onLogout={logout}
-        onClose={() => setDrawerOpen(false)}
-        emailNotice={emailNotice}
-        emailBusy={emailBusy}
-      />
-      <MeAuthDialog mode={authMode} onClose={() => setAuthMode(null)} onAuthenticated={refreshHome} />
-      <AvatarSettingsDialog open={avatarSettingsOpen} home={home} onClose={() => setAvatarSettingsOpen(false)} onSaved={refreshHome} />
-      {showSearchEntry ? <MobileSearchDrawer open={searchOpen} onClose={() => setSearchOpen(false)} /> : null}
+      {drawerLoaded ? (
+        <MobileMeDrawer
+          open={drawerOpen}
+          home={home}
+          loading={loading}
+          avatarUrl={avatarUrl}
+          onLogin={() => openAuth("login")}
+          onRegister={() => openAuth("register")}
+          onOpenAvatarSettings={openAvatarSettings}
+          onResendVerification={resendEmailVerification}
+          onLogout={logout}
+          onClose={() => setDrawerOpen(false)}
+          emailNotice={emailNotice}
+          emailBusy={emailBusy}
+        />
+      ) : null}
+      {authLoaded ? <MeAuthDialog mode={authMode} onClose={() => setAuthMode(null)} onAuthenticated={refreshHome} /> : null}
+      {avatarSettingsLoaded ? <AvatarSettingsDialog open={avatarSettingsOpen} home={home} onClose={() => setAvatarSettingsOpen(false)} onSaved={refreshHome} /> : null}
+      {showSearchEntry && searchLoaded ? <MobileSearchDrawer open={searchOpen} onClose={() => setSearchOpen(false)} /> : null}
     </>
   );
 }

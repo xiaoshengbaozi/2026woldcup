@@ -203,12 +203,13 @@ function StandingTab({
 function GroupTable({ group }: { group: GroupStanding }) {
   return (
     <article className="overflow-hidden rounded-2xl bg-black/20 shadow-[inset_0_1px_0_rgba(255,255,255,.075)] ring-1 ring-white/[0.07] backdrop-blur-2xl">
-      <div className="grid grid-cols-[minmax(120px,1fr)_28px_28px_28px_28px_36px] items-center px-4 py-3 text-[10px] uppercase tracking-[0.08em] text-white/52">
+      <div className="grid grid-cols-[minmax(104px,1fr)_24px_24px_24px_24px_30px_36px] items-center px-4 py-3 text-[10px] uppercase tracking-[0.08em] text-white/52">
         <span className="text-left">{group.label}</span>
         <span className="text-center">P</span>
         <span className="text-center">W</span>
         <span className="text-center">D</span>
         <span className="text-center">L</span>
+        <span className="text-center">GD</span>
         <span className="text-right">PTS</span>
       </div>
 
@@ -227,6 +228,7 @@ function GroupTable({ group }: { group: GroupStanding }) {
 
 function StandingRow({ team, index }: { team: StandingTeam; index: number }) {
   const href = getTeamDetailHrefByCode(team.code ?? teamCode(team)) || getTeamDetailHrefByName(team.name);
+  const goalDifference = team.goalDifference ?? 0;
   const teamContent = (
     <>
       <span className={`tabular w-4 shrink-0 text-xs font-semibold ${index < 2 ? "text-volt" : "text-white/45"}`}>
@@ -247,7 +249,7 @@ function StandingRow({ team, index }: { team: StandingTeam; index: number }) {
   );
 
   return (
-    <div className="grid grid-cols-[minmax(120px,1fr)_28px_28px_28px_28px_36px] items-center px-4 py-2 text-sm transition odd:bg-volt/[0.035] hover:bg-white/[0.045]">
+    <div className="grid grid-cols-[minmax(104px,1fr)_24px_24px_24px_24px_30px_36px] items-center px-4 py-2 text-sm transition odd:bg-volt/[0.035] hover:bg-white/[0.045]">
       {href ? (
         <Link href={href} className="group/team flex min-w-0 items-center justify-start gap-2.5 text-left">
           {teamContent}
@@ -261,6 +263,7 @@ function StandingRow({ team, index }: { team: StandingTeam; index: number }) {
       <span className="tabular text-center text-xs text-white/78">{team.won}</span>
       <span className="tabular text-center text-xs text-white/78">{team.drawn}</span>
       <span className="tabular text-center text-xs text-white/78">{team.lost}</span>
+      <span className="tabular text-center text-xs text-white/78">{formatGoalDifference(goalDifference)}</span>
       <span className={`tabular text-right text-xs font-semibold ${team.points > 0 ? "text-flare" : "text-volt"}`}>
         {team.points}
       </span>
@@ -302,9 +305,15 @@ function buildApiGroupStandings(rows: NormalizedWorldCupStandingRow[]): GroupSta
             drawn: row.draw,
             lost: row.lose,
             points: row.points,
+            goalsFor: row.goalsFor,
+            goalDifference: row.goalsDiff,
           };
         }),
     }));
+}
+
+function formatGoalDifference(value: number) {
+  return value > 0 ? `+${value}` : String(value);
 }
 
 function buildPredictionGroupStandings(scores: Record<string, PredictionScore>): GroupStanding[] {
@@ -412,6 +421,8 @@ function buildSeedGroupStandings(): GroupStanding[] {
       drawn: 0,
       lost: 0,
       points: 0,
+      goalsFor: 0,
+      goalDifference: 0,
     })),
   }));
 }

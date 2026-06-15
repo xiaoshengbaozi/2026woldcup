@@ -7,7 +7,7 @@ import { AvatarPicker } from "@/components/avatar-picker";
 import { useUserPreferenceCatalog } from "@/lib/use-user-preferences";
 import { userApi, type PublicUser } from "@/lib/user-system";
 
-type AvatarSettingsDialogProps = {
+export type AvatarSettingsDialogProps = {
   open: boolean;
   home: { user: Pick<PublicUser, "profile"> } | null;
   onClose: () => void;

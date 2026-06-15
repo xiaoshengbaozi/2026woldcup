@@ -6,7 +6,6 @@ import { readFile, writeFile } from "fs/promises";
 import { promisify } from "util";
 import type { ApiFootballEndpoint, ApiFootballService } from "./apiFootball";
 import type { HistoryBuffer } from "./historyBuffer";
-import type { PlayerXTimelineService } from "./playerXTimeline";
 import type { SnapshotCache } from "./snapshotCache";
 import type { UserSystem } from "./userSystem";
 import type { WorldCupCacheKey, WorldCupCacheService } from "./worldCupCache";
@@ -63,7 +62,6 @@ interface HttpServerOptions {
     getSubscribedClientCount: () => number;
   };
   apiFootball?: ApiFootballService;
-  playerXTimeline?: PlayerXTimelineService;
   worldCupCache?: WorldCupCacheService;
   getState: () => {
     countries: CountryData[];
@@ -114,7 +112,6 @@ export function createHttpServer(options: HttpServerOptions) {
         url.pathname.startsWith("/api/avatar/") ||
         url.pathname.startsWith("/api/telegram/") ||
         url.pathname.startsWith("/api/tg/") ||
-        url.pathname === "/api/player-x-timeline" ||
         url.pathname === "/api/user-preferences" ||
         url.pathname.startsWith("/api/me/") ||
         url.pathname.startsWith("/api/admin/"))
@@ -158,7 +155,6 @@ export function createHttpServer(options: HttpServerOptions) {
           lastUpdateTimestamp: state.lastPolymarketUpdate,
           apiFootballConfigured: options.apiFootball?.isConfigured() ?? false,
           wechatJsSdkConfigured: isWechatJsSdkConfigured(),
-          xApi: options.playerXTimeline?.getRuntimeStats() ?? null,
         },
         clients: options.wsServer.getClientCount(),
         subscribedClients: options.wsServer.getSubscribedClientCount(),
@@ -197,7 +193,6 @@ export function createHttpServer(options: HttpServerOptions) {
           lastUpdateTimestamp: state.lastPolymarketUpdate,
           apiFootballConfigured: options.apiFootball?.isConfigured() ?? false,
           wechatJsSdkConfigured: isWechatJsSdkConfigured(),
-          xApi: options.playerXTimeline?.getRuntimeStats() ?? null,
         },
         data: {
           sequenceNumber: state.sequenceNumber,
@@ -1049,7 +1044,6 @@ function isCredentialedCorsPath(pathname: string) {
   return (
     pathname === "/admin" ||
     pathname === "/admini" ||
-    pathname === "/api/player-x-timeline" ||
     pathname === "/api/site-analytics" ||
     pathname === "/api/user-preferences" ||
     pathname.startsWith("/api/auth/") ||

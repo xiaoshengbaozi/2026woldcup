@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { ExternalLink, Languages, Loader2, Newspaper, X } from "lucide-react";
@@ -71,6 +71,8 @@ type ArticleIndexItem = {
 };
 
 const NEWS_API = process.env.NEXT_PUBLIC_NEWS_API_URL || "https://news.20250114.xyz";
+const HEADLINE_NEWS_LIMIT = 5;
+const FULL_NEWS_LIMIT = 72;
 
 const editorTabs = ["体育", "旅游", "文化", "专题"];
 const TRAVEL_EDITOR_TAB = "旅游";
@@ -156,6 +158,8 @@ const timeFormatter = new Intl.DateTimeFormat("zh-CN", {
 export default function NewsPage() {
   const [payload, setPayload] = useState<NewsResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [deferredLoading, setDeferredLoading] = useState(false);
+  const [deferredRequested, setDeferredRequested] = useState(false);
   const [readerItem, setReaderItem] = useState<NewsItem | null>(null);
   const [readerArticle, setReaderArticle] = useState<ArticleResponse | null>(null);
   const [readerLoading, setReaderLoading] = useState(false);
@@ -166,10 +170,10 @@ export default function NewsPage() {
   const [activeNewsTab, setActiveNewsTab] = useState<NewsTabId>("headline");
   const mobileTabsSentinelRef = useRef<HTMLDivElement>(null);
   const mobileTabsRef = useRef<HTMLDivElement>(null);
+  const deferredNewsSentinelRef = useRef<HTMLDivElement>(null);
   const headlineRef = useRef<HTMLElement>(null);
   const editorRef = useRef<HTMLElement>(null);
   const latestRef = useRef<HTMLElement>(null);
-  const activeTabFrameRef = useRef<number | null>(null);
   const { pinned: isMobileTabsPinned, height: mobileTabsHeight } = useMobilePinnedRail(
     mobileTabsSentinelRef,
     mobileTabsRef,
@@ -178,7 +182,12 @@ export default function NewsPage() {
   );
 
   const endpoint = useMemo(() => {
-    const params = new URLSearchParams({ limit: "72" });
+    const params = new URLSearchParams({ limit: String(HEADLINE_NEWS_LIMIT) });
+    return `${NEWS_API}/api/news?${params.toString()}`;
+  }, []);
+
+  const deferredEndpoint = useMemo(() => {
+    const params = new URLSearchParams({ limit: String(FULL_NEWS_LIMIT) });
     return `${NEWS_API}/api/news?${params.toString()}`;
   }, []);
 
@@ -205,51 +214,108 @@ export default function NewsPage() {
     return () => { alive = false; };
   }, [endpoint]);
 
+  const loadDeferredNews = useCallback(async () => {
+    if (deferredRequested || deferredLoading) return;
+
+    setDeferredRequested(true);
+    setDeferredLoading(true);
+    try {
+      const data = await cachedJson<NewsResponse>(deferredEndpoint, 3 * 60 * 1000, async () => {
+        const response = await fetchWithTimeout(deferredEndpoint, { cache: "no-store" }, 5_000);
+        if (!response.ok) throw new Error(`News API returned ${response.status}`);
+        return (await response.json()) as NewsResponse;
+      }, { persist: true, staleTtlMs: 24 * 60 * 60 * 1000 });
+      setPayload(data);
+    } catch {
+      setPayload((current) => current ?? { updatedAt: null, count: 0, total: 0, errors: [], items: [] });
+    } finally {
+      setDeferredLoading(false);
+    }
+  }, [deferredEndpoint, deferredLoading, deferredRequested]);
+
+  useEffect(() => {
+    if (deferredRequested) return;
+
+    const node = deferredNewsSentinelRef.current;
+    if (!node || typeof IntersectionObserver === "undefined") {
+      const timeoutId = window.setTimeout(() => {
+        void loadDeferredNews();
+      }, 1_200);
+      return () => window.clearTimeout(timeoutId);
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return;
+        observer.disconnect();
+        void loadDeferredNews();
+      },
+      { rootMargin: "420px 0px" }
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [deferredRequested, loadDeferredNews]);
+
   useEffect(() => {
     const mobileQuery = window.matchMedia("(max-width: 1023px)");
+    let observer: IntersectionObserver | null = null;
 
-    const syncActiveTab = () => {
-      if (!mobileQuery.matches) return;
+    const connect = () => {
+      observer?.disconnect();
+      observer = null;
+
+      if (!mobileQuery.matches || typeof IntersectionObserver === "undefined") {
+        setActiveNewsTab("headline");
+        return;
+      }
 
       const tabsOffset = MOBILE_TOP_MODULE_OFFSET + (mobileTabsRef.current?.offsetHeight ?? 0) + 12;
-      const sectionRefs = [
-        { id: "headline" as const, ref: headlineRef },
-        { id: "editor" as const, ref: editorRef },
-        { id: "latest" as const, ref: latestRef },
-      ];
-      const nextActive = sectionRefs.reduce<NewsTabId>((current, section) => {
-        const node = section.ref.current;
-        if (!node) return current;
-        return node.getBoundingClientRect().top - tabsOffset <= 0 ? section.id : current;
-      }, "headline");
+      const visibleSections = new Map<NewsTabId, number>();
+      const sections = [
+        { id: "headline" as const, node: headlineRef.current },
+        { id: "editor" as const, node: editorRef.current },
+        { id: "latest" as const, node: latestRef.current },
+      ].filter((section): section is { id: NewsTabId; node: HTMLElement } => Boolean(section.node));
 
-      setActiveNewsTab((current) => (current === nextActive ? current : nextActive));
+      observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            const section = sections.find((item) => item.node === entry.target);
+            if (!section) continue;
+            if (entry.isIntersecting) {
+              visibleSections.set(section.id, entry.boundingClientRect.top);
+            } else {
+              visibleSections.delete(section.id);
+            }
+          }
+
+          const nextActive = Array.from(visibleSections.entries())
+            .sort((a, b) => Math.abs(a[1] - tabsOffset) - Math.abs(b[1] - tabsOffset))[0]?.[0];
+
+          if (nextActive) {
+            setActiveNewsTab((current) => (current === nextActive ? current : nextActive));
+          }
+        },
+        {
+          rootMargin: `-${tabsOffset}px 0px -55% 0px`,
+          threshold: [0, 0.01, 0.2],
+        }
+      );
+
+      for (const section of sections) observer.observe(section.node);
     };
 
-    const scheduleSyncActiveTab = () => {
-      if (activeTabFrameRef.current !== null) return;
-      activeTabFrameRef.current = window.requestAnimationFrame(() => {
-        activeTabFrameRef.current = null;
-        syncActiveTab();
-      });
-    };
-
-    const handleMediaChange = () => {
-      syncActiveTab();
-    };
-
-    syncActiveTab();
-    window.addEventListener("scroll", scheduleSyncActiveTab, { passive: true });
-    window.addEventListener("resize", scheduleSyncActiveTab);
-    mobileQuery.addEventListener?.("change", handleMediaChange);
+    connect();
+    window.addEventListener("resize", connect);
+    mobileQuery.addEventListener?.("change", connect);
 
     return () => {
-      if (activeTabFrameRef.current !== null) window.cancelAnimationFrame(activeTabFrameRef.current);
-      window.removeEventListener("scroll", scheduleSyncActiveTab);
-      window.removeEventListener("resize", scheduleSyncActiveTab);
-      mobileQuery.removeEventListener?.("change", handleMediaChange);
+      observer?.disconnect();
+      window.removeEventListener("resize", connect);
+      mobileQuery.removeEventListener?.("change", connect);
     };
-  }, []);
+  }, [payload?.items.length, mobileTabsHeight]);
 
   useEffect(() => {
     window.dispatchEvent(new CustomEvent("mobile-top-rail-change", { detail: { pinned: isMobileTabsPinned, height: mobileTabsHeight + 12 } }));
@@ -330,6 +396,7 @@ export default function NewsPage() {
   const latestItems = visualItems.slice(8, 14);
   const listItems = items.slice(14, 21);
   const featureItems = visualItems.slice(14, 17);
+  const deferredContentReady = visualItems.length > HEADLINE_NEWS_LIMIT;
   const activeEditorItems =
     activeEditorTab === TRAVEL_EDITOR_TAB
       ? travelGuideFeatures
@@ -361,7 +428,14 @@ export default function NewsPage() {
       latest: latestRef,
     };
     const target = sectionRefs[tab].current;
-    if (!target || !window.matchMedia("(max-width: 1023px)").matches) return;
+    if (!window.matchMedia("(max-width: 1023px)").matches) return;
+
+    if (!target && tab !== "headline") {
+      void loadDeferredNews();
+      return;
+    }
+
+    if (!target) return;
 
     setActiveNewsTab(tab);
     const offset = MOBILE_TOP_MODULE_OFFSET + (mobileTabsRef.current?.offsetHeight ?? 0) + 12;
@@ -520,8 +594,12 @@ export default function NewsPage() {
         )}
       </section>
 
+      <div ref={deferredNewsSentinelRef} className="h-px" aria-hidden="true" />
+
+      {!deferredContentReady && (deferredLoading || deferredRequested) ? <DeferredNewsSkeleton /> : null}
+
       {/* ── EDITOR'S CHOICE ── */}
-      {(editorItems.length > 0 || travelGuideFeatures.length > 0 || articleFeatureItems.length > 0) && (
+      {deferredContentReady && (editorItems.length > 0 || travelGuideFeatures.length > 0 || articleFeatureItems.length > 0) && (
         <section ref={editorRef} className="mt-4 scroll-mt-24 sm:mt-8">
           <SectionHeader title="编辑精选" hideOnMobile />
 
@@ -555,7 +633,7 @@ export default function NewsPage() {
       )}
 
       {/* ── LATEST NEWS Grid ── */}
-      {latestItems.length > 0 && (
+      {deferredContentReady && latestItems.length > 0 && (
         <section ref={latestRef} className="mt-8 scroll-mt-24">
           <SectionHeader title="最新资讯" actionLabel="查看更多" hideOnMobile />
 
@@ -568,6 +646,7 @@ export default function NewsPage() {
       )}
 
       {/* ── World Cup Updates: Sidebar List ── */}
+      {deferredContentReady && (
       <section className="mt-8 grid gap-5 lg:grid-cols-[0.4fr_1fr]">
         {/* Left intro */}
         <div className="news-text-card hero-card flex flex-col justify-center p-6">
@@ -605,9 +684,10 @@ export default function NewsPage() {
           ))}
         </div>
       </section>
+      )}
 
       {/* ── Bottom Feature Grid ── */}
-      {featureItems.length > 0 && (
+      {deferredContentReady && featureItems.length > 0 && (
         <section className="mt-8">
           <SectionHeader title="文艺 / 旅游" actionLabel="全部资讯" />
 
@@ -985,5 +1065,27 @@ function EmptyState() {
         </p>
       </div>
     </div>
+  );
+}
+
+function DeferredNewsSkeleton() {
+  return (
+    <section className="mt-8 grid gap-5 lg:grid-cols-[0.4fr_1fr]">
+      <div className="hero-card flex min-h-[220px] flex-col justify-center gap-3 p-6">
+        <div className="h-3 w-24 rounded-full bg-white/[0.06]" />
+        <div className="h-7 w-40 rounded-full bg-white/[0.08]" />
+        <div className="h-3 w-56 rounded-full bg-white/[0.05]" />
+        <div className="h-10 w-28 rounded-full bg-white/[0.06]" />
+      </div>
+      <div className="hero-card grid gap-px overflow-hidden">
+        {Array.from({ length: 5 }).map((_, index) => (
+          <div key={index} className="flex items-center gap-4 bg-white/[0.03] px-5 py-4">
+            <div className="h-4 w-12 rounded-full bg-white/[0.06]" />
+            <div className="h-3.5 flex-1 rounded-full bg-white/[0.05]" />
+            <div className="h-3.5 w-3.5 rounded-full bg-white/[0.05]" />
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }

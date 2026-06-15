@@ -35,7 +35,7 @@ const WONDERKID_NAMES = [
   "Warren Zaire-Emery", "Claudio Echeverri",
 ];
 
-type MeAuthDialogProps = {
+export type MeAuthDialogProps = {
   mode: SharedAuthMode | null;
   onClose: () => void;
   onAuthenticated?: () => void;
