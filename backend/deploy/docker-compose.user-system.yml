@@ -61,6 +61,7 @@ services:
       REDIS_URL: redis://redis:6379
       CORS_ORIGIN: https://ball.boyzi.fun,https://ball.boyzi.top,https://localhost,capacitor://localhost,ionic://localhost,https://beta-wzja.world-cup-2026-625.pages.dev,https://world-cup-2026-625.pages.dev
       API_FOOTBALL_CACHE_FILE: /app/data/api-football-cache.json
+      WORLDCUP_CACHE_FILE: /app/data/worldcup-cache.json
     ports:
       - "3002:3001"
     volumes:
