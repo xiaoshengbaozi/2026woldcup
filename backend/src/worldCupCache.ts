@@ -51,15 +51,26 @@ type WorldCupCacheOptions = {
 type SyncTarget = {
   key: Exclude<WorldCupCacheKey, "meta">;
   ttlSeconds: number;
-  intervalMs: number;
+  schedule: SyncSchedule;
+  intervalMs?: number;
   load: () => Promise<unknown>;
   source: string;
 };
 
+type SyncSchedule = "always" | "daily" | "daily-window" | "window" | "interval";
+
 const DEFAULT_CACHE_FILE = resolve(process.cwd(), "data", "worldcup-cache.json");
 const LIVE_INTERVAL_MS = numberFromEnv("WORLDCUP_CACHE_LIVE_INTERVAL_MS", 60_000);
-const FOOTBALL_INTERVAL_MS = numberFromEnv("WORLDCUP_CACHE_FOOTBALL_INTERVAL_MS", 5 * 60_000);
+const MATCH_WINDOW_INTERVAL_MS = numberFromEnv("WORLDCUP_CACHE_MATCH_WINDOW_INTERVAL_MS", 10 * 60_000);
+const TOP_SCORERS_INTERVAL_MS = numberFromEnv("WORLDCUP_CACHE_TOP_SCORERS_INTERVAL_MS", 30 * 60_000);
+const SQUADS_INTERVAL_MS = numberFromEnv("WORLDCUP_CACHE_SQUADS_INTERVAL_MS", 24 * 60 * 60_000);
 const NEWS_INTERVAL_MS = numberFromEnv("WORLDCUP_CACHE_NEWS_INTERVAL_MS", 10 * 60_000);
+const SCHEDULER_TICK_MS = numberFromEnv("WORLDCUP_CACHE_SCHEDULER_TICK_MS", 60_000);
+const DAILY_REFRESH_HOUR = numberFromEnv("WORLDCUP_CACHE_DAILY_REFRESH_HOUR", 12);
+const MATCH_WINDOW_BEFORE_MS = numberFromEnv("WORLDCUP_CACHE_MATCH_WINDOW_BEFORE_MS", 30 * 60_000);
+const MATCH_WINDOW_AFTER_MS = numberFromEnv("WORLDCUP_CACHE_MATCH_WINDOW_AFTER_MS", 30 * 60_000);
+const MATCH_WINDOW_ASSUMED_MATCH_MS = numberFromEnv("WORLDCUP_CACHE_MATCH_WINDOW_ASSUMED_MATCH_MS", 3 * 60 * 60_000);
+const LIVE_GRACE_MS = numberFromEnv("WORLDCUP_CACHE_LIVE_GRACE_MS", 15 * 60_000);
 const RSS_FEEDS = (process.env.WORLDCUP_RSS_FEEDS || "")
   .split(",")
   .map((feed) => feed.trim())
@@ -69,61 +80,66 @@ export function createWorldCupCache(options: WorldCupCacheOptions) {
   const cacheFile = resolve(process.env.WORLDCUP_CACHE_FILE || DEFAULT_CACHE_FILE);
   const cache = loadCache(cacheFile);
   const timers: ReturnType<typeof setInterval>[] = [];
+  const runningTargets = new Set<WorldCupCacheKey>();
   let started = false;
 
   const targets: SyncTarget[] = [
     {
       key: "fixtures",
       ttlSeconds: 300,
-      intervalMs: FOOTBALL_INTERVAL_MS,
+      schedule: "daily",
       source: "api-football",
       load: () => buildFixturesCache(options.apiFootball),
     },
     {
       key: "live",
       ttlSeconds: 90,
+      schedule: "window",
       intervalMs: LIVE_INTERVAL_MS,
       source: "vps-worldcup-live",
-      load: () => buildLiveSummary(options.apiFootball, options.getMarkets),
+      load: () => buildLiveSummary(options.apiFootball, options.getMarkets, cache),
     },
     {
       key: "today",
       ttlSeconds: 180,
-      intervalMs: FOOTBALL_INTERVAL_MS,
+      schedule: "daily-window",
       source: "api-football",
       load: () => getWorldCupFixtures(options.apiFootball, todayUrl()),
     },
     {
       key: "upcoming",
       ttlSeconds: 300,
-      intervalMs: FOOTBALL_INTERVAL_MS,
+      schedule: "daily-window",
       source: "api-football",
       load: () => getWorldCupFixtures(options.apiFootball, upcomingUrl()),
     },
     {
       key: "standings",
       ttlSeconds: 300,
-      intervalMs: FOOTBALL_INTERVAL_MS,
+      schedule: "daily-window",
       source: "api-football",
       load: () => getWorldCupStandings(options.apiFootball, tournamentUrl("/api/worldcup/standings")),
     },
     {
       key: "top-scorers",
       ttlSeconds: 300,
-      intervalMs: FOOTBALL_INTERVAL_MS,
+      schedule: "window",
+      intervalMs: TOP_SCORERS_INTERVAL_MS,
       source: "api-football",
       load: () => getWorldCupTopScorers(options.apiFootball, tournamentUrl("/api/worldcup/top-scorers")),
     },
     {
       key: "squads",
       ttlSeconds: 3600,
-      intervalMs: numberFromEnv("WORLDCUP_CACHE_SQUADS_INTERVAL_MS", 6 * 60 * 60_000),
+      schedule: "interval",
+      intervalMs: SQUADS_INTERVAL_MS,
       source: "api-football",
       load: () => buildSquadsCache(options.apiFootball),
     },
     {
       key: "markets",
       ttlSeconds: 30,
+      schedule: "always",
       intervalMs: 15_000,
       source: "polymarket",
       load: async () => ({
@@ -135,6 +151,7 @@ export function createWorldCupCache(options: WorldCupCacheOptions) {
     {
       key: "news",
       ttlSeconds: 600,
+      schedule: "interval",
       intervalMs: NEWS_INTERVAL_MS,
       source: "rss",
       load: fetchRssNews,
@@ -142,6 +159,10 @@ export function createWorldCupCache(options: WorldCupCacheOptions) {
   ];
 
   async function syncTarget(target: SyncTarget) {
+    if (runningTargets.has(target.key)) {
+      return { key: target.key, ok: true, skipped: "already_running" };
+    }
+    runningTargets.add(target.key);
     try {
       const data = await target.load();
       cache[target.key] = {
@@ -174,6 +195,8 @@ export function createWorldCupCache(options: WorldCupCacheOptions) {
       updateMeta(cache, cacheFile);
       saveCache(cacheFile, cache);
       return { key: target.key, ok: false, error: message };
+    } finally {
+      runningTargets.delete(target.key);
     }
   }
 
@@ -184,14 +207,22 @@ export function createWorldCupCache(options: WorldCupCacheOptions) {
     );
   }
 
+  function syncDueTargets() {
+    const now = Date.now();
+    const windowState = getMatchWindowState(cache, now);
+    for (const target of targets) {
+      if (shouldSyncTarget(target, cache[target.key], now, windowState)) {
+        void syncTarget(target);
+      }
+    }
+  }
+
   return {
     start() {
       if (started) return;
       started = true;
-      void syncAll();
-      for (const target of targets) {
-        timers.push(setInterval(() => void syncTarget(target), target.intervalMs));
-      }
+      syncDueTargets();
+      timers.push(setInterval(syncDueTargets, SCHEDULER_TICK_MS));
     },
 
     stop() {
@@ -244,6 +275,126 @@ export function createWorldCupCache(options: WorldCupCacheOptions) {
   };
 }
 
+type MatchWindowState = {
+  active: boolean;
+  inScheduledWindow: boolean;
+  hasRecentLive: boolean;
+};
+
+function shouldSyncTarget(
+  target: SyncTarget,
+  current: WorldCupCacheEnvelope | null | undefined,
+  now: number,
+  windowState: MatchWindowState
+) {
+  const intervalMs = target.intervalMs ?? MATCH_WINDOW_INTERVAL_MS;
+
+  if (!current?.data) {
+    return target.schedule !== "window" || windowState.active;
+  }
+
+  if (target.schedule === "always") {
+    return isCacheOlderThan(current, now, intervalMs);
+  }
+
+  if (target.schedule === "interval") {
+    return isCacheOlderThan(current, now, intervalMs);
+  }
+
+  if (target.schedule === "daily") {
+    return isDailyRefreshDue(current, now);
+  }
+
+  if (target.schedule === "daily-window") {
+    return isDailyRefreshDue(current, now) || (windowState.active && isCacheOlderThan(current, now, MATCH_WINDOW_INTERVAL_MS));
+  }
+
+  if (target.schedule === "window") {
+    return windowState.active && isCacheOlderThan(current, now, intervalMs);
+  }
+
+  return false;
+}
+
+function getMatchWindowState(cache: StoredCache, now: number): MatchWindowState {
+  const starts = getTodayFixtureStartTimes(cache, now);
+  const start = starts.length ? Math.min(...starts) - MATCH_WINDOW_BEFORE_MS : 0;
+  const end = starts.length ? Math.max(...starts) + MATCH_WINDOW_ASSUMED_MATCH_MS + MATCH_WINDOW_AFTER_MS : 0;
+  const inScheduledWindow = Boolean(starts.length && now >= start && now <= end);
+  const hasRecentLive = hasRecentLiveFixtures(cache, now);
+
+  return {
+    active: inScheduledWindow || hasRecentLive,
+    inScheduledWindow,
+    hasRecentLive,
+  };
+}
+
+function getTodayFixtureStartTimes(cache: StoredCache, now: number) {
+  const dayStart = startOfUtcDayMs(now);
+  const dayEnd = dayStart + 24 * 60 * 60_000;
+  const fixtures = [
+    ...getPayloadFixtures(cache.today?.data),
+    ...getPayloadFixtures(cache.fixtures?.data),
+  ];
+  const seen = new Set<number>();
+
+  return fixtures
+    .map((fixture) => Date.parse(String(fixture.startIso ?? fixture.date ?? "")))
+    .filter((time) => Number.isFinite(time) && time >= dayStart && time < dayEnd)
+    .filter((time) => {
+      if (seen.has(time)) return false;
+      seen.add(time);
+      return true;
+    });
+}
+
+function hasRecentLiveFixtures(cache: StoredCache, now: number) {
+  const liveUpdatedAt = Date.parse(cache.live?.updatedAt ?? "");
+  if (!Number.isFinite(liveUpdatedAt) || now - liveUpdatedAt > LIVE_GRACE_MS) return false;
+  return getLiveFixtures(cache.live?.data).some(isLiveFixture);
+}
+
+function getLiveFixtures(data: unknown) {
+  const summary = asObject(data);
+  const live = asObject(summary.live ?? data);
+  return getPayloadFixtures(live);
+}
+
+function getPayloadFixtures(data: unknown) {
+  const payload = asObject(data);
+  return Array.isArray(payload.fixtures) ? (payload.fixtures as Array<Record<string, unknown>>) : [];
+}
+
+function isLiveFixture(fixture: Record<string, unknown>) {
+  const status = String(fixture.status ?? fixture.statusLabel ?? "").toLowerCase();
+  return ["live", "1h", "2h", "ht", "et", "bt", "p", "in_play"].some((token) => status.includes(token));
+}
+
+function isCacheOlderThan(current: WorldCupCacheEnvelope, now: number, intervalMs: number) {
+  const updatedAt = Date.parse(current.updatedAt);
+  return !Number.isFinite(updatedAt) || now - updatedAt >= intervalMs;
+}
+
+function isDailyRefreshDue(current: WorldCupCacheEnvelope, now: number) {
+  const updatedAt = Date.parse(current.updatedAt);
+  if (!Number.isFinite(updatedAt)) return true;
+  const boundary = getDailyRefreshBoundary(now);
+  return now >= boundary && updatedAt < boundary;
+}
+
+function getDailyRefreshBoundary(now: number) {
+  const date = new Date(now);
+  const hour = Math.max(0, Math.min(23, Math.floor(DAILY_REFRESH_HOUR)));
+  date.setHours(hour, 0, 0, 0);
+  return date.getTime();
+}
+
+function startOfUtcDayMs(now: number) {
+  const date = new Date(now);
+  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+}
+
 async function buildSquadsCache(apiFootball: ApiFootballService) {
   const standings = await getWorldCupStandings(apiFootball, tournamentUrl("/api/worldcup/standings"));
   const teamIds = extractTeamIdsFromStandings(standings);
@@ -258,69 +409,23 @@ async function buildSquadsCache(apiFootball: ApiFootballService) {
 export type WorldCupCacheService = ReturnType<typeof createWorldCupCache>;
 
 async function buildFixturesCache(apiFootball: ApiFootballService) {
-  const [fixtures, live] = await Promise.all([
-    getWorldCupFixtures(apiFootball, tournamentUrl("/api/worldcup/fixtures")),
-    getWorldCupLiveFixtures(apiFootball, tournamentUrl("/api/worldcup/live")),
-  ]);
-
-  return mergeFixturePayload(fixtures, live);
+  return getWorldCupFixtures(apiFootball, tournamentUrl("/api/worldcup/fixtures"));
 }
 
-async function buildLiveSummary(apiFootball: ApiFootballService, getMarkets: () => CountryData[]) {
-  const [live, today, standings, news] = await Promise.allSettled([
-    getWorldCupLiveFixtures(apiFootball, tournamentUrl("/api/worldcup/live")),
-    getWorldCupFixtures(apiFootball, todayUrl()),
-    getWorldCupStandings(apiFootball, tournamentUrl("/api/worldcup/standings")),
-    fetchRssNews(),
-  ]);
+async function buildLiveSummary(apiFootball: ApiFootballService, getMarkets: () => CountryData[], cache: StoredCache) {
+  const live = await getWorldCupLiveFixtures(apiFootball, tournamentUrl("/api/worldcup/live"));
 
   return {
     generatedAt: new Date().toISOString(),
-    live: valueOrNull(live),
-    today: valueOrNull(today),
-    standings: valueOrNull(standings),
+    live,
+    today: cache.today?.data ?? null,
+    standings: cache.standings?.data ?? null,
     markets: {
       timestamp: Date.now(),
       count: getMarkets().length,
       markets: getMarkets(),
     },
-    news: valueOrNull(news),
-  };
-}
-
-function mergeFixturePayload(basePayload: unknown, livePayload: unknown) {
-  const base = basePayload as { fixtures?: Array<Record<string, unknown>> };
-  const live = livePayload as { fixtures?: Array<Record<string, unknown>> };
-  const fixtures = base.fixtures ?? [];
-  const overlays = live.fixtures ?? [];
-
-  if (!fixtures.length || !overlays.length) return basePayload;
-
-  const overlaysById = new Map(
-    overlays
-      .map((fixture) => [Number(fixture.apiFixtureId), fixture] as const)
-      .filter(([id]) => Number.isFinite(id) && id > 0)
-  );
-
-  return {
-    ...(basePayload as object),
-    fixtures: fixtures.map((fixture) => {
-      const overlay = overlaysById.get(Number(fixture.apiFixtureId));
-      return overlay ? mergeFixture(fixture, overlay) : fixture;
-    }),
-  };
-}
-
-function mergeFixture(base: Record<string, unknown>, overlay: Record<string, unknown>) {
-  return {
-    ...base,
-    status: overlay.status ?? base.status,
-    statusLabel: overlay.statusLabel ?? base.statusLabel,
-    elapsed: overlay.elapsed ?? base.elapsed,
-    score: overlay.score ?? base.score,
-    homeTeam: overlay.homeTeam ?? base.homeTeam,
-    awayTeam: overlay.awayTeam ?? base.awayTeam,
-    weather: overlay.weather || base.weather,
+    news: cache.news?.data ?? null,
   };
 }
 
@@ -399,7 +504,6 @@ function enrichPlayerProfileFromSquads(profileData: unknown, squadsData: unknown
   if (!squadHit) return profileData;
 
   const player = asObject(data.player);
-  const team = asObject(squadHit.squad.team);
   const squadPlayer = asObject(squadHit.player);
   const seasonStats = Array.isArray(data.seasonStats) ? data.seasonStats : [];
 
@@ -416,11 +520,7 @@ function enrichPlayerProfileFromSquads(profileData: unknown, squadsData: unknown
       photo: player.photo ?? squadPlayer.photo ?? "",
       ...player,
     },
-    currentTeam: data.currentTeam ?? {
-      id: team.id ?? null,
-      name: team.name ?? team.englishName ?? "",
-      logo: team.logo ?? "",
-    },
+    currentTeam: data.currentTeam ?? null,
     currentSeason: data.currentSeason ?? Number(season),
     seasonStats: seasonStats.length ? seasonStats : [buildSquadFallbackStatistic(squadHit, season)],
   };
@@ -440,14 +540,9 @@ function buildSquadFallbackStatistic(
   hit: { squad: Record<string, unknown>; player: Record<string, unknown> },
   season: string
 ) {
-  const team = asObject(hit.squad.team);
   const player = asObject(hit.player);
   return {
-    team: {
-      id: team.id ?? null,
-      name: team.name ?? team.englishName ?? "",
-      logo: team.logo ?? "",
-    },
+    team: null,
     league: {
       id: Number(process.env.WORLDCUP_LEAGUE_ID || "1"),
       name: "FIFA World Cup",
@@ -579,10 +674,6 @@ function updateMeta(cache: StoredCache, cacheFile: string) {
 function numberFromEnv(key: string, fallback: number) {
   const value = Number(process.env[key]);
   return Number.isFinite(value) && value > 0 ? value : fallback;
-}
-
-function valueOrNull<T>(result: PromiseSettledResult<T>) {
-  return result.status === "fulfilled" ? result.value : null;
 }
 
 function getErrorMessage(error: unknown) {

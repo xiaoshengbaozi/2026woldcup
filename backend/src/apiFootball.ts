@@ -93,6 +93,8 @@ export function createApiFootballService(
   const requestTimeoutMs = Number(process.env.API_FOOTBALL_REQUEST_TIMEOUT_MS || DEFAULT_REQUEST_TIMEOUT_MS);
   const cacheFile = resolve(process.env.API_FOOTBALL_CACHE_FILE || resolve(process.cwd(), "data", "api-football-cache.json"));
   const cache = loadCache(cacheFile);
+  const inFlight = new Map<string, Promise<ApiFootballGatewayResponse>>();
+  const allowForceRefresh = process.env.API_FOOTBALL_ALLOW_FORCE_REFRESH === "1";
 
   return {
     isConfigured: () => Boolean(apiKey),
@@ -102,7 +104,7 @@ export function createApiFootballService(
         throw createHttpError(503, "api_football_not_configured");
       }
 
-      const forceRefresh = shouldForceRefresh(params);
+      const forceRefresh = allowForceRefresh && shouldForceRefresh(params);
       const normalizedParams = normalizeParams(params);
       const cacheKey = `${endpoint}?${normalizedParams.toString()}`;
       const cached = cache.get(cacheKey);
@@ -117,54 +119,69 @@ export function createApiFootballService(
         return { ...cached.payload, cached: true };
       }
 
+      if (!forceRefresh) {
+        const pending = inFlight.get(cacheKey);
+        if (pending) return pending;
+      }
+
       const url = `${host}/${endpoint}${normalizedParams.size ? `?${normalizedParams}` : ""}`;
-      let response: Response;
+
+      const requestPromise = (async () => {
+        let response: Response;
+        try {
+          response = await fetchWithTimeout(url, {
+            headers: {
+              "x-apisports-key": apiKey,
+            },
+          }, requestTimeoutMs);
+        } catch (error) {
+          if (cached && cached.staleUntil > Date.now()) {
+            return { ...cached.payload, cached: true };
+          }
+          throw error;
+        }
+
+        const upstream = await response.json().catch(() => null);
+
+        if (!response.ok) {
+          if (cached && cached.staleUntil > Date.now()) {
+            return { ...cached.payload, cached: true };
+          }
+          throw createHttpError(response.status, "api_football_upstream_error", upstream);
+        }
+
+        if (hasApiFootballErrors(upstream)) {
+          if (cached && cached.staleUntil > Date.now() && !hasApiFootballErrors(cached.payload.upstream)) {
+            return { ...cached.payload, cached: true };
+          }
+          throw createHttpError(502, "api_football_data_unavailable", upstream);
+        }
+
+        const payload: ApiFootballGatewayResponse = {
+          source: "api-football",
+          endpoint,
+          cached: false,
+          timestamp: Date.now(),
+          upstream,
+        };
+
+        const ttl = getCacheTtl(endpoint, normalizedParams, fallbackTtl);
+        cache.set(cacheKey, {
+          expiresAt: Date.now() + ttl,
+          staleUntil: Date.now() + ttl + staleTtl,
+          payload,
+        });
+        saveCache(cacheFile, cache);
+
+        return payload;
+      })();
+
+      inFlight.set(cacheKey, requestPromise);
       try {
-        response = await fetchWithTimeout(url, {
-          headers: {
-            "x-apisports-key": apiKey,
-          },
-        }, requestTimeoutMs);
-      } catch (error) {
-        if (cached && cached.staleUntil > Date.now()) {
-          return { ...cached.payload, cached: true };
-        }
-        throw error;
+        return await requestPromise;
+      } finally {
+        inFlight.delete(cacheKey);
       }
-
-      const upstream = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        if (cached && cached.staleUntil > Date.now()) {
-          return { ...cached.payload, cached: true };
-        }
-        throw createHttpError(response.status, "api_football_upstream_error", upstream);
-      }
-
-      if (hasApiFootballErrors(upstream)) {
-        if (cached && cached.staleUntil > Date.now() && !hasApiFootballErrors(cached.payload.upstream)) {
-          return { ...cached.payload, cached: true };
-        }
-        throw createHttpError(502, "api_football_data_unavailable", upstream);
-      }
-
-      const payload: ApiFootballGatewayResponse = {
-        source: "api-football",
-        endpoint,
-        cached: false,
-        timestamp: Date.now(),
-        upstream,
-      };
-
-      const ttl = getCacheTtl(endpoint, normalizedParams, fallbackTtl);
-      cache.set(cacheKey, {
-        expiresAt: Date.now() + ttl,
-        staleUntil: Date.now() + ttl + staleTtl,
-        payload,
-      });
-      saveCache(cacheFile, cache);
-
-      return payload;
     },
   };
 }
