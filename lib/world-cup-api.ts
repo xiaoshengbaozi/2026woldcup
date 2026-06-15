@@ -28,6 +28,7 @@ export type NormalizedWorldCupFixture = {
   stage: string;
   weather: string;
   status?: Match["status"];
+  statusShort?: string;
   statusLabel?: string;
   elapsed?: number | null;
   score?: Match["score"];
@@ -270,6 +271,7 @@ function mergeFixture(base: NormalizedWorldCupFixture, overlay: NormalizedWorldC
   return {
     ...base,
     status: overlay.status ?? base.status,
+    statusShort: overlay.statusShort ?? base.statusShort,
     statusLabel: overlay.statusLabel ?? base.statusLabel,
     elapsed: overlay.elapsed ?? base.elapsed,
     score: overlay.score ?? base.score,
@@ -305,6 +307,7 @@ function toMatch(fixture: NormalizedWorldCupFixture): Match {
     stage: fixture.stage,
     weather: fixture.weather,
     status: fixture.status,
+    statusShort: fixture.statusShort,
     statusLabel: fixture.statusLabel,
     elapsed: fixture.elapsed,
     score: fixture.score,

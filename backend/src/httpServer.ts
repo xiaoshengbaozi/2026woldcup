@@ -455,6 +455,7 @@ function mergeCachedFixturePayload(baseData: unknown, liveData: unknown) {
         ? {
             ...fixture,
             status: overlay.status ?? fixture.status,
+            statusShort: overlay.statusShort ?? fixture.statusShort,
             statusLabel: overlay.statusLabel ?? fixture.statusLabel,
             elapsed: overlay.elapsed ?? fixture.elapsed,
             score: overlay.score ?? fixture.score,

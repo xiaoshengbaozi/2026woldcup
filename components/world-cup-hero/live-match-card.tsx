@@ -23,8 +23,13 @@ export function LiveMatchCard({
   const isUnlocked = areMatchTeamsConfirmed(match.summary);
   const stableCurrentTime = currentTime > 0 ? currentTime : match.start.getTime();
   const fallbackElapsed = Math.max(0, Math.floor((stableCurrentTime - match.start.getTime()) / 60000));
+  const statusShort = match.statusShort?.trim().toUpperCase();
   const elapsed = typeof match.elapsed === "number" && match.elapsed > 0 ? match.elapsed : fallbackElapsed;
-  const isHT = match.status === "halftime" || (isLive && elapsed >= 45 && elapsed < 60);
+  const isHT =
+    match.status === "halftime" ||
+    statusShort === "HT" ||
+    statusShort === "BT" ||
+    (!statusShort && isLive && elapsed >= 45 && elapsed < 60);
   const minute = isLive ? getMatchPhaseLabel({ ...match, elapsed }) : formatKickoff(match.start);
   const statusLabel = isLive ? (isHT ? "中场" : "直播中") : "即将开赛";
   const score = getMatchScore(match);
@@ -63,7 +68,7 @@ export function LiveMatchCard({
           <div
             className={`h-full transition-[width] duration-700 ease-out ${isHT ? "bg-gradient-to-r from-amber-500 to-amber-400" : isLive ? "bg-gradient-to-r from-volt to-volt/80" : "bg-gradient-to-r from-flare to-volt"}`}
             style={{
-              width: isLive ? (isHT ? "45%" : `${Math.min(elapsed / 90 * 100, 100)}%`) : "8%",
+              width: isLive ? getProgressWidth(statusShort, elapsed, isHT) : "8%",
               boxShadow: isHT ? "0 0 16px rgba(251,191,36,0.6)" : isLive ? "0 0 16px rgba(216,255,62,0.5)" : "0 0 16px rgba(255,154,31,0.45)",
             }}
           />
@@ -71,6 +76,12 @@ export function LiveMatchCard({
       </div>
     </div>
   );
+}
+
+function getProgressWidth(statusShort: string | undefined, elapsed: number, isHT: boolean) {
+  if (isHT) return statusShort === "BT" ? "100%" : "45%";
+  if (statusShort === "P" || statusShort === "ET" || statusShort === "AET" || statusShort === "PEN") return "100%";
+  return `${Math.min(elapsed / 90 * 100, 100)}%`;
 }
 
 function formatKickoff(date: Date) {

@@ -20,6 +20,7 @@ type GroupStandingsProps = {
 type PredictionScore = { home: number; away: number } | null;
 
 type StandingTeam = Team & {
+  code?: string;
   played: number;
   won: number;
   drawn: number;
@@ -225,7 +226,7 @@ function GroupTable({ group }: { group: GroupStanding }) {
 }
 
 function StandingRow({ team, index }: { team: StandingTeam; index: number }) {
-  const href = getTeamDetailHrefByCode(teamCode(team)) || getTeamDetailHrefByName(team.name);
+  const href = getTeamDetailHrefByCode(team.code ?? teamCode(team)) || getTeamDetailHrefByName(team.name);
   const teamContent = (
     <>
       <span className={`tabular w-4 shrink-0 text-xs font-semibold ${index < 2 ? "text-volt" : "text-white/45"}`}>
@@ -291,6 +292,7 @@ function buildApiGroupStandings(rows: NormalizedWorldCupStandingRow[]): GroupSta
           const localTeam = getTeamByCode(code);
 
           return {
+            code,
             badge: code || String(row.rank),
             badgeType: code ? "image" : "code",
             image: code ? getFlagUrl(normalizeFlagCode(code), 40) : "",
@@ -318,7 +320,8 @@ function mergeGroupStandings(...sources: GroupStanding[][]): GroupStanding[] {
 
   for (const source of sources) {
     for (const group of source) {
-      groups.set(group.id, group);
+      const existing = groups.get(group.id);
+      groups.set(group.id, existing ? mergeGroupStanding(existing, group) : normalizeGroupStanding(group));
     }
   }
 
@@ -327,11 +330,79 @@ function mergeGroupStandings(...sources: GroupStanding[][]): GroupStanding[] {
     .filter((group): group is GroupStanding => Boolean(group));
 }
 
+function mergeGroupStanding(base: GroupStanding, incoming: GroupStanding): GroupStanding {
+  const teams = new Map<string, StandingTeam>();
+
+  for (const team of base.teams) {
+    teams.set(getStandingTeamKey(team), normalizeStandingTeam(team));
+  }
+
+  for (const team of incoming.teams) {
+    teams.set(getStandingTeamKey(team), normalizeStandingTeam(team));
+  }
+
+  return {
+    ...base,
+    ...incoming,
+    teams: sortStandingTeams([...teams.values()]).slice(0, 4),
+  };
+}
+
+function normalizeGroupStanding(group: GroupStanding): GroupStanding {
+  const teams = new Map<string, StandingTeam>();
+  for (const team of group.teams) {
+    teams.set(getStandingTeamKey(team), normalizeStandingTeam(team));
+  }
+
+  return {
+    ...group,
+    teams: sortStandingTeams([...teams.values()]).slice(0, 4),
+  };
+}
+
+function normalizeStandingTeam(team: StandingTeam): StandingTeam {
+  const code = normalizeStandingCode(team.code ?? teamCode(team));
+  const localTeam = getTeamByCode(code);
+
+  return {
+    ...team,
+    code,
+    badge: code || team.badge,
+    badgeType: code ? "image" : team.badgeType,
+    image: code ? getFlagUrl(normalizeFlagCode(code), 40) : team.image,
+    name: localTeam?.nameCn || localTeam?.name || team.name,
+  };
+}
+
+function getStandingTeamKey(team: StandingTeam) {
+  return normalizeStandingCode(team.code ?? teamCode(team)) || normalizeTeamNameKey(team.name);
+}
+
+function sortStandingTeams(teams: StandingTeam[]) {
+  return teams.sort((a, b) =>
+    b.points - a.points ||
+    (b.goalDifference ?? 0) - (a.goalDifference ?? 0) ||
+    (b.goalsFor ?? 0) - (a.goalsFor ?? 0) ||
+    b.won - a.won ||
+    a.name.localeCompare(b.name)
+  );
+}
+
+function normalizeStandingCode(code?: string | null) {
+  const upper = code?.trim().toUpperCase() ?? "";
+  return standingCodeAliases[upper] ?? upper;
+}
+
+function normalizeTeamNameKey(name: string) {
+  return name.replace(/[^\p{L}\p{N}]/gu, "").toLowerCase();
+}
+
 function buildSeedGroupStandings(): GroupStanding[] {
   return GROUPS.map((group) => ({
     id: group.id,
     label: `${group.id} 组`,
     teams: group.teams.map((item) => ({
+      code: item.code,
       badge: item.code,
       badgeType: "image",
       image: getFlagUrl(item.code, 40),
@@ -352,6 +423,7 @@ function computePredictionStandings(groupId: string, scores: Record<string, Pred
   const rows = new Map<string, StandingTeam>();
   for (const item of group.teams) {
     rows.set(item.code, {
+      code: item.code,
       badge: item.code,
       badgeType: "image",
       image: getFlagUrl(item.code, 40),
@@ -397,18 +469,11 @@ function computePredictionStandings(groupId: string, scores: Record<string, Pred
     }
   }
 
-  return [...rows.entries()]
+  return sortStandingTeams([...rows.entries()]
     .map(([code, row]) => {
       const team = getTeamByCode(code);
       return { ...row, name: team?.nameCn || team?.name || row.name };
-    })
-    .sort((a, b) =>
-      b.points - a.points ||
-      (b.goalDifference ?? 0) - (a.goalDifference ?? 0) ||
-      (b.goalsFor ?? 0) - (a.goalsFor ?? 0) ||
-      b.won - a.won ||
-      a.name.localeCompare(b.name)
-    )
+    }))
     .slice(0, 4);
 }
 
@@ -426,17 +491,27 @@ function repairApiGroupRows(grouped: Map<string, NormalizedWorldCupStandingRow[]
 
     const rankedRows = rows.sort((a, b) => a.rank - b.rank).slice(0, 4);
     const rawCodes = rankedRows.map((row) => getCanonicalApiTeamCode(row.team));
-    const usedGroupCodes = new Set(rawCodes.filter((code) => groupTeamCodes.includes(code)));
-    const missingGroupCodes = groupTeamCodes.filter((code) => !usedGroupCodes.has(code));
+    const firstSeenGroupCodes = new Set<string>();
+    const missingGroupCodes = groupTeamCodes.filter((code) => {
+      const isPresent = rawCodes.includes(code);
+      if (!isPresent || firstSeenGroupCodes.has(code)) return true;
+      firstSeenGroupCodes.add(code);
+      return false;
+    });
+    const acceptedGroupCodes = new Set<string>();
 
     for (const row of rankedRows) {
       const rawCode = getCanonicalApiTeamCode(row.team);
-      if (groupTeamCodes.includes(rawCode)) continue;
+      if (groupTeamCodes.includes(rawCode) && !acceptedGroupCodes.has(rawCode)) {
+        acceptedGroupCodes.add(rawCode);
+        continue;
+      }
 
       const replacementCode = missingGroupCodes.shift();
       const replacementTeam = replacementCode ? getTeamByCode(replacementCode) : undefined;
       if (!replacementCode || !replacementTeam) continue;
 
+      acceptedGroupCodes.add(replacementCode);
       row.team.id = null;
       row.team.code = replacementCode;
       row.team.name = replacementTeam.nameCn || replacementTeam.name;
@@ -464,7 +539,7 @@ function getCanonicalApiTeamCode(team: NormalizedWorldCupStandingRow["team"]) {
 }
 
 const apiCodeAliases: Record<string, string> = {
-  ALG: "DZA",
+  DZA: "ALG",
   KSA: "SAU",
   PRY: "PAR",
   CUR: "CUW",
@@ -506,7 +581,7 @@ const apiTeamIdToCode: Record<number, string> = {
   1504: "GHA",
   1508: "COD",
   1531: "RSA",
-  1532: "DZA",
+  1532: "ALG",
   1533: "CPV",
   1548: "JOR",
   1567: "IRQ",
@@ -565,21 +640,14 @@ function collectTeams(matches: Match[]): StandingTeam[] {
     applyScore(homeRow, awayRow, score.home, score.away);
   });
 
-  return [...teams.values()]
-    .sort((a, b) =>
-      b.points - a.points ||
-      (b.goalDifference ?? 0) - (a.goalDifference ?? 0) ||
-      (b.goalsFor ?? 0) - (a.goalsFor ?? 0) ||
-      b.won - a.won ||
-      a.name.localeCompare(b.name)
-    )
-    .slice(0, 4);
+  return sortStandingTeams([...teams.values()]).slice(0, 4);
 }
 
 function ensureStandingTeam(teams: Map<string, StandingTeam>, team: Team & { key: string }) {
   if (teams.has(team.key)) return;
 
   teams.set(team.key, {
+    code: normalizeStandingCode(team.key || teamCode(team)),
     badge: team.badge,
     badgeType: team.badgeType,
     image: team.image,
@@ -600,8 +668,8 @@ function getMatchTeams(match: Match) {
   const away = match.awayTeam ? teamFromMeta(match.awayTeam.code, match.awayTeam.name, parsed.away) : parsed.away;
 
   return {
-    home: { ...home, key: teamCode(home) },
-    away: { ...away, key: teamCode(away) },
+    home: { ...home, key: normalizeStandingCode(match.homeTeam?.code ?? teamCode(home)) },
+    away: { ...away, key: normalizeStandingCode(match.awayTeam?.code ?? teamCode(away)) },
   };
 }
 
@@ -652,11 +720,18 @@ function teamCode(team: Team) {
   const code = team.image.split("/").pop()?.split(".")[0] ?? "";
 
   return (
-    countryCodes[code] ??
+    countryCodes[code.toLowerCase()] ??
     team.name.replace(/[^\p{L}\p{N}]/gu, "").slice(0, 3).toUpperCase() ??
     team.badge
   );
 }
+
+const standingCodeAliases: Record<string, string> = {
+  DZA: "ALG",
+  KSA: "SAU",
+  PRY: "PAR",
+  CUR: "CUW",
+};
 
 const countryCodes: Record<string, string> = {
   mx: "MEX",
@@ -715,6 +790,15 @@ const countryCodes: Record<string, string> = {
   sk: "SVK",
   si: "SVN",
   ch: "SUI",
+  "gb-eng": "ENG",
+  "gb-sct": "SCO",
+  py: "PAR",
+  dz: "DZA",
+  cv: "CPV",
+  cd: "COD",
+  cw: "CUW",
+  se: "SWE",
+  uz: "UZB",
   tn: "TUN",
   tr: "TUR",
   ua: "UKR",
