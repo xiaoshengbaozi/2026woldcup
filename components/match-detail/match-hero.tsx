@@ -203,16 +203,8 @@ function isWarmupStage(stage?: string) {
 
 function formatMatchStatus(detail: MatchDetail, start: Date) {
   if (detail.status === "not_started") return formatTime(start);
-  if (detail.status === "halftime") return "中场";
   if (detail.status === "finished") return "已结束";
-
-  const elapsed = detail.match.elapsed;
-  if (typeof elapsed === "number" && elapsed > 0) {
-    const phase = elapsed <= 45 ? "上半场" : "下半场";
-    return `${phase} ${elapsed}'`;
-  }
-
-  return "比赛中";
+  return getMatchPhaseLabel(detail.match);
 }
 
 export function MatchHero({ detail, favoriteAction }: { detail: MatchDetail; favoriteAction?: ReactNode }) {

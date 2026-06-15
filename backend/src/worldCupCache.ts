@@ -207,6 +207,16 @@ export function createWorldCupCache(options: WorldCupCacheOptions) {
     );
   }
 
+  async function syncKey(key: WorldCupCacheKey) {
+    if (key === "meta") return syncAll();
+    if (key === "player-profile") return { key, ok: true, skipped: "manual_refresh_unsupported" };
+
+    const target = targets.find((item) => item.key === key);
+    if (!target) return { key, ok: true, skipped: "target_not_found" };
+
+    return syncTarget(target);
+  }
+
   function syncDueTargets() {
     const now = Date.now();
     const windowState = getMatchWindowState(cache, now);
@@ -272,6 +282,7 @@ export function createWorldCupCache(options: WorldCupCacheOptions) {
     },
 
     syncAll,
+    syncKey,
   };
 }
 
@@ -331,8 +342,7 @@ function getMatchWindowState(cache: StoredCache, now: number): MatchWindowState 
 }
 
 function getTodayFixtureStartTimes(cache: StoredCache, now: number) {
-  const dayStart = startOfUtcDayMs(now);
-  const dayEnd = dayStart + 24 * 60 * 60_000;
+  const todayInShanghai = formatDateInOffset(now, 8);
   const fixtures = [
     ...getPayloadFixtures(cache.today?.data),
     ...getPayloadFixtures(cache.fixtures?.data),
@@ -341,7 +351,7 @@ function getTodayFixtureStartTimes(cache: StoredCache, now: number) {
 
   return fixtures
     .map((fixture) => Date.parse(String(fixture.startIso ?? fixture.date ?? "")))
-    .filter((time) => Number.isFinite(time) && time >= dayStart && time < dayEnd)
+    .filter((time) => Number.isFinite(time) && formatDateInOffset(time, 8) === todayInShanghai)
     .filter((time) => {
       if (seen.has(time)) return false;
       seen.add(time);
@@ -395,6 +405,10 @@ function startOfUtcDayMs(now: number) {
   return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
 }
 
+function formatDateInOffset(value: number, offsetHours: number) {
+  return new Date(value + offsetHours * 60 * 60_000).toISOString().slice(0, 10);
+}
+
 async function buildSquadsCache(apiFootball: ApiFootballService) {
   const standings = await getWorldCupStandings(apiFootball, tournamentUrl("/api/worldcup/standings"));
   const teamIds = extractTeamIdsFromStandings(standings);
@@ -435,8 +449,18 @@ function tournamentUrl(pathname: string) {
 
 function todayUrl() {
   const url = tournamentUrl("/api/worldcup/fixtures");
-  url.searchParams.set("date", new Date().toISOString().slice(0, 10));
+  const now = Date.now();
+  const shanghaiDayStartUtc = startOfOffsetDayUtcMs(now, 8);
+  const shanghaiDayEndUtc = shanghaiDayStartUtc + 24 * 60 * 60_000 - 1;
+  url.searchParams.set("from", new Date(shanghaiDayStartUtc).toISOString().slice(0, 10));
+  url.searchParams.set("to", new Date(shanghaiDayEndUtc).toISOString().slice(0, 10));
   return url;
+}
+
+function startOfOffsetDayUtcMs(now: number, offsetHours: number) {
+  const offsetMs = offsetHours * 60 * 60_000;
+  const shifted = new Date(now + offsetMs);
+  return Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate()) - offsetMs;
 }
 
 function upcomingUrl() {

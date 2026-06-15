@@ -309,8 +309,8 @@ function handleWorldCupCacheRequest(
   }
 
   if (url.searchParams.get("refresh") === "1") {
-    worldCupCache.syncAll().catch((error) => {
-      console.error("[WorldCupCache] Manual refresh failed:", error);
+    worldCupCache.syncKey(key).catch((error) => {
+      console.error(`[WorldCupCache] Manual refresh failed; key=${key}:`, error);
     });
   }
 
@@ -371,15 +371,60 @@ function getCachedFixturePayload(worldCupCache: WorldCupCacheService, url: URL) 
   if (url.searchParams.has("date")) {
     const date = url.searchParams.get("date");
     const today = worldCupCache.get("today");
-    const live = worldCupCache.get("live");
-    const todayPayload = today?.ok && today.data ? filterCachedFixturePayloadByDate(today.data, date, live?.data) : null;
-    if (todayPayload && getFixtureCount(todayPayload) > 0) return todayPayload;
-
     const fixtures = worldCupCache.get("fixtures");
-    if (fixtures?.ok && fixtures.data) return filterCachedFixturePayloadByDate(fixtures.data, date, live?.data);
+    const live = worldCupCache.get("live");
+    const standings = worldCupCache.get("standings");
+    const payloads = [
+      fixtures?.ok && fixtures.data ? fixtures.data : null,
+      today?.ok && today.data ? today.data : null,
+    ].filter(Boolean);
+
+    if (payloads.length) {
+      return filterCachedFixturePayloadByDate(
+        combineCachedFixturePayloads(payloads),
+        date,
+        live?.data,
+        standings?.data
+      );
+    }
   }
 
   return null;
+}
+
+function combineCachedFixturePayloads(payloads: unknown[]) {
+  const base = asRecord(payloads[0]);
+  const byKey = new Map<string, Record<string, unknown>>();
+
+  for (const payload of payloads) {
+    const fixtures = Array.isArray(asRecord(payload).fixtures)
+      ? asRecord(payload).fixtures as Array<Record<string, unknown>>
+      : [];
+    for (const fixture of fixtures) {
+      byKey.set(getCachedFixtureKey(fixture), fixture);
+    }
+  }
+
+  const fixtures = [...byKey.values()].sort((a, b) => {
+    const aTime = Date.parse(String(a.startIso ?? ""));
+    const bTime = Date.parse(String(b.startIso ?? ""));
+    return (Number.isFinite(aTime) ? aTime : 0) - (Number.isFinite(bTime) ? bTime : 0);
+  });
+
+  return {
+    ...base,
+    count: fixtures.length,
+    fixtures,
+  };
+}
+
+function getCachedFixtureKey(fixture: Record<string, unknown>) {
+  const identity = getCachedFixtureIdentity(fixture);
+  if (identity) return `identity:${identity}`;
+
+  const id = Number(fixture.apiFixtureId);
+  if (Number.isFinite(id) && id > 0) return `id:${id}`;
+  return `uid:${String(fixture.uid ?? "")}`;
 }
 
 function mergeCachedFixturePayload(baseData: unknown, liveData: unknown) {
@@ -394,15 +439,23 @@ function mergeCachedFixturePayload(baseData: unknown, liveData: unknown) {
       .map((fixture) => [Number(fixture.apiFixtureId), fixture] as const)
       .filter(([id]) => Number.isFinite(id) && id > 0)
   );
+  const liveByIdentity = new Map(
+    liveFixtures
+      .map((fixture) => [getCachedFixtureIdentity(fixture), fixture] as const)
+      .filter(([identity]) => Boolean(identity))
+  );
 
   return {
     ...base,
     fixtures: fixtures.map((fixture) => {
-      const overlay = liveById.get(Number(fixture.apiFixtureId));
+      const overlay =
+        liveById.get(Number(fixture.apiFixtureId)) ??
+        liveByIdentity.get(getCachedFixtureIdentity(fixture));
       return overlay
         ? {
             ...fixture,
             status: overlay.status ?? fixture.status,
+            statusShort: overlay.statusShort ?? fixture.statusShort,
             statusLabel: overlay.statusLabel ?? fixture.statusLabel,
             elapsed: overlay.elapsed ?? fixture.elapsed,
             score: overlay.score ?? fixture.score,
@@ -414,16 +467,96 @@ function mergeCachedFixturePayload(baseData: unknown, liveData: unknown) {
   };
 }
 
-function filterCachedFixturePayloadByDate(baseData: unknown, date: string | null, liveData: unknown) {
+function getCachedFixtureIdentity(fixture: Record<string, unknown>) {
+  const startTime = Date.parse(String(fixture.startIso ?? ""));
+  if (!Number.isFinite(startTime)) return "";
+
+  const homeTeam = asRecord(fixture.homeTeam);
+  const awayTeam = asRecord(fixture.awayTeam);
+  const home = String(homeTeam.code ?? homeTeam.englishName ?? homeTeam.name ?? "");
+  const away = String(awayTeam.code ?? awayTeam.englishName ?? awayTeam.name ?? "");
+  const homeKey = normalizeCachedFixtureTeam(home);
+  const awayKey = normalizeCachedFixtureTeam(away);
+  if (!homeKey || !awayKey) return "";
+
+  return [startTime, homeKey, awayKey].join("|");
+}
+
+function normalizeCachedFixtureTeam(value: string) {
+  return value
+    .normalize("NFKD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[^\p{L}\p{N}]/gu, "")
+    .toLowerCase();
+}
+
+function filterCachedFixturePayloadByDate(baseData: unknown, date: string | null, liveData: unknown, standingsData?: unknown) {
   const merged = mergeCachedFixturePayload(baseData, liveData);
   const base = asRecord(merged);
   const fixtures = Array.isArray(base.fixtures) ? base.fixtures as Array<Record<string, unknown>> : [];
   const filtered = date ? fixtures.filter((fixture) => fixtureMatchesApiDate(fixture, date)) : fixtures;
+  const scored = applyStandingInferredFixtureScores(filtered, standingsData);
   return {
     ...base,
-    count: filtered.length,
-    fixtures: filtered,
+    count: scored.length,
+    fixtures: scored,
   };
+}
+
+function applyStandingInferredFixtureScores(fixtures: Array<Record<string, unknown>>, standingsData: unknown) {
+  const standings = buildStandingRowsByTeamId(standingsData);
+  if (!standings.size) return fixtures;
+  const now = Date.now();
+
+  return fixtures.map((fixture) => {
+    const status = String(fixture.status ?? "");
+    if (status === "finished") return fixture;
+    const endTime = Date.parse(String(fixture.endIso ?? "")) || Date.parse(String(fixture.startIso ?? "")) + 2 * 60 * 60_000;
+    if (!Number.isFinite(endTime) || now < endTime) return fixture;
+
+    const homeTeam = asRecord(fixture.homeTeam);
+    const awayTeam = asRecord(fixture.awayTeam);
+    const home = standings.get(Number(homeTeam.id));
+    const away = standings.get(Number(awayTeam.id));
+    if (!home || !away || home.played !== 1 || away.played !== 1) return fixture;
+    if (home.goalsFor !== away.goalsAgainst || away.goalsFor !== home.goalsAgainst) return fixture;
+
+    return {
+      ...fixture,
+      status: "finished",
+      statusLabel: "已结束",
+      elapsed: 90,
+      score: {
+        home: home.goalsFor,
+        away: away.goalsFor,
+        halftimeHome: asRecord(fixture.score).halftimeHome ?? null,
+        halftimeAway: asRecord(fixture.score).halftimeAway ?? null,
+      },
+    };
+  });
+}
+
+function buildStandingRowsByTeamId(standingsData: unknown) {
+  const rows = getStandingRows(standingsData);
+  const byTeamId = new Map<number, { played: number; goalsFor: number; goalsAgainst: number }>();
+  for (const row of rows) {
+    const team = asRecord(row.team);
+    const id = Number(team.id);
+    if (!Number.isFinite(id) || id <= 0) continue;
+    byTeamId.set(id, {
+      played: Number(row.played ?? 0),
+      goalsFor: Number(row.goalsFor ?? 0),
+      goalsAgainst: Number(row.goalsAgainst ?? 0),
+    });
+  }
+  return byTeamId;
+}
+
+function getStandingRows(standingsData: unknown) {
+  const data = asRecord(standingsData);
+  if (Array.isArray(data.standings)) return data.standings as Array<Record<string, unknown>>;
+  const groups = asRecord(data.groups);
+  return Object.values(groups).flatMap((value) => Array.isArray(value) ? value as Array<Record<string, unknown>> : []);
 }
 
 function fixtureMatchesApiDate(fixture: Record<string, unknown>, date: string) {

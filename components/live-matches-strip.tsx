@@ -183,7 +183,8 @@ function MatchTickerItem({ match, isLive, stageLabel, currentTime }: { match: Ma
   const slug = generateMatchRouteSlug(match);
   const isUnlocked = areMatchTeamsConfirmed(match.summary);
   const hasStarted = hasMatchStarted(match) || isLive;
-  const elapsed = Math.max(0, Math.floor(((currentTime > 0 ? currentTime : match.start.getTime()) - match.start.getTime()) / 60000));
+  const fallbackElapsed = Math.max(0, Math.floor(((currentTime > 0 ? currentTime : match.start.getTime()) - match.start.getTime()) / 60000));
+  const elapsed = typeof match.elapsed === "number" && match.elapsed > 0 ? match.elapsed : fallbackElapsed;
   const time = hasStarted ? getMatchPhaseLabel({ ...match, elapsed }) : match.start.toLocaleTimeString("zh-CN", {
     timeZone: "Asia/Shanghai",
     hour: "2-digit",

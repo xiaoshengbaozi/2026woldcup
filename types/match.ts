@@ -21,6 +21,7 @@ export type Match = {
   stage: string;
   weather: string;
   status?: "not_started" | "live" | "halftime" | "finished" | "postponed" | "unknown";
+  statusShort?: string;
   statusLabel?: string;
   elapsed?: number | null;
   score?: {

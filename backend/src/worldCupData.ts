@@ -21,6 +21,7 @@ export interface NormalizedWorldCupFixture {
   stage: string;
   weather: string;
   status: "not_started" | "live" | "halftime" | "finished" | "postponed" | "cancelled";
+  statusShort: string;
   statusLabel: string;
   elapsed: number | null;
   score: {
@@ -221,6 +222,7 @@ function mergeFreshFixture(base: NormalizedWorldCupFixture, overlay: NormalizedW
   return {
     ...base,
     status: overlay.status,
+    statusShort: overlay.statusShort,
     statusLabel: overlay.statusLabel,
     elapsed: overlay.elapsed,
     score: overlay.score,
@@ -415,7 +417,8 @@ function normalizeFixture(raw: ApiFootballFixture): NormalizedWorldCupFixture {
   const end = start ? new Date(start.getTime() + 2 * 60 * 60 * 1000) : null;
   const homeTeam = normalizeTeam(raw.teams?.home);
   const awayTeam = normalizeTeam(raw.teams?.away);
-  const status = normalizeStatus(raw.fixture?.status?.short);
+  const statusShort = normalizeStatusShort(raw.fixture?.status?.short);
+  const status = normalizeStatus(statusShort);
   const stage = localizeRound(raw.league?.round ?? "");
 
   return {
@@ -431,6 +434,7 @@ function normalizeFixture(raw: ApiFootballFixture): NormalizedWorldCupFixture {
     stage,
     weather: "待更新",
     status,
+    statusShort,
     statusLabel: STATUS_LABELS[status],
     elapsed: raw.fixture?.status?.elapsed ?? null,
     score: {
@@ -896,6 +900,10 @@ function normalizeStatus(shortStatus = ""): NormalizedWorldCupFixture["status"] 
   if (["PST", "PST"].includes(shortStatus)) return "postponed";
   if (["CANC", "ABD", "AWD", "WO"].includes(shortStatus)) return "cancelled";
   return "not_started";
+}
+
+function normalizeStatusShort(shortStatus = "") {
+  return shortStatus.trim().toUpperCase();
 }
 
 function localizeRound(round: string) {

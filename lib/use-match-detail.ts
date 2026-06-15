@@ -200,6 +200,7 @@ function buildRealMatchDetail(match: Match, slug: string, remote: WorldCupMatchD
         ...match,
         status: mergedStatus,
         statusLabel: mergedStatus === "finished" ? "已结束" : fixture.statusLabel,
+        statusShort: fixture.statusShort,
         elapsed: fixture.elapsed,
         score: fixture.score,
       }
