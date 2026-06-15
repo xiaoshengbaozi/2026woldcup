@@ -10,6 +10,16 @@ loadLocalEnv(resolve(process.cwd(), ".env"));
 
 const DEFAULT_INTERVAL_MS = 30_000;
 const POLL_INTERVAL_MS = parseInt(process.env.REMINDER_WORKER_INTERVAL_MS || "", 10) || DEFAULT_INTERVAL_MS;
+const DEFAULT_FOLLOW_SCAN_BEFORE_MS = 30 * 60_000;
+const DEFAULT_FOLLOW_SCAN_AFTER_MS = 30 * 60_000;
+const FOLLOW_SCAN_BEFORE_MS = parseDurationMs(
+  process.env.REMINDER_WORKER_FOLLOW_SCAN_BEFORE_MS,
+  DEFAULT_FOLLOW_SCAN_BEFORE_MS
+);
+const FOLLOW_SCAN_AFTER_MS = parseDurationMs(
+  process.env.REMINDER_WORKER_FOLLOW_SCAN_AFTER_MS,
+  DEFAULT_FOLLOW_SCAN_AFTER_MS
+);
 
 export interface ReminderWorkerOptions {
   intervalMs?: number;
@@ -57,7 +67,7 @@ export function createReminderWorker(store = new UserStore(), options: ReminderW
         logger.log(`[ReminderWorker] queued ${jobs.length} reminder notification(s).`);
       }
 
-      if (apiFootball?.isConfigured()) {
+      if (apiFootball?.isConfigured() && shouldRunFollowUpdateScan(users, now())) {
         const notificationIdsBeforeFollowScan = snapshotNotificationIds(store);
         await queueFollowUpdateNotifications(store, apiFootball, logger);
         await deliverNewTelegramNotifications(store, notificationIdsBeforeFollowScan, logger);
@@ -98,6 +108,23 @@ export function collectDueReminderJobs(users: WorldCupUser[], now: number) {
   }
 
   return jobs;
+}
+
+export function shouldRunFollowUpdateScan(users: WorldCupUser[], now: number) {
+  const mode = (process.env.REMINDER_WORKER_FOLLOW_SCAN_MODE || "match-window").trim().toLowerCase();
+  if (mode === "off" || mode === "false" || mode === "0") return false;
+  if (mode === "always" || mode === "true" || mode === "1") return true;
+  if (!users.some((user) => user.followedTeams.length || user.followedPlayers.length)) return false;
+
+  if (isWithinConfiguredFollowScanWindow(now)) return true;
+
+  for (const startsAt of getKnownMatchStartTimes(users)) {
+    if (now >= startsAt - FOLLOW_SCAN_BEFORE_MS && now <= startsAt + FOLLOW_SCAN_AFTER_MS) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 function isWorkerReminderDue(reminder: MatchReminder, now: number) {
@@ -574,6 +601,41 @@ function addUtcDays(date: Date, days: number) {
 
 function formatApiDate(date: Date) {
   return date.toISOString().slice(0, 10);
+}
+
+function getKnownMatchStartTimes(users: WorldCupUser[]) {
+  const startsAtValues = new Set<string>();
+  for (const user of users) {
+    for (const reminder of user.reminders) {
+      if (reminder.enabled && reminder.startsAt) startsAtValues.add(reminder.startsAt);
+    }
+    for (const match of user.favoriteMatches) {
+      if (match.startsAt) startsAtValues.add(match.startsAt);
+    }
+  }
+
+  return [...startsAtValues]
+    .map((startsAt) => Date.parse(startsAt))
+    .filter((timestamp) => Number.isFinite(timestamp));
+}
+
+function isWithinConfiguredFollowScanWindow(now: number) {
+  const startsAt = parseOptionalTimestamp(process.env.REMINDER_WORKER_FOLLOW_SCAN_START);
+  const endsAt = parseOptionalTimestamp(process.env.REMINDER_WORKER_FOLLOW_SCAN_END);
+  if (startsAt === null || endsAt === null) return false;
+  return now >= startsAt && now <= endsAt;
+}
+
+function parseOptionalTimestamp(value: string | undefined) {
+  if (!value) return null;
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) ? timestamp : null;
+}
+
+function parseDurationMs(value: string | undefined, fallback: number) {
+  if (!value) return fallback;
+  const duration = Number(value);
+  return Number.isFinite(duration) && duration >= 0 ? duration : fallback;
 }
 
 function snapshotNotificationIds(store: UserStore) {
