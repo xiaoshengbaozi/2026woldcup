@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { GlobalSearchDrawerCard } from "./global-search";
 
-type MobileSearchDrawerProps = {
+export type MobileSearchDrawerProps = {
   open: boolean;
   onClose: () => void;
 };

@@ -8,7 +8,6 @@ import { getTelegramBotUsername, sendTelegramMessage } from "./telegramService";
 import { getWorldCupFixtures, getWorldCupSquads } from "./worldCupData";
 import { UserStore, toPublicUser } from "./userStore";
 import type { InvitationCode, PredictionArchive, UserNotification, WorldCupUser } from "./userStore";
-import type { PlayerXTimelineService, XTimelinePlayerInput } from "./playerXTimeline";
 
 const SESSION_COOKIE = "wc_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
@@ -47,18 +46,12 @@ export class UserSystem {
   constructor(
     private readonly store = new UserStore(),
     private readonly apiFootball?: ApiFootballService,
-    private readonly playerXTimeline?: PlayerXTimelineService,
   ) {}
 
   async handleRequest(req: http.IncomingMessage, res: http.ServerResponse, url: URL) {
     try {
       if (req.method === "GET" && url.pathname === "/api/user-preferences") {
         sendJson(res, await this.getPreferenceCatalog());
-        return true;
-      }
-
-      if (req.method === "GET" && url.pathname === "/api/player-x-timeline") {
-        sendJson(res, await this.getPublicPlayerXTimeline(url));
         return true;
       }
 
@@ -220,15 +213,8 @@ export class UserSystem {
         const syncedUser = syncMutualFollowedMatchesForUser(this.store, user.id, catalog);
         const queuedNotifications = queueDueMatchNotifications(this.store, syncedUser);
         const latestUser = this.store.getUserById(user.id) ?? syncedUser;
-        await deliverTelegramNotifications(this.store, latestUser, collectTelegramPendingNotifications(latestUser, queuedNotifications));
+        await deliverTelegramNotifications(this.store, latestUser, queuedNotifications);
         sendJson(res, buildHomePayload(this.store.getUserById(user.id) ?? latestUser, catalog));
-        return true;
-      }
-
-      if (req.method === "GET" && url.pathname === "/api/me/player-x-timeline") {
-        const user = this.requireSessionUser(req, res);
-        if (!user) return true;
-        sendJson(res, await this.getPlayerXTimeline(user.followedPlayers));
         return true;
       }
 
@@ -676,43 +662,18 @@ export class UserSystem {
     return payload;
   }
 
-  private async getPublicPlayerXTimeline(url: URL) {
-    const playerIds = parseCsv(url.searchParams.get("playerIds"));
-    const limit = clampInteger(Number(url.searchParams.get("limit") || 12), 1, 24, 12);
-    if (playerIds.length) {
-      return this.getPlayerXTimeline(playerIds.slice(0, limit).map((id) => ({ id })));
-    }
-
-    const catalog = await this.getPreferenceCatalog();
-    return this.getPlayerXTimeline(catalog.players.slice(0, limit));
-  }
-
-  private async getPlayerXTimeline(players: XTimelinePlayerInput[]) {
-    if (!this.playerXTimeline) {
-      return {
-        timestamp: Date.now(),
-        configured: false,
-        warning: "x_timeline_service_unavailable",
-        players: [],
-        items: [],
-      };
-    }
-
-    return this.playerXTimeline.getTimeline(players);
-  }
-
   private async syncNotificationState(user: WorldCupUser) {
     const catalog = await this.getPreferenceCatalog();
     const syncedUser = syncMutualFollowedMatchesForUser(this.store, user.id, catalog);
     const queuedNotifications = queueDueMatchNotifications(this.store, syncedUser);
     const latestUser = this.store.getUserById(user.id) ?? syncedUser;
-    await deliverTelegramNotifications(this.store, latestUser, collectTelegramPendingNotifications(latestUser, queuedNotifications));
+    await deliverTelegramNotifications(this.store, latestUser, queuedNotifications);
     return this.store.getUserById(user.id) ?? latestUser;
   }
 }
 
-export function createUserSystem(store = new UserStore(), apiFootball?: ApiFootballService, playerXTimeline?: PlayerXTimelineService) {
-  return new UserSystem(store, apiFootball, playerXTimeline);
+export function createUserSystem(store = new UserStore(), apiFootball?: ApiFootballService) {
+  return new UserSystem(store, apiFootball);
 }
 
 function buildAdminUsersPayload(users: WorldCupUser[]) {
@@ -1791,8 +1752,7 @@ function queueDueMatchNotifications(store: UserStore, user: WorldCupUser, now = 
     if (isDayReminder && (!isSameDay || timeToStart <= 20 * 60_000)) continue;
     if (isTwentyMinuteReminder && (timeToStart > 20 * 60_000 || timeToStart < -2 * 60 * 60_000)) continue;
 
-    const beforeIds = new Set((store.getUserById(latestUser.id) ?? latestUser).notifications.map((notification) => notification.id));
-    const updatedUser = store.queueNotification(latestUser.id, {
+    const result = store.createNotification(latestUser.id, {
       type: "match_reminder",
       title: reminder.title,
       body: isTwentyMinuteReminder ? "比赛即将开始，别错过你收藏的比赛。" : "你收藏的比赛今天开赛。",
@@ -1804,8 +1764,7 @@ function queueDueMatchNotifications(store: UserStore, user: WorldCupUser, now = 
         urgent: isTwentyMinuteReminder,
       },
     });
-    const queued = updatedUser.notifications.find((notification) => !beforeIds.has(notification.id));
-    if (queued) queuedNotifications.push(queued);
+    if (result.created) queuedNotifications.push(result.notification);
     store.markReminderQueued(latestUser.id, reminder.id, now);
   }
   return queuedNotifications;
@@ -1823,19 +1782,6 @@ async function deliverTelegramNotifications(store: UserStore, user: WorldCupUser
     store.markNotificationTelegramDelivered(user.id, notification.id);
     store.markTelegramDeliverySent(user.id);
   }
-}
-
-function collectTelegramPendingNotifications(user: WorldCupUser, queuedNotifications: UserNotification[]) {
-  const byId = new Map<string, UserNotification>();
-  for (const notification of queuedNotifications) byId.set(notification.id, notification);
-  for (const notification of user.notifications) {
-    if (notification.read || notification.metadata?.telegramDeliveredAt) continue;
-    if (notification.channel !== "site" && notification.channel !== "telegram") continue;
-    byId.set(notification.id, notification);
-  }
-  return [...byId.values()]
-    .sort((a, b) => a.createdAt - b.createdAt)
-    .slice(0, 5);
 }
 
 function normalizeSearchText(value: string) {

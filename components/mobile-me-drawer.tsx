@@ -11,7 +11,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { openCreatorSupportModal } from "@/components/support-creator-modal";
 import type { UserSessionPayload } from "@/lib/user-system";
 
-type MobileMeDrawerProps = {
+export type MobileMeDrawerProps = {
   open: boolean;
   home: UserSessionPayload | null;
   loading?: boolean;

@@ -8,7 +8,6 @@ import { createEventDetector } from "./eventDetector";
 import { createHistoryBuffer } from "./historyBuffer";
 import { createHttpServer } from "./httpServer";
 import { createMatchLinesService } from "./matchLines";
-import { createPlayerXTimelineService } from "./playerXTimeline";
 import { createReminderWorker } from "./reminderWorker";
 import { createSnapshotCache } from "./snapshotCache";
 import { UserStore } from "./userStore";
@@ -55,7 +54,6 @@ async function main() {
   const wsServer = createWsServer();
   const matchLines = createMatchLinesService();
   const apiFootball = createApiFootballService();
-  const playerXTimeline = createPlayerXTimelineService();
   let currentCountries: Map<string, CountryData> = new Map();
   const worldCupCache = createWorldCupCache({
     apiFootball,
@@ -63,7 +61,7 @@ async function main() {
   });
   const userStore = new UserStore();
   await userStore.ready();
-  const userSystem = createUserSystem(userStore, apiFootball, playerXTimeline);
+  const userSystem = createUserSystem(userStore, apiFootball);
   matchLines.start();
   worldCupCache.start();
   if (process.env.ENABLE_EMBEDDED_REMINDER_WORKER === "true") {
@@ -167,7 +165,6 @@ async function main() {
     historyBuffer,
     wsServer,
     apiFootball,
-    playerXTimeline,
     worldCupCache,
     userSystem,
     getState: () => ({

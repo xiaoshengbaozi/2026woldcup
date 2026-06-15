@@ -14,6 +14,8 @@ const navItems = [
 ];
 
 const HIDE_MOBILE_NAV_PAGES = new Set(["/matches/calendar"]);
+const NEWS_API = process.env.NEXT_PUBLIC_NEWS_API_URL || "https://news.20250114.xyz";
+const warmedTargets = new Set<string>();
 
 export function MobileNavBar() {
   const pathname = usePathname();
@@ -21,10 +23,11 @@ export function MobileNavBar() {
   const normalizedPathname = pathname !== "/" ? pathname.replace(/\/$/, "") : pathname;
   const isLivePage = normalizedPathname === "/live";
   const [liveReturnHref, setLiveReturnHref] = useState("/matches");
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
 
   const isActive = (href: string) => {
-    if (href === "/") return pathname === "/";
-    return pathname.startsWith(href);
+    const pathActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
+    return pathActive || pendingHref === href;
   };
 
   useEffect(() => {
@@ -33,9 +36,44 @@ export function MobileNavBar() {
   }, [isLivePage]);
 
   useEffect(() => {
+    setPendingHref(null);
+  }, [pathname]);
+
+  useEffect(() => {
     if (isLivePage) return;
-    router.prefetch("/live");
+
+    const prefetchNavTargets = () => {
+      for (const item of navItems) router.prefetch(item.href);
+      router.prefetch("/live");
+    };
+
+    if (typeof window.requestIdleCallback === "function") {
+      const idleId = window.requestIdleCallback(prefetchNavTargets, { timeout: 1_500 });
+      return () => window.cancelIdleCallback(idleId);
+    }
+
+    const timeoutId = window.setTimeout(prefetchNavTargets, 600);
+    return () => window.clearTimeout(timeoutId);
   }, [isLivePage, router]);
+
+  const prewarmHref = (href: string) => {
+    router.prefetch(href);
+    if (warmedTargets.has(href)) return;
+    warmedTargets.add(href);
+
+    if (href === "/news") {
+      const endpoint = `${NEWS_API}/api/news?${new URLSearchParams({ limit: "72" }).toString()}`;
+      void fetch(endpoint, { cache: "force-cache" }).catch(() => undefined);
+    }
+
+    if (href === "/matches" || href === "/live") {
+      void fetch("/calendar.ics", { cache: "force-cache" }).catch(() => undefined);
+    }
+
+    if (href === "/data") {
+      void import("@/components/market-dashboard/market-dashboard");
+    }
+  };
 
   const handleLiveNavClick = (event: MouseEvent<HTMLAnchorElement>) => {
     if (isLivePage) {
@@ -47,6 +85,7 @@ export function MobileNavBar() {
       "mobile-live-return-url",
       `${window.location.pathname}${window.location.search}${window.location.hash}`
     );
+    setPendingHref("/live");
   };
 
   if (HIDE_MOBILE_NAV_PAGES.has(normalizedPathname)) return null;
@@ -73,6 +112,11 @@ export function MobileNavBar() {
               <Link
                 key={item.label}
                 href={item.href}
+                onPointerDown={() => {
+                  setPendingHref(item.href);
+                  prewarmHref(item.href);
+                }}
+                onClick={() => setPendingHref(item.href)}
                 className="relative flex flex-col items-center gap-1 px-1.5 py-1.5 transition-colors sm:px-3"
               >
                 {active && (
@@ -110,6 +154,12 @@ export function MobileNavBar() {
         <Link
           href={isLivePage ? liveReturnHref : "/live"}
           onClick={handleLiveNavClick}
+          onPointerDown={() => {
+            if (!isLivePage) {
+              setPendingHref("/live");
+              prewarmHref("/live");
+            }
+          }}
           className="mobile-floating-surface pointer-events-auto relative z-[90] flex h-[62px] w-[62px] shrink-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-full text-black transition-transform hover:scale-[1.02]"
           style={liveNavSurfaceStyle}
           aria-label="直播"

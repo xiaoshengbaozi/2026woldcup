@@ -634,6 +634,30 @@ export class UserStore {
     return user;
   }
 
+  createNotification(userId: string, input: Omit<UserNotification, "id" | "createdAt" | "read">) {
+    const user = this.requireUser(userId);
+    const duplicate = user.notifications.find((item) => (
+      (item.type === input.type &&
+        item.metadata?.reminderId !== undefined &&
+        item.metadata.reminderId === input.metadata?.reminderId) ||
+      (input.metadata?.notificationKey !== undefined &&
+        item.metadata?.notificationKey === input.metadata.notificationKey)
+    ));
+
+    if (duplicate) return { user, notification: duplicate, created: false };
+
+    const notification: UserNotification = {
+      id: randomUUID(),
+      ...input,
+      read: false,
+      createdAt: Date.now(),
+    };
+
+    user.notifications = [notification, ...user.notifications].slice(0, 200);
+    this.touch(user);
+    return { user, notification, created: true };
+  }
+
   markReminderQueued(userId: string, reminderId: string, queuedAt = Date.now()) {
     const user = this.requireUser(userId);
     user.reminders = user.reminders.map((reminder) => (
