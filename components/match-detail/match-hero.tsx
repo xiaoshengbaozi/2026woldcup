@@ -19,7 +19,7 @@ import skhiriImage from "@/assets/players/TUN-tunisia/headshots/ellyes-skhiri.we
 import kessieImage from "@/assets/players/CIV-ivory-coast/headshots/franck-kessie.webp";
 import bacunaImage from "@/assets/players/CUW-curacao/headshots/juninho-bacuna.webp";
 import ryanImage from "@/assets/players/AUS-australia/headshots/mathew-ryan.webp";
-import diazImage from "@/assets/players/COL-colombia/headshots/luis-diaz.webp";
+import jamesImage from "@/assets/players/COL-colombia/headshots/james-rodriguez.webp";
 import modricImage from "@/assets/players/CRO-croatia/headshots/luka-modric.webp";
 import hojlundImage from "@/assets/players/DEN-denmark/headshots/rasmus-hojlund.webp";
 import caicedoImage from "@/assets/players/ECU-ecuador/headshots/moises-caicedo.webp";
@@ -86,7 +86,7 @@ const PLAYER_ASSETS: Record<string, { src: string; name: string }> = {
   CAN: { src: daviesImage.src, name: "Alphonso Davies" },
   CIV: { src: kessieImage.src, name: "Franck Kessie" },
   COD: { src: wissaImage.src, name: "Yoane Wissa" },
-  COL: { src: diazImage.src, name: "Luis Diaz" },
+  COL: { src: jamesImage.src, name: "James Rodriguez" },
   CPV: { src: mendesImage.src, name: "Ryan Mendes" },
   CRO: { src: modricImage.src, name: "Luka Modric" },
   CUW: { src: bacunaImage.src, name: "Juninho Bacuna" },
