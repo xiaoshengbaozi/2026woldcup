@@ -15,6 +15,8 @@ const GAMMA_EVENT_URL = `https://gamma-api.polymarket.com/events/${POLYMARKET_WO
 const CLOB_BOOKS_URL = "https://clob.polymarket.com/books";
 const PING_INTERVAL_MS = 10_000;
 const MAX_RECONNECT_DELAY_MS = 30_000;
+const MARKET_REFRESH_INTERVAL_MS = 5 * 60_000;
+const MAX_VALID_SPREAD = 0.5;
 
 interface TeamMetadata {
   code: string;
@@ -247,14 +249,30 @@ function marketToState(market: GammaMarket, team: TeamMetadata, tokenId: string)
   };
 }
 
+function isValidDecimalPrice(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1;
+}
+
+function hasValidTwoSidedBook(
+  bestBid: number | undefined,
+  bestAsk: number | undefined
+): bestBid is number {
+  if (!isValidDecimalPrice(bestBid) || !isValidDecimalPrice(bestAsk)) return false;
+  return bestAsk >= bestBid && bestAsk - bestBid <= MAX_VALID_SPREAD;
+}
+
 function updatePriceFromBidAsk(state: MarketState, timestamp?: string) {
-  const prices = [state.bestBid, state.bestAsk].filter(
-    (price): price is number => typeof price === "number" && Number.isFinite(price)
-  );
-  const decimalPrice =
-    prices.length === 2
-      ? (prices[0] + prices[1]) / 2
-      : prices[0] ?? state.lastTradePrice ?? state.country.yesPrice / 100;
+  const bestBid = state.bestBid;
+  const bestAsk = state.bestAsk;
+  const hasTwoSidedBook = hasValidTwoSidedBook(bestBid, bestAsk);
+  const decimalPrice = hasTwoSidedBook
+    ? (bestBid + bestAsk!) / 2
+    : isValidDecimalPrice(state.lastTradePrice)
+      ? state.lastTradePrice!
+      : null;
+
+  if (decimalPrice === null) return false;
+
   const yesPrice = cents(decimalPrice);
 
   state.country = {
@@ -262,11 +280,13 @@ function updatePriceFromBidAsk(state: MarketState, timestamp?: string) {
     yesPrice,
     impliedProbability: yesPrice,
     spread:
-      typeof state.bestBid === "number" && typeof state.bestAsk === "number"
-        ? cents(Math.max(0, state.bestAsk - state.bestBid))
+      hasTwoSidedBook
+        ? cents(Math.max(0, bestAsk! - bestBid))
         : state.country.spread,
     lastUpdated: parseNumber(timestamp, Date.now()),
   };
+
+  return true;
 }
 
 async function fetchWorldCupMarkets(): Promise<MarketState[]> {
@@ -347,6 +367,7 @@ export function createPolymarketClient(apiKey: string): PolymarketClient {
   let reconnectAttempt = 0;
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   let pingTimer: ReturnType<typeof setInterval> | null = null;
+  let refreshTimer: ReturnType<typeof setInterval> | null = null;
 
   function emitSnapshot() {
     for (const state of states.values()) {
@@ -375,6 +396,7 @@ export function createPolymarketClient(apiKey: string): PolymarketClient {
 
   function subscribe() {
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    if (tokenToCode.size === 0) return;
     ws.send(
       JSON.stringify({
         assets_ids: Array.from(tokenToCode.keys()),
@@ -389,8 +411,42 @@ export function createPolymarketClient(apiKey: string): PolymarketClient {
   }
 
   function handleCountryMutation(state: MarketState, timestamp?: string) {
-    updatePriceFromBidAsk(state, timestamp);
-    emitter.emit("countryUpdate", state.country);
+    if (updatePriceFromBidAsk(state, timestamp)) {
+      emitter.emit("countryUpdate", state.country);
+    }
+  }
+
+  async function loadActiveMarkets() {
+    const initialStates = await fetchWorldCupMarkets();
+    await hydrateOrderBooks(initialStates);
+    states.clear();
+    tokenToCode.clear();
+
+    for (const state of initialStates) {
+      states.set(state.binding.countryCode, state);
+      tokenToCode.set(state.binding.tokenId, state.binding.countryCode);
+    }
+
+    console.log(`[Polymarket] Loaded ${states.size} active World Cup Winner markets.`);
+    emitSnapshot();
+    subscribe();
+  }
+
+  function startMarketRefresh() {
+    if (refreshTimer) return;
+    refreshTimer = setInterval(() => {
+      void loadActiveMarkets().catch((error) => {
+        emitter.emit("error", error);
+        console.error("[Polymarket] Market refresh failed:", error);
+      });
+    }, MARKET_REFRESH_INTERVAL_MS);
+  }
+
+  function clearMarketRefresh() {
+    if (refreshTimer) {
+      clearInterval(refreshTimer);
+      refreshTimer = null;
+    }
   }
 
   function handleMessage(message: PolymarketMessage) {
@@ -483,18 +539,8 @@ export function createPolymarketClient(apiKey: string): PolymarketClient {
         console.log("[Polymarket] Public market channel does not require an API key.");
       }
 
-      const initialStates = await fetchWorldCupMarkets();
-      await hydrateOrderBooks(initialStates);
-      states.clear();
-      tokenToCode.clear();
-
-      for (const state of initialStates) {
-        states.set(state.binding.countryCode, state);
-        tokenToCode.set(state.binding.tokenId, state.binding.countryCode);
-      }
-
-      console.log(`[Polymarket] Loaded ${states.size} active World Cup Winner markets.`);
-      emitSnapshot();
+      await loadActiveMarkets();
+      startMarketRefresh();
       await connectWebSocket();
     },
 
@@ -503,6 +549,7 @@ export function createPolymarketClient(apiKey: string): PolymarketClient {
       if (reconnectTimer) clearTimeout(reconnectTimer);
       reconnectTimer = null;
       clearPing();
+      clearMarketRefresh();
       ws?.close();
       ws = null;
       connected = false;
