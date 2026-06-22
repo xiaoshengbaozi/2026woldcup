@@ -2,6 +2,7 @@
 
 import { DashboardShell } from "@/components/dashboard-shell";
 import { WorldCupHero } from "@/components/world-cup-hero";
+import { useLiveMarketData } from "@/lib/use-live-market-data";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
 import dynamic from "next/dynamic";
 import { useMemo } from "react";
@@ -17,6 +18,8 @@ const GroupStandings = dynamic(
 );
 
 export function HomeDashboard() {
+  useLiveMarketData();
+
   const {
     matches,
     warmupMatches,
