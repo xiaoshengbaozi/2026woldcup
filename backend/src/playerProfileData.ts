@@ -184,7 +184,10 @@ function hasAnyRecordedGoal(item: any) {
 function isScoringEvent(event: any) {
   const type = String(event.type ?? "").toLowerCase();
   const detail = String(event.detail ?? "").toLowerCase();
-  return type === "goal" && !detail.includes("own goal");
+  if (type !== "goal") return false;
+  if (detail.includes("own goal")) return false;
+  if (detail.includes("missed penalty") || detail.includes("penalty missed")) return false;
+  return true;
 }
 
 function getResponse<T>(result: PromiseSettledResult<{ upstream: unknown }>) {
