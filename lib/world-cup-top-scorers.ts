@@ -64,11 +64,11 @@ export async function fetchWorldCupTopScorers(options: { forceRefresh?: boolean 
   try {
     payload = options.forceRefresh
       ? await fetchCachedScorers()
-      : await cachedJson<TopScorersPayload>(cacheUrl, 10 * 60 * 1000, fetchCachedScorers, { persist: true, staleTtlMs: 24 * 60 * 60 * 1000 });
+      : await cachedJson<TopScorersPayload>(cacheUrl, TOP_SCORERS_REFRESH_MS, fetchCachedScorers);
   } catch {
     payload = options.forceRefresh
       ? await fetchScorers()
-      : await cachedJson<TopScorersPayload>(url, 10 * 60 * 1000, fetchScorers, { persist: true, staleTtlMs: 24 * 60 * 60 * 1000 });
+      : await cachedJson<TopScorersPayload>(url, TOP_SCORERS_REFRESH_MS, fetchScorers);
   }
 
   return (payload.scorers ?? [])

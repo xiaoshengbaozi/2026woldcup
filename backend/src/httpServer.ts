@@ -303,12 +303,6 @@ function handleWorldCupCacheRequest(
     return;
   }
 
-  if (url.searchParams.get("refresh") === "1") {
-    worldCupCache.syncKey(key).catch((error) => {
-      console.error(`[WorldCupCache] Manual refresh failed; key=${key}:`, error);
-    });
-  }
-
   if (key === "player-profile") {
     const playerId = Number(url.searchParams.get("player") ?? url.searchParams.get("id"));
     const season = url.searchParams.get("season") || "2025";
@@ -327,12 +321,48 @@ function handleWorldCupCacheRequest(
   }
 
   const payload = worldCupCache.get(key);
+  const shouldRefresh = url.searchParams.get("refresh") === "1" || isWorldCupCacheExpired(payload);
+
+  if (shouldRefresh) {
+    worldCupCache
+      .syncKey(key)
+      .then(() => {
+        const refreshed = worldCupCache.get(key);
+        sendWorldCupCacheEnvelope(res, key, refreshed);
+      })
+      .catch((error: Error) => {
+        console.error(`[WorldCupCache] Refresh failed; key=${key}:`, error);
+        const fallback = worldCupCache.get(key);
+        if (fallback) {
+          sendWorldCupCacheEnvelope(res, key, fallback);
+          return;
+        }
+        sendJson(res, { error: error.message || "worldcup_cache_refresh_failed", key }, 503, { "Cache-Control": "no-store" });
+      });
+    return;
+  }
+
+  sendWorldCupCacheEnvelope(res, key, payload);
+}
+
+function sendWorldCupCacheEnvelope(
+  res: http.ServerResponse,
+  key: WorldCupCacheKey,
+  payload: ReturnType<WorldCupCacheService["get"]>
+) {
   if (!payload) {
     sendJson(res, { error: "worldcup_cache_warming", key }, 503, { "Cache-Control": "no-store" });
     return;
   }
 
   sendCachedJson(res, payload, getWorldCupCacheEnvelopeHeader(key), payload.ok ? 200 : 503);
+}
+
+function isWorldCupCacheExpired(payload: ReturnType<WorldCupCacheService["get"]>) {
+  if (!payload) return false;
+  const updatedAt = Date.parse(payload.updatedAt);
+  const ttlMs = Math.max(0, Number(payload.ttlSeconds ?? 0)) * 1000;
+  return !Number.isFinite(updatedAt) || ttlMs <= 0 || Date.now() - updatedAt >= ttlMs;
 }
 
 function parseWorldCupCacheKey(pathname: string): WorldCupCacheKey | null {
