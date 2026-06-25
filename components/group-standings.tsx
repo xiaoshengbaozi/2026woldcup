@@ -93,8 +93,8 @@ export function GroupStandings({ matches }: GroupStandingsProps) {
   const apiGroups = useMemo(() => buildApiGroupStandings(remoteStandings), [remoteStandings]);
   const seedGroups = useMemo(() => buildSeedGroupStandings(), []);
   const officialGroups = useMemo(
-    () => mergeGroupStandings(seedGroups, fallbackGroups, apiGroups),
-    [apiGroups, fallbackGroups, seedGroups]
+    () => (remoteStandings.length ? mergeGroupStandings(seedGroups, apiGroups) : mergeGroupStandings(seedGroups, fallbackGroups)),
+    [apiGroups, fallbackGroups, remoteStandings.length, seedGroups]
   );
   const archiveGroups = useMemo(
     () => (activeArchive ? buildPredictionGroupStandings(activeArchive.groupScores) : []),
@@ -280,42 +280,78 @@ function buildApiGroupStandings(rows: NormalizedWorldCupStandingRow[]): GroupSta
     return acc;
   }, new Map());
 
-  repairApiGroupRows(grouped);
+  return GROUPS.map((group) => {
+    const accepted = new Map<string, StandingTeam>();
+    const groupTeamCodes = group.teams.map((team) => team.code);
+    const incomingRows = grouped.get(group.id) ?? [];
 
-  return [...grouped.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([id, items]) => ({
-      id,
-      label: `${id} 组`,
-      teams: items
-        .sort((a, b) => a.rank - b.rank)
-        .slice(0, 4)
-        .map((row) => {
-          const code = getCanonicalApiTeamCode(row.team);
-          const localTeam = getTeamByCode(code);
+    for (const row of incomingRows.sort(compareApiStandingRows)) {
+      const code = getCanonicalApiTeamCode(row.team);
+      if (!groupTeamCodes.includes(code) || accepted.has(code)) continue;
+      accepted.set(code, apiRowToStandingTeam(row, code));
+    }
 
-          return {
-            code,
-            badge: code || String(row.rank),
-            badgeType: code ? "image" : "code",
-            image: code ? getFlagUrl(normalizeFlagCode(code), 40) : "",
-            name: localTeam?.nameCn || localTeam?.name || row.team.name,
-            played: row.played,
-            won: row.win,
-            drawn: row.draw,
-            lost: row.lose,
-            points: row.points,
-            goalsFor: row.goalsFor,
-            goalDifference: row.goalsDiff,
-          };
-        }),
-    }));
+    const teams = groupTeamCodes.map((code) => accepted.get(code) ?? seedTeamToStanding(code));
+
+    return {
+      id: group.id,
+      label: group.id + " \u7ec4",
+      teams: sortStandingTeams(teams).slice(0, 4),
+    };
+  });
+}
+
+function compareApiStandingRows(a: NormalizedWorldCupStandingRow, b: NormalizedWorldCupStandingRow) {
+  return (
+    a.rank - b.rank ||
+    b.points - a.points ||
+    b.goalsDiff - a.goalsDiff ||
+    b.goalsFor - a.goalsFor ||
+    a.team.name.localeCompare(b.team.name)
+  );
+}
+
+function apiRowToStandingTeam(row: NormalizedWorldCupStandingRow, code: string): StandingTeam {
+  const localTeam = getTeamByCode(code);
+
+  return {
+    code,
+    badge: code || String(row.rank),
+    badgeType: code ? "image" : "code",
+    image: code ? getFlagUrl(normalizeFlagCode(code), 40) : "",
+    name: localTeam?.nameCn || localTeam?.name || row.team.name,
+    played: row.played,
+    won: row.win,
+    drawn: row.draw,
+    lost: row.lose,
+    points: row.points,
+    goalsFor: row.goalsFor,
+    goalDifference: row.goalsDiff,
+  };
+}
+
+function seedTeamToStanding(code: string): StandingTeam {
+  const team = getTeamByCode(code);
+
+  return {
+    code,
+    badge: code,
+    badgeType: "image",
+    image: getFlagUrl(normalizeFlagCode(code), 40),
+    name: team?.nameCn || team?.name || code,
+    played: 0,
+    won: 0,
+    drawn: 0,
+    lost: 0,
+    points: 0,
+    goalsFor: 0,
+    goalDifference: 0,
+  };
 }
 
 function formatGoalDifference(value: number) {
   return value > 0 ? `+${value}` : String(value);
 }
-
 function buildPredictionGroupStandings(scores: Record<string, PredictionScore>): GroupStanding[] {
   return GROUPS.map((group) => ({
     id: group.id,
