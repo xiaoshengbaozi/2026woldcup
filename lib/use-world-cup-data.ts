@@ -6,8 +6,13 @@ import { hasMatchInLiveRefreshWindow } from "@/lib/live-match-queue";
 import { parseTeams } from "@/lib/teams";
 import { cachedText, fetchWithTimeout } from "@/lib/request-cache";
 import { useNow } from "@/lib/use-now";
-import { fetchWorldCupFixtures, fetchWorldCupWarmupFixtures } from "@/lib/world-cup-api";
-import type { Match } from "@/types/match";
+import {
+  fetchWorldCupFixtures,
+  fetchWorldCupStandings,
+  fetchWorldCupWarmupFixtures,
+  type NormalizedWorldCupStandingRow,
+} from "@/lib/world-cup-api";
+import type { Match, MatchTeamMeta } from "@/types/match";
 
 const LIVE_FIXTURE_REFRESH_MS = 60_000;
 
@@ -53,7 +58,11 @@ export function useWorldCupData() {
         const liveMatches = await fetchWorldCupFixtures({ forceRefresh });
         if (!active) return;
         if (liveMatches.length) {
-          const nextMatches = mergeCalendarWithLiveFixtures(calendarMatches, liveMatches);
+          const standings = await fetchWorldCupStandings().catch(() => []);
+          const nextMatches = enrichKnockoutMatchesWithStandings(
+            mergeCalendarWithLiveFixtures(calendarMatches, liveMatches),
+            standings
+          );
           matchesRef.current = nextMatches;
           setMatches(nextMatches);
           setError("");
@@ -70,10 +79,12 @@ export function useWorldCupData() {
 
       if (calendarMatches.length) {
         if (!active) return;
-        matchesRef.current = calendarMatches;
-        setMatches(calendarMatches);
+        const standings = await fetchWorldCupStandings().catch(() => []);
+        const nextMatches = enrichKnockoutMatchesWithStandings(calendarMatches, standings);
+        matchesRef.current = nextMatches;
+        setMatches(nextMatches);
         setError("");
-        if (!forceRefresh && hasMatchInLiveRefreshWindow(calendarMatches, Date.now())) {
+        if (!forceRefresh && hasMatchInLiveRefreshWindow(nextMatches, Date.now())) {
           void loadMatches(true);
         }
       }
@@ -220,6 +231,81 @@ export function mergeCalendarWithLiveFixtures(calendarMatches: Match[], liveMatc
 
   const unmatchedLive = liveMatches.filter((match) => !usedLiveIds.has(match.uid));
   return [...merged, ...unmatchedLive].sort((a, b) => a.start.getTime() - b.start.getTime());
+}
+
+export function enrichKnockoutMatchesWithStandings(
+  matches: Match[],
+  standings: NormalizedWorldCupStandingRow[]
+) {
+  if (!standings.length) return matches;
+
+  const slotIndex = buildGroupSlotIndex(standings);
+  if (!slotIndex.size) return matches;
+
+  return matches.map((match) => {
+    if (!isFirstKnockoutRound(match)) return match;
+
+    const resolved = resolveKnockoutSummary(match.summary, slotIndex);
+    if (!resolved) return match;
+
+    return {
+      ...match,
+      summary: resolved.summary,
+      homeTeam: resolved.homeTeam ?? match.homeTeam,
+      awayTeam: resolved.awayTeam ?? match.awayTeam,
+    };
+  });
+}
+
+function buildGroupSlotIndex(standings: NormalizedWorldCupStandingRow[]) {
+  const slots = new Map<string, MatchTeamMeta>();
+
+  for (const row of standings) {
+    const groupId = getStandingGroupId(row.group);
+    if (!groupId || row.rank > 2 || !row.description) continue;
+    slots.set(`${groupId}:${row.rank}`, {
+      id: row.team.id,
+      name: row.team.name,
+      englishName: row.team.englishName,
+      code: row.team.code,
+      logo: row.team.logo,
+    });
+  }
+
+  return slots;
+}
+
+function isFirstKnockoutRound(match: Match) {
+  return match.stage.includes("1/16") || match.summary.includes("1/16");
+}
+
+function resolveKnockoutSummary(summary: string, slots: Map<string, MatchTeamMeta>) {
+  const match = summary.match(/^(.*?)([^()]+?)\s+vs\s+([^()]+?)(\s*\([^)]+\)\s*)$/i);
+  if (!match) return null;
+
+  const [, prefix, homeSlot, awaySlot, suffix] = match;
+  const homeTeam = resolveGroupSlot(homeSlot, slots);
+  const awayTeam = resolveGroupSlot(awaySlot, slots);
+  if (!homeTeam && !awayTeam) return null;
+
+  const nextHome = homeTeam?.name ?? homeSlot.trim();
+  const nextAway = awayTeam?.name ?? awaySlot.trim();
+
+  return {
+    summary: `${prefix}${nextHome} vs ${nextAway}${suffix}`,
+    homeTeam,
+    awayTeam,
+  };
+}
+
+function resolveGroupSlot(value: string, slots: Map<string, MatchTeamMeta>) {
+  const match = value.trim().match(/^([A-L])组第([12])$/i);
+  if (!match) return null;
+  return slots.get(`${match[1].toUpperCase()}:${match[2]}`) ?? null;
+}
+
+function getStandingGroupId(group: string) {
+  return group.match(/([A-L])\s*组/i)?.[1]?.toUpperCase() ?? null;
 }
 
 function mergeMatchLocation(calendarLocation: string, liveLocation: string) {
