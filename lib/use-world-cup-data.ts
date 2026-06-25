@@ -240,12 +240,15 @@ export function enrichKnockoutMatchesWithStandings(
   if (!standings.length) return matches;
 
   const slotIndex = buildGroupSlotIndex(standings);
-  if (!slotIndex.size) return matches;
+  const thirdPlaceRankings = buildThirdPlaceRankings(standings);
+  if (!slotIndex.size && !thirdPlaceRankings.length) return matches;
+
+  const usedThirdPlaceGroups = new Set<string>();
 
   return matches.map((match) => {
     if (!isFirstKnockoutRound(match)) return match;
 
-    const resolved = resolveKnockoutSummary(match.summary, slotIndex);
+    const resolved = resolveKnockoutSummary(match.summary, slotIndex, thirdPlaceRankings, usedThirdPlaceGroups);
     if (!resolved) return match;
 
     return {
@@ -262,7 +265,7 @@ function buildGroupSlotIndex(standings: NormalizedWorldCupStandingRow[]) {
 
   for (const row of standings) {
     const groupId = getStandingGroupId(row.group);
-    if (!groupId || row.rank > 2 || !row.description) continue;
+    if (!groupId || row.rank > 3) continue;
     slots.set(`${groupId}:${row.rank}`, {
       id: row.team.id,
       name: row.team.name,
@@ -275,17 +278,49 @@ function buildGroupSlotIndex(standings: NormalizedWorldCupStandingRow[]) {
   return slots;
 }
 
+function buildThirdPlaceRankings(standings: NormalizedWorldCupStandingRow[]) {
+  return standings
+    .filter((row) => row.rank === 3)
+    .map((row) => ({
+      groupId: getStandingGroupId(row.group),
+      team: {
+        id: row.team.id,
+        name: row.team.name,
+        englishName: row.team.englishName,
+        code: row.team.code,
+        logo: row.team.logo,
+      } satisfies MatchTeamMeta,
+      points: row.points,
+      goalsDiff: row.goalsDiff,
+      goalsFor: row.goalsFor,
+    }))
+    .filter((row): row is { groupId: string; team: MatchTeamMeta; points: number; goalsDiff: number; goalsFor: number } => Boolean(row.groupId))
+    .sort((left, right) => {
+      return (
+        right.points - left.points ||
+        right.goalsDiff - left.goalsDiff ||
+        right.goalsFor - left.goalsFor ||
+        left.groupId.localeCompare(right.groupId)
+      );
+    });
+}
+
 function isFirstKnockoutRound(match: Match) {
   return match.stage.includes("1/16") || match.summary.includes("1/16");
 }
 
-function resolveKnockoutSummary(summary: string, slots: Map<string, MatchTeamMeta>) {
+function resolveKnockoutSummary(
+  summary: string,
+  slots: Map<string, MatchTeamMeta>,
+  thirdPlaceRankings: Array<{ groupId: string; team: MatchTeamMeta }>,
+  usedThirdPlaceGroups: Set<string>
+) {
   const match = summary.match(/^(.*?)([^()]+?)\s+vs\s+([^()]+?)(\s*\([^)]+\)\s*)$/i);
   if (!match) return null;
 
   const [, prefix, homeSlot, awaySlot, suffix] = match;
-  const homeTeam = resolveGroupSlot(homeSlot, slots);
-  const awayTeam = resolveGroupSlot(awaySlot, slots);
+  const homeTeam = resolveKnockoutSlot(homeSlot, slots, thirdPlaceRankings, usedThirdPlaceGroups);
+  const awayTeam = resolveKnockoutSlot(awaySlot, slots, thirdPlaceRankings, usedThirdPlaceGroups);
   if (!homeTeam && !awayTeam) return null;
 
   const nextHome = homeTeam?.name ?? homeSlot.trim();
@@ -298,10 +333,45 @@ function resolveKnockoutSummary(summary: string, slots: Map<string, MatchTeamMet
   };
 }
 
+function resolveKnockoutSlot(
+  value: string,
+  slots: Map<string, MatchTeamMeta>,
+  thirdPlaceRankings: Array<{ groupId: string; team: MatchTeamMeta }>,
+  usedThirdPlaceGroups: Set<string>
+) {
+  const direct = resolveGroupSlot(value, slots);
+  if (direct) return direct;
+  return resolveThirdPlaceSlot(value, thirdPlaceRankings, usedThirdPlaceGroups);
+}
+
 function resolveGroupSlot(value: string, slots: Map<string, MatchTeamMeta>) {
-  const match = value.trim().match(/^([A-L])组第([12])$/i);
+  const match = value.trim().match(/^([A-L])组第([123])$/i);
   if (!match) return null;
   return slots.get(`${match[1].toUpperCase()}:${match[2]}`) ?? null;
+}
+
+function resolveThirdPlaceSlot(
+  value: string,
+  thirdPlaceRankings: Array<{ groupId: string; team: MatchTeamMeta }>,
+  usedThirdPlaceGroups: Set<string>
+) {
+  const match = value
+    .trim()
+    .match(/^小组第三\(([^)]+)\)$/i);
+  if (!match) return null;
+
+  const allowedGroups = match[1]
+    .split(",")
+    .map((item) => item.trim().toUpperCase())
+    .filter(Boolean);
+
+  const candidate = thirdPlaceRankings.find(
+    (row) => allowedGroups.includes(row.groupId) && !usedThirdPlaceGroups.has(row.groupId)
+  );
+  if (!candidate) return null;
+
+  usedThirdPlaceGroups.add(candidate.groupId);
+  return candidate.team;
 }
 
 function getStandingGroupId(group: string) {
