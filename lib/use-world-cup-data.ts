@@ -212,10 +212,17 @@ export function mergeCalendarWithLiveFixtures(calendarMatches: Match[], liveMatc
   if (!calendarMatches.length) return liveMatches;
 
   const liveByIdentity = new Map(liveMatches.map((match) => [getMatchIdentity(match), match]));
+  const liveByStartStage = new Map(liveMatches.map((match) => [getMatchStartStageIdentity(match), match]));
   const usedLiveIds = new Set<string>();
 
   const merged = calendarMatches.map((calendarMatch) => {
-    const liveMatch = liveByIdentity.get(getMatchIdentity(calendarMatch));
+    const exactMatch = liveByIdentity.get(getMatchIdentity(calendarMatch));
+    const stageMatch =
+      exactMatch ||
+      (isPlaceholderKnockoutMatch(calendarMatch)
+        ? liveByStartStage.get(getMatchStartStageIdentity(calendarMatch))
+        : undefined);
+    const liveMatch = stageMatch;
     if (!liveMatch) return calendarMatch;
 
     usedLiveIds.add(liveMatch.uid);
@@ -429,6 +436,28 @@ function getMatchIdentity(match: Match) {
     normalizeTeamName(teams.home.name),
     normalizeTeamName(teams.away.name),
   ].join("|");
+}
+
+function getMatchStartStageIdentity(match: Match) {
+  return [
+    match.start.getTime(),
+    match.stageKind || "",
+  ].join("|");
+}
+
+function isPlaceholderKnockoutMatch(match: Match) {
+  const stageKind = match.stageKind ?? "";
+  if (!["r32", "r16", "qf", "sf", "third", "final"].includes(stageKind)) return false;
+
+  const teams = parseTeams(match.summary);
+  const values = [teams.home.name, teams.away.name].join(" ").toLowerCase();
+  return (
+    values.includes("组第") ||
+    values.includes("待定") ||
+    values.includes("winner") ||
+    values.includes("runner-up") ||
+    values.includes("third")
+  );
 }
 
 function normalizeTeamName(name: string) {
