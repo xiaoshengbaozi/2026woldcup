@@ -283,7 +283,10 @@ function buildGroupSlotIndex(standings: NormalizedWorldCupStandingRow[]) {
       accepted.set(code, row);
     }
 
-    const ordered = [...accepted.values()].sort((a, b) => a.rank - b.rank).slice(0, 3);
+    const officialRows = [...accepted.values()];
+    if (!isGroupComplete(officialRows)) continue;
+
+    const ordered = officialRows.sort((a, b) => a.rank - b.rank).slice(0, 3);
     for (const row of ordered) {
       const slot = `${group.id}:${row.rank}`;
       slots.set(slot, toMatchTeamMeta(row));
@@ -294,8 +297,14 @@ function buildGroupSlotIndex(standings: NormalizedWorldCupStandingRow[]) {
 }
 
 function buildThirdPlaceRankings(standings: NormalizedWorldCupStandingRow[]) {
-  return GROUPS.flatMap((group) =>
-    (groupStandingsById(standings).get(group.id) ?? [])
+  const rowsByGroup = groupStandingsById(standings);
+
+  return GROUPS.flatMap((group) => {
+    const officialRows = (rowsByGroup.get(group.id) ?? [])
+      .filter((row) => group.teams.some((team) => team.code === normalizeStandingCode(row.team.code)));
+    if (!isGroupComplete(officialRows)) return [];
+
+    return officialRows
       .filter((row) => row.rank === 3 && group.teams.some((team) => team.code === normalizeStandingCode(row.team.code)))
       .slice(0, 1)
       .map((row) => ({
@@ -304,8 +313,8 @@ function buildThirdPlaceRankings(standings: NormalizedWorldCupStandingRow[]) {
         points: row.points,
         goalsDiff: row.goalsDiff,
         goalsFor: row.goalsFor,
-      }))
-  )
+      }));
+  })
     .sort((left, right) => {
       return (
         right.points - left.points ||
@@ -314,6 +323,10 @@ function buildThirdPlaceRankings(standings: NormalizedWorldCupStandingRow[]) {
         left.groupId.localeCompare(right.groupId)
       );
     });
+}
+
+function isGroupComplete(rows: NormalizedWorldCupStandingRow[]) {
+  return rows.length >= 4 && rows.every((row) => row.played >= 3);
 }
 
 function groupStandingsById(standings: NormalizedWorldCupStandingRow[]) {
