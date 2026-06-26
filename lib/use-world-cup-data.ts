@@ -5,6 +5,7 @@ import { extractCity, getTournamentProgress, parseCalendar } from "@/lib/calenda
 import { hasMatchInLiveRefreshWindow } from "@/lib/live-match-queue";
 import { parseTeams } from "@/lib/teams";
 import { cachedText, fetchWithTimeout } from "@/lib/request-cache";
+import { getStageKind } from "@/lib/stage";
 import { useNow } from "@/lib/use-now";
 import { GROUPS } from "@/data/world-cup-2026-groups";
 import {
@@ -441,13 +442,21 @@ function getMatchIdentity(match: Match) {
 function getMatchStartStageIdentity(match: Match) {
   return [
     match.start.getTime(),
-    match.stageKind || "",
+    getStageKind(match.stage, match.stageKind),
   ].join("|");
 }
 
 function isPlaceholderKnockoutMatch(match: Match) {
-  const stageKind = match.stageKind ?? "";
+  const stageKind = getStageKind(match.stage, match.stageKind);
   if (!["r32", "r16", "qf", "sf", "third", "final"].includes(stageKind)) return false;
+
+  const rawSummary = match.summary.toLowerCase();
+  if (
+    /[a-l]\s*组\s*第\s*[123]/i.test(match.summary) ||
+    /小组第三|待定|胜者|负者|winner|runner-up|third/i.test(rawSummary)
+  ) {
+    return true;
+  }
 
   const teams = parseTeams(match.summary);
   const values = [teams.home.name, teams.away.name].join(" ").toLowerCase();
