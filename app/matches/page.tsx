@@ -131,9 +131,9 @@ export default function MatchesPage() {
   const stageTeamCount = useMemo(() => {
     if (!stage) return totalTeams;
     const stageGroup = readFilterGroupValue(stage);
-    if (stageGroup === "???") return totalTeams;
-    if (stageGroup === "???") return 32;
-    if (stageGroup === "???") return 4;
+    if (stageGroup === "小组赛") return totalTeams;
+    if (stageGroup === "淘汰赛") return 32;
+    if (stageGroup === "决赛周") return 4;
 
     const kind = getStageKind(stage);
     if (kind === "r32") return 32;

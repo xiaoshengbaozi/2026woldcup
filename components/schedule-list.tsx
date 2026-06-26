@@ -220,9 +220,9 @@ function getKnockoutStageGroupId(kind: StageKind) {
 }
 
 function formatGroupTitle(group: string) {
-  if (group === "knockout") return "???";
-  if (group === "final-week") return "???";
-  return group + " ?";
+  if (group === "knockout") return "淘汰赛";
+  if (group === "final-week") return "决赛周";
+  return group + " 组";
 }
 function rankGroup(group: string) {
   if (group === "knockout") return 99;
