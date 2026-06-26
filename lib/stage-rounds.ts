@@ -1,4 +1,4 @@
-import { getStageGroupId } from "@/lib/stage";
+import { getStageGroupId, getStageKind } from "@/lib/stage";
 import type { Match } from "@/types/match";
 
 export function buildMatchRoundLabels(matches: Match[]) {
@@ -6,6 +6,9 @@ export function buildMatchRoundLabels(matches: Match[]) {
   const grouped = new Map<string, Match[]>();
 
   for (const match of matches) {
+    const kind = getStageKind(match.stage, match.stageKind);
+    if (kind !== "group") continue;
+
     const groupId = getStageGroupId(match.stage);
     if (!groupId) continue;
     if (!grouped.has(groupId)) grouped.set(groupId, []);

@@ -307,6 +307,8 @@ function toMatch(fixture: NormalizedWorldCupFixture): Match {
     end: fixture.endIso ? new Date(fixture.endIso) : null,
     geo: fixture.geo,
     stage: fixture.stage,
+    stageKind: fixture.stageKind as Match["stageKind"],
+    stageOrder: fixture.stageOrder,
     weather: fixture.weather,
     status: fixture.status,
     statusShort: fixture.statusShort,

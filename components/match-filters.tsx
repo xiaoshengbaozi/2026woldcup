@@ -59,10 +59,10 @@ export function readFilterGroupValue(value: string) {
 
 export function getStageFilterGroup(stage: string, stageKind?: string | null) {
   const kind = getStageKind(stage, stageKind);
-  if (getStageGroupId(stage) || kind === "group") return "小组赛";
+  if (kind === "group") return "小组赛";
   if (kind === "r32" || kind === "r16" || kind === "qf") return "淘汰赛";
   if (kind === "sf" || kind === "third" || kind === "final") return "决赛周";
-  return "未知阶段";
+  return kind === "other" ? "决赛周" : "未知阶段";
 }
 export function getCityFilterGroup(city: string) {
   const mexicoCities = ["Mexico City", "Guadalajara", "Monterrey", "墨西哥城", "瓜达拉哈拉", "萨波潘", "蒙特雷"];

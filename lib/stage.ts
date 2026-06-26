@@ -3,7 +3,6 @@ export type StageKind = "group" | "r32" | "r16" | "qf" | "sf" | "third" | "final
 const GROUP_STAGE_PATTERNS = [
   /(?:^|\b)Group\s+([A-L])\b/i,
   /(?:^|\b)([A-L])\s*组\b/i,
-  /([A-L])\s*组/i,
 ];
 
 export function getStageKind(stage: string, stageKind?: string | null): StageKind {
@@ -11,12 +10,12 @@ export function getStageKind(stage: string, stageKind?: string | null): StageKin
   if (normalized) return normalized;
 
   const text = stage.trim();
-  if (getStageGroupId(text)) return "group";
+  if (/Group\s+[A-L]\s*/i.test(text) || /([A-L])\s*组\s*第[123]/i.test(text)) return "group";
   if (/1\/32|Round of 32|32nd Finals?|32强|1\/16决赛/i.test(text)) return "r32";
   if (/1\/16|Round of 16|16th Finals?|8th Finals?|1\/8 Finals?|16强|1\/8决赛/i.test(text)) return "r16";
   if (/1\/4|Quarter/i.test(text)) return "qf";
   if (/1\/2|Semi/i.test(text)) return "sf";
-  if (/3rd|Third Place|三四名/i.test(text)) return "third";
+  if (/3rd|Third Place|三四名|季军/i.test(text)) return "third";
   if (/Final/i.test(text)) return "final";
   if (/warmup|热身/i.test(text)) return "warmup";
   return "other";
