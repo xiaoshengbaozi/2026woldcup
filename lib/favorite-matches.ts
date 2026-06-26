@@ -167,7 +167,11 @@ export function normalizeFavoriteMatchTitle(value: string) {
 
 export function compactFavoriteMatchStage(stage: string) {
   if (/group|\u5c0f\u7ec4\u8d5b/i.test(stage)) return "\u5c0f\u7ec4\u8d5b";
-  return stage.replace("Round of 32", "32\u5f3a").replace("Round of 16", "16\u5f3a");
+  return stage
+    .replace("Round of 32", "32强")
+    .replace("Round of 16", "16强")
+    .replace("1/16决赛", "32强")
+    .replace("1/8决赛", "16强");
 }
 
 export function formatFavoriteVenueLine(match: FavoriteMatchCard) {

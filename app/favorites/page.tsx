@@ -703,6 +703,8 @@ function formatFullDate(date: Date | null) {
 function compactStage(stage: string) {
   if (!stage) return "赛程";
   if (stage.includes("Group")) return "小组赛";
+  if (stage.includes("1/16决赛")) return "32强";
+  if (stage.includes("1/8决赛")) return "16强";
   if (stage.includes("1/16")) return "32强";
   if (stage.includes("1/8")) return "16强";
   if (stage.includes("1/4")) return "8强";

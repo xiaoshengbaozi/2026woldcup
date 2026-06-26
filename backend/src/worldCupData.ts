@@ -7,6 +7,7 @@ import {
   localizePosition as localizeFootballPosition,
 } from "./footballLocalization";
 import { localizePlayerName } from "./playerTranslations";
+import { mergeCalendarFallbackFixtures } from "./worldCupCalendarFallback";
 
 export interface NormalizedWorldCupFixture {
   uid: string;
@@ -155,7 +156,7 @@ export async function getWorldCupFixtures(apiFootball: ApiFootballService, url: 
   const payload = await apiFootball.request("fixtures", params);
   const upstream = payload.upstream as ApiFootballFixturesResponse;
   assertNoApiFootballErrors(upstream);
-  const fixtures = (upstream.response ?? []).map(normalizeFixture);
+  const fixtures = mergeCalendarFallbackFixtures((upstream.response ?? []).map(normalizeFixture));
   const overlays = shouldOverlayFreshFixtures(params)
     ? await getFreshFixtureOverlays(apiFootball, params)
     : [];
@@ -980,7 +981,7 @@ function normalizeStageMeta(round: string) {
 
   const direct: Array<{ pattern: RegExp; kind: WorldCupStageKind; order: number }> = [
     { pattern: /^(Round of 32|32nd Finals?|32th Finals?)$/i, kind: 'r32', order: 20 },
-    { pattern: /^(Round of 16|16th Finals?|8th Finals?|1\/8 Finals?)$/i, kind: 'r16', order: 30 },
+    { pattern: /^(Round of 16|16th Finals?|8th Finals?|1\/8 Finals?|1\/8 决赛|1\/8决赛|16强)$/i, kind: 'r16', order: 30 },
     { pattern: /^(Quarter-finals?|Quarter Finals?|1\/4 Finals?)$/i, kind: 'qf', order: 40 },
     { pattern: /^(Semi-finals?|Semi Finals?|1\/2 Finals?)$/i, kind: 'sf', order: 50 },
     { pattern: /^(3rd Place Final|Third Place|3rd Place)$/i, kind: 'third', order: 60 },
@@ -1000,14 +1001,20 @@ function localizeRound(round: string) {
   if (groupMatch) return `小组赛第 ${groupMatch[1]} 轮`;
 
   const direct: Record<string, string> = {
+    "Round of 32": "1/16 决赛",
+    "32nd Finals": "1/16 决赛",
+    "32th Finals": "1/16 决赛",
     "Round of 16": "1/8 决赛",
+    "16th Finals": "1/8 决赛",
     "8th Finals": "1/8 决赛",
     "Quarter-finals": "1/4 决赛",
     "Quarter Finals": "1/4 决赛",
     "Semi-finals": "半决赛",
     "Semi Finals": "半决赛",
     "3rd Place Final": "三四名决赛",
-    Final: "决赛",
+    "Third Place": "三四名决赛",
+    "3rd Place": "三四名决赛",
+    "Final": "决赛",
   };
 
   return direct[normalized] ?? normalized;
