@@ -16,7 +16,7 @@ export function buildMatchRoundLabels(matches: Match[]) {
     [...groupMatches]
       .sort((left, right) => left.start.getTime() - right.start.getTime())
       .forEach((match, index) => {
-        labels.set(match.uid, `${groupId}组 ${formatRoundTitle(Math.floor(index / 2) + 1)}`);
+        labels.set(match.uid, `${groupId}组 · ${formatRoundTitle(Math.floor(index / 2) + 1)}`);
       });
   }
 

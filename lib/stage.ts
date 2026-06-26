@@ -59,7 +59,7 @@ export function formatStageLabel(stage: string, summary?: string, stageKind?: st
 
   if (kind === "group" && groupId && roundLabel) return `${groupId}组 · ${roundLabel}`;
   if (kind === "group" && groupId) return `${groupId}组`;
-  if (kind === "r32") return "32强";
+  if (kind === "r32") return "1/16决赛";
   if (kind === "r16") return "1/8决赛";
   if (kind === "qf") return "1/4决赛";
   if (kind === "sf") return "半决赛";
