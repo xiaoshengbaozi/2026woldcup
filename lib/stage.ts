@@ -10,13 +10,15 @@ export function getStageKind(stage: string, stageKind?: string | null): StageKin
   if (normalized) return normalized;
 
   const text = stage.trim();
+  const compactText = text.replace(/\s+/g, "");
+
   if (/Group\s+[A-L]\s*/i.test(text) || /([A-L])\s*组\s*第[123]/i.test(text)) return "group";
-  if (/1\/32|Round of 32|32nd Finals?|32强|1\/16决赛/i.test(text)) return "r32";
-  if (/1\/16|Round of 16|16th Finals?|8th Finals?|1\/8 Finals?|16强|1\/8决赛/i.test(text)) return "r16";
-  if (/1\/4|Quarter/i.test(text)) return "qf";
-  if (/1\/2|Semi/i.test(text)) return "sf";
-  if (/3rd|Third Place|三四名|季军/i.test(text)) return "third";
-  if (/Final/i.test(text)) return "final";
+  if (/1\/16决赛|1\/32|Roundof32|32ndFinals?|32thFinals?|32强/i.test(compactText)) return "r32";
+  if (/1\/8决赛|Roundof16|16thFinals?|8thFinals?|1\/8Finals?|16强/i.test(compactText)) return "r16";
+  if (/1\/4决赛|1\/4|Quarter/i.test(compactText)) return "qf";
+  if (/半决赛|1\/2|Semi/i.test(compactText)) return "sf";
+  if (/三四名|季军|3rd|ThirdPlace/i.test(compactText)) return "third";
+  if (/^决赛$|Final/i.test(compactText)) return "final";
   if (/warmup|热身/i.test(text)) return "warmup";
   return "other";
 }
