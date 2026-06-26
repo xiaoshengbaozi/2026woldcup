@@ -10,7 +10,7 @@ export function getStageKind(stage: string, stageKind?: string | null): StageKin
   if (/1\/16|Round of 16|16th Finals?|8th Finals?|1\/8 Finals?/i.test(text)) return "r16";
   if (/1\/4|Quarter/i.test(text)) return "qf";
   if (/1\/2|Semi/i.test(text)) return "sf";
-  if (/3rd|Third Place|季军/i.test(text)) return "third";
+  if (/3rd|Third Place|三四名/i.test(text)) return "third";
   if (/Final/i.test(text)) return "final";
   if (/warmup|热身/i.test(text)) return "warmup";
   return "other";
@@ -19,7 +19,7 @@ export function getStageKind(stage: string, stageKind?: string | null): StageKin
 export function getStageGroupId(stage: string): string | null {
   const match =
     stage.match(/(?:^|\b)Group\s+([A-L])\b/i) ??
-    stage.match(/(?:^|\b)([A-L])\s*组/i) ??
+    stage.match(/(?:^|\b)([A-L])\s*组\b/i) ??
     stage.match(/([A-L])\s*组/i);
 
   return match?.[1]?.toUpperCase() ?? null;
@@ -60,10 +60,10 @@ export function formatStageLabel(stage: string, summary?: string, stageKind?: st
   if (kind === "group" && groupId && roundLabel) return `${groupId}组 · ${roundLabel}`;
   if (kind === "group" && groupId) return `${groupId}组`;
   if (kind === "r32") return "32强";
-  if (kind === "r16") return "16强";
-  if (kind === "qf") return "8强";
+  if (kind === "r16") return "1/8决赛";
+  if (kind === "qf") return "1/4决赛";
   if (kind === "sf") return "半决赛";
-  if (kind === "third") return "季军赛";
+  if (kind === "third") return "三四名决赛";
   if (kind === "final") return "决赛";
   if (kind === "warmup") return "热身赛";
   return stage;
