@@ -19,6 +19,8 @@ export interface NormalizedWorldCupFixture {
   endIso: string | null;
   geo: null;
   stage: string;
+  stageKind: WorldCupStageKind;
+  stageOrder: number;
   weather: string;
   status: "not_started" | "live" | "halftime" | "finished" | "postponed" | "cancelled";
   statusShort: string;
@@ -33,6 +35,17 @@ export interface NormalizedWorldCupFixture {
   homeTeam: NormalizedTeam;
   awayTeam: NormalizedTeam;
 }
+
+export type WorldCupStageKind =
+  | "group"
+  | "r32"
+  | "r16"
+  | "qf"
+  | "sf"
+  | "third"
+  | "final"
+  | "warmup"
+  | "other";
 
 export interface NormalizedWorldCupStandingRow {
   group: string;
@@ -419,7 +432,9 @@ function normalizeFixture(raw: ApiFootballFixture): NormalizedWorldCupFixture {
   const awayTeam = normalizeTeam(raw.teams?.away);
   const statusShort = normalizeStatusShort(raw.fixture?.status?.short);
   const status = normalizeStatus(statusShort);
-  const stage = localizeRound(raw.league?.round ?? "");
+  const round = raw.league?.round ?? "";
+  const stage = localizeRound(round);
+  const stageMeta = normalizeStageMeta(round);
 
   return {
     uid: `api-football-${raw.fixture?.id ?? `${homeTeam.code}-${awayTeam.code}-${raw.fixture?.timestamp ?? ""}`}`,
@@ -432,6 +447,8 @@ function normalizeFixture(raw: ApiFootballFixture): NormalizedWorldCupFixture {
     endIso: end?.toISOString() ?? null,
     geo: null,
     stage,
+    stageKind: stageMeta.kind,
+    stageOrder: stageMeta.order,
     weather: "待更新",
     status,
     statusShort,
@@ -951,6 +968,30 @@ function normalizeStatus(shortStatus = ""): NormalizedWorldCupFixture["status"] 
 
 function normalizeStatusShort(shortStatus = "") {
   return shortStatus.trim().toUpperCase();
+}
+
+function normalizeStageMeta(round: string) {
+  const normalized = round.trim();
+  const groupMatch = normalized.match(/^Group Stage\s*-\s*(\d+)$/i);
+  if (groupMatch) {
+    const roundNumber = Number(groupMatch[1]);
+    return { kind: 'group' as const, order: Number.isFinite(roundNumber) ? roundNumber : 10 };
+  }
+
+  const direct: Array<{ pattern: RegExp; kind: WorldCupStageKind; order: number }> = [
+    { pattern: /^(Round of 32|32nd Finals?|32th Finals?)$/i, kind: 'r32', order: 20 },
+    { pattern: /^(Round of 16|16th Finals?|8th Finals?|1\/8 Finals?)$/i, kind: 'r16', order: 30 },
+    { pattern: /^(Quarter-finals?|Quarter Finals?|1\/4 Finals?)$/i, kind: 'qf', order: 40 },
+    { pattern: /^(Semi-finals?|Semi Finals?|1\/2 Finals?)$/i, kind: 'sf', order: 50 },
+    { pattern: /^(3rd Place Final|Third Place|3rd Place)$/i, kind: 'third', order: 60 },
+    { pattern: /^Final$/i, kind: 'final', order: 70 },
+  ];
+
+  for (const entry of direct) {
+    if (entry.pattern.test(normalized)) return { kind: entry.kind, order: entry.order };
+  }
+
+  return { kind: 'other' as const, order: 99 };
 }
 
 function localizeRound(round: string) {

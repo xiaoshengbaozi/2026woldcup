@@ -26,6 +26,8 @@ export type NormalizedWorldCupFixture = {
   endIso: string | null;
   geo: null;
   stage: string;
+  stageKind?: string;
+  stageOrder?: number;
   weather: string;
   status?: Match["status"];
   statusShort?: string;

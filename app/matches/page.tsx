@@ -9,7 +9,7 @@ import { MobileMatchDayStrip, type MatchDayOption } from "@/components/mobile-ma
 import { ScheduleList } from "@/components/schedule-list";
 import { extractCity, groupMatchesByDay } from "@/lib/calendar";
 import { getEffectiveMatchStatus } from "@/lib/match-status";
-import { getStageGroupId } from "@/lib/stage";
+import { getStageGroupId, getStageKind } from "@/lib/stage";
 import { useMobilePinnedRail } from "@/lib/use-mobile-pinned-rail";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
 
@@ -131,18 +131,19 @@ export default function MatchesPage() {
   const stageTeamCount = useMemo(() => {
     if (!stage) return totalTeams;
     const stageGroup = readFilterGroupValue(stage);
-    if (stageGroup === "小组赛") return totalTeams;
-    if (stageGroup === "淘汰赛") return 32;
-    if (stageGroup === "决赛周") return 4;
+    if (stageGroup === "???") return totalTeams;
+    if (stageGroup === "???") return 32;
+    if (stageGroup === "???") return 4;
+
+    const kind = getStageKind(stage);
+    if (kind === "r32") return 32;
+    if (kind === "r16") return 16;
+    if (kind === "qf") return 8;
+    if (kind === "sf") return 4;
+    if (kind === "third" || kind === "final") return 2;
     if (getStageGroupId(stage)) return totalTeams;
-    if (stage.includes("1/16")) return 32;
-    if (stage.includes("1/8")) return 16;
-    if (stage.includes("1/4")) return 8;
-    if (stage.includes("半决赛")) return 4;
-    if (stage.includes("决赛")) return 2;
     return totalTeams;
   }, [stage, totalTeams]);
-
   return (
     <DashboardShell>
       <LiveMatchesStrip matches={liveQueueMatches} />

@@ -4,7 +4,7 @@ import { MatchCard } from "@/components/match-card";
 import { MatchCardCompact } from "@/components/match-card-compact";
 import { getDayStatus } from "@/lib/calendar";
 import { formatDate } from "@/lib/format";
-import { getStageGroupId } from "@/lib/stage";
+import { getStageGroupId, getStageKind, type StageKind } from "@/lib/stage";
 import { buildMatchRoundLabels } from "@/lib/stage-rounds";
 import type { Match } from "@/types/match";
 import type { ScheduleLayout } from "@/app/matches/page";
@@ -204,7 +204,8 @@ export function ScheduleList({
 
 function groupMatchesByStageGroup(matches: Match[]) {
   const grouped = matches.reduce<Map<string, Match[]>>((acc, match) => {
-    const groupId = getStageGroupId(match.stage) ?? getKnockoutStageGroupId(match.stage);
+    const kind = getStageKind(match.stage, match.stageKind);
+    const groupId = getStageGroupId(match.stage) ?? getKnockoutStageGroupId(kind);
     if (!acc.has(groupId)) acc.set(groupId, []);
     acc.get(groupId)?.push(match);
     return acc;
@@ -213,20 +214,19 @@ function groupMatchesByStageGroup(matches: Match[]) {
   return [...grouped.entries()].sort(([left], [right]) => rankGroup(left) - rankGroup(right));
 }
 
-function getKnockoutStageGroupId(stage: string) {
-  if (/1\/16|1\/8|1\/4|round\s+of\s+(?:32|16)|8th\s+finals|quarter-?\s*finals?/i.test(stage)) return "knockout";
-  if (/半决赛|三四名|季军|决赛|semi-?\s*finals?|final|third-?\s*place/i.test(stage)) return "final-week";
+function getKnockoutStageGroupId(kind: StageKind) {
+  if (kind === "sf" || kind === "third" || kind === "final") return "final-week";
   return "knockout";
 }
 
 function formatGroupTitle(group: string) {
-  if (group === "knockout") return "淘汰赛";
-  if (group === "final-week") return "决赛周";
-  return `${group} 组`;
+  if (group === "knockout") return "???";
+  if (group === "final-week") return "???";
+  return group + " ?";
 }
-
 function rankGroup(group: string) {
   if (group === "knockout") return 99;
   if (group === "final-week") return 100;
   return group.charCodeAt(0) - 64;
 }
+

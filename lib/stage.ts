@@ -1,7 +1,25 @@
+export type StageKind = "group" | "r32" | "r16" | "qf" | "sf" | "third" | "final" | "warmup" | "other";
+
+export function getStageKind(stage: string, stageKind?: string | null): StageKind {
+  const normalized = normalizeStageKind(stageKind);
+  if (normalized) return normalized;
+
+  const text = stage.trim();
+  if (getStageGroupId(text)) return "group";
+  if (/1\/32|Round of 32|32nd Finals?/i.test(text)) return "r32";
+  if (/1\/16|Round of 16|16th Finals?|8th Finals?|1\/8 Finals?/i.test(text)) return "r16";
+  if (/1\/4|Quarter/i.test(text)) return "qf";
+  if (/1\/2|Semi/i.test(text)) return "sf";
+  if (/3rd|Third Place|季军/i.test(text)) return "third";
+  if (/Final/i.test(text)) return "final";
+  if (/warmup|热身/i.test(text)) return "warmup";
+  return "other";
+}
+
 export function getStageGroupId(stage: string): string | null {
   const match =
     stage.match(/(?:^|\b)Group\s+([A-L])\b/i) ??
-    stage.match(/小组赛\s*([A-L])\s*组/i) ??
+    stage.match(/(?:^|\b)([A-L])\s*组/i) ??
     stage.match(/([A-L])\s*组/i);
 
   return match?.[1]?.toUpperCase() ?? null;
@@ -24,7 +42,7 @@ export function getStageRoundLabel(stage: string, summary?: string): string | nu
   const source = [stage, summary].filter(Boolean).join(" ");
   const digitMatch =
     source.match(/Round\s+(\d+)/i) ??
-    source.match(/第\s*(\d+)\s*轮/) ??
+    source.match(/第\s*(\d+)\s*轮/i) ??
     source.match(/Matchday\s+(\d+)/i);
 
   if (digitMatch) return ROUND_WORDS[digitMatch[1]] ?? `第${digitMatch[1]}轮`;
@@ -33,36 +51,57 @@ export function getStageRoundLabel(stage: string, summary?: string): string | nu
   return wordMatch ? `${wordMatch[1]}轮` : null;
 }
 
-export function formatStageLabel(stage: string, summary?: string): string {
+export function formatStageLabel(stage: string, summary?: string, stageKind?: string | null): string {
   const source = [stage, summary].filter(Boolean).join(" ");
-  const groupId = getStageGroupId(source) ?? getStageGroupId(stage);
+  const kind = getStageKind(source, stageKind);
+  const groupId = getStageGroupId(source);
   const roundLabel = getStageRoundLabel(stage, summary);
 
-  if (groupId && roundLabel) return `${groupId}组 ${roundLabel}`;
-  if (groupId) return `${groupId}组`;
-  if (stage.includes("1/16")) return "1/16 决赛";
-  if (stage.includes("1/8")) return "1/8 决赛";
-  if (stage.includes("1/4")) return "1/4 决赛";
-  if (stage.includes("三/四名")) return "三四名决赛";
+  if (kind === "group" && groupId && roundLabel) return `${groupId}组 · ${roundLabel}`;
+  if (kind === "group" && groupId) return `${groupId}组`;
+  if (kind === "r32") return "32强";
+  if (kind === "r16") return "16强";
+  if (kind === "qf") return "8强";
+  if (kind === "sf") return "半决赛";
+  if (kind === "third") return "季军赛";
+  if (kind === "final") return "决赛";
+  if (kind === "warmup") return "热身赛";
   return stage;
 }
 
-/**
- * Extract round number from stage/summary and format as "小组赛第X轮"
- * Handles formats like: "Group A Round 3", "A组 第3轮", "Matchday 3", "第3轮"
- */
-export function formatRoundLabel(stage: string, summary?: string): string {
-  return formatStageLabel(stage, summary);
+export function formatRoundLabel(stage: string, summary?: string, stageKind?: string | null): string {
+  return formatStageLabel(stage, summary, stageKind);
 }
 
-export function rankStage(stage: string): number {
+export function rankStage(stage: string, stageKind?: string | null): number {
+  const kind = getStageKind(stage, stageKind);
   const groupId = getStageGroupId(stage);
-  if (groupId) return groupId.charCodeAt(0) - 64;
-  if (stage.includes("1/16")) return 13;
-  if (stage.includes("1/8")) return 14;
-  if (stage.includes("1/4")) return 15;
-  if (stage.includes("半决赛")) return 16;
-  if (stage.includes("三四名") || stage.includes("季军")) return 17;
-  if (stage.includes("决赛")) return 18;
+  if (kind === "group" && groupId) return groupId.charCodeAt(0) - 64;
+  if (kind === "r32") return 13;
+  if (kind === "r16") return 14;
+  if (kind === "qf") return 15;
+  if (kind === "sf") return 16;
+  if (kind === "third") return 17;
+  if (kind === "final") return 18;
+  if (kind === "warmup") return 19;
   return 99;
+}
+
+function normalizeStageKind(value?: string | null): StageKind | null {
+  const kind = (value || "").trim().toLowerCase();
+  if (!kind) return null;
+  if (
+    kind === "group" ||
+    kind === "r32" ||
+    kind === "r16" ||
+    kind === "qf" ||
+    kind === "sf" ||
+    kind === "third" ||
+    kind === "final" ||
+    kind === "warmup" ||
+    kind === "other"
+  ) {
+    return kind;
+  }
+  return null;
 }

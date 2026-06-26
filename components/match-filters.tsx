@@ -7,7 +7,7 @@ import { ComponentType, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { openCreatorSupportModal } from "@/components/support-creator-modal";
 import type { ScheduleCompletionFilter, ScheduleLayout } from "@/app/matches/page";
-import { formatStageLabel, getStageGroupId, rankStage } from "@/lib/stage";
+import { formatStageLabel, getStageGroupId, getStageKind, rankStage } from "@/lib/stage";
 
 type Timezone = {
   label: string;
@@ -57,12 +57,12 @@ export function readFilterGroupValue(value: string) {
 }
 
 export function getStageFilterGroup(stage: string) {
-  if (getStageGroupId(stage) || stage.includes("小组赛")) return "小组赛";
-  if (stage.includes("1/16") || stage.includes("1/8") || stage.includes("1/4")) return "淘汰赛";
-  if (stage.includes("半决赛") || stage.includes("决赛")) return "决赛周";
-  return "赛段";
+  const kind = getStageKind(stage);
+  if (getStageGroupId(stage) || kind === "group") return "???";
+  if (kind === "r32" || kind === "r16" || kind === "qf") return "???";
+  if (kind === "sf" || kind === "third" || kind === "final") return "???";
+  return "??";
 }
-
 export function getCityFilterGroup(city: string) {
   const mexicoCities = ["Mexico City", "Guadalajara", "Monterrey", "墨西哥城", "瓜达拉哈拉", "萨波潘", "蒙特雷"];
   const canadaCities = ["Toronto", "Vancouver", "多伦多", "温哥华"];

@@ -19,6 +19,8 @@ export type Match = {
     lon: number;
   } | null;
   stage: string;
+  stageKind?: "group" | "r32" | "r16" | "qf" | "sf" | "third" | "final" | "warmup" | "other";
+  stageOrder?: number;
   weather: string;
   status?: "not_started" | "live" | "halftime" | "finished" | "postponed" | "unknown";
   statusShort?: string;

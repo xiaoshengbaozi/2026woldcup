@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { Minus, Plus, RotateCcw, Maximize2, Minimize2, Expand, Shrink } from "lucide-react";
 import { parseTeams } from "@/lib/teams";
 import { formatTime } from "@/lib/format";
-import { formatStageLabel } from "@/lib/stage";
+import { formatStageLabel, getStageKind } from "@/lib/stage";
 import { areMatchTeamsConfirmed } from "@/lib/match-availability";
 import { generateMatchRouteSlug } from "@/lib/match-detail";
 import { getStageGroupId } from "@/lib/stage";
@@ -450,9 +450,10 @@ export function TopologyBracket({ matches, timezoneOffset = 0 }: TopologyBracket
     const inJourney = teamJourneySet.has(id);
 
     // Stage label color
-    const stageLabel = formatStageLabel(match.stage, match.summary);
-    const isFinal = match.stage.includes("决赛");
-    const isSemi = match.stage.includes("半决赛");
+    const stageLabel = formatStageLabel(match.stage, match.summary, match.stageKind);
+    const kind = getStageKind(match.stage, match.stageKind);
+    const isFinal = kind === 'final';
+    const isSemi = kind === 'sf';
 
     const card = (
         <motion.div
