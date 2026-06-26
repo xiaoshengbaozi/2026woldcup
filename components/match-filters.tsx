@@ -72,8 +72,8 @@ export function getCityFilterGroup(city: string) {
   return "美国";
 }
 
-function sortStages(stages: string[]): string[] {
-  return [...stages].sort((a, b) => rankStage(a) - rankStage(b));
+function sortStages(stages: string[], stageKindsByStage?: Record<string, string | null | undefined>): string[] {
+  return [...stages].sort((a, b) => rankStage(a, stageKindsByStage?.[a]) - rankStage(b, stageKindsByStage?.[b]));
 }
 
 export function MatchFilters({
@@ -93,7 +93,7 @@ export function MatchFilters({
   onTimezoneChange,
   onLayoutChange
 }: MatchFiltersProps) {
-  const sorted = sortStages(stages);
+  const sorted = sortStages(stages, stageKindsByStage);
   const stageOptions = useMemo(
     () => sorted.map((item) => ({
       label: formatStageLabel(item),

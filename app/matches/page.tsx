@@ -56,12 +56,22 @@ export default function MatchesPage() {
   );
 
   const stages = useMemo(
-    () => [...new Set(completionFilteredMatches.map((match) => match.stage))],
+    () => {
+      const byValue = new Map<string, string>();
+
+      for (const match of completionFilteredMatches) {
+        const value = getMatchStageFilterValue(match);
+        if (!byValue.has(value)) byValue.set(value, value);
+      }
+
+      return [...byValue.values()];
+    },
     [completionFilteredMatches]
   );
   const stageKindsByStage = useMemo(() => {
     return completionFilteredMatches.reduce<Record<string, string | null | undefined>>((acc, match) => {
-      if (!(match.stage in acc)) acc[match.stage] = match.stageKind;
+      const value = getMatchStageFilterValue(match);
+      if (!(value in acc)) acc[value] = match.stageKind;
       return acc;
     }, {});
   }, [completionFilteredMatches]);
@@ -87,12 +97,12 @@ export default function MatchesPage() {
 
       return (
         (!normalizedQuery || haystack.includes(normalizedQuery)) &&
-        (!stage || (stageGroup ? getStageFilterGroup(match.stage) === stageGroup : match.stage === stage)) &&
+        (!stage || (stageGroup ? getStageFilterGroup(match.stage, match.stageKind) === stageGroup : matchMatchesStageFilter(match, stage, stageKindsByStage[stage]))) &&
         (activeCity === "全部城市" || (cityGroup ? getCityFilterGroup(city) === cityGroup : city === activeCity)) &&
         (!selectedDay || getMatchDayKey(match.start, timezoneOffset) === selectedDay)
       );
     });
-  }, [activeCity, completionFilteredMatches, query, selectedDay, stage, timezoneOffset]);
+  }, [activeCity, completionFilteredMatches, query, selectedDay, stage, stageKindsByStage, timezoneOffset]);
 
   const grouped = useMemo(() => groupMatchesByDay(filteredMatches), [filteredMatches]);
   const matchDays = useMemo(
@@ -236,6 +246,30 @@ export default function MatchesPage() {
       />
     </DashboardShell>
   );
+}
+
+function getMatchStageFilterValue(match: { stage: string; stageKind?: string | null }) {
+  const kind = getStageKind(match.stage, match.stageKind);
+  if (kind === "r32") return "1/16 决赛";
+  if (kind === "r16") return "1/8 决赛";
+  if (kind === "qf") return "1/4 决赛";
+  if (kind === "sf") return "半决赛";
+  if (kind === "third") return "三四名决赛";
+  if (kind === "final") return "决赛";
+  return match.stage;
+}
+
+function matchMatchesStageFilter(
+  match: { stage: string; stageKind?: string | null },
+  selectedStage: string,
+  selectedStageKind?: string | null
+) {
+  const selectedKind = getStageKind(selectedStage, selectedStageKind);
+  if (selectedKind !== "group" && selectedKind !== "other") {
+    return getStageKind(match.stage, match.stageKind) === selectedKind;
+  }
+
+  return match.stage === selectedStage;
 }
 
 function buildMatchDayOptions(matches: { start: Date }[], timezoneOffset: number): MatchDayOption[] {
