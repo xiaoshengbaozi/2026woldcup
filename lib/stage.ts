@@ -1,13 +1,19 @@
 export type StageKind = "group" | "r32" | "r16" | "qf" | "sf" | "third" | "final" | "warmup" | "other";
 
+const GROUP_STAGE_PATTERNS = [
+  /(?:^|\b)Group\s+([A-L])\b/i,
+  /(?:^|\b)([A-L])\s*组\b/i,
+  /([A-L])\s*组/i,
+];
+
 export function getStageKind(stage: string, stageKind?: string | null): StageKind {
   const normalized = normalizeStageKind(stageKind);
   if (normalized) return normalized;
 
   const text = stage.trim();
   if (getStageGroupId(text)) return "group";
-  if (/1\/32|Round of 32|32nd Finals?/i.test(text)) return "r32";
-  if (/1\/16|Round of 16|16th Finals?|8th Finals?|1\/8 Finals?/i.test(text)) return "r16";
+  if (/1\/32|Round of 32|32nd Finals?|32强/i.test(text)) return "r32";
+  if (/1\/16|Round of 16|16th Finals?|8th Finals?|1\/8 Finals?|16强/i.test(text)) return "r16";
   if (/1\/4|Quarter/i.test(text)) return "qf";
   if (/1\/2|Semi/i.test(text)) return "sf";
   if (/3rd|Third Place|三四名/i.test(text)) return "third";
@@ -17,12 +23,11 @@ export function getStageKind(stage: string, stageKind?: string | null): StageKin
 }
 
 export function getStageGroupId(stage: string): string | null {
-  const match =
-    stage.match(/(?:^|\b)Group\s+([A-L])\b/i) ??
-    stage.match(/(?:^|\b)([A-L])\s*组\b/i) ??
-    stage.match(/([A-L])\s*组/i);
-
-  return match?.[1]?.toUpperCase() ?? null;
+  for (const pattern of GROUP_STAGE_PATTERNS) {
+    const match = stage.match(pattern);
+    if (match?.[1]) return match[1].toUpperCase();
+  }
+  return null;
 }
 
 const ROUND_WORDS: Record<string, string> = {

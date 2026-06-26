@@ -59,6 +59,12 @@ export default function MatchesPage() {
     () => [...new Set(completionFilteredMatches.map((match) => match.stage))],
     [completionFilteredMatches]
   );
+  const stageKindsByStage = useMemo(() => {
+    return completionFilteredMatches.reduce<Record<string, string | null | undefined>>((acc, match) => {
+      if (!(match.stage in acc)) acc[match.stage] = match.stageKind;
+      return acc;
+    }, {});
+  }, [completionFilteredMatches]);
 
   const cities = useMemo(() => {
     const values = completionFilteredMatches
@@ -135,7 +141,7 @@ export default function MatchesPage() {
     if (stageGroup === "淘汰赛") return 32;
     if (stageGroup === "决赛周") return 4;
 
-    const kind = getStageKind(stage);
+    const kind = stageKindsByStage[stage] ?? getStageKind(stage);
     if (kind === "r32") return 32;
     if (kind === "r16") return 16;
     if (kind === "qf") return 8;
@@ -143,7 +149,7 @@ export default function MatchesPage() {
     if (kind === "third" || kind === "final") return 2;
     if (getStageGroupId(stage)) return totalTeams;
     return totalTeams;
-  }, [stage, totalTeams]);
+  }, [stage, stageKindsByStage, totalTeams]);
   return (
     <DashboardShell>
       <LiveMatchesStrip matches={liveQueueMatches} />
@@ -165,6 +171,7 @@ export default function MatchesPage() {
           completionFilter={completionFilter}
           stage={stage}
           stages={stages}
+          stageKindsByStage={stageKindsByStage}
           activeCity={activeCity}
           cities={cities}
           timezoneOffset={timezoneOffset}
@@ -196,6 +203,7 @@ export default function MatchesPage() {
                 completionFilter={completionFilter}
                 stage={stage}
                 stages={stages}
+                stageKindsByStage={stageKindsByStage}
                 activeCity={activeCity}
                 cities={cities}
                 timezoneOffset={timezoneOffset}

@@ -27,6 +27,7 @@ type MatchFiltersProps = {
   completionFilter: ScheduleCompletionFilter;
   stage: string;
   stages: string[];
+  stageKindsByStage?: Record<string, string | null | undefined>;
   activeCity: string;
   cities: string[];
   timezoneOffset: number;
@@ -56,12 +57,12 @@ export function readFilterGroupValue(value: string) {
   return value.startsWith(FILTER_GROUP_PREFIX) ? value.slice(FILTER_GROUP_PREFIX.length) : "";
 }
 
-export function getStageFilterGroup(stage: string) {
-  const kind = getStageKind(stage);
+export function getStageFilterGroup(stage: string, stageKind?: string | null) {
+  const kind = getStageKind(stage, stageKind);
   if (getStageGroupId(stage) || kind === "group") return "小组赛";
   if (kind === "r32" || kind === "r16" || kind === "qf") return "淘汰赛";
   if (kind === "sf" || kind === "third" || kind === "final") return "决赛周";
-  return "赛段";
+  return "未知阶段";
 }
 export function getCityFilterGroup(city: string) {
   const mexicoCities = ["Mexico City", "Guadalajara", "Monterrey", "墨西哥城", "瓜达拉哈拉", "萨波潘", "蒙特雷"];
@@ -80,6 +81,7 @@ export function MatchFilters({
   completionFilter,
   stage,
   stages,
+  stageKindsByStage,
   activeCity,
   cities,
   timezoneOffset,
@@ -96,9 +98,9 @@ export function MatchFilters({
     () => sorted.map((item) => ({
       label: formatStageLabel(item),
       value: item,
-      group: getStageFilterGroup(item)
+      group: getStageFilterGroup(item, stageKindsByStage?.[item])
     })),
-    [sorted]
+    [sorted, stageKindsByStage]
   );
   const cityOptions = useMemo(
     () => cities.filter((city) => city !== "全部城市").map((city) => ({
