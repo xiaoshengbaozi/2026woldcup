@@ -18,6 +18,14 @@ import type { Match, MatchTeamMeta } from "@/types/match";
 
 const LIVE_FIXTURE_REFRESH_MS = 60_000;
 
+type ThirdPlaceRanking = {
+  groupId: string;
+  team: MatchTeamMeta;
+  points: number;
+  goalsDiff: number;
+  goalsFor: number;
+};
+
 export function useWorldCupData() {
   const currentTime = useNow(30_000);
   const [matches, setMatches] = useState<Match[]>([]);
@@ -252,7 +260,7 @@ export function enrichKnockoutMatchesWithStandings(
   const thirdPlaceRankings = buildThirdPlaceRankings(standings);
   if (!slotIndex.size && !thirdPlaceRankings.length) return matches;
 
-  const usedThirdPlaceGroups = new Set<string>();
+  const usedThirdPlaceGroups = getConfirmedThirdPlaceGroups(matches, thirdPlaceRankings);
 
   return matches.map((match) => {
     if (!isFirstKnockoutRound(match)) return match;
@@ -296,7 +304,7 @@ function buildGroupSlotIndex(standings: NormalizedWorldCupStandingRow[]) {
   return slots;
 }
 
-function buildThirdPlaceRankings(standings: NormalizedWorldCupStandingRow[]) {
+function buildThirdPlaceRankings(standings: NormalizedWorldCupStandingRow[]): ThirdPlaceRanking[] {
   const rowsByGroup = groupStandingsById(standings);
 
   return GROUPS.flatMap((group) => {
@@ -323,6 +331,36 @@ function buildThirdPlaceRankings(standings: NormalizedWorldCupStandingRow[]) {
         left.groupId.localeCompare(right.groupId)
       );
     });
+}
+
+function getConfirmedThirdPlaceGroups(matches: Match[], thirdPlaceRankings: ThirdPlaceRanking[]) {
+  const groups = new Set<string>();
+  if (!thirdPlaceRankings.length) return groups;
+
+  const thirdPlaceByTeamKey = new Map<string, string>();
+  for (const row of thirdPlaceRankings) {
+    getMatchTeamKeys(row.team).forEach((key) => thirdPlaceByTeamKey.set(key, row.groupId));
+  }
+
+  for (const match of matches) {
+    if (!isFirstKnockoutRound(match) || isPlaceholderKnockoutMatch(match)) continue;
+
+    for (const team of [match.homeTeam, match.awayTeam]) {
+      if (!team) continue;
+      for (const key of getMatchTeamKeys(team)) {
+        const groupId = thirdPlaceByTeamKey.get(key);
+        if (groupId) groups.add(groupId);
+      }
+    }
+  }
+
+  return groups;
+}
+
+function getMatchTeamKeys(team: MatchTeamMeta) {
+  return [team.code, team.englishName, team.name]
+    .map(normalizeTeamName)
+    .filter(Boolean);
 }
 
 function isGroupComplete(rows: NormalizedWorldCupStandingRow[]) {
@@ -360,7 +398,7 @@ function isFirstKnockoutRound(match: Match) {
 function resolveKnockoutSummary(
   summary: string,
   slots: Map<string, MatchTeamMeta>,
-  thirdPlaceRankings: Array<{ groupId: string; team: MatchTeamMeta }>,
+  thirdPlaceRankings: ThirdPlaceRanking[],
   usedThirdPlaceGroups: Set<string>
 ) {
   const match = summary.match(/^(.*?)([^()]+?)\s+vs\s+([^()]+?)(\s*\([^)]+\)\s*)$/i);
@@ -384,7 +422,7 @@ function resolveKnockoutSummary(
 function resolveKnockoutSlot(
   value: string,
   slots: Map<string, MatchTeamMeta>,
-  thirdPlaceRankings: Array<{ groupId: string; team: MatchTeamMeta }>,
+  thirdPlaceRankings: ThirdPlaceRanking[],
   usedThirdPlaceGroups: Set<string>
 ) {
   const direct = resolveGroupSlot(value, slots);
@@ -400,7 +438,7 @@ function resolveGroupSlot(value: string, slots: Map<string, MatchTeamMeta>) {
 
 function resolveThirdPlaceSlot(
   value: string,
-  thirdPlaceRankings: Array<{ groupId: string; team: MatchTeamMeta }>,
+  thirdPlaceRankings: ThirdPlaceRanking[],
   usedThirdPlaceGroups: Set<string>
 ) {
   const match = value
