@@ -24,7 +24,7 @@ export default function MatchesPage() {
   const [stage, setStage] = useState("");
   const [timezoneOffset, setTimezoneOffset] = useState(0);
   const [layout, setLayout] = useState<ScheduleLayout>("default");
-  const [completionFilter, setCompletionFilter] = useState<ScheduleCompletionFilter>("all");
+  const [completionFilter, setCompletionFilter] = useState<ScheduleCompletionFilter>("not_started");
   const [selectedDay, setSelectedDay] = useState("");
   const mobileRailSentinelRef = useRef<HTMLDivElement>(null);
   const mobileRailRef = useRef<HTMLDivElement>(null);

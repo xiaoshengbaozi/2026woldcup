@@ -212,7 +212,7 @@ function CompletionFilterToggle({
 }) {
   const options: { value: ScheduleCompletionFilter; label: string }[] = [
     { value: "all", label: "全部" },
-    { value: "not_started", label: "未开始" },
+    { value: "not_started", label: "未开赛" },
   ];
 
   return (
