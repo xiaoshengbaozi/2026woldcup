@@ -235,10 +235,14 @@ export function mergeCalendarWithLiveFixtures(calendarMatches: Match[], liveMatc
     if (!liveMatch) return calendarMatch;
 
     usedLiveIds.add(liveMatch.uid);
+    const keepCalendarSlot = shouldKeepCalendarKnockoutSlot(calendarMatch, liveMatch);
 
     return {
       ...calendarMatch,
       ...liveMatch,
+      summary: keepCalendarSlot ? calendarMatch.summary : liveMatch.summary,
+      homeTeam: keepCalendarSlot ? calendarMatch.homeTeam : liveMatch.homeTeam,
+      awayTeam: keepCalendarSlot ? calendarMatch.awayTeam : liveMatch.awayTeam,
       location: mergeMatchLocation(calendarMatch.location, liveMatch.location),
       stage: calendarMatch.stage,
       weather: liveMatch.weather || calendarMatch.weather,
@@ -248,6 +252,14 @@ export function mergeCalendarWithLiveFixtures(calendarMatches: Match[], liveMatc
 
   const unmatchedLive = liveMatches.filter((match) => !usedLiveIds.has(match.uid));
   return [...merged, ...unmatchedLive].sort((a, b) => a.start.getTime() - b.start.getTime());
+}
+
+function shouldKeepCalendarKnockoutSlot(calendarMatch: Match, liveMatch: Match) {
+  return (
+    isFirstKnockoutRound(calendarMatch) &&
+    isPlaceholderKnockoutMatch(calendarMatch) &&
+    !isPlaceholderKnockoutMatch(liveMatch)
+  );
 }
 
 export function enrichKnockoutMatchesWithStandings(
