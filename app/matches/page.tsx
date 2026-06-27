@@ -109,16 +109,44 @@ export default function MatchesPage() {
     () => buildMatchDayOptions(completionFilteredMatches, timezoneOffset),
     [completionFilteredMatches, timezoneOffset]
   );
+  const mobileMatchDays = useMemo(
+    () => buildMatchDayOptions(scheduleMatches, timezoneOffset),
+    [scheduleMatches, timezoneOffset]
+  );
 
   useEffect(() => {
-    if (selectedDay && !matchDays.some((day) => day.key === selectedDay)) setSelectedDay("");
-  }, [matchDays, selectedDay]);
+    if (typeof window === "undefined") return;
+    if (!window.matchMedia("(max-width: 639px)").matches) return;
+    if (selectedDay || !mobileMatchDays.length) return;
+
+    const defaultDay = getDefaultMobileMatchDay(mobileMatchDays, timezoneOffset);
+    if (!defaultDay) return;
+
+    const todayKey = getCurrentDayKey(timezoneOffset);
+    if (defaultDay === todayKey && !matchDays.some((day) => day.key === todayKey)) {
+      setCompletionFilter("all");
+    }
+    setSelectedDay(defaultDay);
+  }, [matchDays, mobileMatchDays, selectedDay, timezoneOffset]);
+
+  useEffect(() => {
+    const availableDays = typeof window !== "undefined" && window.matchMedia("(max-width: 639px)").matches
+      ? mobileMatchDays
+      : matchDays;
+    if (selectedDay && !availableDays.some((day) => day.key === selectedDay)) setSelectedDay("");
+  }, [matchDays, mobileMatchDays, selectedDay]);
 
   useEffect(() => {
     setStage("");
-    setSelectedDay("");
     setActiveCity("全部城市");
   }, [completionFilter, setActiveCity]);
+
+  const handleMobileMatchDaySelect = (day: string) => {
+    if (day && isPastMatchDay(day, timezoneOffset)) {
+      setCompletionFilter("all");
+    }
+    setSelectedDay(day);
+  };
 
   useEffect(() => {
     if (!cities.includes(activeCity)) setActiveCity("全部城市");
@@ -226,9 +254,9 @@ export default function MatchesPage() {
                 onLayoutChange={setLayout}
               />
               <MobileMatchDayStrip
-                days={matchDays}
+                days={mobileMatchDays}
                 selectedDay={selectedDay}
-                onSelectDay={setSelectedDay}
+                onSelectDay={handleMobileMatchDaySelect}
               />
             </div>
           </div>
@@ -294,6 +322,21 @@ function buildMatchDayOptions(matches: { start: Date }[], timezoneOffset: number
       month: item.date.toLocaleDateString("en-US", { month: "short" }),
       count: item.count
     }));
+}
+
+function getDefaultMobileMatchDay(days: MatchDayOption[], timezoneOffset: number) {
+  const todayKey = getCurrentDayKey(timezoneOffset);
+  if (days.some((day) => day.key === todayKey)) return todayKey;
+
+  return days.find((day) => day.key > todayKey)?.key ?? days[0]?.key ?? "";
+}
+
+function isPastMatchDay(dayKey: string, timezoneOffset: number) {
+  return dayKey < getCurrentDayKey(timezoneOffset);
+}
+
+function getCurrentDayKey(timezoneOffset: number) {
+  return formatDayKey(getAdjustedDate(new Date(), timezoneOffset));
 }
 
 function getMatchDayKey(date: Date, timezoneOffset: number) {

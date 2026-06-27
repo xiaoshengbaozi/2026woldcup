@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { CalendarDays } from "lucide-react";
 import type { MouseEvent } from "react";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
 export type MatchDayOption = {
   key: string;
@@ -25,6 +25,21 @@ export function MobileMatchDayStrip({
   onSelectDay
 }: MobileMatchDayStripProps) {
   const stripRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!selectedDay) return;
+
+    const strip = stripRef.current;
+    const button = strip?.querySelector<HTMLButtonElement>(`[data-match-day="${selectedDay}"]`);
+    if (!strip || !button) return;
+
+    window.requestAnimationFrame(() => {
+      strip.scrollTo({
+        left: button.offsetLeft - strip.clientWidth / 2 + button.offsetWidth / 2,
+        behavior: "smooth"
+      });
+    });
+  }, [selectedDay]);
 
   if (!days.length) return null;
 
@@ -88,6 +103,7 @@ export function MobileMatchDayStrip({
             key={day.key}
             active={selectedDay === day.key}
             count={day.count}
+            dayKey={day.key}
             label={day.weekday}
             meta={day.month}
             value={day.day}
@@ -102,6 +118,7 @@ export function MobileMatchDayStrip({
 function DayButton({
   active,
   count,
+  dayKey,
   label,
   meta,
   value,
@@ -109,6 +126,7 @@ function DayButton({
 }: {
   active: boolean;
   count: number;
+  dayKey?: string;
   label: string;
   meta: string;
   value: string;
@@ -119,6 +137,7 @@ function DayButton({
   return (
     <button
       type="button"
+      data-match-day={dayKey}
       onClick={onClick}
       className={`relative flex h-[68px] w-[50px] shrink-0 flex-col items-center justify-center overflow-hidden rounded-2xl text-center transition duration-300 ${
         active
