@@ -5,7 +5,7 @@ const MATCH_END_GRACE_MS = 10 * 60_000;
 export function getEffectiveMatchStatus(match: Match, status: Match["status"] | undefined = match.status): Match["status"] {
   if (status === "finished" || status === "postponed" || status === "unknown") return status;
   if (shouldForceFinishedByClock(match)) return "finished";
-  return status;
+  return status ?? "not_started";
 }
 
 export function shouldForceFinishedByClock(match: Pick<Match, "start" | "end">) {
