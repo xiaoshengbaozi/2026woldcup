@@ -271,6 +271,7 @@ export default function MatchesPage() {
         timezoneOffset={timezoneOffset}
         layout={layout}
         matchesForRoundLabels={scheduleMatches}
+        topologyMatches={scheduleMatches}
       />
     </DashboardShell>
   );

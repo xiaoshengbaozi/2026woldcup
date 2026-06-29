@@ -121,6 +121,7 @@ type ScheduleListProps = {
   timezoneOffset: number;
   layout: ScheduleLayout;
   matchesForRoundLabels: Match[];
+  topologyMatches?: Match[];
 };
 
 export function ScheduleList({
@@ -130,7 +131,8 @@ export function ScheduleList({
   isEmpty,
   timezoneOffset,
   layout,
-  matchesForRoundLabels
+  matchesForRoundLabels,
+  topologyMatches
 }: ScheduleListProps) {
   const days = [...grouped.entries()];
   const flatMatches = Array.from(grouped.values()).flat();
@@ -188,7 +190,7 @@ export function ScheduleList({
       )}
       {layout === "topology" && (
         <TopologyBracket
-          matches={flatMatches}
+          matches={topologyMatches?.length ? topologyMatches : flatMatches}
           timezoneOffset={timezoneOffset}
         />
       )}

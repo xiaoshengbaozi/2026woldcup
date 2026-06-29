@@ -9,6 +9,7 @@ import { formatTime } from "@/lib/format";
 import { formatStageLabel, getStageKind } from "@/lib/stage";
 import { areMatchTeamsConfirmed } from "@/lib/match-availability";
 import { generateMatchRouteSlug } from "@/lib/match-detail";
+import { getEffectiveMatchStatus } from "@/lib/match-status";
 import { getStageGroupId } from "@/lib/stage";
 import type { Match, Team } from "@/types/match";
 
@@ -113,11 +114,174 @@ const RIGHT_GROUPS = ["G", "H", "I", "J", "K", "L"];
 
 const WORLD_CUP_LOGO_URL = "https://digitalhub.fifa.com/transform/157d23bf-7e13-4d7b-949e-5d27d340987e/WC26_Logo?&io=transform:fill&quality=75";
 
+type GroupStandingRow = {
+  team: Team;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDiff: number;
+  points: number;
+};
+
+type KnockoutSlot = {
+  label: string;
+  groups: string[];
+  rank: number | null;
+  isThirdPool: boolean;
+};
+
 /* ──────────────────────── Helpers ──────────────────────── */
 
 function getMatchNumber(uid: string): string | null {
   const match = uid.match(/match(\d+)/i);
   return match ? `M${parseInt(match[1], 10)}` : null;
+}
+
+function isPlaceholderTeamName(name: string) {
+  return !name || name === "待定" || name.includes("待定") || name.includes("组") || name.includes("晋级");
+}
+
+function getTeamKey(team: Team) {
+  return team.name.trim().toLowerCase();
+}
+
+function parseKnockoutSlots(summary: string): [KnockoutSlot | null, KnockoutSlot | null] {
+  const clean = summary
+    .replace(/^⚽\s*/, "")
+    .replace(/\s*\([^)]+\)\s*$/, "");
+  const [home = "", away = ""] = clean.split(/\s+vs\s+/i);
+  return [parseKnockoutSlot(home), parseKnockoutSlot(away)];
+}
+
+function parseKnockoutSlot(value: string): KnockoutSlot | null {
+  const slot = value.trim().replace(/\\/g, "");
+  const direct = slot.match(/^([A-L])组第([123])$/i);
+  if (direct) {
+    return {
+      label: `${direct[1].toUpperCase()}组第${direct[2]}`,
+      groups: [direct[1].toUpperCase()],
+      rank: Number(direct[2]),
+      isThirdPool: false,
+    };
+  }
+
+  const third = slot.match(/^小组第三\(([^)]+)\)$/i);
+  if (third) {
+    const groups = third[1]
+      .split(",")
+      .map((item) => item.trim().toUpperCase())
+      .filter(Boolean);
+    return {
+      label: `最佳第三 ${groups.join("/")}`,
+      groups,
+      rank: 3,
+      isThirdPool: true,
+    };
+  }
+
+  return null;
+}
+
+function buildGroupStandings(matches: Match[]) {
+  const rowsByGroup = new Map<string, Map<string, GroupStandingRow>>();
+
+  for (const match of matches) {
+    const groupId = getStageGroupId(match.stage);
+    if (!groupId) continue;
+
+    const teams = parseTeams(match.summary);
+    if (!rowsByGroup.has(groupId)) rowsByGroup.set(groupId, new Map());
+    const groupRows = rowsByGroup.get(groupId)!;
+
+    for (const team of [teams.home, teams.away]) {
+      if (isPlaceholderTeamName(team.name)) continue;
+      const key = getTeamKey(team);
+      if (!groupRows.has(key)) {
+        groupRows.set(key, {
+          team,
+          played: 0,
+          won: 0,
+          drawn: 0,
+          lost: 0,
+          goalsFor: 0,
+          goalsAgainst: 0,
+          goalDiff: 0,
+          points: 0,
+        });
+      }
+    }
+
+    const status = getEffectiveMatchStatus(match);
+    const homeScore = match.score?.home;
+    const awayScore = match.score?.away;
+    if (status !== "finished" || homeScore == null || awayScore == null) continue;
+
+    const home = groupRows.get(getTeamKey(teams.home));
+    const away = groupRows.get(getTeamKey(teams.away));
+    if (!home || !away) continue;
+
+    home.played += 1;
+    away.played += 1;
+    home.goalsFor += homeScore;
+    home.goalsAgainst += awayScore;
+    away.goalsFor += awayScore;
+    away.goalsAgainst += homeScore;
+
+    if (homeScore > awayScore) {
+      home.won += 1;
+      away.lost += 1;
+      home.points += 3;
+    } else if (homeScore < awayScore) {
+      away.won += 1;
+      home.lost += 1;
+      away.points += 3;
+    } else {
+      home.drawn += 1;
+      away.drawn += 1;
+      home.points += 1;
+      away.points += 1;
+    }
+
+    home.goalDiff = home.goalsFor - home.goalsAgainst;
+    away.goalDiff = away.goalsFor - away.goalsAgainst;
+  }
+
+  const standings: Record<string, GroupStandingRow[]> = {};
+  rowsByGroup.forEach((rows, groupId) => {
+    standings[groupId] = [...rows.values()].sort((a, b) => (
+      b.points - a.points ||
+      b.goalDiff - a.goalDiff ||
+      b.goalsFor - a.goalsFor ||
+      a.team.name.localeCompare(b.team.name, "zh-CN")
+    ));
+  });
+
+  return standings;
+}
+
+function getResolvedSlotTeam(slot: KnockoutSlot | null, standings: Record<string, GroupStandingRow[]>) {
+  if (!slot || slot.rank == null) return null;
+  if (slot.isThirdPool) {
+    return slot.groups
+      .map((groupId) => ({ groupId, row: standings[groupId]?.[2] }))
+      .filter((item): item is { groupId: string; row: GroupStandingRow } => Boolean(item.row))
+      .sort((a, b) => (
+        b.row.points - a.row.points ||
+        b.row.goalDiff - a.row.goalDiff ||
+        b.row.goalsFor - a.row.goalsFor ||
+        a.groupId.localeCompare(b.groupId)
+      ))[0]?.row.team ?? null;
+  }
+
+  return standings[slot.groups[0]]?.[slot.rank - 1]?.team ?? null;
+}
+
+function getSlotCaption(slot: KnockoutSlot | null) {
+  if (!slot) return "";
+  return slot.label;
 }
 
 /* ──────────────────────── Component ──────────────────────── */
@@ -152,7 +316,7 @@ export function TopologyBracket({ matches, timezoneOffset = 0 }: TopologyBracket
     return map;
   }, [matches]);
 
-  const { groupTeams, teamGroupMap } = React.useMemo(() => {
+  const { groupTeams, teamGroupMap, groupStandings } = React.useMemo(() => {
     const groupTeamsMap = new Map<string, Set<string>>();
     const teamGroup = new Map<string, string>();
     matches.forEach(m => {
@@ -161,7 +325,7 @@ export function TopologyBracket({ matches, timezoneOffset = 0 }: TopologyBracket
       if (!groupTeamsMap.has(gid)) groupTeamsMap.set(gid, new Set());
       const teams = parseTeams(m.summary);
       [teams.home, teams.away].forEach(t => {
-        if (t.name && t.name !== "待定" && !t.name.includes("待定") && !t.name.includes("组")) {
+        if (!isPlaceholderTeamName(t.name)) {
           groupTeamsMap.get(gid)?.add(t.name);
           teamGroup.set(t.name, gid);
         }
@@ -179,7 +343,13 @@ export function TopologyBracket({ matches, timezoneOffset = 0 }: TopologyBracket
         return d;
       });
     });
-    return { groupTeams: finalMap, teamGroupMap: teamGroup };
+    const standings = buildGroupStandings(matches);
+    Object.entries(standings).forEach(([groupId, rows]) => {
+      rows.forEach((row) => {
+        teamGroup.set(row.team.name, groupId);
+      });
+    });
+    return { groupTeams: finalMap, teamGroupMap: teamGroup, groupStandings: standings };
   }, [matches]);
 
   /* ── Coords ── */
@@ -360,10 +530,19 @@ export function TopologyBracket({ matches, timezoneOffset = 0 }: TopologyBracket
     const sy = f.y + f.h / 2;
     const ex = side === "left" ? t.x : t.x + t.w;
     const ey = t.y + t.h / 2;
-    const off = Math.abs(ex - sx) * 0.42;
-    const c1x = side === "left" ? sx + off : sx - off;
-    const c2x = side === "left" ? ex - off : ex + off;
-    return `M ${sx} ${sy} C ${c1x} ${sy}, ${c2x} ${ey}, ${ex} ${ey}`;
+    const dir = side === "left" ? 1 : -1;
+    const lane = Math.max(24, Math.abs(ex - sx) * 0.5);
+    const midX = sx + lane * dir;
+    const corner = 14;
+    if (Math.abs(sy - ey) < 8) return `M ${sx} ${sy} L ${ex} ${ey}`;
+    return [
+      `M ${sx} ${sy}`,
+      `L ${midX - corner * dir} ${sy}`,
+      `Q ${midX} ${sy} ${midX} ${sy + Math.sign(ey - sy) * corner}`,
+      `L ${midX} ${ey - Math.sign(ey - sy) * corner}`,
+      `Q ${midX} ${ey} ${midX + corner * dir} ${ey}`,
+      `L ${ex} ${ey}`,
+    ].join(" ");
   };
 
   const isConnectionActive = (f: string, t: string) => teamJourneySet.has(f) && teamJourneySet.has(t);
@@ -371,6 +550,18 @@ export function TopologyBracket({ matches, timezoneOffset = 0 }: TopologyBracket
   /* ── Render Group Card ── */
   const renderGroupCard = (groupId: string) => {
     const teams = groupTeams[groupId] || [];
+    const standings = groupStandings[groupId] || [];
+    const displayRows = standings.length ? standings : teams.map((team) => ({
+      team,
+      played: 0,
+      won: 0,
+      drawn: 0,
+      lost: 0,
+      goalsFor: 0,
+      goalsAgainst: 0,
+      goalDiff: 0,
+      points: 0,
+    }));
     const anyHovered = hoveredTeam !== null;
     const isActive = teamJourneySet.has(`G_${groupId}`);
 
@@ -378,7 +569,7 @@ export function TopologyBracket({ matches, timezoneOffset = 0 }: TopologyBracket
       <div
         id={`bracket-node-G_${groupId}`}
         key={`group-${groupId}`}
-        className={`group relative w-[196px] rounded-2xl border p-3 backdrop-blur-xl transition-all duration-300 ${
+        className={`group relative w-[218px] rounded-[1.45rem] border p-3 backdrop-blur-xl transition-all duration-300 ${
           isActive
             ? "border-volt/60 bg-volt/[0.04] shadow-[0_0_20px_-4px_rgba(216,255,62,0.2)]"
             : anyHovered
@@ -389,22 +580,22 @@ export function TopologyBracket({ matches, timezoneOffset = 0 }: TopologyBracket
         {/* Header */}
         <div className="mb-2.5 flex items-center justify-between border-b border-white/[0.06] pb-2">
           <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-volt/80">
-            {groupId} 组
+            {groupId} 组积分
           </span>
           <span className="rounded-full bg-white/[0.04] px-2 py-0.5 text-[8px] font-medium uppercase tracking-wider text-white/30">
-            STAGE 1
+            PTS / GD
           </span>
         </div>
 
-        {/* Teams */}
-        <div className="space-y-0.5">
+        <div className="space-y-1">
           {Array.from({ length: 4 }).map((_, i) => {
-            const team = teams[i];
-            if (!team) {
+            const row = displayRows[i];
+            const team = row?.team;
+            if (!row || !team) {
               return (
                 <div key={i} className="flex items-center gap-2 rounded-lg px-1.5 py-1 text-[10px] text-white/15">
                   <div className="h-4 w-5 rounded bg-white/[0.03]" />
-                  <span>—</span>
+                  <span>待定</span>
                 </div>
               );
             }
@@ -412,21 +603,32 @@ export function TopologyBracket({ matches, timezoneOffset = 0 }: TopologyBracket
             return (
               <div
                 key={team.name}
-                className={`flex items-center gap-2 rounded-lg px-1.5 py-1 transition-colors cursor-pointer ${
+                className={`grid grid-cols-[18px_minmax(0,1fr)_38px_34px] items-center gap-1.5 rounded-xl px-1.5 py-1.5 transition-colors cursor-pointer ${
                   isHovered ? "bg-volt/[0.08]" : "hover:bg-white/[0.03]"
                 }`}
                 onMouseEnter={() => setHoveredTeam(team.name)}
                 onMouseLeave={() => setHoveredTeam(null)}
               >
-                {team.image ? (
-                  <img src={team.image} alt="" className="h-4 w-5 rounded object-cover shadow-sm" />
-                ) : (
-                  <div className="flex h-4 w-5 items-center justify-center rounded bg-white/[0.05] text-[7px] font-bold text-white/40">
-                    {team.badge}
-                  </div>
-                )}
-                <span className={`truncate text-[11px] font-medium leading-tight ${isHovered ? "text-volt" : "text-white/75"}`}>
-                  {team.name}
+                <span className={`text-[10px] font-bold tabular-nums ${i < 2 ? "text-volt" : i === 2 ? "text-flare/80" : "text-white/28"}`}>
+                  {i + 1}
+                </span>
+                <div className="flex min-w-0 items-center gap-1.5">
+                  {team.image ? (
+                    <img src={team.image} alt="" className="h-4 w-5 rounded object-cover shadow-sm" />
+                  ) : (
+                    <div className="flex h-4 w-5 items-center justify-center rounded bg-white/[0.05] text-[7px] font-bold text-white/40">
+                      {team.badge}
+                    </div>
+                  )}
+                  <span className={`truncate text-[11px] font-medium leading-tight ${isHovered ? "text-volt" : "text-white/75"}`}>
+                    {team.name}
+                  </span>
+                </div>
+                <span className="text-right text-[10px] font-semibold text-white/46 tabular-nums">
+                  {row.played ? `${row.won}-${row.drawn}-${row.lost}` : "0-0-0"}
+                </span>
+                <span className={`text-right text-[10px] font-bold tabular-nums ${i < 3 ? "text-white/78" : "text-white/34"}`}>
+                  {row.points}<span className="ml-1 text-white/24">{row.goalDiff > 0 ? "+" : ""}{row.goalDiff}</span>
                 </span>
               </div>
             );
@@ -441,11 +643,19 @@ export function TopologyBracket({ matches, timezoneOffset = 0 }: TopologyBracket
     const match = matchMap.get(id);
     if (!match) return null;
     const teams = parseTeams(match.summary);
+    const isRoundOf32 = getStageKind(match.stage, match.stageKind) === "r32";
+    const [homeSlot, awaySlot] = isRoundOf32 ? parseKnockoutSlots(match.summary) : [null, null];
+    const resolvedHome = getResolvedSlotTeam(homeSlot, groupStandings);
+    const resolvedAway = getResolvedSlotTeam(awaySlot, groupStandings);
+    const displayTeams = {
+      home: isPlaceholderTeamName(teams.home.name) && resolvedHome ? resolvedHome : teams.home,
+      away: isPlaceholderTeamName(teams.away.name) && resolvedAway ? resolvedAway : teams.away,
+    };
     const adjustedStart = new Date(match.start.getTime() + timezoneOffset * 3600000);
     const slug = generateMatchRouteSlug(match);
     const isUnlocked = areMatchTeamsConfirmed(match.summary);
-    const isHomeH = hoveredTeam === teams.home.name;
-    const isAwayH = hoveredTeam === teams.away.name;
+    const isHomeH = hoveredTeam === displayTeams.home.name;
+    const isAwayH = hoveredTeam === displayTeams.away.name;
     const anyH = hoveredTeam !== null;
     const inJourney = teamJourneySet.has(id);
 
@@ -458,7 +668,7 @@ export function TopologyBracket({ matches, timezoneOffset = 0 }: TopologyBracket
     const card = (
         <motion.div
           id={`bracket-node-${id}`}
-          className={`group relative w-[196px] rounded-2xl border p-3 backdrop-blur-xl transition-all duration-300 ${
+          className={`group relative w-[218px] rounded-[1.45rem] border p-3 backdrop-blur-xl transition-all duration-300 ${
             inJourney
               ? "border-volt/60 bg-volt/[0.04] shadow-[0_0_20px_-4px_rgba(216,255,62,0.2)]"
               : anyH
@@ -481,28 +691,38 @@ export function TopologyBracket({ matches, timezoneOffset = 0 }: TopologyBracket
 
           {/* Teams */}
           <div className="space-y-0.5">
-            {[teams.home, teams.away].map((team, idx) => {
+            {[displayTeams.home, displayTeams.away].map((team, idx) => {
               const isH = idx === 0 ? isHomeH : isAwayH;
+              const slot = idx === 0 ? homeSlot : awaySlot;
+              const slotCaption = getSlotCaption(slot);
+              const pending = isPlaceholderTeamName(team.name);
               return (
                 <div
                   key={idx}
-                  className={`flex items-center justify-between rounded-lg px-1.5 py-1 transition-colors ${
+                  className={`rounded-xl px-1.5 py-1.5 transition-colors ${
                     isH ? "bg-volt/[0.08]" : "hover:bg-white/[0.03]"
                   }`}
-                  onMouseEnter={() => setHoveredTeam(team.name)}
+                  onMouseEnter={() => !pending && setHoveredTeam(team.name)}
                   onMouseLeave={() => setHoveredTeam(null)}
                 >
-                  <div className="flex min-w-0 items-center gap-1.5">
-                    {team.image ? (
-                      <img src={team.image} alt="" className="h-4 w-5 rounded object-cover shadow-sm" />
-                    ) : (
-                      <div className="flex h-4 w-5 items-center justify-center rounded bg-white/[0.05] text-[7px] font-bold text-white/40">
-                        ?
-                      </div>
+                  <div className="flex min-w-0 items-center justify-between gap-2">
+                    <div className="flex min-w-0 items-center gap-1.5">
+                      {team.image ? (
+                        <img src={team.image} alt="" className="h-4 w-5 rounded object-cover shadow-sm" />
+                      ) : (
+                        <div className="flex h-4 w-5 items-center justify-center rounded bg-white/[0.05] text-[7px] font-bold text-white/40">
+                          {pending ? "TBD" : team.badge || "?"}
+                        </div>
+                      )}
+                      <span className={`truncate text-[11px] font-medium leading-tight ${isH ? "text-volt" : pending ? "text-white/38" : "text-white/75"}`}>
+                        {team.name}
+                      </span>
+                    </div>
+                    {slotCaption && (
+                      <span className="shrink-0 rounded-full bg-white/[0.045] px-1.5 py-0.5 text-[8px] font-semibold text-white/34">
+                        {slotCaption}
+                      </span>
                     )}
-                    <span className={`truncate text-[11px] font-medium leading-tight ${isH ? "text-volt" : "text-white/75"}`}>
-                      {team.name}
-                    </span>
                   </div>
                 </div>
               );
