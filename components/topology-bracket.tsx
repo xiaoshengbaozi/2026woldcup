@@ -303,15 +303,17 @@ export function TopologyBracket({ matches, timezoneOffset = 0 }: TopologyBracket
   const hasCenteredLogo = useRef(false);
 
   // Canvas dimensions — extra horizontal space keeps bracket columns and connector curves readable.
-  const CANVAS_W = 2920;
+  const CANVAS_W = 3260;
   const CANVAS_H = 1060;
 
   /* ── Data ── */
   const matchMap = React.useMemo(() => {
     const map = new Map<string, Match>();
-    matches.forEach(m => {
-      const num = getMatchNumber(m.uid);
-      if (num) map.set(num, m);
+    [...matches]
+      .sort((a, b) => a.start.getTime() - b.start.getTime())
+      .forEach((m, index) => {
+        const num = getMatchNumber(m.uid) ?? `M${index + 1}`;
+        if (!map.has(num)) map.set(num, m);
     });
     return map;
   }, [matches]);
@@ -874,7 +876,7 @@ export function TopologyBracket({ matches, timezoneOffset = 0 }: TopologyBracket
             </svg>
 
             {/* ── Bracket Grid ── */}
-            <div className="absolute inset-0 z-10 flex items-center justify-center gap-16 px-14">
+            <div className="absolute inset-0 z-10 flex items-center justify-center gap-12 px-16">
               {/* Left Groups */}
               <div className="flex h-full shrink-0 flex-col justify-center gap-5 py-6">
                 {LEFT_GROUPS.map(g => renderGroupCard(g))}
