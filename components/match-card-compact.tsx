@@ -2,7 +2,7 @@ import { MapPin } from "lucide-react";
 import Link from "next/link";
 import { detailRows } from "@/lib/calendar";
 import { areMatchTeamsConfirmed } from "@/lib/match-availability";
-import { getMatchLiveDisplay } from "@/lib/match-live-display";
+import { getMatchLiveDisplay, getMatchScore, getPenaltyScore } from "@/lib/match-live-display";
 import { parseTeams } from "@/lib/teams";
 import { generateMatchRouteSlug } from "@/lib/match-detail";
 import { formatStageLabel } from "@/lib/stage";
@@ -50,7 +50,7 @@ export function MatchCardCompact({
             className="mt-1 text-xl font-semibold leading-none text-white transition group-hover:text-volt sm:text-2xl"
             style={{ fontFamily: "ScreenMatrix, monospace" }}
           >
-            {display.centerLabel}
+            {display.hasStarted ? <InlineScore match={match} /> : display.centerLabel}
           </div>
         </div>
 
@@ -65,6 +65,23 @@ export function MatchCardCompact({
     </Link>
   ) : (
     card
+  );
+}
+
+function InlineScore({ match }: { match: Match }) {
+  const score = getMatchScore(match);
+  const penalty = getPenaltyScore(match);
+
+  if (!penalty) return <>{score.home} - {score.away}</>;
+
+  return (
+    <>
+      {score.home}
+      <span className="align-[0.08em] text-[0.58em] opacity-85">({penalty.home})</span>
+      {" - "}
+      {score.away}
+      <span className="align-[0.08em] text-[0.58em] opacity-85">({penalty.away})</span>
+    </>
   );
 }
 
