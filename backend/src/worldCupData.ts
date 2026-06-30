@@ -32,6 +32,10 @@ export interface NormalizedWorldCupFixture {
     away: number | null;
     halftimeHome: number | null;
     halftimeAway: number | null;
+    extraTimeHome: number | null;
+    extraTimeAway: number | null;
+    penaltyHome: number | null;
+    penaltyAway: number | null;
   };
   homeTeam: NormalizedTeam;
   awayTeam: NormalizedTeam;
@@ -460,6 +464,10 @@ function normalizeFixture(raw: ApiFootballFixture): NormalizedWorldCupFixture {
       away: raw.goals?.away ?? null,
       halftimeHome: raw.score?.halftime?.home ?? null,
       halftimeAway: raw.score?.halftime?.away ?? null,
+      extraTimeHome: raw.score?.extratime?.home ?? null,
+      extraTimeAway: raw.score?.extratime?.away ?? null,
+      penaltyHome: raw.score?.penalty?.home ?? null,
+      penaltyAway: raw.score?.penalty?.away ?? null,
     },
     homeTeam,
     awayTeam,
@@ -1419,6 +1427,18 @@ interface ApiFootballFixture {
   };
   score?: {
     halftime?: {
+      home?: number | null;
+      away?: number | null;
+    };
+    fulltime?: {
+      home?: number | null;
+      away?: number | null;
+    };
+    extratime?: {
+      home?: number | null;
+      away?: number | null;
+    };
+    penalty?: {
       home?: number | null;
       away?: number | null;
     };

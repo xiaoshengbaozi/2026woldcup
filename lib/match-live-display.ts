@@ -51,7 +51,15 @@ export function getMatchScore(match: Match) {
 
 export function formatScore(match: Match) {
   const { home, away } = getMatchScore(match);
-  return `${home} - ${away}`;
+  const penalty = getPenaltyScoreLabel(match);
+  return penalty ? `${home} - ${away} ${penalty}` : `${home} - ${away}`;
+}
+
+export function getPenaltyScoreLabel(match: Match) {
+  const home = match.score?.penaltyHome;
+  const away = match.score?.penaltyAway;
+  if (typeof home !== "number" || typeof away !== "number") return "";
+  return `点球 ${home}-${away}`;
 }
 
 export function getMatchPhaseLabel(match: Match) {

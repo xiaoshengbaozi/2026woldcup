@@ -556,6 +556,10 @@ function applyStandingInferredFixtureScores(fixtures: Array<Record<string, unkno
         away: away.goalsFor,
         halftimeHome: asRecord(fixture.score).halftimeHome ?? null,
         halftimeAway: asRecord(fixture.score).halftimeAway ?? null,
+        extraTimeHome: asRecord(fixture.score).extraTimeHome ?? null,
+        extraTimeAway: asRecord(fixture.score).extraTimeAway ?? null,
+        penaltyHome: asRecord(fixture.score).penaltyHome ?? null,
+        penaltyAway: asRecord(fixture.score).penaltyAway ?? null,
       },
     };
   });

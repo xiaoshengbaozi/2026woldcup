@@ -31,6 +31,10 @@ export type Match = {
     away: number | null;
     halftimeHome?: number | null;
     halftimeAway?: number | null;
+    extraTimeHome?: number | null;
+    extraTimeAway?: number | null;
+    penaltyHome?: number | null;
+    penaltyAway?: number | null;
   };
   homeTeam?: MatchTeamMeta;
   awayTeam?: MatchTeamMeta;
@@ -162,7 +166,14 @@ export type MatchDetail = {
   homeTeamCode: string;
   awayTeamCode: string;
   status: MatchStatus;
-  score: { home: number; away: number };
+  score: {
+    home: number;
+    away: number;
+    extraTimeHome?: number | null;
+    extraTimeAway?: number | null;
+    penaltyHome?: number | null;
+    penaltyAway?: number | null;
+  };
   odds: MatchOdds;
   homeLineup: MatchLineup;
   awayLineup: MatchLineup;

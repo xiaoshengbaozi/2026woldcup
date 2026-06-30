@@ -221,6 +221,10 @@ function buildRealMatchDetail(match: Match, slug: string, remote: WorldCupMatchD
     score: {
       home: fixture?.score?.home ?? match.score?.home ?? 0,
       away: fixture?.score?.away ?? match.score?.away ?? 0,
+      extraTimeHome: fixture?.score?.extraTimeHome ?? match.score?.extraTimeHome ?? null,
+      extraTimeAway: fixture?.score?.extraTimeAway ?? match.score?.extraTimeAway ?? null,
+      penaltyHome: fixture?.score?.penaltyHome ?? match.score?.penaltyHome ?? null,
+      penaltyAway: fixture?.score?.penaltyAway ?? match.score?.penaltyAway ?? null,
     },
     odds: { homeWin: 0, draw: 0, awayWin: 0, history: [] },
     homeLineup: findTeamLineup(remote?.lineups ?? [], match.homeTeam) ?? emptyLineup("官方阵容待公布"),
