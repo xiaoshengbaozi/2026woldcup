@@ -327,7 +327,8 @@ export function MatchHero({ detail, favoriteAction }: { detail: MatchDetail; fav
                 away={teams.away}
                 homeScore={detail.score.home}
                 awayScore={detail.score.away}
-                penaltyLabel={formatPenaltyScore(detail.score)}
+                penaltyHome={detail.score.penaltyHome}
+                penaltyAway={detail.score.penaltyAway}
               />
               <MatchMetaRow
                 start={adjustedStart}
@@ -343,7 +344,8 @@ export function MatchHero({ detail, favoriteAction }: { detail: MatchDetail; fav
               away={teams.away}
               homeScore={detail.score.home}
               awayScore={detail.score.away}
-              penaltyLabel={formatPenaltyScore(detail.score)}
+              penaltyHome={detail.score.penaltyHome}
+              penaltyAway={detail.score.penaltyAway}
               stageLabel={stageLabel}
               phaseLabel={desktopLiveStatusText}
               start={adjustedStart}
@@ -425,37 +427,34 @@ function StartedScoreLine({
   away,
   homeScore,
   awayScore,
-  penaltyLabel,
+  penaltyHome,
+  penaltyAway,
 }: {
   home: { badge: string; image: string; name: string };
   away: { badge: string; image: string; name: string };
   homeScore: number;
   awayScore: number;
-  penaltyLabel?: string;
+  penaltyHome?: number | null;
+  penaltyAway?: number | null;
 }) {
+  const scoreLabel = formatScoreWithPenalty(homeScore, awayScore, penaltyHome, penaltyAway);
+
   return (
-    <div className="mt-3 flex w-full flex-col items-center gap-2">
-      <div className="grid w-full grid-cols-[minmax(0,1fr)_auto_auto_auto_minmax(0,1fr)] items-center gap-2">
-        <span className="min-w-0 truncate text-right text-base font-bold uppercase tracking-[0.08em] text-white/82">
-          {home.name}
-        </span>
-        <MiniFlag team={home} compact />
-        <span
-          className="px-1 text-4xl font-bold leading-none tabular-nums text-white drop-shadow-[0_0_22px_rgba(255,255,255,0.2)]"
-          style={{ fontFamily: "ScreenMatrix, monospace" }}
-        >
-          {homeScore} - {awayScore}
-        </span>
-        <MiniFlag team={away} compact />
-        <span className="min-w-0 truncate text-left text-base font-bold uppercase tracking-[0.08em] text-white/82">
-          {away.name}
-        </span>
-      </div>
-      {penaltyLabel && (
-        <span className="rounded-full bg-volt/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-volt ring-1 ring-volt/20">
-          {penaltyLabel}
-        </span>
-      )}
+    <div className="mt-3 grid w-full grid-cols-[minmax(0,1fr)_auto_auto_auto_minmax(0,1fr)] items-center gap-2">
+      <span className="min-w-0 truncate text-right text-base font-bold uppercase tracking-[0.08em] text-white/82">
+        {home.name}
+      </span>
+      <MiniFlag team={home} compact />
+      <span
+        className="px-1 text-4xl font-bold leading-none tabular-nums text-white drop-shadow-[0_0_22px_rgba(255,255,255,0.2)]"
+        style={{ fontFamily: "ScreenMatrix, monospace" }}
+      >
+        {scoreLabel}
+      </span>
+      <MiniFlag team={away} compact />
+      <span className="min-w-0 truncate text-left text-base font-bold uppercase tracking-[0.08em] text-white/82">
+        {away.name}
+      </span>
     </div>
   );
 }
@@ -465,7 +464,8 @@ function StartedMobileBannerContent({
   away,
   homeScore,
   awayScore,
-  penaltyLabel,
+  penaltyHome,
+  penaltyAway,
   stageLabel,
   phaseLabel,
   start,
@@ -476,7 +476,8 @@ function StartedMobileBannerContent({
   away: { badge: string; image: string; name: string };
   homeScore: number;
   awayScore: number;
-  penaltyLabel?: string;
+  penaltyHome?: number | null;
+  penaltyAway?: number | null;
   stageLabel: string;
   phaseLabel: string;
   start: Date;
@@ -484,6 +485,7 @@ function StartedMobileBannerContent({
   stage: string;
 }) {
   const [phase, minute] = splitPhaseLabel(phaseLabel);
+  const hasPenalty = typeof penaltyHome === "number" && typeof penaltyAway === "number";
 
   return (
     <div className="relative z-20 flex w-full max-w-[22rem] flex-col items-center px-3 py-4 text-center lg:hidden">
@@ -493,7 +495,7 @@ function StartedMobileBannerContent({
             className="text-5xl font-bold leading-none tabular-nums text-white drop-shadow-[0_0_22px_rgba(255,255,255,0.18)]"
             style={{ fontFamily: "ScreenMatrix, monospace" }}
           >
-            {homeScore}
+            {hasPenalty ? `${homeScore}(${penaltyHome})` : homeScore}
           </span>
           <div className="mt-5 flex items-center gap-2 self-start">
             <span className="min-w-0 max-w-[5.2rem] truncate text-sm font-semibold text-white/82">
@@ -508,11 +510,6 @@ function StartedMobileBannerContent({
             {phase}
           </span>
           {minute && <span className="mt-1 text-xs font-semibold text-white/68">{minute}</span>}
-          {penaltyLabel && (
-            <span className="mt-2 rounded-full bg-volt/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-volt ring-1 ring-volt/20">
-              {penaltyLabel}
-            </span>
-          )}
           <span className="mt-12 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/62">
             {stageLabel}
           </span>
@@ -523,7 +520,7 @@ function StartedMobileBannerContent({
             className="text-5xl font-bold leading-none tabular-nums text-white drop-shadow-[0_0_22px_rgba(255,255,255,0.18)]"
             style={{ fontFamily: "ScreenMatrix, monospace" }}
           >
-            {awayScore}
+            {hasPenalty ? `${awayScore}(${penaltyAway})` : awayScore}
           </span>
           <div className="mt-5 flex items-center gap-2 self-end">
             <MiniFlag team={away} compact />
@@ -539,12 +536,9 @@ function StartedMobileBannerContent({
   );
 }
 
-function formatPenaltyScore(score: {
-  penaltyHome?: number | null;
-  penaltyAway?: number | null;
-}) {
-  if (typeof score.penaltyHome !== "number" || typeof score.penaltyAway !== "number") return "";
-  return `点球 ${score.penaltyHome}-${score.penaltyAway}`;
+function formatScoreWithPenalty(home: number, away: number, penaltyHome?: number | null, penaltyAway?: number | null) {
+  if (typeof penaltyHome !== "number" || typeof penaltyAway !== "number") return `${home} - ${away}`;
+  return `${home}(${penaltyHome}) - ${away}(${penaltyAway})`;
 }
 
 function splitPhaseLabel(label: string) {
