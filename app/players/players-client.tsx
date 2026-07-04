@@ -759,6 +759,9 @@ function ScorerBoard({ players, loading }: { players: WorldCupTopScorer[]; loadi
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-volt/50">Ranking</p>
           <h2 className="mt-0.5 text-sm font-bold text-white/80">{"射手榜"}</h2>
+          {!loading && players.length > 0 ? (
+            <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/30">Total {players.length}</p>
+          ) : null}
         </div>
         <Trophy className="h-4 w-4 text-volt/60" />
       </div>
@@ -768,7 +771,7 @@ function ScorerBoard({ players, loading }: { players: WorldCupTopScorer[]; loadi
         ) : players.length === 0 ? (
           <div className="px-4 py-6 text-center text-xs font-semibold text-white/34">本届世界杯暂无进球数据</div>
         ) : null}
-        {players.slice(0, 8).map((player, index) => (
+        {players.map((player, index) => (
           <Link
             key={player.id}
             href={"/players/" + player.id + "/"}
