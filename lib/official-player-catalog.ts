@@ -1,4 +1,4 @@
-import fifaOfficialSquads from "@/data/fifa-official-squads.json";
+import fifaOfficialSquads from "@/data/fifa-official-squads.slim.json";
 import officialPlayerAges from "@/data/official-player-ages.json";
 import officialPlayerGoals from "@/data/official-player-goals.json";
 import officialPlayerRatings from "@/data/official-player-ratings.json";

@@ -19,7 +19,8 @@ import { generateMatchRouteSlug } from "@/lib/match-detail";
 import { parseTeams } from "@/lib/teams";
 import { useNow } from "@/lib/use-now";
 import { getVenueBannerImage } from "@/lib/venue-assets";
-import { fallbackTopScorerProfiles, fetchWorldCupTopScorers, TOP_SCORERS_REFRESH_MS, type WorldCupTopScorer } from "@/lib/world-cup-top-scorers";
+import { fallbackTopScorerProfiles } from "@/lib/world-cup-top-scorers";
+import { useTopScorers } from "@/lib/use-top-scorers";
 import type { Match } from "@/types/match";
 import { OptimizedImage } from "./optimized-image";
 import { LiveMatchCard } from "./world-cup-hero/live-match-card";
@@ -139,8 +140,14 @@ export function WorldCupHero({ matches, progress, completedCount, ongoingCount, 
   const [isDesktop, setIsDesktop] = useState(false);
   const { news: fifaNews, loading: newsLoading } = useFifaNews(isDesktop);
   const popularTeams = usePopularTeams();
-  const [topScorers, setTopScorers] = useState<WorldCupTopScorer[]>(fallbackTopScorerProfiles);
   const topScorersRefreshEnabled = hasMatchInLiveRefreshWindow(matches, currentTime);
+  const { topScorers } = useTopScorers({
+    refreshEnabled: topScorersRefreshEnabled,
+    limit: 5,
+    fallback: fallbackTopScorerProfiles,
+    deferUntilIdle: true,
+    logTag: "WorldCupHero",
+  });
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(min-width: 1024px)");
@@ -151,55 +158,6 @@ export function WorldCupHero({ matches, progress, completedCount, ongoingCount, 
 
     return () => mediaQuery.removeEventListener("change", syncDesktopState);
   }, []);
-
-  useEffect(() => {
-    const loadTopScorers = () => {
-      let active = true;
-      const syncTopScorers = (forceRefresh = false) => {
-        fetchWorldCupTopScorers({ forceRefresh })
-          .then((items) => {
-            if (active) setTopScorers(items.length ? items.slice(0, 5) : fallbackTopScorerProfiles);
-          })
-          .catch((error) => {
-            console.warn("[WorldCupHero] top scorers unavailable:", error);
-          });
-      };
-
-      syncTopScorers(false);
-      const refreshId = topScorersRefreshEnabled
-        ? window.setInterval(() => syncTopScorers(true), TOP_SCORERS_REFRESH_MS)
-        : null;
-
-      return () => {
-        active = false;
-        if (refreshId !== null) window.clearInterval(refreshId);
-      };
-    };
-
-    let cleanup: (() => void) | undefined;
-    const start = () => {
-      cleanup = loadTopScorers();
-    };
-
-    let idleId: number | null = null;
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-
-    if (typeof window.requestIdleCallback === "function") {
-      idleId = window.requestIdleCallback(start, { timeout: 2_500 });
-    } else {
-      timeoutId = setTimeout(start, 1_200);
-    }
-
-    return () => {
-      if (idleId !== null) {
-        window.cancelIdleCallback(idleId);
-      }
-      if (timeoutId !== null) {
-        clearTimeout(timeoutId);
-      }
-      cleanup?.();
-    };
-  }, [topScorersRefreshEnabled]);
 
   const hasClientTime = currentTime > 0;
   const nextMatch = useMemo(

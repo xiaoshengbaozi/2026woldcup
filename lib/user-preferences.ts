@@ -1,4 +1,4 @@
-import officialSquadsData from "@/data/fifa-official-squads.json";
+import officialSquadsData from "@/data/fifa-official-squads.slim.json";
 import mitomaImage from "@/assets/players/JPN-japan/headshots/kaoru-mitoma.webp";
 import { getApiSportsPlayerPhoto } from "@/lib/player-photo-overrides";
 

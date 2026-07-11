@@ -15,7 +15,8 @@ import { useNow } from "@/lib/use-now";
 import { useWorldCupData } from "@/lib/use-world-cup-data";
 import playerArticles from "@/data/player-articles.json";
 import { getOfficialPlayerCatalog, type OfficialPlayerCatalogItem } from "@/lib/official-player-catalog";
-import { fallbackTopScorerProfiles, fetchWorldCupTopScorers, TOP_SCORERS_REFRESH_MS, type WorldCupTopScorer } from "@/lib/world-cup-top-scorers";
+import { fallbackTopScorerProfiles, type WorldCupTopScorer } from "@/lib/world-cup-top-scorers";
+import { useTopScorers } from "@/lib/use-top-scorers";
 
 type PlayerArticle = (typeof playerArticles.players)[number];
 type PlayerListItem = PlayerArticle | OfficialPlayerCatalogItem;
@@ -81,12 +82,19 @@ export function PlayersClient() {
     mobileFiltersRef,
     MOBILE_PLAYERS_FILTERS_STICKY_OFFSET
   );
-  const [topScorers, setTopScorers] = useState<WorldCupTopScorer[]>(fallbackTopScorerProfiles);
-  const [topScorersLoading, setTopScorersLoading] = useState(true);
   const { home } = useUserSession();
   const { matches, warmupMatches } = useWorldCupData();
   const currentTime = useNow(30_000);
   const signedIn = Boolean(home);
+  const topScorersRefreshEnabled = useMemo(
+    () => hasMatchInLiveRefreshWindow([...matches, ...warmupMatches], currentTime),
+    [currentTime, matches, warmupMatches]
+  );
+  const { topScorers, loading: topScorersLoading } = useTopScorers({
+    refreshEnabled: topScorersRefreshEnabled,
+    fallback: fallbackTopScorerProfiles,
+    logTag: "PlayersClient",
+  });
 
   const visibleTabs = useMemo(
     () => tabs.filter((tab) => tab.id !== "following" || signedIn),
@@ -154,44 +162,11 @@ export function PlayersClient() {
       })),
     [topScorers]
   );
-  const topScorersRefreshEnabled = useMemo(
-    () => hasMatchInLiveRefreshWindow([...matches, ...warmupMatches], currentTime),
-    [currentTime, matches, warmupMatches]
-  );
-
   const visiblePlayers = useMemo((): PlayerRailItem[] => {
     if (activeTab === "following") return followedPlayers;
     if (activeTab === "squads") return topScorerRailItems;
     return playerArticles.players.filter((player) => player.category === activeTab).map(toRailItem);
   }, [activeTab, followedPlayers, topScorerRailItems]);
-
-  useEffect(() => {
-    let active = true;
-    setTopScorersLoading(true);
-    const syncTopScorers = (forceRefresh = false) => {
-      fetchWorldCupTopScorers({ forceRefresh })
-        .then((items) => {
-          if (active) setTopScorers(items.length ? items : fallbackTopScorerProfiles);
-        })
-        .catch((error) => {
-          console.warn("[PlayersClient] top scorers unavailable:", error);
-          if (active && !forceRefresh) setTopScorers(fallbackTopScorerProfiles);
-        })
-        .finally(() => {
-          if (active) setTopScorersLoading(false);
-        });
-    };
-
-    syncTopScorers(false);
-    const refreshId = topScorersRefreshEnabled
-      ? window.setInterval(() => syncTopScorers(true), TOP_SCORERS_REFRESH_MS)
-      : null;
-
-    return () => {
-      active = false;
-      if (refreshId !== null) window.clearInterval(refreshId);
-    };
-  }, [topScorersRefreshEnabled]);
 
   useEffect(() => {
     if (signedIn && !signedInDefaultAppliedRef.current) {

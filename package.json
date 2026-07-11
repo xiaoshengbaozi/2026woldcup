@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/sync-public-data.mjs",
     "dev": "next dev",
-    "prebuild": "node scripts/generate-article-index.mjs",
+    "prebuild": "node scripts/generate-article-index.mjs && node scripts/sync-public-data.mjs",
     "postbuild": "node scripts/strip-next-polyfills.mjs",
     "articles:index": "node scripts/generate-article-index.mjs",
     "build": "next build",

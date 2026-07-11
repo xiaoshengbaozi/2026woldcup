@@ -36,7 +36,8 @@ import {
 import { useUserPreferenceCatalog } from "@/lib/use-user-preferences";
 import { useUserSession } from "@/components/user-session-provider";
 import { userApi, type PublicUser, type UserHomePayload } from "@/lib/user-system";
-import { fetchWorldCupTopScorers, TOP_SCORERS_REFRESH_MS, type WorldCupTopScorer } from "@/lib/world-cup-top-scorers";
+import { type WorldCupTopScorer } from "@/lib/world-cup-top-scorers";
+import { useTopScorers } from "@/lib/use-top-scorers";
 import { getFlagUrl } from "@/lib/world-cup-2026";
 import { generateMatchSlug } from "@/lib/match-detail";
 import { hasMatchInLiveRefreshWindow } from "@/lib/live-match-queue";
@@ -291,7 +292,6 @@ function MePageContent() {
   const [home, setHome] = useState<UserHomePayload | null>(null);
   const sharedCatalog = useUserPreferenceCatalog(true);
   const [catalog, setCatalog] = useState<UserPreferenceCatalog>(sharedCatalog);
-  const [topScorers, setTopScorers] = useState<WorldCupTopScorer[]>(DEFAULT_TOP_SCORERS);
   const [loading, setLoading] = useState(true);
   const [authMode, setAuthMode] = useState<AuthMode | null>(null);
   const [registerStep, setRegisterStep] = useState<RegisterStep>("account");
@@ -316,6 +316,12 @@ function MePageContent() {
     [currentTime, matches, warmupMatches]
   );
   const popularTeams = usePopularTeams();
+  const { topScorers } = useTopScorers({
+    refreshEnabled: topScorersRefreshEnabled,
+    limit: 6,
+    fallback: DEFAULT_TOP_SCORERS,
+    logTag: "MePage",
+  });
 
   const avatarPlayerId = selectedPlayerIds[0] ?? catalog.players[0]?.id ?? fallbackUserPreferenceCatalog.players[0].id;
 
@@ -373,29 +379,6 @@ function MePageContent() {
     const query = nextParams.toString();
     router.replace(query ? `/me?${query}` : "/me", { scroll: false });
   }, [router, searchParams]);
-
-  useEffect(() => {
-    let active = true;
-    const syncTopScorers = (forceRefresh = false) => {
-      fetchWorldCupTopScorers({ forceRefresh })
-        .then((players) => {
-          if (active && players.length) setTopScorers(players.slice(0, 6));
-        })
-        .catch(() => {
-          if (active && !forceRefresh) setTopScorers(DEFAULT_TOP_SCORERS);
-        });
-    };
-
-    syncTopScorers(false);
-    const refreshId = topScorersRefreshEnabled
-      ? window.setInterval(() => syncTopScorers(true), TOP_SCORERS_REFRESH_MS)
-      : null;
-
-    return () => {
-      active = false;
-      if (refreshId !== null) window.clearInterval(refreshId);
-    };
-  }, [topScorersRefreshEnabled]);
 
   const openAuth = useCallback((mode: AuthMode, syncUrl = true) => {
     ignoreAuthParamRef.current = false;

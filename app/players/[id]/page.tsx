@@ -4,7 +4,7 @@ import playerArticles from "@/data/player-articles.json";
 import playerNameTranslations from "@/data/localization/players.json";
 import { getOfficialPlayerById, getOfficialPlayerCatalog } from "@/lib/official-player-catalog";
 import { getApiSportsPlayerPhoto } from "@/lib/player-photo-overrides";
-import { findPlayerScoutNoteByIdentity } from "@/lib/player-scout-notes";
+import { findPlayerScoutNoteByIdentity } from "@/lib/player-scout-notes-data";
 import { PlayerProfileClient } from "./player-profile-client";
 
 type Props = {

@@ -16,7 +16,8 @@ import {
 } from "@/components/motion/lineup-player-enter";
 import { getOfficialPlayerCatalog, type OfficialPlayerCatalogItem } from "@/lib/official-player-catalog";
 import { hasKnownBlankPlayerPhoto } from "@/lib/player-photo-overrides";
-import { findPlayerScoutNoteByIdentity, type PlayerScoutNote } from "@/lib/player-scout-notes";
+import { findPlayerScoutNoteByIdentityIn, type PlayerScoutNote } from "@/lib/player-scout-notes";
+import { usePlayerScoutNotes } from "@/lib/use-player-scout-notes";
 import { parseTeams } from "@/lib/teams";
 import type { MatchDetail, LineupPlayer, PlayerPosition } from "@/types/match";
 
@@ -436,7 +437,8 @@ function MobilePitchPlayer({
   const label = player.number ? `${player.number} ${player.nameCn || player.name}` : player.nameCn || player.name;
   const fallback = player.number ?? getPlayerInitial(player);
   const href = /^\d+$/.test(player.id) ? `/players/${player.id}/` : null;
-  const scoutNote = getLineupPlayerScoutNote(player);
+  const scoutNotes = usePlayerScoutNotes();
+  const scoutNote = getLineupPlayerScoutNote(scoutNotes, player);
   const [scoutOpen, setScoutOpen] = useState(false);
   const avatar = (
     <div className="relative grid h-10 w-10 place-items-center overflow-hidden rounded-full bg-[#30343d] text-[11px] font-black text-white shadow-[0_10px_22px_rgba(0,0,0,.26)] ring-1 ring-white/15 transition group-hover:ring-volt/45">
@@ -528,7 +530,8 @@ function MobileBenchPlayer({
   const label = player.number ? `${player.number} ${player.nameCn || player.name}` : player.nameCn || player.name;
   const positionLabel = player.positionCn || player.position;
   const href = /^\d+$/.test(player.id) ? `/players/${player.id}/` : null;
-  const scoutNote = getLineupPlayerScoutNote(player);
+  const scoutNotes = usePlayerScoutNotes();
+  const scoutNote = getLineupPlayerScoutNote(scoutNotes, player);
   const [scoutOpen, setScoutOpen] = useState(false);
   const content = (
     <>
@@ -591,6 +594,7 @@ function FormationPitch({
   const layout = getPlayerPitchCoords(starters, formation);
   const accentFrom = accentHex === "#D8FF3E" ? "rgba(216,255,62," : "rgba(255,154,31,";
   const displayCoach = localizeCoachName(coach) || "待更新";
+  const scoutNotes = usePlayerScoutNotes();
   const [activeScout, setActiveScout] = useState<{ player: LineupPlayer; note: PlayerScoutNote } | null>(null);
 
   return (
@@ -687,7 +691,7 @@ function FormationPitch({
             const labelWidth = rowDensity >= 5 ? 44 : rowDensity === 4 ? 52 : rowDensity === 3 ? 62 : 72;
             const isGK = player.position === "GK";
             const isCapt = player.isCaptain;
-            const scoutNote = getLineupPlayerScoutNote(player);
+            const scoutNote = getLineupPlayerScoutNote(scoutNotes, player);
             const label = player.number ? `${player.number} ${player.nameCn || player.name}` : player.nameCn || player.name;
             const displayName = player.nameCn || player.name;
             const fallback = player.number ?? getPlayerInitial(player);
@@ -991,8 +995,9 @@ function getPlayerInitial(player: LineupPlayer) {
   return name.trim().charAt(0).toUpperCase() || "·";
 }
 
-function getLineupPlayerScoutNote(player: LineupPlayer) {
-  return findPlayerScoutNoteByIdentity({
+function getLineupPlayerScoutNote(notes: PlayerScoutNote[] | null, player: LineupPlayer) {
+  if (!notes) return null;
+  return findPlayerScoutNoteByIdentityIn(notes, {
     id: player.id,
     name: player.name,
     nameEn: player.nameEn,
@@ -1092,7 +1097,8 @@ function FeaturedPlayerRow({
 }) {
   const { player, category } = item;
   const href = /^\d+$/.test(player.id) ? `/players/${player.id}/` : null;
-  const scoutNote = getLineupPlayerScoutNote(player);
+  const scoutNotes = usePlayerScoutNotes();
+  const scoutNote = getLineupPlayerScoutNote(scoutNotes, player);
   const [scoutOpen, setScoutOpen] = useState(false);
   const content = (
     <>
@@ -1330,7 +1336,8 @@ function PlayerCell({
   const href = /^\d+$/.test(player.id)
     ? `/players/${player.id}/`
     : null;
-  const scoutNote = getLineupPlayerScoutNote(player);
+  const scoutNotes = usePlayerScoutNotes();
+  const scoutNote = getLineupPlayerScoutNote(scoutNotes, player);
   const [scoutOpen, setScoutOpen] = useState(false);
   const content = (
     <>

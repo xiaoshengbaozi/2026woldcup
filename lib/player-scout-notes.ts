@@ -1,4 +1,8 @@
-import scoutNotesData from "@/data/player-scout-notes.json";
+// Pure types + finders. The dataset itself is NOT imported here so client
+// bundles stay small:
+// - Client components: use `usePlayerScoutNotes()` (lazy fetch) and the
+//   `*In` finders below.
+// - Server/build-time code: import from `@/lib/player-scout-notes-data`.
 
 export type PlayerScoutNote = {
   apiPlayerId: number;
@@ -32,37 +36,33 @@ export type PlayerScoutContractDetails = {
   sourceCn: string;
 };
 
-const PLAYER_SCOUT_NOTES = scoutNotesData.players as PlayerScoutNote[];
-
-export function findPlayerScoutNote(playerId: string | number) {
-  const normalizedId = String(playerId);
-  return PLAYER_SCOUT_NOTES.find((note) => String(note.apiPlayerId) === normalizedId) ?? null;
-}
-
-export function findPlayerScoutNoteByIdentity(identity: {
+export type PlayerScoutIdentity = {
   id?: string | number | null;
   name?: string | null;
   nameEn?: string | null;
   nameCn?: string | null;
-}) {
+};
+
+export function findPlayerScoutNoteIn(notes: PlayerScoutNote[], playerId: string | number) {
+  const normalizedId = String(playerId);
+  return notes.find((note) => String(note.apiPlayerId) === normalizedId) ?? null;
+}
+
+export function findPlayerScoutNoteByIdentityIn(notes: PlayerScoutNote[], identity: PlayerScoutIdentity) {
   if (identity.id != null && /^\d+$/.test(String(identity.id))) {
-    const byId = findPlayerScoutNote(identity.id);
+    const byId = findPlayerScoutNoteIn(notes, identity.id);
     if (byId) return byId;
   }
 
   const keys = [identity.name, identity.nameEn, identity.nameCn].map(normalizeScoutName).filter(Boolean);
   if (!keys.length) return null;
 
-  return PLAYER_SCOUT_NOTES.find((note) => {
+  return notes.find((note) => {
     const noteKeys = [note.nameEn, note.nameCn].map(normalizeScoutName).filter(Boolean);
     return keys.some((key) =>
       noteKeys.some((noteKey) => key === noteKey || key.includes(noteKey) || noteKey.includes(key))
     );
   }) ?? null;
-}
-
-export function getPlayerScoutNotes() {
-  return PLAYER_SCOUT_NOTES;
 }
 
 function normalizeScoutName(value: string | null | undefined) {

@@ -1,4 +1,3 @@
-import rawH2hData from "@/data/h2h/michill-worldcup-2026-h2h.json";
 import { getBackendApiUrl } from "@/lib/world-cup-api";
 import { cachedJson, fetchWithTimeout } from "@/lib/request-cache";
 import type { HeadToHeadMatch, HeadToHeadStatus, MatchTeamMeta } from "@/types/match";
@@ -64,7 +63,27 @@ type HeadToHeadResult = {
   status: HeadToHeadStatus;
 };
 
-const h2hData = rawH2hData as unknown as MichillH2HData;
+const LOCAL_H2H_URL = "/data/h2h.json";
+
+// Lazily fetched instead of statically imported: the dataset is ~900KB and
+// was previously inlined into the matches/[slug] page chunk.
+let localH2hPromise: Promise<MichillH2HData | null> | null = null;
+
+function loadLocalH2hData() {
+  if (!localH2hPromise) {
+    localH2hPromise = fetchWithTimeout(LOCAL_H2H_URL, {}, 10_000)
+      .then((response) => {
+        if (!response.ok) throw new Error(`local h2h fetch returned ${response.status}`);
+        return response.json() as Promise<MichillH2HData>;
+      })
+      .catch((error) => {
+        console.warn("[HeadToHead] local dataset unavailable:", error);
+        localH2hPromise = null;
+        return null;
+      });
+  }
+  return localH2hPromise;
+}
 const LOCAL_MATCH_LIMIT = 10;
 
 const codeAliases: Record<string, string> = {
@@ -73,7 +92,7 @@ const codeAliases: Record<string, string> = {
 };
 
 export async function fetchWorldCupHeadToHead(homeTeam: MatchTeamMeta, awayTeam: MatchTeamMeta): Promise<HeadToHeadResult> {
-  const local = findLocalHeadToHead(homeTeam, awayTeam);
+  const local = await findLocalHeadToHead(homeTeam, awayTeam);
   if (local) return local;
 
   if (!homeTeam.id || !awayTeam.id) return { matches: [], status: "unknown" };
@@ -102,10 +121,13 @@ export async function fetchWorldCupHeadToHead(homeTeam: MatchTeamMeta, awayTeam:
   };
 }
 
-function findLocalHeadToHead(homeTeam: MatchTeamMeta, awayTeam: MatchTeamMeta): HeadToHeadResult | null {
+async function findLocalHeadToHead(homeTeam: MatchTeamMeta, awayTeam: MatchTeamMeta): Promise<HeadToHeadResult | null> {
   const homeCode = normalizeTeamCode(homeTeam.code);
   const awayCode = normalizeTeamCode(awayTeam.code);
   if (!homeCode || !awayCode) return null;
+
+  const h2hData = await loadLocalH2hData();
+  if (!h2hData) return null;
 
   const pairKey = toPairKey(homeCode, awayCode);
   const pair = h2hData.pairs[pairKey];
