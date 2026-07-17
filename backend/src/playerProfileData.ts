@@ -74,14 +74,16 @@ export async function getWorldCupTopScorers(apiFootball: ApiFootballService, url
   const officialScorers = response.filter((item) => (item.goals ?? 0) > 0);
   const eventScorers = await getTopScorersFromFixtureEvents(apiFootball, params);
   if (eventScorers.length) {
+    const scorers = mergeTopScorers(officialScorers, eventScorers);
     return {
-      source: "api-football-events-fallback",
+      source: officialScorers.length ? "api-football-merged" : "api-football-events-fallback",
       normalized: true,
       localized: true,
       timestamp: Date.now(),
       officialCount: officialScorers.length,
-      count: eventScorers.length,
-      scorers: eventScorers,
+      eventCount: eventScorers.length,
+      count: scorers.length,
+      scorers,
     };
   }
 
@@ -104,6 +106,31 @@ export async function getWorldCupTopScorers(apiFootball: ApiFootballService, url
     count: response.length,
     scorers: response,
   };
+}
+
+function mergeTopScorers<T extends { id: number | null; nameEn: string; goals: number | null }>(
+  officialScorers: T[],
+  eventScorers: EventTopScorer[]
+) {
+  const merged = new Map<number, T | EventTopScorer>();
+
+  for (const scorer of eventScorers) {
+    merged.set(scorer.id, scorer);
+  }
+
+  for (const scorer of officialScorers) {
+    if (!scorer.id) continue;
+    const eventScorer = merged.get(scorer.id);
+    merged.set(scorer.id, {
+      ...eventScorer,
+      ...scorer,
+      goals: Math.max(scorer.goals ?? 0, eventScorer?.goals ?? 0),
+    });
+  }
+
+  return [...merged.values()].sort(
+    (a, b) => (b.goals ?? 0) - (a.goals ?? 0) || a.nameEn.localeCompare(b.nameEn)
+  );
 }
 
 async function getTopScorersFromFixtureEvents(apiFootball: ApiFootballService, params: URLSearchParams) {
